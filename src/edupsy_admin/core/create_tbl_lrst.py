@@ -1,9 +1,8 @@
 import datetime
-from create_tbl_names import get_names
-from utils_sql import get_sql_con, get_tbl_info
+from edupsy_admin.core.utils_sql import get_sql_con, get_tbl_info
 
 
-def session_tbl(con, fn):
+def lrst_tbl(con, fn):
     """Create a table for tests and questionnaires.
 
     Parameters
@@ -13,7 +12,6 @@ def session_tbl(con, fn):
     fn : function
         _description_
     """
-    names = get_names(fn)
     query_string = (
         "CREATE TABLE lrst("
         "diagnose text NOT NULL, "

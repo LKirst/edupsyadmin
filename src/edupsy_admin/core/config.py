@@ -4,6 +4,8 @@ This module defines a global configuration object. Other modules should use
 this object to store application-wide configuration values.
 
 """
+import os
+
 from dotenv import load_dotenv
 from yaml import Node
 from yaml import SafeLoader
@@ -94,6 +96,10 @@ class YamlConfig(_AttrDict):
         tag = _ParameterTag(params)
         tag.add(SafeLoader)
         for path in [path] if isinstance(path, str) else path:
+            if not os.path.exists(path):
+                logger.warn(
+                    f"trying to open config file at '{path}' but the path does not exist; the -c argument allows you to set a path to a config.yml"
+                )
             with open(path, "r") as stream:
                 logger.info(f"reading config data from '{path}'")
                 data = safe_load(stream)

@@ -22,6 +22,15 @@ Install for the current user (NOT POSSIBLE YET):
 
     $ python -m pip install . --user
 
+NOTE TO SELF: I have installed the package using the following command at the
+top level of my package
+
+    $ pip install -e .
+
+    Then, I can run it with:
+
+    $ edupsy_admin -c "PATH/TO/THE/APP/edupsy_admin/etc/config.yml" hello
+
 Run the application:
 
     $ python -m edupsy_admin --help
