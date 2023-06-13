@@ -14,6 +14,9 @@ def names_tbl(con, fn):
             "birthday TEXT NOT NULL, "
             "gender TEXT NOT NULL, "
             "school TEXT NOT NULL, "
+            "street TEXT NOT NULL, "
+            "city TEXT NOT NULL, "
+            "parent TEXT NOT NULL, "
             "id TEXT PRIMARY KEY);"
         )
     )
