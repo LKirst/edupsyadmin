@@ -1,0 +1,4 @@
+## Runtime configuration for the edupsy_admin application.
+##
+core:
+  logging: WARN
