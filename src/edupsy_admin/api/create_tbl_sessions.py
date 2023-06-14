@@ -1,6 +1,6 @@
 import datetime
-from create_tbl_names import get_names
-from utils_sql import get_sql_con, get_tbl_info
+from .create_tbl_names import get_names
+from .utils_sql import get_sql_con, get_tbl_info
 
 
 def session_tbl(con, fn):

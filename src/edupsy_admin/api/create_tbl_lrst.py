@@ -1,5 +1,6 @@
 import datetime
-from edupsy_admin.core.utils_sql import get_sql_con, get_tbl_info
+from ..core.logger import logger
+from .utils_sql import get_sql_con, get_tbl_info
 
 
 def lrst_tbl(con, fn):

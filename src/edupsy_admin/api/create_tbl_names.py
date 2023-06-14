@@ -1,5 +1,5 @@
-from edupsy_admin.core import logger
-from edupsy_admin.core.utils_sql import get_sql_con, get_tbl_info
+from ..core import logger
+from .utils_sql import get_sql_con, get_tbl_info
 
 CLIENT_VARIABLES = [
     "first_name",
