@@ -29,7 +29,7 @@ top level of my package
 
     Then, I can run it with:
 
-    $ edupsy_admin -c "PATH/TO/THE/APP/edupsy_admin/etc/config.yml" hello
+    $ edupsy_admin -w INFO -c "/c/literatur/code/edupsy_admin/etc/config.yml" hello
 
 Run the application:
 
@@ -42,3 +42,13 @@ Run the test suite:
 Build documentation:
 
     $ sphinx-build -b html doc doc/_build/html
+
+## TODO
+
+- Create a function for an LRSt report
+
+- Create tests 
+
+- Use SQLCipher for encryption
+
+- Create a UI 
