@@ -3,8 +3,7 @@
     python -m edupsy_admin  ...
 
 """
-from edupsy_admin.core import create_tbl_names
-from edupsy_admin.core import utils_sql
+from edupsy_admin.api import create_tbl_names, utils_sql
 
 
 def main():
