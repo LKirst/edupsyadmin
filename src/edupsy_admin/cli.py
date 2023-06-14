@@ -89,6 +89,41 @@ def _hello(subparsers, common):
     parser.set_defaults(command=hello)
     return
 
+def _lrst(subparsers, common):
+    """CLI adaptor for the api.lrst command.
+
+    :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
+    """
+    parser = subparsers.add_parser("lrst", parents=[common])
+    parser.set_defaults(command=lrst)
+    return
+
+def _client(subparsers, common):
+    """CLI adaptor for the api.client command.
+
+    :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
+    """
+    parser = subparsers.add_parser("client", parents=[common])
+    parser.set_defaults(command=client,
+            help="Edit or read the database of clients")
+    parser.add_argument("--new", "-n", action='store_true')
+    parser.add_argument("--list", "-l", action='store_true')
+    parser.add_argument("--remove", action='store_true')
+    parser.add_argument("--file",
+            type=str, default=None, help="Path to an Infoportal file")
+    return
+
+def _session(subparsers, common):
+    """CLI adaptor for the api.session command.
+
+    :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
+    """
+    parser = subparsers.add_parser("session", parents=[common])
+    parser.set_defaults(command=session)
+    return
 
 # Make the module executable.
 
