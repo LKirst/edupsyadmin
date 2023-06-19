@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from inspect import getfullargspec
 
 from . import __version__
-from .api import hello
+from .api import hello, clients
 from .core.config import config
 from .core.logger import logger
 
@@ -67,6 +67,7 @@ def _args(argv):
     common = ArgumentParser(add_help=False)  # common subcommand arguments
     common.add_argument("--name", "-n", default="World", help="greeting name")
     _hello(subparsers, common)
+    _clients(subparsers, common)
     args = parser.parse_args(argv)
     if not args.command:
         # No sucommand was specified.
@@ -99,30 +100,30 @@ def _lrst(subparsers, common):
     parser.set_defaults(command=lrst)
     return
 
-def _client(subparsers, common):
-    """CLI adaptor for the api.client command.
+def _clients(subparsers, common):
+    """CLI adaptor for the api.clients command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("client", parents=[common])
-    parser.set_defaults(command=client,
+    parser = subparsers.add_parser("clients", parents=[common])
+    parser.set_defaults(command=clients,
             help="Edit or read the database of clients")
-    parser.add_argument("--new", "-n", action='store_true')
-    parser.add_argument("--list", "-l", action='store_true')
+    parser.add_argument("--add", "-a", action='store_true')
+    parser.add_argument("--listc", "-l", action='store_true')
     parser.add_argument("--remove", action='store_true')
     parser.add_argument("--file",
             type=str, default=None, help="Path to an Infoportal file")
     return
 
-def _session(subparsers, common):
-    """CLI adaptor for the api.session command.
+def _sessions(subparsers, common):
+    """CLI adaptor for the api.sessions command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("session", parents=[common])
-    parser.set_defaults(command=session)
+    parser = subparsers.add_parser("sessions", parents=[common])
+    parser.set_defaults(command=sessions)
     return
 
 # Make the module executable.

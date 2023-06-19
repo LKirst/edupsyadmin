@@ -2,14 +2,15 @@ import os
 import sqlite3
 import pprint
 
+from ..core.logger import logger
+
 DB_PATH = "temporary_db_for_testing.sqlite"
 
 
 def get_sql_con(fn: str = DB_PATH):
-    print(f"Cwd: {os.getcwd()}")
     try:
         con = sqlite3.connect(fn)
-        print(f"Connected to the db {fn}")
+        logger.info(f"connected to the db {fn}")
         return con
     except sqlite3.Error as e:
         print(e)

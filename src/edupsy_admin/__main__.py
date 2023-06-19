@@ -3,13 +3,13 @@
     python -m edupsy_admin  ...
 
 """
-from edupsy_admin.api import create_tbl_names, utils_sql
+from .api import Clients, utils_sql
 
 
 def main():
     """Execute the application."""
-    clients = create_tbl_names.Clients(utils_sql.DB_PATH)
-    print("I have not implemented the app yet! This is where my code should go.")
+    clients = Clients(utils_sql.DB_PATH)
+    print("I have not implemented the app yet!")
 
 
 # Make the script executable.
