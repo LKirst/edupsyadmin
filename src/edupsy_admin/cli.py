@@ -65,7 +65,7 @@ def _args(argv):
     parser.set_defaults(command=None)
     subparsers = parser.add_subparsers(title="subcommands")
     common = ArgumentParser(add_help=False)  # common subcommand arguments
-    common.add_argument("--id", "-i", help="client code")
+    common.add_argument("--idcode", "-i", help="client code")
     _hello(subparsers, common)
     _clients(subparsers, common)
     args = parser.parse_args(argv)

@@ -18,8 +18,6 @@ class Clients:
     def __init__(self, fn):
         logger.debug(f"create connection to database at {fn}")
         self.fn = fn
-        con = get_sql_con(self.fn)
-        cur = con.cursor()
         sep = " TEXT NOT NULL, "
         client_var_initializers = sep.join(CLIENT_VARIABLES) + sep
         query_string = (
@@ -29,37 +27,37 @@ class Clients:
             + "datetime_lastmodified TEXT NOT NULL, "
             + "id TEXT PRIMARY KEY);"
         )
+        self._execute(query_string)
+
+    def _execute(self, query_string):
+        con = get_sql_con(self.fn)
+        cur = con.cursor()
+        logger.debug(f"executing: {query_string}")
         cur.execute(query_string)
         con.commit()
-
         get_tbl_info("clients", con, cur)
-
         con.close()
 
     def connect(self, name, add, listc, remove, file):
         raise NotImplementedError()
 
-    def add(self):
+    def add(self, idcode):
         """Add a client to the clients table."""
         data = dict.fromkeys(CLIENT_VARIABLES)
         for key in data.keys():
             data[key] = input(key + ": ")
         logger.debug('adding client to the database')
         client_key_commaseparated = ", ".join(data.keys())
-        client_value_commaseparated = ", ".join(data.values())
+        client_value_commaseparated = "', '".join(data.values())
+        logger.warn("You should use prepared statements here")
         query_string = (
                 "INSERT INTO clients ("
                 + client_key_commaseparated
-                + ") VALUES ("
+                + ", datetime_created, datetime_lastmodified, id) VALUES ('"
                 + client_value_commaseparated
-                + ");"
+                + f"', datetime('now'), datetime('now'), '{idcode}');"
                 )
-
-        con = get_sql_con(self.fn)
-        cur = con.cursor()
-        cur.execute(query_string)
-        con.commit()
-        con.close()
+        self._execute(query_string)
 
     def ls(self):
         raise NotImplementedError()
@@ -74,9 +72,9 @@ class Clients:
 
 clients = Clients(DB_PATH)
 
-def manipulate_clients(action):
+def manipulate_clients(action, idcode):
     if action=="add":
-        clients.add()
+        clients.add(idcode)
     elif action=="list":
         clients.ls()
     elif action=="edit":
