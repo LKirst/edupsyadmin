@@ -49,6 +49,6 @@ Build documentation:
 
 - Create tests 
 
-- Use SQLCipher for encryption
+- Encrypt data
 
 - Create a UI 

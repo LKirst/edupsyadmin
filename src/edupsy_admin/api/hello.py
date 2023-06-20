@@ -4,10 +4,10 @@
 from ..core.logger import logger
 
 
-def main(name="World") -> str:
+def main(id="World") -> str:
     """Execute the command.
 
     :param name: name to use in greeting
     """
-    logger.debug("executing hello command")
-    return f"Hello, {name}!"
+    logger.debug(f"executing hello command with the return value 'Hello, {id}!'")
+    return f"Hello, {id}!"

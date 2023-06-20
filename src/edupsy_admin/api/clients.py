@@ -10,6 +10,7 @@ CLIENT_VARIABLES = [
     "street",
     "city",
     "parent",
+    "telephone"
 ]
 
 
@@ -38,18 +39,49 @@ class Clients:
     def connect(self, name, add, listc, remove, file):
         raise NotImplementedError()
 
-    def add(
-        self, first_name, last_name, birthday, gender, school, street, city, parent
-    ):
+    def add(self):
         """Add a client to the clients table."""
+        data = dict.fromkeys(CLIENT_VARIABLES)
+        for key in data.keys():
+            data[key] = input(key + ": ")
         logger.debug('adding client to the database')
+        client_key_commaseparated = ", ".join(data.keys())
+        client_value_commaseparated = ", ".join(data.values())
+        query_string = (
+                "INSERT INTO clients ("
+                + client_key_commaseparated
+                + ") VALUES ("
+                + client_value_commaseparated
+                + ");"
+                )
+
+        con = get_sql_con(self.fn)
+        cur = con.cursor()
+        cur.execute(query_string)
+        con.commit()
+        con.close()
+
+    def ls(self):
         raise NotImplementedError()
 
-    def edit(
-        self, first_name, last_name, birthday, gender, school, street, city, parent
-    ):
+    def edit(self, key):
         """Change a value for a client in the clients table."""
         logger.debug('editing client to the database')
         raise NotImplementedError()
 
+    def rm(self):
+        raise NotImplementedError()
+
 clients = Clients(DB_PATH)
+
+def manipulate_clients(action):
+    if action=="add":
+        clients.add()
+    elif action=="list":
+        clients.ls()
+    elif action=="edit":
+        clients.edit()
+    elif action=="remove":
+        clients.rm()
+    else:
+        raise Exception("Please select a valid action!")

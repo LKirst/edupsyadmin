@@ -4,12 +4,13 @@
 
 """
 from .api import Clients, utils_sql
+from .core import logger
 
 
 def main():
     """Execute the application."""
-    clients = Clients(utils_sql.DB_PATH)
-    print("I have not implemented the app yet!")
+    logger.debug("executing __main__.main()")
+    logger.warn("I have not implememented __main__.main() yet!")
 
 
 # Make the script executable.

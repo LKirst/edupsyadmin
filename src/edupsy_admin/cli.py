@@ -65,7 +65,7 @@ def _args(argv):
     parser.set_defaults(command=None)
     subparsers = parser.add_subparsers(title="subcommands")
     common = ArgumentParser(add_help=False)  # common subcommand arguments
-    common.add_argument("--name", "-n", default="World", help="greeting name")
+    common.add_argument("--id", "-i", help="client code")
     _hello(subparsers, common)
     _clients(subparsers, common)
     args = parser.parse_args(argv)
@@ -107,13 +107,10 @@ def _clients(subparsers, common):
     :param common: parser for common subcommand arguments
     """
     parser = subparsers.add_parser("clients", parents=[common])
-    parser.set_defaults(command=clients,
+    parser.set_defaults(command=clients.manipulate_clients,
             help="Edit or read the database of clients")
-    parser.add_argument("--add", "-a", action='store_true')
-    parser.add_argument("--listc", "-l", action='store_true')
-    parser.add_argument("--remove", action='store_true')
-    parser.add_argument("--file",
-            type=str, default=None, help="Path to an Infoportal file")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--action", type=str, choices=["add", "list","edit","remove"], default="list")
     return
 
 def _sessions(subparsers, common):
