@@ -29,14 +29,17 @@ class Clients:
         )
         self._execute(query_string)
 
-    def _execute(self, query_string):
+    def _execute(self, query_string, tblinfo=False):
         con = get_sql_con(self.fn)
         cur = con.cursor()
         logger.debug(f"executing: {query_string}")
         cur.execute(query_string)
+        tables=cur.fetchall()
         con.commit()
-        get_tbl_info("clients", con, cur)
+        if tblinfo:
+            get_tbl_info("clients", con, cur)
         con.close()
+        return tables
 
     def connect(self, name, add, listc, remove, file):
         raise NotImplementedError()
@@ -60,6 +63,9 @@ class Clients:
         self._execute(query_string)
 
     def ls(self):
+        """List the clients stored"""
+        query_string = "SELECT * FROM clients;"
+        print(self._execute(query_string))
         raise NotImplementedError()
 
     def edit(self, key):
