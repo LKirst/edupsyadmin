@@ -1,30 +1,43 @@
 from ..core.logger import logger
+from ..core.encrypt import Encryption
 from .utils_sql import get_sql_con, get_tbl_info, DB_PATH
 
-CLIENT_VARIABLES = [
-    "first_name",
-    "last_name",
-    "birthday",
-    "gender",
-    "school",
-    "street",
-    "city",
-    "parent",
-    "telephone"
-]
-
+CLIENT_VARIABLES_ENCRYPTED = [
+        "first_name",
+        "last_name",
+        "birthday",
+        "street",
+        "city",
+        "parent",
+        "telephone",
+        "email",
+        "gender",
+        "notes"
+        ]
+CLIENT_VARIABLES_UNENCRYPTED = [
+        "school",
+        "date_ofgraduation"
+        ]
+CLIENT_VARIABLES_AUTOMATIC = [
+        "datetime_created",
+        "datetime_lastmodified",
+        ]
+CLIENT_VARIABLES_ALL = (
+        CLIENT_VARIABLES_ENCRYPTED +
+        CLIENT_VARIABLES_UNENCRYPTED +
+        CLIENT_VARIABLES_AUTOMATIC)
 
 class Clients:
+
     def __init__(self, fn):
         logger.debug(f"create connection to database at {fn}")
         self.fn = fn
+        self.encryption=Encryption()
         sep = " TEXT NOT NULL, "
-        client_var_initializers = sep.join(CLIENT_VARIABLES) + sep
+        client_var_initializers = sep.join(CLIENT_VARIABLES_ALL) + sep
         query_string = (
             "CREATE TABLE if not exists clients("
             + client_var_initializers
-            + "datetime_created TEXT NOT NULL, "
-            + "datetime_lastmodified TEXT NOT NULL, "
             + "id TEXT PRIMARY KEY);"
         )
         self._execute(query_string)
@@ -46,9 +59,14 @@ class Clients:
 
     def add(self, idcode):
         """Add a client to the clients table."""
-        data = dict.fromkeys(CLIENT_VARIABLES)
+        data = dict.fromkeys(CLIENT_VARIABLES_ALL)
         for key in data.keys():
-            data[key] = input(key + ": ")
+            inp = input(key + ": ")
+            if key in CLIENT_VARIABLES_ENCRYPTED:
+                data[key]=self.encryption.encrypt(inp)
+            elif key in CLIENT_VARIABLES_AUTOMATIC:
+                data[key]=inp
+
         logger.debug('adding client to the database')
         client_key_commaseparated = ", ".join(data.keys())
         client_value_commaseparated = "', '".join(data.values())
