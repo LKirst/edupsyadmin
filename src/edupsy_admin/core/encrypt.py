@@ -9,30 +9,35 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from .logger import logger
 from .config import config
 
+
 class Encryption:
-    def __init__(self, username: str, configpath: str,
-            uid: str = "liebermann-schulpsychologie.github.io"):
+    def __init__(
+        self,
+        username: str,
+        configpath: str,
+        uid: str = "liebermann-schulpsychologie.github.io",
+    ):
         """Use a password with Fernet to derive a key
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
         """
-        self.username=username
+        self.username = username
         logger.info(f"retrieving password for {uid} using keyring")
-        cred=keyring.get_credential(uid, username)
-        password=str.encode(cred.password) # passwords as bytes
+        cred = keyring.get_credential(uid, username)
+        password = str.encode(cred.password)  # passwords as bytes
 
         # read salt from or write it to the config file
         config.load(configpath)
-        if 'core' in config.keys() and 'salt' in config.core.keys():
+        if "core" in config.keys() and "salt" in config.core.keys():
             logger.info("using existing salt from the config file")
-            salt=config.core.salt
+            salt = config.core.salt
         else:
             logger.info("creating new salt and writing it to the config file")
             salt = os.urandom(16)
             with open(configpath, "a") as f:
-                if 'core' in config.keys():
-                    config.core.update({'salt':salt})
+                if "core" in config.keys():
+                    config.core.update({"salt": salt})
                 else:
-                    config.update({'core':{'salt':salt}})
+                    config.update({"core": {"salt": salt}})
                 dictyaml = dict(config)
                 print(f"dictyaml = {dictyaml}")
                 yaml.safe_dump(dictyaml, f)

@@ -3,36 +3,34 @@ from ..core.encrypt import Encryption
 from .utils_sql import get_sql_con, get_tbl_info
 
 CLIENT_VARIABLES_ENCRYPTED = [
-        "first_name",
-        "last_name",
-        "birthday",
-        "street",
-        "city",
-        "parent",
-        "telephone",
-        "email",
-        "gender",
-        "notes"
-        ]
-CLIENT_VARIABLES_UNENCRYPTED = [
-        "school",
-        "date_ofgraduation"
-        ]
+    "first_name",
+    "last_name",
+    "birthday",
+    "street",
+    "city",
+    "parent",
+    "telephone",
+    "email",
+    "gender",
+    "notes",
+]
+CLIENT_VARIABLES_UNENCRYPTED = ["school", "date_ofgraduation"]
 CLIENT_VARIABLES_AUTOMATIC = [
-        "datetime_created",
-        "datetime_lastmodified",
-        ]
+    "datetime_created",
+    "datetime_lastmodified",
+]
 CLIENT_VARIABLES_ALL = (
-        CLIENT_VARIABLES_ENCRYPTED +
-        CLIENT_VARIABLES_UNENCRYPTED +
-        CLIENT_VARIABLES_AUTOMATIC)
+    CLIENT_VARIABLES_ENCRYPTED
+    + CLIENT_VARIABLES_UNENCRYPTED
+    + CLIENT_VARIABLES_AUTOMATIC
+)
+
 
 class Clients:
-
     def __init__(self, fn):
         logger.debug(f"create connection to database at {fn}")
         self.fn = fn
-        self.encryption=Encryption()
+        self.encryption = Encryption()
         sep = " TEXT NOT NULL, "
         client_var_initializers = sep.join(CLIENT_VARIABLES_ALL) + sep
         query_string = (
@@ -47,7 +45,7 @@ class Clients:
         cur = con.cursor()
         logger.debug(f"executing: {query_string}")
         cur.execute(query_string)
-        tables=cur.fetchall()
+        tables = cur.fetchall()
         con.commit()
         if tblinfo:
             get_tbl_info("clients", con, cur)
@@ -60,21 +58,21 @@ class Clients:
         for key in data.keys():
             inp = input(key + ": ")
             if key in CLIENT_VARIABLES_ENCRYPTED:
-                data[key]=self.encryption.encrypt(inp)
+                data[key] = self.encryption.encrypt(inp)
             elif key in CLIENT_VARIABLES_AUTOMATIC:
-                data[key]=inp
+                data[key] = inp
 
-        logger.debug('adding client to the database')
+        logger.debug("adding client to the database")
         client_key_commaseparated = ", ".join(data.keys())
         client_value_commaseparated = "', '".join(data.values())
         logger.warn("You should use prepared statements here")
         query_string = (
-                "INSERT INTO clients ("
-                + client_key_commaseparated
-                + ", datetime_created, datetime_lastmodified, id) VALUES ('"
-                + client_value_commaseparated
-                + f"', datetime('now'), datetime('now'), '{idcode}');"
-                )
+            "INSERT INTO clients ("
+            + client_key_commaseparated
+            + ", datetime_created, datetime_lastmodified, id) VALUES ('"
+            + client_value_commaseparated
+            + f"', datetime('now'), datetime('now'), '{idcode}');"
+        )
         self._execute(query_string)
 
     def ls(self):
@@ -85,20 +83,20 @@ class Clients:
 
     def edit(self, key):
         """Change a value for a client in the clients table."""
-        logger.debug('editing client to the database')
+        logger.debug("editing client to the database")
         raise NotImplementedError()
 
     def rm(self):
         raise NotImplementedError()
 
     def manipulate_clients(action, idcode):
-        if action=="add":
+        if action == "add":
             clients.add(idcode)
-        elif action=="list":
+        elif action == "list":
             clients.ls()
-        elif action=="edit":
+        elif action == "edit":
             clients.edit()
-        elif action=="remove":
+        elif action == "remove":
             clients.rm()
         else:
             raise Exception("Please select a valid action!")

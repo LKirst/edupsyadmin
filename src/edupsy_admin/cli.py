@@ -93,6 +93,7 @@ def _hello(subparsers, common):
     parser.set_defaults(command=hello)
     return
 
+
 def _lrst(subparsers, common):
     """CLI adaptor for the api.lrst command.
 
@@ -103,6 +104,7 @@ def _lrst(subparsers, common):
     parser.set_defaults(command=lrst)
     return
 
+
 def _clients(subparsers, common):
     """CLI adaptor for the api.clients command.
 
@@ -111,11 +113,15 @@ def _clients(subparsers, common):
     """
     parser = subparsers.add_parser("clients", parents=[common])
     myclients = clients.Clients()
-    parser.set_defaults(command=myclients.manipulate_clients(),
-            help="Edit or read the database of clients")
+    parser.set_defaults(
+        command=myclients.manipulate_clients(),
+        help="Edit or read the database of clients",
+    )
     parser.add_argument(
-            "action", choices=["add", "list","edit","remove"], default="list")
+        "action", choices=["add", "list", "edit", "remove"], default="list"
+    )
     return
+
 
 def _sessions(subparsers, common):
     """CLI adaptor for the api.sessions command.
@@ -126,6 +132,7 @@ def _sessions(subparsers, common):
     parser = subparsers.add_parser("sessions", parents=[common])
     parser.set_defaults(command=sessions)
     return
+
 
 # Make the module executable.
 
