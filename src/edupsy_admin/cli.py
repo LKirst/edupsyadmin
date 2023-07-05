@@ -64,10 +64,13 @@ def _args(argv):
     )
     parser.set_defaults(command=None)
     subparsers = parser.add_subparsers(title="subcommands")
+
     common = ArgumentParser(add_help=False)  # common subcommand arguments
     common.add_argument("--idcode", "-i", help="client code")
+    common.add_argument("--username", "-u", help="username for encryption")
     _hello(subparsers, common)
     _clients(subparsers, common)
+
     args = parser.parse_args(argv)
     if not args.command:
         # No sucommand was specified.
@@ -107,10 +110,11 @@ def _clients(subparsers, common):
     :param common: parser for common subcommand arguments
     """
     parser = subparsers.add_parser("clients", parents=[common])
-    parser.set_defaults(command=clients.manipulate_clients,
+    myclients = clients.Clients()
+    parser.set_defaults(command=myclients.manipulate_clients(),
             help="Edit or read the database of clients")
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("--action", type=str, choices=["add", "list","edit","remove"], default="list")
+    parser.add_argument(
+            "action", choices=["add", "list","edit","remove"], default="list")
     return
 
 def _sessions(subparsers, common):

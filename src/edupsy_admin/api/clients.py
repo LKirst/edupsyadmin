@@ -1,6 +1,6 @@
 from ..core.logger import logger
 from ..core.encrypt import Encryption
-from .utils_sql import get_sql_con, get_tbl_info, DB_PATH
+from .utils_sql import get_sql_con, get_tbl_info
 
 CLIENT_VARIABLES_ENCRYPTED = [
         "first_name",
@@ -54,9 +54,6 @@ class Clients:
         con.close()
         return tables
 
-    def connect(self, name, add, listc, remove, file):
-        raise NotImplementedError()
-
     def add(self, idcode):
         """Add a client to the clients table."""
         data = dict.fromkeys(CLIENT_VARIABLES_ALL)
@@ -94,16 +91,14 @@ class Clients:
     def rm(self):
         raise NotImplementedError()
 
-clients = Clients(DB_PATH)
-
-def manipulate_clients(action, idcode):
-    if action=="add":
-        clients.add(idcode)
-    elif action=="list":
-        clients.ls()
-    elif action=="edit":
-        clients.edit()
-    elif action=="remove":
-        clients.rm()
-    else:
-        raise Exception("Please select a valid action!")
+    def manipulate_clients(action, idcode):
+        if action=="add":
+            clients.add(idcode)
+        elif action=="list":
+            clients.ls()
+        elif action=="edit":
+            clients.edit()
+        elif action=="remove":
+            clients.rm()
+        else:
+            raise Exception("Please select a valid action!")

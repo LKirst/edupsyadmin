@@ -47,8 +47,12 @@ Build documentation:
 
 - Create a function for an LRSt report
 
+- Use SQLalchemy 
+
 - Create tests 
 
 - Encrypt data
 
-- Create a UI 
+- Create a UI
+
+- Include the MIT license in files taken from the cookiecutter template 
