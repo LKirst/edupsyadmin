@@ -2,7 +2,6 @@ import base64
 import os
 import keyring
 import yaml
-from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -10,17 +9,14 @@ from .logger import logger
 from .config import config
 
 
-class Encryption:
-    def __init__(
-        self,
+def get_encryption_key(
         username: str,
         configpath: str,
         uid: str = "liebermann-schulpsychologie.github.io",
     ):
-        """Use a password with Fernet to derive a key
+        """Use a password to derive a key
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
         """
-        self.username = username
         logger.info(f"retrieving password for {uid} using keyring")
         cred = keyring.get_credential(uid, username)
         password = str.encode(cred.password)  # passwords as bytes
@@ -50,12 +46,5 @@ class Encryption:
             iterations=480000,
         )
         key = base64.urlsafe_b64encode(kdf.derive(password))
-        self._f = Fernet(key)
 
-    def encrypt(self, data: bytes):
-        token = self._f.encrypt(data)
-        return token
-
-    def decrypt(self, token: bytes):
-        data = self._f.decrypt(token)
-        return data
+        return key
