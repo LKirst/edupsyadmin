@@ -10,41 +10,41 @@ from .config import config
 
 
 def get_encryption_key(
-        username: str,
-        configpath: str,
-        uid: str = "liebermann-schulpsychologie.github.io",
-    ):
-        """Use a password to derive a key
-        (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
-        """
-        logger.info(f"retrieving password for {uid} using keyring")
-        cred = keyring.get_credential(uid, username)
-        password = str.encode(cred.password)  # passwords as bytes
+    username: str,
+    configpath: str,
+    uid: str = "liebermann-schulpsychologie.github.io",
+):
+    """Use a password to derive a key
+    (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
+    """
+    logger.info(f"retrieving password for {uid} using keyring")
+    cred = keyring.get_credential(uid, username)
+    password = str.encode(cred.password)  # passwords as bytes
 
-        # read salt from or write it to the config file
-        config.load(configpath)
-        if "core" in config.keys() and "salt" in config.core.keys():
-            logger.info("using existing salt from the config file")
-            salt = config.core.salt
-        else:
-            logger.info("creating new salt and writing it to the config file")
-            salt = os.urandom(16)
-            with open(configpath, "a") as f:
-                if "core" in config.keys():
-                    config.core.update({"salt": salt})
-                else:
-                    config.update({"core": {"salt": salt}})
-                dictyaml = dict(config)
-                print(f"dictyaml = {dictyaml}")
-                yaml.safe_dump(dictyaml, f)
+    # read salt from or write it to the config file
+    config.load(configpath)
+    if "core" in config.keys() and "salt" in config.core.keys():
+        logger.info("using existing salt from the config file")
+        salt = config.core.salt
+    else:
+        logger.info("creating new salt and writing it to the config file")
+        salt = os.urandom(16)
+        with open(configpath, "a") as f:
+            if "core" in config.keys():
+                config.core.update({"salt": salt})
+            else:
+                config.update({"core": {"salt": salt}})
+            dictyaml = dict(config)
+            print(f"dictyaml = {dictyaml}")
+            yaml.safe_dump(dictyaml, f)
 
-        # derive a key using the password and salt
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=480000,
-        )
-        key = base64.urlsafe_b64encode(kdf.derive(password))
+    # derive a key using the password and salt
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=480000,
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(password))
 
-        return key
+    return key
