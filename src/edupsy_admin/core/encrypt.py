@@ -10,33 +10,22 @@ from .config import config
 
 
 def get_encryption_key(
-    username: str,
-    configpath: str,
-    uid: str = "liebermann-schulpsychologie.github.io",
-):
+    username: str = None,
+    configpath: str = None,
+    uid: str = None
+) -> bytes:
     """Use a password to derive a key
     (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
     """
-    logger.info(f"retrieving password for {uid} using keyring")
-    cred = keyring.get_credential(uid, username)
-    password = str.encode(cred.password)  # passwords as bytes
+    if None in [username, configpath, uid]:
+        global config
+        logger.debug("trying to use config.username, config.core.config and config.uid")
+        username=config.username
+        configpath=config.core.config
+        uid=config.uid
 
-    # read salt from or write it to the config file
-    config.load(configpath)
-    if "core" in config.keys() and "salt" in config.core.keys():
-        logger.info("using existing salt from the config file")
-        salt = config.core.salt
-    else:
-        logger.info("creating new salt and writing it to the config file")
-        salt = os.urandom(16)
-        with open(configpath, "a") as f:
-            if "core" in config.keys():
-                config.core.update({"salt": salt})
-            else:
-                config.update({"core": {"salt": salt}})
-            dictyaml = dict(config)
-            print(f"dictyaml = {dictyaml}")
-            yaml.safe_dump(dictyaml, f)
+    salt = _load_or_create_salt(configpath)
+    password = _retrieve_password(username, uid)
 
     # derive a key using the password and salt
     kdf = PBKDF2HMAC(
@@ -48,3 +37,30 @@ def get_encryption_key(
     key = base64.urlsafe_b64encode(kdf.derive(password))
 
     return key
+
+
+def _load_or_create_salt(configpath: str) -> bytes:
+    config.load(configpath)
+    core_config = config.setdefault("core", {})
+    salt = core_config.get("salt")
+
+    if salt:
+        logger.info("using existing salt from the config file")
+    else:
+        salt = os.urandom(16)
+        core_config["salt"] = salt
+        with open(configpath, "w") as f:
+            dictyaml = dict(config)
+            yaml.dump(dictyaml, f) # safe_dump does not work with bytes
+        logger.info("created a new salt and wrote it to the config file")
+
+    return salt
+
+
+def _retrieve_password(username: str, uid: str) -> bytes:
+    logger.info(f"retrieving password for {uid} using keyring")
+    cred = keyring.get_credential(uid, username)
+    if not cred or not cred.password:
+        raise ValueError(f"Password not found for uid: {uid}, username: {username}")
+
+    return cred.password.encode()

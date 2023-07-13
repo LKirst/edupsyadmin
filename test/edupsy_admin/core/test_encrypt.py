@@ -1,45 +1,47 @@
 """ Test suite for the core.encrypt module.
 """
 
-import pytest
+
 import os
-from pathlib import Path
+import pytest
 import keyring
-from edupsy_admin.core.encrypt import *
+from pathlib import Path
 
-TEST_UID = "example.com"
-TEST_USER = "test_user_do_not_use"
-TEST_PW = "test_pw_do_not_use"
-TEST_CONFIG = Path("test/data/conf_encrypt.yml")
-
-
-@pytest.fixture(autouse=True)
-def configfile():
-    if not TEST_CONFIG.parent.exists():
-        os.makedirs(TEST_CONFIG.parent)
-    open(TEST_CONFIG, mode="a").close()
-    yield
-    os.remove(TEST_CONFIG)
-
+from edupsy_admin.core.config import config
+from edupsy_admin.core.logger import logger
+from edupsy_admin.core.encrypt import get_encryption_key
 
 @pytest.fixture
-def encryption():
-    """Return an Encryption object for texting"""
-    cred = keyring.get_credential(TEST_UID, TEST_USER)
+def configfile():
+    """Create a test config file and an encryption key"""
+    # create a config file if it does not exist
+    cfg_path = Path("test/data/testconfig.yml")
+    if not cfg_path.parent.exists():
+        os.makedirs(cfg_path.parent)
+    open(cfg_path, mode="a").close()
+    config.load(str(cfg_path))
+
+    # set config values
+    config.core = {}
+    config.core.config = str(cfg_path)
+    config.username = "test_user_do_not_use"
+    config.uid = "example.com"
+    config.logging="DEBUG"
+    logger.start(config.logging)
+
+    # create a keyring entry for testing if it does not exist
+    cred = keyring.get_credential(config.uid, config.username)
     if cred is None:
-        keyring.set_password(TEST_UID, TEST_USER, TEST_PW)
-    encryption = Encryption(
-        username=TEST_USER, configpath=str(TEST_CONFIG), uid=TEST_UID
-    )
-    return encryption
+        keyring.set_password(config.uid, config.username, "test_pw_do_not_use")
+
+    yield
+    os.remove(config.core.config)
 
 
-class EncryptionTest(object):
-    """Test suite for the Encryption class."""
+def test_get_encryption_key(configfile):
+    # Call the function
+    key = get_encryption_key()
 
-    def test_encrypt_and_decrypt(self, encryption):
-        secret_message = b"This is a test message."
-        token = encryption.encrypt(secret_message)
-        decrypted_message = encryption.decrypt(token)
-        assert decrypted_message == secret_message
-        assert token != secret_message
+    # Assertions
+    assert isinstance(key, bytes)
+    assert len(key) > 0
