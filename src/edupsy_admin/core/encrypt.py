@@ -10,9 +10,7 @@ from .config import config
 
 
 def get_encryption_key(
-    username: str = None,
-    configpath: str = None,
-    uid: str = None
+    username: str = None, configpath: str = None, uid: str = None
 ) -> bytes:
     """Use a password to derive a key
     (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
@@ -20,14 +18,15 @@ def get_encryption_key(
     if None in [username, configpath, uid]:
         global config
         logger.debug("trying to use config.username, config.core.config and config.uid")
-        username=config.username
-        configpath=config.core.config
-        uid=config.uid
+        username = config.username
+        configpath = config.core.config
+        uid = config.uid
 
     salt = _load_or_create_salt(configpath)
     password = _retrieve_password(username, uid)
 
     # derive a key using the password and salt
+    logger.debug("deriving key from password")
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
@@ -38,23 +37,33 @@ def get_encryption_key(
 
     return key
 
-
 def _load_or_create_salt(configpath: str) -> bytes:
     config.load(configpath)
-    core_config = config.setdefault("core", {})
-    salt = core_config.get("salt")
-
-    if salt:
+    if "core" in config.keys() and "salt" in config.core.keys():
         logger.info("using existing salt from the config file")
+        salt = config.core.salt
     else:
+        logger.info("creating new salt and writing it to the config file")
         salt = os.urandom(16)
-        core_config["salt"] = salt
-        with open(configpath, "w") as f:
-            dictyaml = dict(config)
-            yaml.dump(dictyaml, f) # safe_dump does not work with bytes
-        logger.info("created a new salt and wrote it to the config file")
+        with open(configpath, "a") as f:
+            if "core" in config.keys():
+                config.core.update({"salt": salt})
+            else:
+                config.update({"core": {"salt": salt}})
+
+            dictyaml = _convert_conf_to_dict(config)  # convert to dict for pyyaml
+            logger.debug(f"config as a dict: {dictyaml}")
+            yaml.dump(dictyaml, f) # I couldn't get safe_dump to work with bytes
 
     return salt
+
+def _convert_conf_to_dict(conf):
+    if isinstance(conf,dict):
+        conf=dict(conf)
+    for key, value in conf.items():
+        if isinstance(value, dict):
+            conf[key] = dict(_convert_conf_to_dict(value))
+    return conf
 
 
 def _retrieve_password(username: str, uid: str) -> bytes:
