@@ -3,7 +3,6 @@
     python -m edupsy_admin  ...
 
 """
-from .api import Clients, utils_sql
 from .core import logger
 
 
