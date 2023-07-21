@@ -23,7 +23,13 @@ def main(argv=None) -> int:
     logger.start(args.warn or "DEBUG")  # can't use default from config yet
     logger.debug("starting execution")
     config.load(args.config)
-    config.core.config = args.config
+    try:
+        config.core.config = args.config
+    except KeyError:
+        logging.error(
+            f"There is no config {args.config} or it does not have the 'core' key."
+        )
+        raise
     if args.warn:
         config.core.logging = args.warn
     logger.stop()  # clear handlers to prevent duplicate records
@@ -94,17 +100,6 @@ def _hello(subparsers, common):
     return
 
 
-def _lrst(subparsers, common):
-    """CLI adaptor for the api.lrst command.
-
-    :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
-    """
-    parser = subparsers.add_parser("lrst", parents=[common])
-    parser.set_defaults(command=lrst)
-    return
-
-
 def _clients(subparsers, common):
     """CLI adaptor for the api.clients command.
 
@@ -123,19 +118,7 @@ def _clients(subparsers, common):
     return
 
 
-def _sessions(subparsers, common):
-    """CLI adaptor for the api.sessions command.
-
-    :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
-    """
-    parser = subparsers.add_parser("sessions", parents=[common])
-    parser.set_defaults(command=sessions)
-    return
-
-
 # Make the module executable.
-
 if __name__ == "__main__":
     try:
         status = main()
