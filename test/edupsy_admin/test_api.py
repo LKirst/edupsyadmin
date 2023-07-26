@@ -16,9 +16,27 @@ from edupsy_admin.api import *  # tests __all__
 from edupsy_admin.core.config import config
 from edupsy_admin.core.logger import logger
 
+TEST_USERNAME = "test_user_do_not_use"
+TEST_UID = "example.com"
 
-@pytest.fixture(autouse=True)
-def configfile():
+client_data = {
+    "first_name_encr": "John",
+    "last_name_encr": "Doe",
+    #"birthday_encr": "1990-01-01",
+    #"street_encr": "123 Main St",
+    #"city_encr": "New York",
+    #"parent_encr": "Jane Doe",
+    #"telephone": "555-1234",
+    #"email_encr": "john.doe@example.com",
+    #"notes_encr": "Some notes_encr",
+    "gender": "Male",
+    "school": "ABC School",
+    "date_of_graduation": "2021-06-30",
+}
+
+
+@pytest.fixture()
+def clients_manager():
     """Create a test config file and an encryption key"""
     # create a config file if it does not exist
     cfg_path = Path("test/data/testconfig.yml")
@@ -30,78 +48,44 @@ def configfile():
     # set config values
     config.core = {}
     config.core.config = str(cfg_path)
-    config.username = "test_user_do_not_use"
-    config.uid = "example.com"
     config.logging = "DEBUG"
     logger.start(config.logging)
 
     # create a keyring entry for testing if it does not exist
-    cred = keyring.get_credential(config.uid, config.username)
+    cred = keyring.get_credential(TEST_UID, TEST_USERNAME)
     if cred is None:
-        keyring.set_password(config.uid, config.username, "test_pw_do_not_use")
+        keyring.set_password(TEST_UID, TEST_USERNAME, "test_pw_do_not_use")
 
-    yield
-    os.remove(config.core.config)
+    database_url = "sqlite:///test.sqlite"
+    manager = ClientsManager(
+            database_url,
+            uid=TEST_UID, username=TEST_USERNAME, configpath=str(cfg_path))
 
-
-# Fixture to create a test instance of ClientsManager
-@pytest.fixture
-def clients_manager():
-    database_url = "sqlite:///test.db"
-    manager = ClientsManager(database_url)
     yield manager
     manager.close()
+    os.remove(config.core.config)
 
 
 # Test the add_client() method
 def test_add_client(clients_manager):
-    client_data = {
-        "first_name": "John",
-        "last_name": "Doe",
-        "birthday": "1990-01-01",
-        "street": "123 Main St",
-        "city": "New York",
-        "parent": "Jane Doe",
-        "telephone": "555-1234",
-        "email": "john.doe@example.com",
-        "gender": "Male",
-        "notes": "Some notes",
-        "school": "ABC School",
-        "date_of_graduation": "2021-06-30",
-    }
-    clients_manager.add_client(client_data)
-    clients = clients_manager.get_all_clients()
-    assert len(clients) == 1
-    assert clients[0]["first_name"] == "John"
-    assert clients[0]["last_name"] == "Doe"
+    client_id = clients_manager.add_client(client_data)
+    client = clients_manager.get_decrypted_client(client_id = client_id)
+    assert client.first_name_encr == b"John"
+    assert client.last_name_encr == b"Doe"
 
 
 # Test the edit_client() method
 def test_edit_client(clients_manager):
-    client_data = {
-        "first_name": "John",
-        "last_name": "Doe",
-        "birthday": "1990-01-01",
-        "street": "123 Main St",
-        "city": "New York",
-        "parent": "Jane Doe",
-        "telephone": "555-1234",
-        "email": "john.doe@example.com",
-        "gender": "Male",
-        "notes": "Some notes",
-        "school": "ABC School",
-        "date_of_graduation": "2021-06-30",
-    }
     clients_manager.add_client(client_data)
     clients = clients_manager.get_all_clients()
     assert len(clients) == 1
     client_id = clients[0]["id"]
 
-    updated_data = {"first_name": "Jane", "last_name": "Smith"}
+    updated_data = {"first_name_encr": "Jane", "last_name_encr": "Smith"}
     clients_manager.edit_client(client_id, updated_data)
     updated_client = clients_manager.get_all_clients()[0]
-    assert updated_client["first_name"] == "Jane"
-    assert updated_client["last_name"] == "Smith"
+    assert updated_client["first_name_encr"] == "Jane"
+    assert updated_client["last_name_encr"] == "Smith"
     assert (
         updated_client["datetime_lastmodified"] > client_data["datetime_lastmodified"]
     )
@@ -109,20 +93,6 @@ def test_edit_client(clients_manager):
 
 # Test the delete_client() method
 def test_delete_client(clients_manager):
-    client_data = {
-        "first_name": "John",
-        "last_name": "Doe",
-        "birthday": "1990-01-01",
-        "street": "123 Main St",
-        "city": "New York",
-        "parent": "Jane Doe",
-        "telephone": "555-1234",
-        "email": "john.doe@example.com",
-        "gender": "Male",
-        "notes": "Some notes",
-        "school": "ABC School",
-        "date_of_graduation": "2021-06-30",
-    }
     clients_manager.add_client(client_data)
     clients = clients_manager.get_all_clients()
     assert len(clients) == 1
@@ -133,7 +103,7 @@ def test_delete_client(clients_manager):
     assert len(clients) == 0
 
 
-def test_collect_client_data_cli(monkeypatch):
+def test_collect_client_data_cli(clients_manager, monkeypatch):
     def mock_input(prompt):
         return "John"
 
@@ -143,9 +113,9 @@ def test_collect_client_data_cli(monkeypatch):
     assert isinstance(client_data, Client)
 
     # StringEncryptedType
-    assert client_data.first_name != "John"
-    assert client_data.last_name != "Doe"
-    assert client_data.birthday != "1990-01-01"
+    assert client_data.first_name_encr != "John"
+    assert client_data.last_name_encr != "Doe"
+    assert client_data.birthday_encr != "1990-01-01"
 
 
 def test_hello():

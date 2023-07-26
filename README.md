@@ -47,11 +47,9 @@ Build documentation:
 
 - Create a function for an LRSt report
 
-- Use SQLalchemy 
+- Create a function for a waiting list
 
 - Create tests 
-
-- Encrypt data
 
 - Create a UI
 
