@@ -22,13 +22,12 @@ TEST_UID = "example.com"
 client_data = {
     "first_name_encr": "John",
     "last_name_encr": "Doe",
-    #"birthday_encr": "1990-01-01",
-    #"street_encr": "123 Main St",
-    #"city_encr": "New York",
-    #"parent_encr": "Jane Doe",
-    #"telephone": "555-1234",
-    #"email_encr": "john.doe@example.com",
-    #"notes_encr": "Some notes_encr",
+    "birthday_encr": "1990-01-01",
+    "street_encr": "123 Main St",
+    "city_encr": "New York",
+    "parent_encr": "Jane Doe",
+    "telephone_encr": "555-1234",
+    "email_encr": "john.doe@example.com",
     "gender": "Male",
     "school": "ABC School",
     "date_of_graduation": "2021-06-30",
@@ -76,18 +75,15 @@ def test_add_client(clients_manager):
 
 # Test the edit_client() method
 def test_edit_client(clients_manager):
-    clients_manager.add_client(client_data)
-    clients = clients_manager.get_all_clients()
-    assert len(clients) == 1
-    client_id = clients[0]["id"]
-
+    client_id = clients_manager.add_client(client_data)
+    client = clients_manager.get_decrypted_client(client_id = client_id)
     updated_data = {"first_name_encr": "Jane", "last_name_encr": "Smith"}
     clients_manager.edit_client(client_id, updated_data)
-    updated_client = clients_manager.get_all_clients()[0]
-    assert updated_client["first_name_encr"] == "Jane"
-    assert updated_client["last_name_encr"] == "Smith"
+    updated_client = clients_manager.get_decrypted_client(client_id)
+    assert updated_client.first_name_encr == b"Jane"
+    assert updated_client.last_name_encr == b"Smith"
     assert (
-        updated_client["datetime_lastmodified"] > client_data["datetime_lastmodified"]
+        updated_client.datetime_lastmodified > client.datetime_lastmodified
     )
 
 
