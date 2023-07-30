@@ -19,6 +19,7 @@ class Encryption():
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
         """
         if self.fernet is not None:
+            logger.debug("fernet was already set; using existing fernet")
             return
 
         salt = self._load_or_create_salt(configpath)
@@ -37,13 +38,13 @@ class Encryption():
 
     def encrypt(self, data: bytes) -> bytes:
         if self.fernet is None:
-            logger.critical('call set_fernet before you use the Encryption object to encrypt')
+            logger.critical('call set_fernet() before calling encrypt()')
         token = self.fernet.encrypt(data)
         return token
 
     def decrypt(self, token: bytes) -> bytes:
         if self.fernet is None:
-            logger.critical('call set_fernet before you use the Encryption object to decrypt')
+            logger.critical('call set_fernet() before calling decrypt()')
         data=self.fernet.decrypt(token)
         return data
 

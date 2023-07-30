@@ -9,11 +9,13 @@ from pathlib import Path
 
 from edupsy_admin.core.config import config
 from edupsy_admin.core.logger import logger
-from edupsy_admin.core.encrypt import get_encryption_key
+from edupsy_admin.core.encrypt import Encryption
+
+secret_message=b"This is a secret message."
 
 @pytest.fixture
 def configfile():
-    """Create a test config file and an encryption key"""
+    """Create a test config file"""
     # create a config file if it does not exist
     cfg_path = Path("test/data/testconfig.yml")
     if not cfg_path.parent.exists():
@@ -37,11 +39,26 @@ def configfile():
     yield
     os.remove(config.core.config)
 
+@pytest.fixture
+def encrypted_message(configfile):
+    """Create an encrypted message."""
+    encr = Encryption()
+    encr.set_fernet(config.username, config.core.config, config.uid)
+    token=encr.encrypt(secret_message)
+    return token
 
-def test_get_encryption_key(configfile):
-    # Call the function
-    key = get_encryption_key()
 
-    # Assertions
-    assert isinstance(key, bytes)
-    assert len(key) > 0
+def test_encrypt(configfile):
+    encr = Encryption()
+    encr.set_fernet(config.username, config.core.config, config.uid)
+    token=encr.encrypt(secret_message)
+
+    assert isinstance(token, bytes)
+    assert secret_message != token
+
+def test_decrypt(encrypted_message):
+    encr = Encryption()
+    encr.set_fernet(config.username, config.core.config, config.uid)
+    decrypted=encr.decrypt(encrypted_message)
+
+    assert decrypted == secret_message
