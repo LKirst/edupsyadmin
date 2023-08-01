@@ -49,8 +49,6 @@ Build documentation:
 
 - Create a function for a waiting list
 
-- Create tests 
-
 - Create a UI
 
-- Include the MIT license in files taken from the cookiecutter template 
+- Rename the package to schoolpsych - one word, no underscores
