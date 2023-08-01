@@ -62,3 +62,11 @@ def test_decrypt(encrypted_message):
     decrypted=encr.decrypt(encrypted_message)
 
     assert decrypted == secret_message
+
+def test_set_fernet(capsys, configfile):
+    encr = Encryption()
+    encr.set_fernet(config.username, config.core.config, config.uid)
+    encr.set_fernet(config.username, config.core.config, config.uid)
+
+    _, stderr = capsys.readouterr()
+    assert "fernet was already set; using existing fernet" in stderr

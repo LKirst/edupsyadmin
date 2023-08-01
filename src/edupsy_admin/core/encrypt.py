@@ -14,7 +14,7 @@ class Encryption():
     fernet = None
 
     def set_fernet(
-        self, username: str, configpath: str, uid: str):
+            self, username: str, configpath: str, uid: str) -> None:
         """use a password to derive a key
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
         """
@@ -77,7 +77,7 @@ class Encryption():
         return cred.password.encode()
 
 
-def _convert_conf_to_dict(conf):
+def _convert_conf_to_dict(conf) -> dict:
     if isinstance(conf,dict):
         conf=dict(conf)
     for key, value in conf.items():
