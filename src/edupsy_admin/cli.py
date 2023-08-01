@@ -20,8 +20,12 @@ def main(argv=None) -> int:
     :return: exit status
     """
     args = _args(argv)
+
+    # start logging
     logger.start(args.warn or "DEBUG")  # can't use default from config yet
     logger.debug("starting execution")
+
+    # config
     config.load(args.config)
     try:
         config.core.config = args.config
@@ -32,8 +36,12 @@ def main(argv=None) -> int:
         raise
     if args.warn:
         config.core.logging = args.warn
+
+    # restart logging based on config
     logger.stop()  # clear handlers to prevent duplicate records
     logger.start(config.core.logging)
+
+    # handle commandline args
     command = args.command
     args = vars(args)
     spec = getfullargspec(command)
@@ -87,17 +95,6 @@ def _args(argv):
         # included in the list.
         args.config = "etc/config.yml"
     return args
-
-
-def _hello(subparsers, common):
-    """CLI adaptor for the api.hello command.
-
-    :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
-    """
-    parser = subparsers.add_parser("hello", parents=[common])
-    parser.set_defaults(command=hello)
-    return
 
 
 def _clients(subparsers, common):

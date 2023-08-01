@@ -114,18 +114,6 @@ def test_collect_client_data_cli(clients_manager, monkeypatch):
     assert client_data.birthday_encr != "1990-01-01"
 
 
-def test_hello():
-    """Test the hello() function."""
-    assert hello() == "Hello, World!"
-    return
-
-
-def test_hello_name():
-    """Test the hello() function with a name."""
-    assert hello("foo") == "Hello, foo!"
-    return
-
-
 # Make the script executable.
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__]))
