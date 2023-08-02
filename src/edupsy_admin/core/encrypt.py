@@ -36,16 +36,16 @@ class Encryption():
         secret_key = base64.urlsafe_b64encode(kdf.derive(password))
         self.fernet = Fernet(secret_key)
 
-    def encrypt(self, data: bytes) -> bytes:
+    def encrypt(self, data: str) -> bytes:
         if self.fernet is None:
             logger.critical('call set_fernet() before calling encrypt()')
-        token = self.fernet.encrypt(data)
+        token = self.fernet.encrypt(data.encode())
         return token
 
-    def decrypt(self, token: bytes) -> bytes:
+    def decrypt(self, token: bytes) -> str:
         if self.fernet is None:
             logger.critical('call set_fernet() before calling decrypt()')
-        data=self.fernet.decrypt(token)
+        data=self.fernet.decrypt(token).decode()
         return data
 
     def _load_or_create_salt(self, configpath: str) -> bytes:

@@ -39,14 +39,14 @@ class Client(Base):
 
     def __init__(
         self,
-        first_name_encr:str,
-        last_name_encr:str,
+        app_username:str,
+        app_configpath:str,
+        app_uid:str,
         school:str,
         gender:str,
         date_of_graduation:str,
-        username:str,
-        configpath:str,
-        uid:str,
+        first_name_encr:str,
+        last_name_encr:str,
         birthday_encr:str = "",
         street_encr:str = "",
         city_encr:str = "",
@@ -55,19 +55,19 @@ class Client(Base):
         email_encr:str = "",
         notes_encr:str = "",
         keyword_taetigkeitsbericht:str = "",
-        datetime_created=None,
-        datetime_lastmodified=None,
+        datetime_created:str=None,
+        datetime_lastmodified:str=None,
     ):
-        encr.set_fernet(username, configpath, uid)
-        self.first_name_encr = encr.encrypt(first_name_encr.encode())
-        self.last_name_encr = encr.encrypt(last_name_encr.encode())
-        self.birthday_encr = encr.encrypt(birthday_encr.encode())
-        self.street_encr = encr.encrypt(street_encr.encode())
-        self.city_encr = encr.encrypt(city_encr.encode())
-        self.parent_encr = encr.encrypt(parent_encr.encode())
-        self.telephone_encr = encr.encrypt(telephone_encr.encode())
-        self.email_encr = encr.encrypt(email_encr.encode())
-        self.notes_encr = encr.encrypt(notes_encr.encode())
+        encr.set_fernet(app_username, app_configpath, app_uid)
+        self.first_name_encr = encr.encrypt(first_name_encr)
+        self.last_name_encr = encr.encrypt(last_name_encr)
+        self.birthday_encr = encr.encrypt(birthday_encr)
+        self.street_encr = encr.encrypt(street_encr)
+        self.city_encr = encr.encrypt(city_encr)
+        self.parent_encr = encr.encrypt(parent_encr)
+        self.telephone_encr = encr.encrypt(telephone_encr)
+        self.email_encr = encr.encrypt(email_encr)
+        self.notes_encr = encr.encrypt(notes_encr)
         self.school = school
         self.gender = gender
         self.date_of_graduation = date_of_graduation
@@ -83,12 +83,12 @@ class Client(Base):
 
 
 class ClientsManager:
-    def __init__(self, database_url: str, uid: str, username: str, configpath: str):
+    def __init__(self, database_url: str, app_uid: str, app_username: str, app_configpath: str):
         self.engine = create_engine(database_url, echo=True)
         self.Session = sessionmaker(bind=self.engine)
-        self.uid = uid
-        self.username = username
-        self.configpath = configpath
+        self.app_uid = app_uid
+        self.app_username = app_username
+        self.app_configpath = app_configpath
 
         Base.metadata.create_all(self.engine) # create the table if it doesn't exist
         logger.debug(f"created connection to database at {database_url}")
@@ -98,14 +98,14 @@ class ClientsManager:
         session = self.Session()
         new_client = Client(
             **client_data,
-            uid=self.uid,
-            username=self.username,
-            configpath=self.configpath,
+            app_uid=self.app_uid,
+            app_username=self.app_username,
+            app_configpath=self.app_configpath,
         )
         session.add(new_client)
         session.commit()
+        logger.debug(f"added client: {new_client}")
         client_id = new_client.client_id
-        logger.debug(f"added client (id = {client_id})")
         session.close()
         return client_id
 
@@ -115,7 +115,7 @@ class ClientsManager:
         client = session.query(Client).filter_by(client_id=client_id).first()
         client_vars = vars(client)
         for attributekey in client_vars.keys():
-            if attributekey.endswith('_encr'):
+            if attributekey.endswith("_encr"):
                 client_vars[attributekey]=encr.decrypt(client_vars[attributekey])
         return client
 
@@ -126,7 +126,7 @@ class ClientsManager:
         if client:
             for key, value in new_data.items():
                 if key.endswith('_encr'):
-                    setattr(client, key, encr.encrypt(value.encode()))
+                    setattr(client, key, encr.encrypt(value))
                 else:
                     setattr(client, key, value)
             client.datetime_lastmodified = datetime.now()
@@ -149,6 +149,10 @@ class ClientsManager:
 def collect_client_data_cli():
     first_name_encr = input("First Name: ")
     last_name_encr = input("Last Name: ")
+    school = input("School: ")
+    date_of_graduation = input("Date of graduation (YYYY-MM-DD): ")
+    gender = input("Gender (f/m): ")
+
     birthday_encr = input("Birthday (YYYY-MM-DD): ")
     street_encr = input("Street: ")
     city_encr = input("City: ")
@@ -156,9 +160,6 @@ def collect_client_data_cli():
     telephone_encr = input("Telephone: ")
     email_encr = input("Email: ")
     notes_encr = input("Notes: ")
-    gender = input("Gender (f/m): ")
-    school = input("School: ")
-    date_of_graduation = input("Date of graduation (YYYY-MM-DD): ")
 
     return Client(
         first_name_encr=first_name_encr,

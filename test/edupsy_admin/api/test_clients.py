@@ -58,7 +58,7 @@ def clients_manager():
     database_url = "sqlite:///test.sqlite"
     manager = ClientsManager(
             database_url,
-            uid=TEST_UID, username=TEST_USERNAME, configpath=str(cfg_path))
+            app_uid=TEST_UID, app_username=TEST_USERNAME, app_configpath=str(cfg_path))
 
     yield manager
     manager.close()
@@ -69,8 +69,8 @@ def clients_manager():
 def test_add_client(clients_manager):
     client_id = clients_manager.add_client(client_data)
     client = clients_manager.get_decrypted_client(client_id = client_id)
-    assert client.first_name_encr == b"John"
-    assert client.last_name_encr == b"Doe"
+    assert client.first_name_encr == "John"
+    assert client.last_name_encr == "Doe"
 
 
 # Test the edit_client() method
@@ -80,8 +80,8 @@ def test_edit_client(clients_manager):
     updated_data = {"first_name_encr": "Jane", "last_name_encr": "Smith"}
     clients_manager.edit_client(client_id, updated_data)
     updated_client = clients_manager.get_decrypted_client(client_id)
-    assert updated_client.first_name_encr == b"Jane"
-    assert updated_client.last_name_encr == b"Smith"
+    assert updated_client.first_name_encr == "Jane"
+    assert updated_client.last_name_encr == "Smith"
     assert (
         updated_client.datetime_lastmodified > client.datetime_lastmodified
     )
@@ -89,14 +89,11 @@ def test_edit_client(clients_manager):
 
 # Test the delete_client() method
 def test_delete_client(clients_manager):
-    clients_manager.add_client(client_data)
-    clients = clients_manager.get_all_clients()
-    assert len(clients) == 1
-    client_id = clients[0]["id"]
-
+    client_id = clients_manager.add_client(client_data)
     clients_manager.delete_client(client_id)
-    clients = clients_manager.get_all_clients()
-    assert len(clients) == 0
+
+    with pytest.raises(Exception) as e_info:
+        client = clients_manager.get_decrypted_client(client_id = client_id)
 
 
 def test_collect_client_data_cli(clients_manager, monkeypatch):
