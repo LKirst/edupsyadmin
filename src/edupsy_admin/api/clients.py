@@ -78,7 +78,11 @@ class Client(Base):
     def __repr__(self):
         representation = (
                 f"<Client(id='{self.client_id}', "
-                f"school='{self.school}')>")
+                f"sc='{self.school}', "
+                f"gr='{self.date_of_graduation}', "
+                f"ge='{self.gender}', "
+                f"ta='{self.keyword_taetigkeitsbericht}'"
+                f")>")
         return representation
 
 
@@ -95,52 +99,49 @@ class ClientsManager:
 
     def add_client(self, client_data):
         logger.debug("trying to add client")
-        session = self.Session()
-        new_client = Client(
-            **client_data,
-            app_uid=self.app_uid,
-            app_username=self.app_username,
-            app_configpath=self.app_configpath,
-        )
-        session.add(new_client)
-        session.commit()
-        logger.debug(f"added client: {new_client}")
-        client_id = new_client.client_id
-        session.close()
-        return client_id
+        with self.Session() as session:
+            new_client = Client(
+                **client_data,
+                app_uid=self.app_uid,
+                app_username=self.app_username,
+                app_configpath=self.app_configpath,
+            )
+            session.add(new_client)
+            session.commit()
+            logger.debug(f"added client: {new_client}")
+            client_id = new_client.client_id
+            return client_id
 
     def get_decrypted_client(self, client_id: int):
         logger.debug(f"trying to access client (id = {client_id})")
-        session = self.Session()
-        client = session.query(Client).filter_by(client_id=client_id).first()
-        client_vars = vars(client)
-        for attributekey in client_vars.keys():
-            if attributekey.endswith("_encr"):
-                client_vars[attributekey]=encr.decrypt(client_vars[attributekey])
-        return client
+        with self.Session() as session:
+            client = session.query(Client).filter_by(client_id=client_id).first()
+            client_vars = vars(client)
+            for attributekey in client_vars.keys():
+                if attributekey.endswith("_encr"):
+                    client_vars[attributekey]=encr.decrypt(client_vars[attributekey])
+            return client
 
     def edit_client(self, client_id: int, new_data):
         logger.debug(f"editing client (id = {client_id})")
-        session = self.Session()
-        client = session.query(Client).filter_by(client_id=client_id).first()
-        if client:
-            for key, value in new_data.items():
-                if key.endswith('_encr'):
-                    setattr(client, key, encr.encrypt(value))
-                else:
-                    setattr(client, key, value)
-            client.datetime_lastmodified = datetime.now()
-            session.commit()
-        session.close()
+        with self.Session() as session:
+            client = session.query(Client).filter_by(client_id=client_id).first()
+            if client:
+                for key, value in new_data.items():
+                    if key.endswith('_encr'):
+                        setattr(client, key, encr.encrypt(value))
+                    else:
+                        setattr(client, key, value)
+                client.datetime_lastmodified = datetime.now()
+                session.commit()
 
     def delete_client(self, client_id: int):
         logger.debug("deleting client")
-        session = self.Session()
-        client = session.query(Client).filter_by(client_id=client_id).first()
-        if client:
-            session.delete(client)
-            session.commit()
-        session.close()
+        with self.Session() as session:
+            client = session.query(Client).filter_by(client_id=client_id).first()
+            if client:
+                session.delete(client)
+                session.commit()
 
     def close(self):
         self.engine.dispose()
