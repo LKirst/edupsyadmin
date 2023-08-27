@@ -9,7 +9,6 @@ def read_csv(*args) -> pd.DataFrame:
         df = pd.read_csv(path, index_col=None, header=0)
         l.append(df)
     concat_df = pd.concat(l, axis=0, ignore_index=True)
-    concat_df = concat_df.astype('category')
     return concat_df
 
 def get_subcategories(categorykey:str, extrcategories:list[str] = None) -> list[str]:
@@ -34,14 +33,17 @@ def add_categories_to_df(df: pd.DataFrame, category_colnm: str) -> pd.DataFrame:
     df[categories_all_set]=df[categories_all_set].astype('category')
     return df
 
+def summary_statistics_nsitzungen(df: pd.DataFrame, min_per_ses=45) -> pd.DataFrame:
+    nsitzungen = df.groupby('school')['nsitzungen'].describe()
+    nsitzungen.loc[:,'sum']=df.groupby('school')['nsitzungen'].agg('sum')
+    total = df['nsitzungen'].describe()
+    total['sum']=df['nsitzungen'].agg('sum')
+    nsitzungen.loc['all',:]=total
+    nsitzungen['zeitstunden']=nsitzungen['sum'] * min_per_ses/60
+    return nsitzungen
 
-def summary_statistics(df: pd.DataFrame) -> pd.DataFrame:
-    summarystats = df.describe()
-    summarystats.loc['sum',:]=df.agg(func='sum', axis=0, numeric_only=True)
-    return summarystats
-
-def nsessions_to_hours(nsessions:float) -> float:
-    return nsessions*45/60
+def summary_statistics_categories(df: pd.DataFrame) -> pd.DataFrame:
+    pass
 
 def wochenstunden_to_hoursperweek(ws: int) -> float:
     pass
@@ -61,6 +63,6 @@ if __name__ == "__main__":
     df.to_csv(args.out_basename + '_df.csv')
     print(df)
 
-    summarystats = summary_statistics(df)
+    summarystats = summary_statistics_nsitzungen(df)
     summarystats.to_csv(args.out_basename + '_summary.csv')
     print(summarystats)
