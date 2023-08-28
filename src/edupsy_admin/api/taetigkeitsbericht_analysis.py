@@ -43,8 +43,24 @@ def add_categories_to_df(df: pd.DataFrame, category_colnm: str) -> pd.DataFrame:
         categories_all.extend(subcategories)
 
     categories_all_set = list(sorted(set(categories_all)))
-    summary_categories = df[categories_all_set].describe()
-    summary_categories.loc['sum',:]=df[categories_all_set].agg('sum', axis=0)
+    categories_df = df[categories_all_set]
+    summary_categories = categories_df.describe()
+    summary_categories.loc['sum',:]=categories_df.agg('sum', axis=0)
+    summary_categories.loc['count_mt3_sessions',:] = (
+        categories_df[categories_df>3].agg(
+            'count', axis=0)
+        )
+    summary_categories.loc['count_1to3_sessions',:] = (
+        categories_df[
+                (categories_df<=3) &
+                (categories_df>=1)
+                    ].agg(
+            'count', axis=0)
+        )
+    summary_categories.loc['count_einm_kurzkont',:] = (
+         categories_df[categories_df<1].agg(
+            'count', axis=0)
+        )
 
     return df, summary_categories
 
