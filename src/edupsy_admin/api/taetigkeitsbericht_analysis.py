@@ -61,12 +61,13 @@ def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> dict:
     logging.info("Arbeitszeitstunden werden unter folgenden Annahmen berechnet:")
     logging.info(f"- Arbeitstage/Jahr nach Abzug von 30 Urlaubstagen: {WD_YEAR}")
     logging.info(f"- Zeitstunden einer Arbeitswoche: {ZSTD_WEEK}")
-    arbeit_zstd_1wstd = ZSTD_YEAR / wstd_total
-    arbeit_zstd_jahr_spsy = arbeit_zstd_1wstd * wstd_spsy
+    zstd_1wstd = ZSTD_YEAR / wstd_total
+    zstd_jahr_spsy = zstd_1wstd * wstd_spsy
     wstd_s = {
             'wstd_total_target':wstd_total,
-            'zstd_spsy_1wstd_target':arbeit_zstd_1wstd,
-            'zstd_spsy_year_target':arbeit_zstd_jahr_spsy,
+            'zstd_spsy_1wstd_target':zstd_1wstd,
+            'zstd_spsy_year_target':zstd_jahr_spsy,
+            'zstd_spsy_week_target':zstd_jahr_spsy/WW_YEAR
     }
     return wstd_s
 
