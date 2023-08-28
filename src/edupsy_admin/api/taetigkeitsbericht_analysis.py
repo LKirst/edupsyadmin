@@ -41,8 +41,8 @@ def add_categories_to_df(df: pd.DataFrame, category_colnm: str) -> pd.DataFrame:
         df.loc[df[category_colnm]==key,subcategories] = df.loc[
                 df[category_colnm]==key, 'nsitzungen']
         categories_all.extend(subcategories)
-    categories_all_set = list(set(categories_all))
 
+    categories_all_set = list(sorted(set(categories_all)))
     summary_categories = df[categories_all_set].describe()
     summary_categories.loc['sum',:]=df[categories_all_set].agg('sum', axis=0)
 
