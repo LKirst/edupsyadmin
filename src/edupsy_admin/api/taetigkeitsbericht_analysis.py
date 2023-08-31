@@ -17,13 +17,14 @@ ZSTD_WEEK = 40 # Zeitstunden per work week
 ZSTD_DAY = ZSTD_WEEK / WD_WEEK # Zeitstunden per work day
 ZSTD_YEAR = ZSTD_DAY * WD_YEAR # Zeitstunden per year
 
+pd.set_option("display.precision", 1)
 
 class Report(FPDF):
-    def __init__(self):
+    def __init__(self, name):
         super().__init__()
         self.WIDTH = 210
         self.HEIGHT = 297
-        self.header_text = f'Tätigkeitsbericht {date.today()}'
+        self.header_text = f'Tätigkeitsbericht {date.today()} ({name})'
 
     def header(self):
         self.set_font("Arial", "B", 11)
@@ -161,8 +162,8 @@ def create_taetigkeitsbericht_report(
         basename_out:str,
         name:str,
         summary_wstd: pd.Series,
-        summary_categories: pd.DataFrame,
-        summary_nsitzungen: pd.DataFrame
+        summary_categories: pd.DataFrame=None,
+        summary_nsitzungen: pd.DataFrame=None
         ) -> None:
 
     if not os.path.exists('resources'):
@@ -171,32 +172,32 @@ def create_taetigkeitsbericht_report(
     dfi.export(summarystats_wstd.to_frame(name='values'),
             wstd_img,
             table_conversion='matplotlib')
-    nsitzungen_img='resources/summary_nsitzungen.png'
-    dfi.export(summary_nsitzungen, nsitzungen_img,
-            table_conversion='matplotlib')
+    if summary_nsitzungen is not None:
+        nsitzungen_img='resources/summary_nsitzungen.png'
+        dfi.export(summary_nsitzungen, nsitzungen_img,
+                table_conversion='matplotlib')
 
-    categorycols=summary_categories.columns
-    chunks = [categorycols[x:x+8] for x in range(0, len(categorycols), 8)]
-
-    report = Report()
+    report = Report(name)
+    if summary_categories is not None:
+        report.add_page()
+        for nm, val in summary_categories.items():
+            report.cell(w=15, h=9, border=0, txt=f"{nm}:")
+            report.ln(6)
+            for text in [
+                    "einmaliger Kurzkontakt",
+                    "1-3 Sitzungen",
+                    "mehr als 3 Sitzungen"]:
+                report.cell(w=50, h=9, border=0, txt=text)
+            report.ln(6) # linebreak
+            for colnm in [
+                    'count_einm_kurzkont',
+                    'count_1to3_sessions',
+                    'count_mt3_sessions']:
+                report.cell(w=50, h=9, border=0,txt=f"{val[colnm]:.0f}")
+            report.ln(18) # linebreak
     report.add_page()
-    for nm, val in summary_categories.items():
-        report.cell(w=15, h=9, border=0, txt=f"{nm}:")
-        report.ln(6)
-        for text in [
-                "einmaliger Kurzkontakt",
-                "1-3 Sitzungen",
-                "mehr als 3 Sitzungen"]:
-            report.cell(w=50, h=9, border=0, txt=text)
-        report.ln(6) # linebreak
-        for colnm in [
-                'count_einm_kurzkont',
-                'count_1to3_sessions',
-                'count_mt3_sessions']:
-            report.cell(w=50, h=9, border=0,txt=f"{val[colnm]:.0f}")
-        report.ln(18) # linebreak
-    report.add_page()
-    report.image(nsitzungen_img, x=15, y=report.HEIGHT * 1/4, w=180)
+    if summarystats_nsitzungen is not None:
+        report.image(nsitzungen_img, x=15, y=report.HEIGHT * 1/4, w=180)
     report.image(wstd_img, x=15, y=report.HEIGHT * 1/2, w=90)
     report.output(basename_out+'_report.pdf')
 
@@ -208,13 +209,15 @@ if __name__ == "__main__":
             help=(
                 'list of strings with item containing the name of the school '
                 'and the number of students at that school, e.g. Schulname625'))
-    parser.add_argument('--out_basename', type=str, default='Taetigkeitsbericht_Out')
-    parser.add_argument('--min_per_ses', type=int, default=45)
+    parser.add_argument('--out_basename', type=str, default='Taetigkeitsbericht_Out',
+            help="base name for the output files; default is 'Taetigkeitsbericht_Out'")
+    parser.add_argument('--min_per_ses', type=int, default=45,
+            help="duration of one session in minutes; default is 45")
     parser.add_argument('--wstd_total', type=int, default=23,
-            help="total Wochstunden (depends on your school)")
+            help="total Wochstunden (depends on your school); default is 23")
     parser.add_argument('--csvfiles', nargs='+', type=str, help='list of files')
     parser.add_argument('--name', type=str, default='Schulpsychologie',
-        help='Name for the subheading of the pdf report')
+            help='name for the header of the pdf report')
     args = parser.parse_args()
 
     if args.csvfiles is not None:
@@ -235,6 +238,8 @@ if __name__ == "__main__":
         zstd_spsy_year_actual = summarystats_nsitzungen.loc['all','zeitstunden']
     else:
         zstd_spsy_year_actual = None
+        summary_categories = None
+        summarystats_nsitzungen = None
 
 
     # Summary statistics for Wochenstunden
