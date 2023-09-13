@@ -1,11 +1,7 @@
 # edupsy_admin
 
-This is the edupsy_admin application. It is not functional yet.
-
-The file structure of the project was created using a [cookiecutter
-template](https://github.com/mdklatt/cookiecutter-python-app). I will try to
-implement most of what the template suggests and delete what I do not need. But
-this will take time.
+edupsy_admin provides tools to help school psychologists with their
+documentation.
 
 ## Minimum Requirements
 
