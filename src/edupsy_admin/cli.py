@@ -4,13 +4,23 @@
 from argparse import ArgumentParser
 from inspect import getfullargspec
 
+from platformdirs import user_data_path
+
 from . import __version__
-from .api import hello, clients
+from .api.clients import new_client
 from .core.config import config
 from .core.logger import logger
 
 
 __all__ = ("main",)
+
+APP_UID = "liebermann-schulpsychologie.github.io"
+USER_DATA_DIR = user_data_path(
+        appname = "edupy_admin",
+        version = __version__,
+        ensure_exists = True
+        )
+DATABASE_URL = USER_DATA_DIR + "edupsy_admin.db"
 
 
 def main(argv=None) -> int:
@@ -27,13 +37,7 @@ def main(argv=None) -> int:
 
     # config
     config.load(args.config)
-    try:
-        config.core.config = args.config
-    except KeyError:
-        logging.error(
-            f"There is no config {args.config} or it does not have the 'core' key."
-        )
-        raise
+    config.core.config = args.config
     if args.warn:
         config.core.logging = args.warn
 
@@ -80,10 +84,11 @@ def _args(argv):
     subparsers = parser.add_subparsers(title="subcommands")
 
     common = ArgumentParser(add_help=False)  # common subcommand arguments
+    common.add_argument("app_username", help="username for encryption")
+    common.add_argument("--app_uid", default=APP_UID)
+    common.add_argument("--database_url", default=DATABASE_URL)
     common.add_argument("--idcode", "-i", help="client code")
-    common.add_argument("--username", "-u", help="username for encryption")
-    _hello(subparsers, common)
-    _clients(subparsers, common)
+    _new_client(subparsers, common)
 
     args = parser.parse_args(argv)
     if not args.command:
@@ -97,21 +102,18 @@ def _args(argv):
     return args
 
 
-def _clients(subparsers, common):
-    """CLI adaptor for the api.clients command.
+def _new_client(subparsers, common):
+    """CLI adaptor for the api.clients.new_client command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("clients", parents=[common])
-    myclients = clients.Clients()
+    parser = subparsers.add_parser("newclient", parents=[common])
     parser.set_defaults(
-        command=myclients.manipulate_clients(),
-        help="Edit or read the database of clients",
+        command=new_client,
+        help="Add a new client",
     )
-    parser.add_argument(
-        "action", choices=["add", "list", "edit", "remove"], default="list"
-    )
+    parser.add_argument("--csv")
     return
 
 

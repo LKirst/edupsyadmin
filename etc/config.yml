@@ -2,3 +2,4 @@
 ##
 core:
   logging: WARN
+  uid: "liebermann-schulpsychologie.github.ioi"
