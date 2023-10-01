@@ -193,3 +193,7 @@ def enter_client_cli(clients_manager):
         email=input("Email: "),
         notes=input("Notes: "),
     )
+
+def create_cover(clients_manager, client_id):
+    client_data = get_decrypted_client(client_id)
+    fill_documentation(client_data)
