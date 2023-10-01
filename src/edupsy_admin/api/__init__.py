@@ -1,6 +1,6 @@
 """ Application commands common to all interfaces.
 
 """
-from .clients import Client, ClientsManager, collect_client_data_cli
+from .clients import Client, ClientsManager, new_client
 
-__all__ = ("Client", "ClientsManager", "collect_client_data_cli")
+__all__ = ("Client", "ClientsManager", "new_client")

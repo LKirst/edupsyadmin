@@ -1,6 +1,7 @@
 """ Implementation of the command line interface.
 
 """
+import os
 from argparse import ArgumentParser
 from inspect import getfullargspec
 
@@ -16,11 +17,11 @@ __all__ = ("main",)
 
 APP_UID = "liebermann-schulpsychologie.github.io"
 USER_DATA_DIR = user_data_path(
-        appname = "edupy_admin",
+        appname = "edupsy_admin",
         version = __version__,
         ensure_exists = True
         )
-DATABASE_URL = USER_DATA_DIR + "edupsy_admin.db"
+DATABASE_URL = "sqlite:///" +  os.path.join(USER_DATA_DIR, "edupsy_admin.db")
 
 
 def main(argv=None) -> int:
@@ -36,8 +37,8 @@ def main(argv=None) -> int:
     logger.debug("starting execution")
 
     # config
-    config.load(args.config)
-    config.core.config = args.config
+    config.load(args.config_path)
+    config.core.config = args.config_path
     if args.warn:
         config.core.logging = args.warn
 
@@ -68,7 +69,7 @@ def _args(argv):
     """
     parser = ArgumentParser()
     parser.add_argument(
-        "-c", "--config", action="append", help="config file [etc/config.yml]"
+        "-c", "--config_path", action="append", help="config file [etc/config.yml]"
     )
     parser.add_argument(
         "-v",
@@ -87,7 +88,7 @@ def _args(argv):
     common.add_argument("app_username", help="username for encryption")
     common.add_argument("--app_uid", default=APP_UID)
     common.add_argument("--database_url", default=DATABASE_URL)
-    common.add_argument("--idcode", "-i", help="client code")
+    #common.add_argument("--idcode", "-i", help="client code")
     _new_client(subparsers, common)
 
     args = parser.parse_args(argv)
@@ -95,10 +96,10 @@ def _args(argv):
         # No sucommand was specified.
         parser.print_help()
         raise SystemExit(1)
-    if not args.config:
+    if not args.config_path:
         # Don't specify this as an argument default or else it will always be
         # included in the list.
-        args.config = "etc/config.yml"
+        args.config_path = "etc/config.yml"
     return args
 
 
@@ -108,7 +109,7 @@ def _new_client(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("newclient", parents=[common])
+    parser = subparsers.add_parser("new_client", parents=[common])
     parser.set_defaults(
         command=new_client,
         help="Add a new client",

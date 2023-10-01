@@ -14,7 +14,7 @@ class Encryption():
     fernet = None
 
     def set_fernet(
-            self, username: str, configpath: str, uid: str) -> None:
+            self, username: str, config_path: str, uid: str) -> None:
         """use a password to derive a key
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
         """
@@ -22,7 +22,7 @@ class Encryption():
             logger.debug("fernet was already set; using existing fernet")
             return
 
-        salt = self._load_or_create_salt(configpath)
+        salt = self._load_or_create_salt(config_path)
         password = self._retrieve_password(username, uid)
 
         # derive a key using the password and salt
@@ -48,15 +48,15 @@ class Encryption():
         data=self.fernet.decrypt(token).decode()
         return data
 
-    def _load_or_create_salt(self, configpath: str) -> bytes:
-        config.load(configpath)
+    def _load_or_create_salt(self, config_path: str) -> bytes:
+        config.load(config_path)
         if "core" in config.keys() and "salt" in config.core.keys():
             logger.info("using existing salt from the config file")
             salt = config.core.salt
         else:
             logger.info("creating new salt and writing it to the config file")
             salt = os.urandom(16)
-            with open(configpath, "a") as f:
+            with open(config_path, "a") as f:
                 if "core" in config.keys():
                     config.core.update({"salt": salt})
                 else:

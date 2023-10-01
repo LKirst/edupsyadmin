@@ -1,2 +1,13 @@
-python-dotenv==0.20.0
-PyYAML==6.0
+-e git+ssh://git@github.com/LKirst/edupsy_admin.git@0af65bfa76715c2f8892d65864b92fe7707458de#egg=edupsy_admin
+greenlet==2.0.2
+numpy==1.26.0
+pandas==2.1.1
+platformdirs==3.10.0
+python-dateutil==2.8.2
+python-dotenv==1.0.0
+pytz==2023.3.post1
+PyYAML==6.0.1
+six==1.16.0
+SQLAlchemy==2.0.21
+typing_extensions==4.8.0
+tzdata==2023.3

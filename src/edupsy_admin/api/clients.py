@@ -1,7 +1,9 @@
+import os
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+import pandas as pd
 
 from ..core.logger import logger
 from ..core.encrypt import Encryption
@@ -38,28 +40,23 @@ class Client(Base):
 
     def __init__(
         self,
-        app_username:str,
-        config:str,
-        app_uid:str,
-        school:str,
-        gender:str,
-        entry_date:str,
-        class_name:str,
-        first_name:str,
-        last_name:str,
-        birthday:str = "",
-        street:str = "",
-        city:str = "",
-        parent:str = "",
-        telephone:str = "",
-        email:str = "",
-        notes:str = "",
-        keyword_taetigkeitsbericht:str = "",
-        datetime_created:str=None,
-        datetime_lastmodified:str=None,
+        school: str,
+        gender: str,
+        entry_date: str,
+        class_name: str,
+        first_name: str,
+        last_name: str,
+        birthday: str = "",
+        street: str = "",
+        city: str = "",
+        parent: str = "",
+        telephone: str = "",
+        email: str = "",
+        notes: str = "",
+        keyword_taetigkeitsbericht: str = "",
+        datetime_created: str = None,
+        datetime_lastmodified: str = None,
     ):
-        encr.set_fernet(app_username, config, app_uid)
-
         self.first_name_encr = encr.encrypt(first_name)
         self.last_name_encr = encr.encrypt(last_name)
         self.birthday_encr = encr.encrypt(birthday)
@@ -81,35 +78,31 @@ class Client(Base):
 
     def __repr__(self):
         representation = (
-                f"<Client(id='{self.client_id}', "
-                f"sc='{self.school}', "
-                f"gr='{self.class_name}', "
-                f"ge='{self.gender}', "
-                f"ta='{self.keyword_taetigkeitsbericht}'"
-                f")>")
+            f"<Client(id='{self.client_id}', "
+            f"sc='{self.school}', "
+            f"gr='{self.class_name}', "
+            f"ge='{self.gender}', "
+            f"ta='{self.keyword_taetigkeitsbericht}'"
+            f")>"
+        )
         return representation
 
 
 class ClientsManager:
-    def __init__(self, database_url: str, app_uid: str, app_username: str, config: str):
+    def __init__(
+        self, database_url: str, app_uid: str, app_username: str, config_path: str
+    ):
         self.engine = create_engine(database_url, echo=True)
         self.Session = sessionmaker(bind=self.engine)
-        self.app_uid = app_uid
-        self.app_username = app_username
-        self.config = config
+        encr.set_fernet(app_username, config_path, app_uid)
 
-        Base.metadata.create_all(self.engine) # create the table if it doesn't exist
+        Base.metadata.create_all(self.engine)  # create the table if it doesn't exist
         logger.debug(f"created connection to database at {database_url}")
 
-    def add_client(self, client_data):
+    def add_client(self, **client_data):
         logger.debug("trying to add client")
         with self.Session() as session:
-            new_client = Client(
-                **client_data,
-                app_uid=self.app_uid,
-                app_username=self.app_username,
-                config=self.config,
-            )
+            new_client = Client(**client_data)
             session.add(new_client)
             session.commit()
             logger.debug(f"added client: {new_client}")
@@ -123,7 +116,7 @@ class ClientsManager:
             client_vars = vars(client)
             for attributekey in client_vars.keys():
                 if attributekey.endswith("_encr"):
-                    client_vars[attributekey]=encr.decrypt(client_vars[attributekey])
+                    client_vars[attributekey] = encr.decrypt(client_vars[attributekey])
             return client
 
     def edit_client(self, client_id: int, new_data):
@@ -132,7 +125,7 @@ class ClientsManager:
             client = session.query(Client).filter_by(client_id=client_id).first()
             if client:
                 for key, value in new_data.items():
-                    if key.endswith('_encr'):
+                    if key.endswith("_encr"):
                         setattr(client, key, encr.encrypt(value))
                     else:
                         setattr(client, key, value)
@@ -147,66 +140,56 @@ class ClientsManager:
                 session.delete(client)
                 session.commit()
 
+
 def new_client(
-        app_username, app_uid, database_url, config, client_csv=None, keepfile=False
-        ):
+    app_username, app_uid, database_url, config_path, csv=None, keepfile=False
+):
     clients_manager = ClientsManager(
         database_url=database_url,
         app_uid=app_uid,
-        app_username=username,
-        config=app_config_path,
-        )
-    clients_manager.add_client()
-    if client_csv:
-        enter_untis_client()
+        app_username=app_username,
+        config_path=config_path,
+    )
+    if csv:
+        enter_untis_client(clients_manager, csv)
         if not keepfile:
-            os.remove(client_csv)
+            os.remove(csv)
     else:
-        enter_client_cli()
+        enter_client_cli(clients_manager)
 
 
-def enter_untis_client(
-        clients_manager, app_username, config, app_uid, client_csv):
-    """Read client from csv
-    """
-    untis_df=pd.read_csv(client_csv)
+def enter_untis_client(clients_manager, csv):
+    """Read client from csv"""
+    untis_df = pd.read_csv(csv)
     clients_manager.add_client(
-        app_username=app_username,
-        config=config,
-        app_uid=app_uid,
-        school = "FOSBOS",
-        gender = untis_df["gender"],
-        entry_date:untis_df["entryDate"],
-        class_name = untis_df["klasse.name"],
-        first_name = untis_df["longName"],
-        last_name = untis_df["foreName"],
-        birthday = untis_df["birthDate"],
-        street = untis_df["address.street"],
-        city = untis_df["address.postCode"] + ' ' + df[untis_df["address.city"],
-        telephone = untis_df["address.mobile"] or untis_df["address.phone"],
-        email =untis_df["address.email"]
-        )
+        school="FOSBOS",
+        gender=untis_df["gender"].item(),
+        entry_date=untis_df["entryDate"].item(),
+        class_name=untis_df["klasse.name"].item(),
+        first_name=untis_df["longName"].item(),
+        last_name=untis_df["foreName"].item(),
+        birthday=untis_df["birthDate"].item(),
+        street=untis_df["address.street"].item(),
+        city=str(untis_df["address.postCode"].item()) + " " + untis_df["address.city"].item(),
+        telephone=str(untis_df["address.mobile"].item() or untis_df["address.phone"].item()),
+        email=untis_df["address.email"].item(),
+    )
 
 
-def enter_client_cli(
-        clients_manager, app_username, config, app_uid):
-    """Create an unencrypted csvfile interactively
-    """
+def enter_client_cli(clients_manager):
+    """Create an unencrypted csvfile interactively"""
     clients_manager.add_client(
-        app_username=app_username,
-        config=config,
-        app_uid=app_uid,
-        school = input("School: "),
-        gender = input("Gender (f/m): "),
-        entry_date = input("Entry date (YYYY-MM-DD): "),
-        class_name = input("Class name: ",
-        first_name = input("First Name: "),
-        last_name = input("Last Name: "),
-        birthday = input("Birthday (YYYY-MM-DD): "),
-        street = input("Street: "),
-        city = input("City (postcode + name): "),
-        parent = input("Parent: "),
-        telephone = input("Telephone: "),
-        email =input("Email: "),
-        notes = input("Notes: ")
-        )
+        school=input("School: "),
+        gender=input("Gender (f/m): "),
+        entry_date=input("Entry date (YYYY-MM-DD): "),
+        class_name=input("Class name: "),
+        first_name=input("First Name: "),
+        last_name=input("Last Name: "),
+        birthday=input("Birthday (YYYY-MM-DD): "),
+        street=input("Street: "),
+        city=input("City (postcode + name): "),
+        parent=input("Parent: "),
+        telephone=input("Telephone: "),
+        email=input("Email: "),
+        notes=input("Notes: "),
+    )
