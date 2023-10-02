@@ -5,13 +5,14 @@
 import os
 import pytest
 import keyring
+import yaml
 from pathlib import Path
 
 from edupsy_admin.core.config import config
 from edupsy_admin.core.logger import logger
-from edupsy_admin.core.encrypt import Encryption
+from edupsy_admin.core.encrypt import Encryption, _convert_conf_to_dict
 
-secret_message=b"This is a secret message."
+secret_message="This is a secret message."
 
 @pytest.fixture
 def configfile():
@@ -70,3 +71,22 @@ def test_set_fernet(capsys, configfile):
 
     _, stderr = capsys.readouterr()
     assert "fernet was already set; using existing fernet" in stderr
+
+def test_update_config(configfile):
+    encr = Encryption()
+    dictyaml = _convert_conf_to_dict(config)
+    salt=encr._load_or_create_salt(config.core.config)
+    dictyaml_salt_config = _convert_conf_to_dict(config)
+    dictyaml_salt_target = {
+            "core":{
+                "config": config.core.config,
+                "salt":salt
+                },
+            "username" : "test_user_do_not_use",
+            "uid" : "example.com",
+            "logging" :"DEBUG",
+            }
+    with open(config.core.config, "r") as f:
+        dictyaml_salt_fromfile=yaml.safe_load(f)
+    assert dictyaml_salt_config == dictyaml_salt_target
+    assert dictyaml_salt_fromfile == dictyaml_salt_target
