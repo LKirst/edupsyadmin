@@ -81,7 +81,6 @@ class Client(Base):
             f"sc='{self.school}', "
             f"gr='{self.class_name}', "
             f"ge='{self.gender}', "
-            f"ta='{self.keyword_taetigkeitsbericht}'"
             f")>"
         )
         return representation
