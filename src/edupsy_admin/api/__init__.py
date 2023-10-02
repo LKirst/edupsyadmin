@@ -1,6 +1,12 @@
 """ Application commands common to all interfaces.
 
 """
-from .clients import Client, ClientsManager, new_client
+from .clients import (
+        ClientsManager, new_client,
+        enter_client_cli, enter_client_untiscsv
+        )
 
-__all__ = ("Client", "ClientsManager", "new_client")
+__all__ = ("ClientsManager",
+           "new_client",
+           "enter_client_cli",
+           "enter_client_untiscsv")

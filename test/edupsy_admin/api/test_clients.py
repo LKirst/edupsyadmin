@@ -20,17 +20,17 @@ TEST_USERNAME = "test_user_do_not_use"
 TEST_UID = "example.com"
 
 client_data = {
-    "first_name_encr": "John",
-    "last_name_encr": "Doe",
-    "birthday_encr": "1990-01-01",
-    "street_encr": "123 Main St",
-    "city_encr": "New York",
-    "parent_encr": "Jane Doe",
-    "telephone_encr": "555-1234",
-    "email_encr": "john.doe@example.com",
-    "gender": "Male",
     "school": "ABC School",
-    "date_of_graduation": "2021-06-30",
+    "gender": "m",
+    "entry_date": "2021-06-30",
+    "class_name": "11TKKG",
+    "first_name": "John",
+    "last_name": "Doe",
+    "birthday": "1990-01-01",
+    "street": "123 Main St",
+    "city": "New York",
+    "telephone": "555-1234",
+    "email": "john.doe@example.com"
 }
 
 
@@ -57,59 +57,61 @@ def clients_manager():
 
     database_url = "sqlite:///test.sqlite"
     manager = ClientsManager(
-            database_url,
-            app_uid=TEST_UID, app_username=TEST_USERNAME, app_configpath=str(cfg_path))
+        database_url,
+        app_uid=TEST_UID,
+        app_username=TEST_USERNAME,
+        config_path=str(cfg_path),
+    )
 
     yield manager
-    manager.close()
     os.remove(config.core.config)
 
 
-# Test the add_client() method
 def test_add_client(clients_manager):
-    client_id = clients_manager.add_client(client_data)
-    client = clients_manager.get_decrypted_client(client_id = client_id)
+    client_id = clients_manager.add_client(**client_data)
+    client = clients_manager.get_decrypted_client(client_id=client_id)
     assert client.first_name_encr == "John"
     assert client.last_name_encr == "Doe"
 
 
-# Test the edit_client() method
 def test_edit_client(clients_manager):
-    client_id = clients_manager.add_client(client_data)
-    client = clients_manager.get_decrypted_client(client_id = client_id)
+    client_id = clients_manager.add_client(**client_data)
+    client = clients_manager.get_decrypted_client(client_id=client_id)
     updated_data = {"first_name_encr": "Jane", "last_name_encr": "Smith"}
     clients_manager.edit_client(client_id, updated_data)
     updated_client = clients_manager.get_decrypted_client(client_id)
     assert updated_client.first_name_encr == "Jane"
     assert updated_client.last_name_encr == "Smith"
-    assert (
-        updated_client.datetime_lastmodified > client.datetime_lastmodified
-    )
+    assert updated_client.datetime_lastmodified > client.datetime_lastmodified
 
 
-# Test the delete_client() method
 def test_delete_client(clients_manager):
-    client_id = clients_manager.add_client(client_data)
+    client_id = clients_manager.add_client(**client_data)
     clients_manager.delete_client(client_id)
 
     with pytest.raises(Exception) as e_info:
-        client = clients_manager.get_decrypted_client(client_id = client_id)
+        client = clients_manager.get_decrypted_client(client_id=client_id)
 
 
-def test_collect_client_data_cli(clients_manager, monkeypatch):
+def test_enter_client_cli(clients_manager, monkeypatch):
+    # simulate the commandline input
+    inputs = iter(client_data)
     def mock_input(prompt):
-        return "John"
-
+        return client_data[next(inputs)]
     monkeypatch.setattr("builtins.input", mock_input)
 
-    client_data = collect_client_data_cli()
-    assert isinstance(client_data, Client)
+    client_id = enter_client_cli(clients_manager)
+    client = clients_manager.get_decrypted_client(client_id=client_id)
+    assert client.first_name_encr == "John"
+    assert client.last_name_encr == "Doe"
 
-    # StringEncryptedType
-    assert client_data.first_name_encr != "John"
-    assert client_data.last_name_encr != "Doe"
-    assert client_data.birthday_encr != "1990-01-01"
 
+def test_enter_client_untiscsv(clients_manager):
+    testcsv = 'test/data/webuntis_example.csv'
+    client_id = enter_client_untiscsv(clients_manager, testcsv)
+    client = clients_manager.get_decrypted_client(client_id=client_id)
+    assert client.first_name_encr == "Max"
+    assert client.last_name_encr == "Mustermann"
 
 # Make the script executable.
 if __name__ == "__main__":

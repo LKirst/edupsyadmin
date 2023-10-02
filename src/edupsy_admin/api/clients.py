@@ -1,7 +1,6 @@
 import os
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime
 import pandas as pd
 
@@ -151,34 +150,35 @@ def new_client(
         config_path=config_path,
     )
     if csv:
-        enter_untis_client(clients_manager, csv)
+        enter_client_untiscsv(clients_manager, csv)
         if not keepfile:
             os.remove(csv)
     else:
         enter_client_cli(clients_manager)
 
 
-def enter_untis_client(clients_manager, csv):
+def enter_client_untiscsv(clients_manager, csv):
     """Read client from csv"""
     untis_df = pd.read_csv(csv)
-    clients_manager.add_client(
+    client_id = clients_manager.add_client(
         school="FOSBOS",
         gender=untis_df["gender"].item(),
         entry_date=untis_df["entryDate"].item(),
         class_name=untis_df["klasse.name"].item(),
-        first_name=untis_df["longName"].item(),
-        last_name=untis_df["foreName"].item(),
+        first_name=untis_df["foreName"].item(),
+        last_name=untis_df["longName"].item(),
         birthday=untis_df["birthDate"].item(),
         street=untis_df["address.street"].item(),
         city=str(untis_df["address.postCode"].item()) + " " + untis_df["address.city"].item(),
         telephone=str(untis_df["address.mobile"].item() or untis_df["address.phone"].item()),
         email=untis_df["address.email"].item(),
     )
+    return client_id
 
 
 def enter_client_cli(clients_manager):
     """Create an unencrypted csvfile interactively"""
-    clients_manager.add_client(
+    client_id = clients_manager.add_client(
         school=input("School: "),
         gender=input("Gender (f/m): "),
         entry_date=input("Entry date (YYYY-MM-DD): "),
@@ -188,11 +188,10 @@ def enter_client_cli(clients_manager):
         birthday=input("Birthday (YYYY-MM-DD): "),
         street=input("Street: "),
         city=input("City (postcode + name): "),
-        parent=input("Parent: "),
         telephone=input("Telephone: "),
         email=input("Email: "),
-        notes=input("Notes: "),
     )
+    return client_id
 
 def create_cover(clients_manager, client_id):
     client_data = get_decrypted_client(client_id)
