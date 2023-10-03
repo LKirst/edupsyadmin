@@ -22,12 +22,12 @@ def add_convenience_data(data:dict) -> dict:
         A dictionary of data values. Must contain "last_name", "first_name",
         "street", "city".
     """
-    data["name"] = data["last_name"] + ", " + data["first_name"]
+    data["name"] = data["first_name"] + " " + data["last_name"]
 
     try:
         data["address"] = data["street"] + ", " + data["city"]
         data["address_multiline"] = (
-            "Familie " + data["last_name"] +
+            data["name"] +
             "\n" + data["street"] + "\n" + data["city"]
         )
     except:
@@ -37,7 +37,7 @@ def add_convenience_data(data:dict) -> dict:
     schoolconfig = config.school[data["school"]]
     data["school_name"]=schoolconfig["school_name"]
     data["school_street"]=schoolconfig["school_street"]
-    data["school_genitive_with_article"]=schoolconfig["school_genetive_with_article"]
+    data["school_head_w_school"]=schoolconfig["school_head_w_school"]
 
     today = date.today()
     data["date_today"] = today.strftime("%d/%m/%Y")  # dd/mm/YY
