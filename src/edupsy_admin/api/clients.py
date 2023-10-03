@@ -7,6 +7,7 @@ import pandas as pd
 from ..core.logger import logger
 from ..core.encrypt import Encryption
 from ..core.config import config
+from .fill_form import fill_form
 
 
 Base = declarative_base()
@@ -79,8 +80,8 @@ class Client(Base):
         representation = (
             f"<Client(id='{self.client_id}', "
             f"sc='{self.school}', "
-            f"gr='{self.class_name}', "
-            f"ge='{self.gender}', "
+            f"cl='{self.class_name}', "
+            f"ge='{self.gender}'"
             f")>"
         )
         return representation
@@ -107,15 +108,17 @@ class ClientsManager:
             client_id = new_client.client_id
             return client_id
 
-    def get_decrypted_client(self, client_id: int):
+    def get_decrypted_client(self, client_id: int) -> dict:
         logger.debug(f"trying to access client (id = {client_id})")
         with self.Session() as session:
-            client = session.query(Client).filter_by(client_id=client_id).first()
-            client_vars = vars(client)
-            for attributekey in client_vars.keys():
+            client_dict = session.query(Client).filter_by(client_id=client_id).first().__dict__
+            decr_vars = {}
+            for attributekey in client_dict.keys():
                 if attributekey.endswith("_encr"):
-                    client_vars[attributekey] = encr.decrypt(client_vars[attributekey])
-            return client
+                    attributekey_decr = attributekey.removesuffix("_encr")
+                    decr_vars[attributekey_decr] = encr.decrypt(client_dict[attributekey])
+            client_dict.update(decr_vars) 
+            return client_dict
 
     def edit_client(self, client_id: int, new_data):
         logger.debug(f"editing client (id = {client_id})")
@@ -192,6 +195,14 @@ def enter_client_cli(clients_manager):
     )
     return client_id
 
-def create_cover(clients_manager, client_id):
-    client_data = get_decrypted_client(client_id)
-    fill_documentation(client_data)
+def create_documentation(
+        app_username:str, app_uid:str, database_url:str, config_path:str,
+        client_id:str, form_paths:list):
+    clients_manager = ClientsManager(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        config_path=config_path,
+    )
+    client_dict = clients_manager.get_decrypted_client(client_id)
+    fill_form(client_dict, form_paths)

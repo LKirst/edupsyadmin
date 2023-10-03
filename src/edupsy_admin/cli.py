@@ -8,7 +8,7 @@ from inspect import getfullargspec
 from platformdirs import user_data_path
 
 from . import __version__
-from .api.clients import new_client
+from .api.clients import new_client, create_documentation
 from .core.config import config
 from .core.logger import logger
 
@@ -48,6 +48,7 @@ def main(argv=None) -> int:
 
     # handle commandline args
     command = args.command
+    logger.debug(f"commandline arguments: {vars(args)}")
     args = vars(args)
     spec = getfullargspec(command)
     if not spec.varkw:
@@ -88,8 +89,8 @@ def _args(argv):
     common.add_argument("app_username", help="username for encryption")
     common.add_argument("--app_uid", default=APP_UID)
     common.add_argument("--database_url", default=DATABASE_URL)
-    #common.add_argument("--idcode", "-i", help="client code")
     _new_client(subparsers, common)
+    _create_documentation(subparsers, common)
 
     args = parser.parse_args(argv)
     if not args.command:
@@ -114,7 +115,26 @@ def _new_client(subparsers, common):
         command=new_client,
         help="Add a new client",
     )
-    parser.add_argument("--csv")
+    parser.add_argument("--csv", help=(
+        "An untis csv with one row. If you pass no csv path, you can "
+        "interactively enter the data"
+        ))
+    return
+
+
+def _create_documentation(subparsers, common):
+    """CLI adaptor for the api.clients.create_documentation command.
+
+    :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
+    """
+    parser = subparsers.add_parser("create_documentation", parents=[common])
+    parser.set_defaults(
+        command=create_documentation,
+        help="Fill a pdf form",
+    )
+    parser.add_argument("client_id", type=int)
+    parser.add_argument("form_paths", nargs='+')
     return
 
 
