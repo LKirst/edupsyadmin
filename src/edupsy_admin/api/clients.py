@@ -24,7 +24,8 @@ class Client(Base):
     street_encr = Column(String)
     city_encr = Column(String)
     parent_encr = Column(String)
-    telephone_encr = Column(String)
+    telephone1_encr = Column(String)
+    telephone2_encr = Column(String)
     email_encr = Column(String)
     notes_encr = Column(String)
 
@@ -34,7 +35,7 @@ class Client(Base):
     gender = Column(String)
     entry_date = Column(String)
     class_name = Column(String)
-    keywordtaetigkeitsbericht = Column(String)
+    keyword_taetigkeitsbericht = Column(String)
     datetime_created = Column(DateTime)
     datetime_lastmodified = Column(DateTime)
 
@@ -50,7 +51,8 @@ class Client(Base):
         street: str = "",
         city: str = "",
         parent: str = "",
-        telephone: str = "",
+        telephone1: str = "",
+        telephone2: str = "",
         email: str = "",
         notes: str = "",
         keyword_taetigkeitsbericht: str = "",
@@ -63,7 +65,8 @@ class Client(Base):
         self.street_encr = encr.encrypt(street)
         self.city_encr = encr.encrypt(city)
         self.parent_encr = encr.encrypt(parent)
-        self.telephone_encr = encr.encrypt(telephone)
+        self.telephone1_encr = encr.encrypt(telephone1)
+        self.telephone2_encr = encr.encrypt(telephone2)
         self.email_encr = encr.encrypt(email)
         self.notes_encr = encr.encrypt(notes)
 
@@ -116,8 +119,12 @@ class ClientsManager:
             for attributekey in client_dict.keys():
                 if attributekey.endswith("_encr"):
                     attributekey_decr = attributekey.removesuffix("_encr")
-                    decr_vars[attributekey_decr] = encr.decrypt(client_dict[attributekey])
-            client_dict.update(decr_vars) 
+                    try:
+                        decr_vars[attributekey_decr] = encr.decrypt(client_dict[attributekey])
+                    except:
+                        logger.critical(f"attribute: {attributekey}; value: {client_dict[attributekey]}")
+                        raise
+            client_dict.update(decr_vars)
             return client_dict
 
     def edit_client(self, client_id: int, new_data):
@@ -172,7 +179,7 @@ def enter_client_untiscsv(clients_manager, csv):
         birthday=untis_df["birthDate"].item(),
         street=untis_df["address.street"].item(),
         city=str(untis_df["address.postCode"].item()) + " " + untis_df["address.city"].item(),
-        telephone=str(untis_df["address.mobile"].item() or untis_df["address.phone"].item()),
+        telephone1=str(untis_df["address.mobile"].item() or untis_df["address.phone"].item()),
         email=untis_df["address.email"].item(),
     )
     return client_id
@@ -190,7 +197,7 @@ def enter_client_cli(clients_manager):
         birthday=input("Birthday (YYYY-MM-DD): "),
         street=input("Street: "),
         city=input("City (postcode + name): "),
-        telephone=input("Telephone: "),
+        telephone1=input("Telephone: "),
         email=input("Email: "),
     )
     return client_id

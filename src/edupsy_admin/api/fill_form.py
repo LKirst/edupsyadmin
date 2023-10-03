@@ -34,16 +34,10 @@ def add_convenience_data(data:dict) -> dict:
         logger.debug("Couldn't add home address.")
 
     # school address
-    try:
-        logger.debug(
-                f"Trying to access the field {data['school']} in the config."
-                )
-        schoolconfig = config[data["school"]]
-        data["school_name"]=schoolconfig["school_name"]
-        data["school_street"]=schoolconfig["school_street"]
-        data["school_genitive_with_article"]=schoolconfig["school_street"]
-    except:
-        logger.warn("Couldn't find school address in the config.")
+    schoolconfig = config.school[data["school"]]
+    data["school_name"]=schoolconfig["school_name"]
+    data["school_street"]=schoolconfig["school_street"]
+    data["school_genitive_with_article"]=schoolconfig["school_genetive_with_article"]
 
     today = date.today()
     data["date_today"] = today.strftime("%d/%m/%Y")  # dd/mm/YY

@@ -119,6 +119,9 @@ def _new_client(subparsers, common):
         "An untis csv with one row. If you pass no csv path, you can "
         "interactively enter the data"
         ))
+    parser.add_argument(
+            "--keepfile", action="store_true",
+            help="Don't delete the csv after adding it to the db.")
     return
 
 
