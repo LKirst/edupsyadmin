@@ -47,6 +47,7 @@ class Client(Base):
         class_name: str,
         first_name: str,
         last_name: str,
+        client_id: id = None,
         birthday: str = "",
         street: str = "",
         city: str = "",
@@ -59,6 +60,9 @@ class Client(Base):
         datetime_created: str = None,
         datetime_lastmodified: str = None,
     ):
+        if client_id:
+            self.client_id = client_id
+
         self.first_name_encr = encr.encrypt(first_name)
         self.last_name_encr = encr.encrypt(last_name)
         self.birthday_encr = encr.encrypt(birthday)
@@ -169,7 +173,11 @@ def new_client(
 def enter_client_untiscsv(clients_manager, csv):
     """Read client from csv"""
     untis_df = pd.read_csv(csv)
-    client_id = clients_manager.add_client(
+    if 'client_id' in untis_df.columns:
+        client_id=untis_df["client_id"].item()
+    else:
+        client_id=None
+    client_id_n = clients_manager.add_client(
         school="FOSBOS",
         gender=untis_df["gender"].item(),
         entry_date=untis_df["entryDate"].item(),
@@ -181,13 +189,19 @@ def enter_client_untiscsv(clients_manager, csv):
         city=str(untis_df["address.postCode"].item()) + " " + untis_df["address.city"].item(),
         telephone1=str(untis_df["address.mobile"].item() or untis_df["address.phone"].item()),
         email=untis_df["address.email"].item(),
+        client_id=client_id
     )
-    return client_id
+    return client_id_n
 
 
 def enter_client_cli(clients_manager):
     """Create an unencrypted csvfile interactively"""
-    client_id = clients_manager.add_client(
+    client_id=input("client_id (press ENTER if you don't know): ")
+    if client_id:
+        client_id=int(client_id)
+    else:
+        client_id=None
+    client_id_n = clients_manager.add_client(
         school=input("School: "),
         gender=input("Gender (f/m): "),
         entry_date=input("Entry date (YYYY-MM-DD): "),
@@ -199,8 +213,9 @@ def enter_client_cli(clients_manager):
         city=input("City (postcode + name): "),
         telephone1=input("Telephone: "),
         email=input("Email: "),
+        client_id=client_id
     )
-    return client_id
+    return client_id_n
 
 def create_documentation(
         app_username:str, app_uid:str, database_url:str, config_path:str,
