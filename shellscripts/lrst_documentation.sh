@@ -7,7 +7,7 @@ done
 
 client_id=${@:$OPTIND:1}
 
-if [ diagnosis -eq 1 ]
+if [ $diagnosis -eq 1 ]
 then
 edupsy_admin -w WARN -c ~/bin/edupsy_admin/etc/config.yml\
     create_documentation lukas.liebermann $client_id\
