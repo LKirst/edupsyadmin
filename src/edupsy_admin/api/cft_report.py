@@ -14,13 +14,13 @@ from datediff import mydatediff
 
 
 class Report(FPDF):
-    def __init__(self, text, plot, testdate, client_id):
+    def __init__(self, heading, text, plot):
         super().__init__()
         self.text = text
         self.plot = plot
         self.WIDTH = 210
         self.HEIGHT = 297
-        self.header_text = f"CFT 20-R (Testdatum: {testdate}; Code: {client_id})"
+        self.header_text = heading
 
     def header(self):
         self.set_font("Arial", "B", 11)
@@ -95,7 +95,8 @@ def create_report(path):
     normal_distribution_plot(z_values, fn_plot)
 
     # create the pdf
-    report = Report(text, fn_plot, testdate, client_id)
+    heading = f"CFT 20-R (Testdatum: {testdate}; Code: {client_id})"
+    report = Report(heading, text, fn_plot)
     report.print_page()
     report.output(os.path.join(path, "{client_id}_Auswertung.pdf"), "F")
 
