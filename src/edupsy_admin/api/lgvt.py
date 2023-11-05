@@ -4,6 +4,8 @@ import argparse
 import pandas as pd
 from pathlib import Path
 
+import percentile_to_t from convert_measures
+
 def askyn(prompt):
     yes = {"yes", "ye", "y"}
     no = {"no", "n"}
@@ -18,6 +20,20 @@ def askyn(prompt):
         return -1
     else:
         raise IOError("Only y, n or q are allowed.")
+
+
+def get_lv_korrektur(lv_rw):
+    lv_korr_faktor = float(input("Korrekturfaktor LV:"))
+    lv_rw_korr = lv_rw * lv_korr_faktor
+    lv_rw_korr_floor = math.floor(lv_rw_korr)
+    lv_rw_korr_ceil = math.ceil(lv_rw_korr)
+    lv_rw_korr_nachkomma = lv_rw_korr % 1
+
+    lv_pr_floor = int(input(f"Rohwert abger. LV = {lv_rw_korr_floor}; PR = "))
+    lv_pr_ceil = int(input(f"Rohwert aufger. LV = {lv_rw_korr_ceil}; PR = "))
+    lv_pr_diff = lv_pr_ceil - lv_pr_floor
+    lv_pr_korr = round(lv_pr_floor + lv_pr_diff * lv_rw_korr_nachkomma)
+    return lv_rw_korr, lv_pr_korr
 
 
 def get_indeces(fn, client_id, d_test, version):
@@ -50,40 +66,33 @@ def get_indeces(fn, client_id, d_test, version):
     lv_rw = correct_answ*2 - incorrect_answ
     lgs_rw = words_until_last_item + words_after_last_item
     if year < 11:
-        lv_korr_faktor = float(input("Korrekturfaktor LV:"))
-        lv_rw_korr = lv_rw * lv_korr_faktor
-        lv_rw_korr_floor = math.floor(lv_rw_korr)
-        lv_rw_korr_ceil = math.ceil(lv_rw_korr)
-        lv_rw_korr_nachkomma = lv_rw_korr % 1
-
-        lv_pr_floor = int(input(f"Rohwert abger. LV = {lv_rw_korr_floor}; PR = "))
-        lv_pr_ceil = int(input(f"Rohwert aufger. LV = {lv_rw_korr_ceil}; PR = "))
-        lv_pr_diff = lv_pr_ceil - lv_pr_floor
-        lv_pr_korr = round(lv_pr_floor + lv_pr_diff * lv_rw_korr_nachkomma)
-
+        lv_rw_korr, lv_pr_korr = get_lv_korrektur(lv_rw)
         lgs_korr_faktor = float(input("Korrekturfaktor LGS:"))
         lgs_rw_korr = round(lgs_rw * lgs_korr_faktor)
     else:
         lv_rw_korr = lv_rw
         lv_pr_korr = int(input("Rohwert LV = {lv_rw_korr}; PR = "))
         lgs_rw_korr = lgs_rw
-
     lgs_pr_korr = input("Rohwert LGS = {lgs_rw_korr}; PR = "))
+
+    lv_t = percentile_to_t(lv_rw_korr)
+    lgs_t = percentile_to_t(lgs_rw_korr)
+
     text += [
         f"\n## LV",
         f"\n- Summe richtige Lösungen: {correct_answ}",
         f"\n- Summe falsche Lösungen: {incorrect_answ}",
         f"\n- Gesamtzahl bearbeitete Items: {i}",
         f"\n- Rohwert LV: {lv_rw}; nach Tzp.-Korrektur: {lv_rw_korr}",
-        f"\n- **PR={lv_korr_pr} ;\tT-Wert=**", # TODO
+        f"\n- PR={lv_korr_pr} ;\tT-Wert={lv_t}",
         f"\n## LGS",
         f"\n- Wörter bis zur letzten Klammer: {words_until_last_item}",
         f"\n- Wörter nach der letzten Klammer: {words_after_last_item}",
         f"\n- Rohwert LGS: {lgs_rw}; nach Tzp.-Korrektur: {lgs_rw_korr}",
-        f"\n- **PR={lgs_pr_korr} ;\tT-Wert=**", # TODO
+        f"\n- PR={lgs_pr_korr} ;\tT-Wert={lgs_t}",
         f"\n## LGN",
         f"\n- Rohwert LGN: {round((correct_answ/i)*100)}%",
-        f"\n- **PR= ;\tT-Wert=**",
+        f"\n- **PR= ;\tT-Wert=**", # TODO
     ]
 
     return text
