@@ -157,7 +157,7 @@ def _mk_report(subparsers, common):
     parser.add_argument("test_date", type=str, help="Testdatum (YYYY-mm-dd)")
     parser.add_argument("test_type", type=str, choices=['LGVT', 'CFT', 'RSTARR'])
     parser.add_argument("--version", type=str,
-            choices=["Rosenkohl", "Toechter", "Laufburschen"])
+            choices=["Rosenkohl", "Toechter", "Laufbursche"])
     return
 
 

@@ -111,10 +111,10 @@ def get_fn_csv(version):
         fn_csv = Path(
             "~/bin/school/psych_lgvt_wortzahl_und_richtige/Toechter_WortzahlRichtigeAntwort.csv"
         )
-    elif version == "Laufburschen":
+    elif version == "Laufbursche":
         # TODO: Create that file
         fn_csv = Path(
-            "~/bin/school/psych_lgvt_wortzahl_und_richtige/Toechter_WortzahlRichtigeAntwort.csv"
+            "~/bin/school/psych_lgvt_wortzahl_und_richtige/Laufbursche_WortzahlRichtigeAntwort.csv"
         )
     else:
         raise IOError
