@@ -9,6 +9,7 @@ from platformdirs import user_data_path
 
 from . import __version__
 from .api.clients import new_client, create_documentation
+from .api.lgvt import mk_report
 from .core.config import config
 from .core.logger import logger
 
@@ -91,6 +92,7 @@ def _args(argv):
     common.add_argument("--database_url", default=DATABASE_URL)
     _new_client(subparsers, common)
     _create_documentation(subparsers, common)
+    _mk_report(subparsers, common)
 
     args = parser.parse_args(argv)
     if not args.command:
@@ -138,6 +140,24 @@ def _create_documentation(subparsers, common):
     )
     parser.add_argument("client_id", type=int)
     parser.add_argument("form_paths", nargs='+')
+    return
+
+def _mk_report(subparsers, common):
+    """CLI adaptor for the api.lgvt.mk_report command.
+
+    :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
+    """
+    parser = subparsers.add_parser("mk_report", parents=[common])
+    parser.set_defaults(
+        command=mk_report,
+        help="Create a test report",
+    )
+    parser.add_argument("client_id", type=int)
+    parser.add_argument("test_date", type=str, help="Testdatum (YYYY-mm-dd)")
+    parser.add_argument("test_type", type=str, choices=['LGVT', 'CFT', 'RSTARR'])
+    parser.add_argument("--version", type=str,
+            choices=["Rosenkohl", "Toechter", "Laufburschen"])
     return
 
 
