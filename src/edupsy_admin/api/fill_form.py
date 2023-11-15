@@ -44,7 +44,7 @@ def add_convenience_data(data:dict) -> dict:
     # TODO: Represent date_today and birthday in the same format in the db
     data["birthday"] = datetime.strptime(
             data["birthday"], "%Y-%m-%d"
-            ).strftime('%m/%d/%Y')
+            ).strftime('%d/%m/%Y')
     data["school_year"] = "2023/24"
 
     return data
