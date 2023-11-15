@@ -3,7 +3,7 @@ import argparse
 from itertools import product
 from pypdf import PdfReader, PdfWriter
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 import pandas as pd
 from fillpdf import fillpdfs
 import shutil
@@ -40,8 +40,11 @@ def add_convenience_data(data:dict) -> dict:
     data["school_head_w_school"]=schoolconfig["school_head_w_school"]
 
     today = date.today()
-    data["date_today"] = today.strftime("%d/%m/%Y")  # dd/mm/YY
-
+    data["date_today"] = today.strftime("%d/%m/%Y")  # dd/mm/YYYY
+    # TODO: Represent date_today and birthday in the same format in the db
+    data["birthday"] = datetime.strptime(
+            data["birthday"], "%Y-%m-%d"
+            ).strftime('%m/%d/%Y')
     data["school_year"] = "2023/24"
 
     return data
