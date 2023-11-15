@@ -14,7 +14,7 @@ edupsy_admin -w WARN -c ~/bin/edupsy_admin/etc/config.yml\
     ~/Templates/Beratung/LRSt_GenehmigungSchulleitung_2023_bsmn.pdf\
     ~/Templates/Beratung/LRSt_Stellungnahme_2023_bsmn.pdf\
     ~/Templates/Beratung/LRSt_Informationsschreiben_2023.pdf\
-    ~/Templates/Beratung/LRSt_Anschreiben_2023.pdf\
+    ~/Templates/Beratung/LRSt_Anschreiben_2023_bsmn.pdf\
     ~/Templates/Beratung/LRSt_AntragNachUeberpruefung_2023_bsmn.pdf
 else
 edupsy_admin -w WARN -c ~/bin/edupsy_admin/etc/config.yml\
