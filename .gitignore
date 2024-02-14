@@ -402,3 +402,4 @@ config.yml
 
 # Environment
 *.schoolpsy
+*.edupsy_admin
