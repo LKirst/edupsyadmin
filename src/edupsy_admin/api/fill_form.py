@@ -4,6 +4,7 @@ from itertools import product
 from pypdf import PdfReader, PdfWriter
 from pathlib import Path
 from datetime import date, datetime
+from dateutil.parser import parse
 import pandas as pd
 from fillpdf import fillpdfs
 import shutil
@@ -42,9 +43,7 @@ def add_convenience_data(data:dict) -> dict:
     today = date.today()
     data["date_today"] = today.strftime("%d/%m/%Y")  # dd/mm/YYYY
     # TODO: Represent date_today and birthday in the same format in the db
-    data["birthday"] = datetime.strptime(
-            data["birthday"], "%Y-%m-%d"
-            ).strftime('%d/%m/%Y')
+    data["birthday"] = parse(data["birthday"], dayfirst=True).strftime('%d/%m/%Y')
     data["school_year"] = "2023/24"
 
     return data
