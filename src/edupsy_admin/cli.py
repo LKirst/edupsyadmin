@@ -9,6 +9,7 @@ from platformdirs import user_data_path
 
 from . import __version__
 from .api.clients import new_client, create_documentation
+# TODO: change the api so that mkreport is a function that works for CFT as well
 from .api.lgvt import mk_report
 from .core.config import config
 from .core.logger import logger
