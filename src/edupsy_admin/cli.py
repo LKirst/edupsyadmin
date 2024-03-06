@@ -127,6 +127,25 @@ def _new_client(subparsers, common):
             help="Don't delete the csv after adding it to the db.")
     return
 
+# TODO: Implement this function
+def _set_client(subparsers, common):
+    """CLI adaptor for the api.clients.edit_client command.
+
+    :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
+    """
+    parser = subparsers.add_parser("set_client", parents=[common])
+    parser.set_defaults(
+        command=set_client,
+        help="Show or change a value for a client",
+    )
+    parser.add_argument("--variable", help=(
+        "the variable you want to display or set"
+        ))
+    parser.add_argument(
+            "--value",
+            help="The new value")
+    return
 
 def _create_documentation(subparsers, common):
     """CLI adaptor for the api.clients.create_documentation command.
