@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime
 import pandas as pd
@@ -38,6 +38,8 @@ class Client(Base):
     keyword_taetigkeitsbericht = Column(String)
     datetime_created = Column(DateTime)
     datetime_lastmodified = Column(DateTime)
+    notenschutz = Column(Boolean)
+    nachteilsausgleich = Column(Boolean)
 
     def __init__(
         self,
@@ -56,6 +58,8 @@ class Client(Base):
         telephone2: str = "",
         email: str = "",
         notes: str = "",
+        notenschutz: bool = False,
+        nachteilsausgleich: bool = False,
         keyword_taetigkeitsbericht: str = "",
     ):
         if client_id:
@@ -77,8 +81,10 @@ class Client(Base):
         self.entry_date = entry_date
         self.class_name = class_name
         self.keyword_taetigkeitsbericht = keyword_taetigkeitsbericht
+        self.notenschutz = notenschutz
+        self.Nachteilsausgleich = nachteilsausgleich
 
-        self.datetime_created = datetime.now().strftime("%Y-%m-%d, %H:%M:%S.%f")
+        self.datetime_created = datetime.now()
         self.datetime_lastmodified = self.datetime_created
 
     def __repr__(self):
@@ -178,7 +184,9 @@ def enter_client_untiscsv(clients_manager, csv):
     client_id_n = clients_manager.add_client(
         school="FOSBOS",
         gender=untis_df["gender"].item(),
-        entry_date=untis_df["entryDate"].item(),
+        entry_date=datetime.strptime(
+            untis_df["entryDate"].item(),'%d.%m.%Y'
+            ).strftime('%Y-%m-%d'),
         class_name=untis_df["klasse.name"].item(),
         first_name=untis_df["foreName"].item(),
         last_name=untis_df["longName"].item(),
