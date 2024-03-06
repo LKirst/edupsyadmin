@@ -57,8 +57,6 @@ class Client(Base):
         email: str = "",
         notes: str = "",
         keyword_taetigkeitsbericht: str = "",
-        datetime_created: str = None,
-        datetime_lastmodified: str = None,
     ):
         if client_id:
             self.client_id = client_id
@@ -80,8 +78,8 @@ class Client(Base):
         self.class_name = class_name
         self.keyword_taetigkeitsbericht = keyword_taetigkeitsbericht
 
-        self.datetime_created = datetime_created or datetime.now()
-        self.datetime_lastmodified = datetime_lastmodified or datetime.now()
+        self.datetime_created = datetime.now().strftime("%Y-%m-%d, %H:%M:%S.%f")
+        self.datetime_lastmodified = self.datetime_created
 
     def __repr__(self):
         representation = (
@@ -184,7 +182,9 @@ def enter_client_untiscsv(clients_manager, csv):
         class_name=untis_df["klasse.name"].item(),
         first_name=untis_df["foreName"].item(),
         last_name=untis_df["longName"].item(),
-        birthday=untis_df["birthDate"].item(),
+        birthday=datetime.strptime(
+            untis_df["birthDate"].item(), '%d.%m.%Y'
+            ).strftime('%Y-%m-%d'),
         street=untis_df["address.street"].item(),
         city=str(untis_df["address.postCode"].item()) + " " + untis_df["address.city"].item(),
         telephone1=str(untis_df["address.mobile"].item() or untis_df["address.phone"].item()),

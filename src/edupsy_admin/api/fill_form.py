@@ -40,10 +40,10 @@ def add_convenience_data(data:dict) -> dict:
     data["school_street"]=schoolconfig["school_street"]
     data["school_head_w_school"]=schoolconfig["school_head_w_school"]
 
+    # for forms, I use the format dd/mm/YYYY; internally, I use YYYY-mm-dd
     today = date.today()
-    data["date_today"] = today.strftime("%d/%m/%Y")  # dd/mm/YYYY
-    # TODO: Represent date_today and birthday in the same format in the db
-    data["birthday"] = parse(data["birthday"], dayfirst=True).strftime('%d/%m/%Y')
+    data["date_today"] = today.strftime("%d/%m/%Y")
+    data["birthday"] = parse(data["birthday"], dayfirst=False).strftime('%d/%m/%Y')
     data["school_year"] = "2023/24"
 
     return data
