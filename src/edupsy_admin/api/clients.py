@@ -135,6 +135,28 @@ class ClientsManager:
             client_dict.update(decr_vars)
             return client_dict
 
+    def get_na_ns(self, school:str) -> pd.DataFrame:
+        logger.debug(f"trying to query nachteilsausgleich and notenschutz")
+        with self.Session() as session:
+            results = session.query(Client).filter((
+                    ((Client.notenschutz==True) or
+                     (Client.nachteilsausgleich==True))
+                    and
+                    (Client.school==school))
+                    ).all()
+            results_list_of_dict = [
+                    {
+                        'id': entry.client_id,
+                        'class_name': entry.class_name,
+                        'first_name': encr.decrypt(entry.first_name_encr),
+                        'last_name': encr.decrypt(entry.last_name_encr),
+                        'notenschutz': entry.notenschutz,
+                        'nachteilsausgleich': entry.nachteilsausgleich
+                    }
+                    for entry in results
+                    ]
+            return pd.DataFrame.from_dict(results_list_of_dict)
+
     def edit_client(self, client_id: int, new_data):
         logger.debug(f"editing client (id = {client_id})")
         with self.Session() as session:
@@ -183,14 +205,30 @@ def set_client(
         config_path=config_path,
     )
     if value:
-        # TODO: Implement this
-        pass
+        if key in ['notenschutz', 'nachteilsausgleich']:
+            value = bool(int(value))
+        new_data={key:value}
+        clients_manager.edit_client(client_id, new_data)
     else:
         client_dict = clients_manager.get_decrypted_client(client_id)
         print('')
         print(client_dict[key])
         print('')
 
+def get_na_ns(
+        app_username:str, app_uid:str, database_url:str, config_path:str,
+        school: str, out: str = None):
+    clients_manager = ClientsManager(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        config_path=config_path
+        )
+    df=clients_manager.get_na_ns(school)
+    if out:
+        df.to_csv(out, index=False)
+    else:
+        print(df)
 
 def enter_client_untiscsv(clients_manager, csv):
     """Read client from csv"""
@@ -218,6 +256,7 @@ def enter_client_untiscsv(clients_manager, csv):
         client_id=client_id
     )
     return client_id_n
+
 
 
 def enter_client_cli(clients_manager):

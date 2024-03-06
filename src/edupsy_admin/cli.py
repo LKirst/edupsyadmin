@@ -8,7 +8,7 @@ from inspect import getfullargspec
 from platformdirs import user_data_path
 
 from . import __version__
-from .api.clients import new_client, create_documentation, set_client
+from .api.clients import new_client, create_documentation, set_client, get_na_ns
 # TODO: change the api so that mkreport is a function that works for CFT as well
 from .api.lgvt import mk_report
 from .core.config import config
@@ -96,6 +96,7 @@ def _args(argv):
     _create_documentation(subparsers, common)
     _mk_report(subparsers, common)
     _set_client(subparsers, common)
+    _get_na_ns(subparsers, common)
 
     args = parser.parse_args(argv)
     if not args.command:
@@ -129,7 +130,6 @@ def _new_client(subparsers, common):
             help="Don't delete the csv after adding it to the db.")
     return
 
-# TODO: Implement this function
 def _set_client(subparsers, common):
     """CLI adaptor for the api.clients.set_client command.
 
@@ -149,6 +149,22 @@ def _set_client(subparsers, common):
             "--value",
             help="The new value")
     return
+
+def _get_na_ns(subparsers, common):
+    """CLI adaptor for the api.clients.get_na_ns command.
+
+    :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
+    """
+    parser = subparsers.add_parser("get_na_ns", parents=[common])
+    parser.set_defaults(
+        command=get_na_ns,
+        help="Show notenschutz and nachteilsausgleich",
+    )
+    parser.add_argument('school', help='which school')
+    parser.add_argument('--out', help='path for an output file')
+    return
+
 
 def _create_documentation(subparsers, common):
     """CLI adaptor for the api.clients.create_documentation command.
