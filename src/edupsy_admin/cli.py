@@ -8,7 +8,7 @@ from inspect import getfullargspec
 from platformdirs import user_data_path
 
 from . import __version__
-from .api.clients import new_client, create_documentation
+from .api.clients import new_client, create_documentation, set_client
 # TODO: change the api so that mkreport is a function that works for CFT as well
 from .api.lgvt import mk_report
 from .core.config import config
@@ -72,7 +72,8 @@ def _args(argv):
     """
     parser = ArgumentParser()
     parser.add_argument(
-        "-c", "--config_path", action="append", help="config file [etc/config.yml]"
+        "-c", "--config_path",
+        action="append", help="config file [etc/config.yml]"
     )
     parser.add_argument(
         "-v",
@@ -94,6 +95,7 @@ def _args(argv):
     _new_client(subparsers, common)
     _create_documentation(subparsers, common)
     _mk_report(subparsers, common)
+    _set_client(subparsers, common)
 
     args = parser.parse_args(argv)
     if not args.command:
@@ -129,7 +131,7 @@ def _new_client(subparsers, common):
 
 # TODO: Implement this function
 def _set_client(subparsers, common):
-    """CLI adaptor for the api.clients.edit_client command.
+    """CLI adaptor for the api.clients.set_client command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
@@ -139,7 +141,8 @@ def _set_client(subparsers, common):
         command=set_client,
         help="Show or change a value for a client",
     )
-    parser.add_argument("--variable", help=(
+    parser.add_argument("client_id", type=int)
+    parser.add_argument("key", help=(
         "the variable you want to display or set"
         ))
     parser.add_argument(
@@ -175,7 +178,8 @@ def _mk_report(subparsers, common):
     )
     parser.add_argument("client_id", type=int)
     parser.add_argument("test_date", type=str, help="Testdatum (YYYY-mm-dd)")
-    parser.add_argument("test_type", type=str, choices=['LGVT', 'CFT', 'RSTARR'])
+    parser.add_argument("test_type", type=str,
+                        choices=['LGVT', 'CFT', 'RSTARR'])
     parser.add_argument("--version", type=str,
             choices=["Rosenkohl", "Toechter", "Laufbursche"])
     return

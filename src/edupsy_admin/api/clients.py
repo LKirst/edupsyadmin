@@ -173,6 +173,24 @@ def new_client(
     else:
         enter_client_cli(clients_manager)
 
+def set_client(
+        app_username:str, app_uid:str, database_url:str, config_path:str,
+        client_id:str, key:str, value:str=None):
+    clients_manager = ClientsManager(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        config_path=config_path,
+    )
+    if value:
+        # TODO: Implement this
+        pass
+    else:
+        client_dict = clients_manager.get_decrypted_client(client_id)
+        print('')
+        print(client_dict[key])
+        print('')
+
 
 def enter_client_untiscsv(clients_manager, csv):
     """Read client from csv"""
@@ -227,7 +245,7 @@ def enter_client_cli(clients_manager):
 
 def create_documentation(
         app_username:str, app_uid:str, database_url:str, config_path:str,
-        client_id:str, form_paths:list):
+        client_id:int, form_paths:list):
     clients_manager = ClientsManager(
         database_url=database_url,
         app_uid=app_uid,
