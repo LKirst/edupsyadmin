@@ -400,6 +400,9 @@ config.yml
 # PDFS
 *.pdf
 
+# CSVs
+*.csv
+
 # Environment
 *.schoolpsy
 *.edupsy_admin
