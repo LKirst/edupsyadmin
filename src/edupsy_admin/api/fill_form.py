@@ -43,7 +43,11 @@ def add_convenience_data(data:dict) -> dict:
     # for forms, I use the format dd/mm/YYYY; internally, I use YYYY-mm-dd
     today = date.today()
     data["date_today"] = today.strftime("%d/%m/%Y")
-    data["birthday"] = parse(data["birthday"], dayfirst=False).strftime('%d/%m/%Y')
+    try:
+        data["birthday"] = parse(data["birthday"], dayfirst=False).strftime('%d/%m/%Y')
+    except:
+        logger.error("The birthday could not be parsed.")
+        data["birthday"] = ""
     data["school_year"] = "2023/24"
 
     return data
