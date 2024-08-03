@@ -10,6 +10,8 @@ import numpy as np
 import dataframe_image as dfi
 from fpdf import FPDF
 
+from .clients import get_data_raw
+
 pd.set_option("display.precision", 1)
 
 
@@ -31,15 +33,6 @@ class Report(FPDF):
         self.set_font("Arial", "I", 8)
         self.set_text_color(128)
         self.cell(0, 10, "Page " + str(self.page_no()), border=0, ln=0, align="C")
-
-
-def read_csv(*args) -> pd.DataFrame:
-    l = []
-    for path in args:
-        df = pd.read_csv(path, index_col=None, header=0)
-        l.append(df)
-    concat_df = pd.concat(l, axis=0, ignore_index=True)
-    return concat_df
 
 
 def get_subcategories(categorykey: str, extrcategories: list[str] = None) -> list[str]:
@@ -244,79 +237,63 @@ def create_taetigkeitsbericht_report(
     report.image(wstd_img, x=15, y=20, w=report.WIDTH - 20)
     report.output(basename_out + "_report.pdf")
 
+def taetigkeitsbericht(
+        app_username,
+        app_uid,
+        database_url,
+        config_path,
+        wst_psy:int,
+        nstudents:list,
+        out_basename:str = "Taetigkeitsbericht_Out",
+        min_per_ses:int = 45,
+        wstd_total:int = 23,
+        name:str = "Schulpsychologie"
+        ) -> None
+    """
+    Create a PDF for the Taetigkeitsbericht.
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "wstd_psy", type=int, help="Anrechnungsstunden in Wochenstunden"
+    param wstd_psy [int]: Anrechnungsstunden in Wochenstunden
+    param nstudents [list]: list of strings with item containing the name of
+        the school and the number of students at that school, e.g. Schulname625
+    param out_basename [str]: base name for the output files.
+        Defaults to "Taetigkeitsbericht_Out".
+    param min_per_ses [int]: duration of one session in minutes.
+        Defaults to 45.
+    param wstd_total [int]: total Wochstunden (depends on your school).
+        Defaults to 23.
     )
-    parser.add_argument(
-        "nstudents",
-        nargs="+",
-        help=(
-            "list of strings with item containing the name of the school "
-            "and the number of students at that school, e.g. Schulname625"
-        ),
+    param name [str]: name for the header of the pdf report.
+        Defaults to "Schulpsychologie".
     )
-    parser.add_argument(
-        "--out_basename",
-        type=str,
-        default="Taetigkeitsbericht_Out",
-        help="base name for the output files; default is 'Taetigkeitsbericht_Out'",
-    )
-    parser.add_argument(
-        "--min_per_ses",
-        type=int,
-        default=45,
-        help="duration of one session in minutes; default is 45",
-    )
-    parser.add_argument(
-        "--wstd_total",
-        type=int,
-        default=23,
-        help="total Wochstunden (depends on your school); default is 23",
-    )
-    parser.add_argument("--csvfiles", nargs="+", type=str, help="list of files")
-    parser.add_argument(
-        "--name",
-        type=str,
-        default="Schulpsychologie",
-        help="name for the header of the pdf report",
-    )
-    args = parser.parse_args()
+    """
 
-    if args.csvfiles is not None:
-        # Read in the csv-files and create a summary for categories
-        df = read_csv(*args.csvfiles)
-        df, summary_categories = add_categories_to_df(df, "taetkey")
-        df.to_csv(args.out_basename + "_df.csv")
-        print(df)
-        summary_categories.to_csv(args.out_basename + "_categories.csv")
-        print(summary_categories)
+    # Query the data
+    df = get_data_raw(app_username, app_uid, database_url, config_path)
+    df, summary_categories = add_categories_to_df(df, "taetkey")
+    df.to_csv(out_basename + "_df.csv")
+    print(df)
+    summary_categories.to_csv(out_basename + "_categories.csv")
+    print(summary_categories)
 
-        # Summary statistics for nsitzungen
-        summarystats_nsitzungen = summary_statistics_nsitzungen(
-            df, min_per_ses=args.min_per_ses
-        )
-        summarystats_nsitzungen.to_csv(args.out_basename + "_nsitzungen.csv")
-        print(summarystats_nsitzungen)
+    # Summary statistics for nsitzungen
+    summarystats_nsitzungen = summary_statistics_nsitzungen(
+        df, min_per_ses=min_per_ses
+    )
+    summarystats_nsitzungen.to_csv(out_basename + "_nsitzungen.csv")
+    print(summarystats_nsitzungen)
 
-        zstd_spsy_year_actual = summarystats_nsitzungen.loc["all", "zeitstunden"]
-    else:
-        zstd_spsy_year_actual = None
-        summary_categories = None
-        summarystats_nsitzungen = None
+    zstd_spsy_year_actual = summarystats_nsitzungen.loc["all", "zeitstunden"]
 
     # Summary statistics for Wochenstunden
     summarystats_wstd = summary_statistics_wstd(
-        args.wstd_psy, args.wstd_total, zstd_spsy_year_actual, *args.nstudents
+        wstd_psy, wstd_total, zstd_spsy_year_actual, *nstudents
     )
-    summarystats_wstd.to_csv(args.out_basename + "_wstd.csv")
+    summarystats_wstd.to_csv(out_basename + "_wstd.csv")
     print(summarystats_wstd)
 
     create_taetigkeitsbericht_report(
-        args.out_basename,
-        args.name,
+        out_basename,
+        name,
         summarystats_wstd,
         summary_categories,
         summarystats_nsitzungen,

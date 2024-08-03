@@ -61,6 +61,7 @@ class Client(Base):
         notenschutz: bool = False,
         nachteilsausgleich: bool = False,
         keyword_taetigkeitsbericht: str = "",
+        n_sessions: int = 1,
     ):
         if client_id:
             self.client_id = client_id
@@ -83,6 +84,7 @@ class Client(Base):
         self.keyword_taetigkeitsbericht = keyword_taetigkeitsbericht
         self.notenschutz = notenschutz
         self.Nachteilsausgleich = nachteilsausgleich
+        self.n_sessions = n_sessions
 
         self.datetime_created = datetime.now()
         self.datetime_lastmodified = self.datetime_created
@@ -157,6 +159,15 @@ class ClientsManager:
                     ]
             return pd.DataFrame.from_dict(results_list_of_dict)
 
+    def get_data_raw(self):
+        """
+        Get the data without decrypting encrypted data.
+        """
+        logger.debug(f"trying to query the entire database")
+        with self.Session() as session:
+            results = session.query(Client).all()
+        return pd.DataFrame(results)
+
     def edit_client(self, client_id: int, new_data):
         logger.debug(f"editing client (id = {client_id})")
         with self.Session() as session:
@@ -229,6 +240,17 @@ def get_na_ns(
         df.to_csv(out, index=False)
     else:
         print(df)
+
+def get_data_raw(
+        app_username:str, app_uid:str, database_url:str, config_path:str):
+    clients_manager = ClientsManager(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        config_path=config_path
+        )
+    df=clients_manager.get_data_raw(school)
+    return df
 
 def enter_client_untiscsv(clients_manager, csv):
     """Read client from csv"""

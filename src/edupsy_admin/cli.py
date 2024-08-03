@@ -11,6 +11,7 @@ from . import __version__
 from .api.clients import new_client, create_documentation, set_client, get_na_ns
 # TODO: change the api so that mkreport is a function that works for CFT as well
 from .api.lgvt import mk_report
+from .api.taetigkeitsbericht_from_db import taetigkeitsbericht
 from .core.config import config
 from .core.logger import logger
 
@@ -199,6 +200,55 @@ def _mk_report(subparsers, common):
     parser.add_argument("--version", type=str,
             choices=["Rosenkohl", "Toechter", "Laufbursche"])
     return
+
+def taetigkeitsbericht(subparsers, common):
+    """CLI adaptor for the api.taetigkeitsbericht_from_db.taetigkeitsbericht command.
+
+    :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
+    """
+    parser = subparsers.add_parser("taetigkeitsbericht", parents=[common])
+    parser.set_defaults(
+        command=taetigkeitsberitch,
+        help="Create a PDF output for the Taetigkeitsbericht",
+    )
+    parser.add_argument(
+        "wstd_psy", type=int, help="Anrechnungsstunden in Wochenstunden"
+    )
+    parser.add_argument(
+        "nstudents",
+        nargs="+",
+        help=(
+            "list of strings with item containing the name of the school "
+            "and the number of students at that school, e.g. Schulname625"
+        ),
+    )
+    parser.add_argument(
+        "--out_basename",
+        type=str,
+        default="Taetigkeitsbericht_Out",
+        help="base name for the output files; default is 'Taetigkeitsbericht_Out'",
+    )
+    parser.add_argument(
+        "--min_per_ses",
+        type=int,
+        default=45,
+        help="duration of one session in minutes; default is 45",
+    )
+    parser.add_argument(
+        "--wstd_total",
+        type=int,
+        default=23,
+        help="total Wochstunden (depends on your school); default is 23",
+    )
+    parser.add_argument(
+        "--name",
+        type=str,
+        default="Schulpsychologie",
+        help="name for the header of the pdf report",
+    )
+    return
+
 
 
 # Make the module executable.
