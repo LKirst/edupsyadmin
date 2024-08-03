@@ -40,6 +40,7 @@ class Client(Base):
     datetime_lastmodified = Column(DateTime)
     notenschutz = Column(Boolean)
     nachteilsausgleich = Column(Boolean)
+    n_sessions = Column(Integer)
 
     def __init__(
         self,
