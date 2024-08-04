@@ -248,7 +248,7 @@ def taetigkeitsbericht(
         min_per_ses:int = 45,
         wstd_total:int = 23,
         name:str = "Schulpsychologie"
-        ) -> None
+        ) -> None:
     """
     Create a PDF for the Taetigkeitsbericht.
 
