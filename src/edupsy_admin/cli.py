@@ -1,6 +1,7 @@
 """ Implementation of the command line interface.
 
 """
+
 import os
 from argparse import ArgumentParser
 from inspect import getfullargspec
@@ -9,6 +10,7 @@ from platformdirs import user_data_path
 
 from . import __version__
 from .api.clients import new_client, create_documentation, set_client, get_na_ns
+
 # TODO: change the api so that mkreport is a function that works for CFT as well
 from .api.lgvt import mk_report
 from .api.taetigkeitsbericht_from_db import taetigkeitsbericht
@@ -20,11 +22,9 @@ __all__ = ("main",)
 
 APP_UID = "liebermann-schulpsychologie.github.io"
 USER_DATA_DIR = user_data_path(
-        appname = "edupsy_admin",
-        version = __version__,
-        ensure_exists = True
-        )
-DATABASE_URL = "sqlite:///" +  os.path.join(USER_DATA_DIR, "edupsy_admin.db")
+    appname="edupsy_admin", version=__version__, ensure_exists=True
+)
+DATABASE_URL = "sqlite:///" + os.path.join(USER_DATA_DIR, "edupsy_admin.db")
 
 
 def main(argv=None) -> int:
@@ -73,8 +73,7 @@ def _args(argv):
     """
     parser = ArgumentParser()
     parser.add_argument(
-        "-c", "--config_path",
-        action="append", help="config file [etc/config.yml]"
+        "-c", "--config_path", action="append", help="config file [etc/config.yml]"
     )
     parser.add_argument(
         "-v",
@@ -122,14 +121,20 @@ def _new_client(subparsers, common):
         command=new_client,
         help="Add a new client",
     )
-    parser.add_argument("--csv", help=(
-        "An untis csv with one row. If you pass no csv path, you can "
-        "interactively enter the data"
-        ))
     parser.add_argument(
-            "--keepfile", action="store_true",
-            help="Don't delete the csv after adding it to the db.")
+        "--csv",
+        help=(
+            "An untis csv with one row. If you pass no csv path, you can "
+            "interactively enter the data"
+        ),
+    )
+    parser.add_argument(
+        "--keepfile",
+        action="store_true",
+        help="Don't delete the csv after adding it to the db.",
+    )
     return
+
 
 def _set_client(subparsers, common):
     """CLI adaptor for the api.clients.set_client command.
@@ -143,13 +148,10 @@ def _set_client(subparsers, common):
         help="Show or change a value for a client",
     )
     parser.add_argument("client_id", type=int)
-    parser.add_argument("key", help=(
-        "the variable you want to display or set"
-        ))
-    parser.add_argument(
-            "--value",
-            help="The new value")
+    parser.add_argument("key", help=("the variable you want to display or set"))
+    parser.add_argument("--value", help="The new value")
     return
+
 
 def _get_na_ns(subparsers, common):
     """CLI adaptor for the api.clients.get_na_ns command.
@@ -162,8 +164,8 @@ def _get_na_ns(subparsers, common):
         command=get_na_ns,
         help="Show notenschutz and nachteilsausgleich",
     )
-    parser.add_argument('school', help='which school')
-    parser.add_argument('--out', help='path for an output file')
+    parser.add_argument("school", help="which school")
+    parser.add_argument("--out", help="path for an output file")
     return
 
 
@@ -179,8 +181,9 @@ def _create_documentation(subparsers, common):
         help="Fill a pdf form",
     )
     parser.add_argument("client_id", type=int)
-    parser.add_argument("form_paths", nargs='+')
+    parser.add_argument("form_paths", nargs="+")
     return
+
 
 def _mk_report(subparsers, common):
     """CLI adaptor for the api.lgvt.mk_report command.
@@ -195,11 +198,12 @@ def _mk_report(subparsers, common):
     )
     parser.add_argument("client_id", type=int)
     parser.add_argument("test_date", type=str, help="Testdatum (YYYY-mm-dd)")
-    parser.add_argument("test_type", type=str,
-                        choices=['LGVT', 'CFT', 'RSTARR'])
-    parser.add_argument("--version", type=str,
-            choices=["Rosenkohl", "Toechter", "Laufbursche"])
+    parser.add_argument("test_type", type=str, choices=["LGVT", "CFT", "RSTARR"])
+    parser.add_argument(
+        "--version", type=str, choices=["Rosenkohl", "Toechter", "Laufbursche"]
+    )
     return
+
 
 def taetigkeitsbericht(subparsers, common):
     """CLI adaptor for the api.taetigkeitsbericht_from_db.taetigkeitsbericht command.
@@ -248,7 +252,6 @@ def taetigkeitsbericht(subparsers, common):
         help="name for the header of the pdf report",
     )
     return
-
 
 
 # Make the module executable.
