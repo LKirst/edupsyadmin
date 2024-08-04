@@ -66,6 +66,7 @@ def create_report(path):
     # remove the plot png
     os.remove(fn_plot)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(

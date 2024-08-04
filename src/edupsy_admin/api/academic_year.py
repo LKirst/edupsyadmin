@@ -9,10 +9,8 @@ def get_academic_year_string(end_of_year):
 
 
 def get_estimated_end_of_academic_year(
-        date_current,
-        grade_current=0,
-        grade_target=0,
-        last_month=7):
+    date_current, grade_current=0, grade_target=0, last_month=7
+):
     remaining_years = grade_target - grade_current
     date_target = date_current + relativedelta.relativedelta(years=remaining_years)
     if date_target.month > last_month:
@@ -54,7 +52,8 @@ if __name__ == "__main__":
         action="store_true",
         help=(
             "if true, 3 years will be added to grade_target and the date returned "
-            "is the date when the records should be destroyed"),
+            "is the date when the records should be destroyed"
+        ),
     )
     args = parser.parse_args()
 

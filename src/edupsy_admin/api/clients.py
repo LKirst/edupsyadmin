@@ -125,39 +125,52 @@ class ClientsManager:
     def get_decrypted_client(self, client_id: int) -> dict:
         logger.debug(f"trying to access client (id = {client_id})")
         with self.Session() as session:
-            client_dict = session.query(Client).filter_by(client_id=client_id).first().__dict__
+            client_dict = (
+                session.query(Client).filter_by(client_id=client_id).first().__dict__
+            )
             decr_vars = {}
             for attributekey in client_dict.keys():
                 if attributekey.endswith("_encr"):
                     attributekey_decr = attributekey.removesuffix("_encr")
                     try:
-                        decr_vars[attributekey_decr] = encr.decrypt(client_dict[attributekey])
+                        decr_vars[attributekey_decr] = encr.decrypt(
+                            client_dict[attributekey]
+                        )
                     except:
-                        logger.critical(f"attribute: {attributekey}; value: {client_dict[attributekey]}")
+                        logger.critical(
+                            f"attribute: {attributekey}; value: {client_dict[attributekey]}"
+                        )
                         raise
             client_dict.update(decr_vars)
             return client_dict
 
-    def get_na_ns(self, school:str) -> pd.DataFrame:
+    def get_na_ns(self, school: str) -> pd.DataFrame:
         logger.debug(f"trying to query nachteilsausgleich and notenschutz")
         with self.Session() as session:
-            results = session.query(Client).filter((
-                    ((Client.notenschutz==True) or
-                     (Client.nachteilsausgleich==True))
-                    and
-                    (Client.school==school))
-                    ).all()
+            results = (
+                session.query(Client)
+                .filter(
+                    (
+                        (
+                            (Client.notenschutz == True)
+                            or (Client.nachteilsausgleich == True)
+                        )
+                        and (Client.school == school)
+                    )
+                )
+                .all()
+            )
             results_list_of_dict = [
-                    {
-                        'id': entry.client_id,
-                        'class_name': entry.class_name,
-                        'first_name': encr.decrypt(entry.first_name_encr),
-                        'last_name': encr.decrypt(entry.last_name_encr),
-                        'notenschutz': entry.notenschutz,
-                        'nachteilsausgleich': entry.nachteilsausgleich
-                    }
-                    for entry in results
-                    ]
+                {
+                    "id": entry.client_id,
+                    "class_name": entry.class_name,
+                    "first_name": encr.decrypt(entry.first_name_encr),
+                    "last_name": encr.decrypt(entry.last_name_encr),
+                    "notenschutz": entry.notenschutz,
+                    "nachteilsausgleich": entry.nachteilsausgleich,
+                }
+                for entry in results
+            ]
             return pd.DataFrame.from_dict(results_list_of_dict)
 
     def get_data_raw(self):
@@ -207,9 +220,16 @@ def new_client(
     else:
         enter_client_cli(clients_manager)
 
+
 def set_client(
-        app_username:str, app_uid:str, database_url:str, config_path:str,
-        client_id:str, key:str, value:str=None):
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    config_path: str,
+    client_id: str,
+    key: str,
+    value: str = None,
+):
     clients_manager = ClientsManager(
         database_url=database_url,
         app_uid=app_uid,
@@ -217,78 +237,88 @@ def set_client(
         config_path=config_path,
     )
     if value:
-        if key in ['notenschutz', 'nachteilsausgleich']:
+        if key in ["notenschutz", "nachteilsausgleich"]:
             value = bool(int(value))
-        new_data={key:value}
+        new_data = {key: value}
         clients_manager.edit_client(client_id, new_data)
     else:
         client_dict = clients_manager.get_decrypted_client(client_id)
-        print('')
+        print("")
         print(client_dict[key])
-        print('')
+        print("")
+
 
 def get_na_ns(
-        app_username:str, app_uid:str, database_url:str, config_path:str,
-        school: str, out: str = None):
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    config_path: str,
+    school: str,
+    out: str = None,
+):
     clients_manager = ClientsManager(
         database_url=database_url,
         app_uid=app_uid,
         app_username=app_username,
-        config_path=config_path
-        )
-    df=clients_manager.get_na_ns(school)
+        config_path=config_path,
+    )
+    df = clients_manager.get_na_ns(school)
     if out:
         df.to_csv(out, index=False)
     else:
         print(df)
 
-def get_data_raw(
-        app_username:str, app_uid:str, database_url:str, config_path:str):
+
+def get_data_raw(app_username: str, app_uid: str, database_url: str, config_path: str):
     clients_manager = ClientsManager(
         database_url=database_url,
         app_uid=app_uid,
         app_username=app_username,
-        config_path=config_path
-        )
-    df=clients_manager.get_data_raw(school)
+        config_path=config_path,
+    )
+    df = clients_manager.get_data_raw(school)
     return df
+
 
 def enter_client_untiscsv(clients_manager, csv):
     """Read client from csv"""
     untis_df = pd.read_csv(csv)
-    if 'client_id' in untis_df.columns:
-        client_id=untis_df["client_id"].item()
+    if "client_id" in untis_df.columns:
+        client_id = untis_df["client_id"].item()
     else:
-        client_id=None
+        client_id = None
     client_id_n = clients_manager.add_client(
         school="FOSBOS",
         gender=untis_df["gender"].item(),
-        entry_date=datetime.strptime(
-            untis_df["entryDate"].item(),'%d.%m.%Y'
-            ).strftime('%Y-%m-%d'),
+        entry_date=datetime.strptime(untis_df["entryDate"].item(), "%d.%m.%Y").strftime(
+            "%Y-%m-%d"
+        ),
         class_name=untis_df["klasse.name"].item(),
         first_name=untis_df["foreName"].item(),
         last_name=untis_df["longName"].item(),
-        birthday=datetime.strptime(
-            untis_df["birthDate"].item(), '%d.%m.%Y'
-            ).strftime('%Y-%m-%d'),
+        birthday=datetime.strptime(untis_df["birthDate"].item(), "%d.%m.%Y").strftime(
+            "%Y-%m-%d"
+        ),
         street=untis_df["address.street"].item(),
-        city=str(untis_df["address.postCode"].item()) + " " + untis_df["address.city"].item(),
-        telephone1=str(untis_df["address.mobile"].item() or untis_df["address.phone"].item()),
+        city=str(untis_df["address.postCode"].item())
+        + " "
+        + untis_df["address.city"].item(),
+        telephone1=str(
+            untis_df["address.mobile"].item() or untis_df["address.phone"].item()
+        ),
         email=untis_df["address.email"].item(),
-        client_id=client_id
+        client_id=client_id,
     )
     return client_id_n
 
 
-
 def enter_client_cli(clients_manager):
     """Create an unencrypted csvfile interactively"""
-    client_id=input("client_id (press ENTER if you don't know): ")
+    client_id = input("client_id (press ENTER if you don't know): ")
     if client_id:
-        client_id=int(client_id)
+        client_id = int(client_id)
     else:
-        client_id=None
+        client_id = None
     client_id_n = clients_manager.add_client(
         school=input("School: "),
         gender=input("Gender (f/m): "),
@@ -301,13 +331,19 @@ def enter_client_cli(clients_manager):
         city=input("City (postcode + name): "),
         telephone1=input("Telephone: "),
         email=input("Email: "),
-        client_id=client_id
+        client_id=client_id,
     )
     return client_id_n
 
+
 def create_documentation(
-        app_username:str, app_uid:str, database_url:str, config_path:str,
-        client_id:int, form_paths:list):
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    config_path: str,
+    client_id: int,
+    form_paths: list,
+):
     clients_manager = ClientsManager(
         database_url=database_url,
         app_uid=app_uid,

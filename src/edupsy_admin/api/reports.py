@@ -4,6 +4,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 class Report(FPDF):
     def __init__(self, heading, text, plot):
         super().__init__()
@@ -34,6 +35,7 @@ class Report(FPDF):
     def print_page(self):
         self.add_page()
         self.page_body()
+
 
 def normal_distribution_plot(v_lines, plot_filename="plot.png"):
     mu = 0

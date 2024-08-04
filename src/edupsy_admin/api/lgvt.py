@@ -7,6 +7,7 @@ from datetime import datetime
 
 from .convert_measures import percentile_to_t
 
+
 def askyn(prompt):
     yes = {"yes", "ye", "y"}
     no = {"no", "n"}
@@ -64,9 +65,9 @@ def get_indeces(fn, client_id, d_test, version):
     words_until_last_item = csv.Wortzahl.iloc[i - 1]
     words_after_last_item = int(input("Words read after the last item: "))
 
-    lv_rw = correct_answ*2 - incorrect_answ
+    lv_rw = correct_answ * 2 - incorrect_answ
     lgs_rw = words_until_last_item + words_after_last_item
-    lg_rw = round((correct_answ/i)*100)
+    lg_rw = round((correct_answ / i) * 100)
     if year < 11:
         lv_rw_korr, lv_pr_korr = get_lv_korrektur(lv_rw)
         lgs_korr_faktor = float(input("Korrekturfaktor LGS:"))
@@ -97,10 +98,11 @@ def get_indeces(fn, client_id, d_test, version):
         f"\n- PR={lgs_pr_korr} ;\tT-Wert={lgs_t:.2f}",
         f"\n## LGN",
         f"\n- Rohwert LGN: {lg_rw}%",
-        f"\n- PR={lg_pr} ;\tT-Wert={lg_t:.2f}", # TODO
+        f"\n- PR={lg_pr} ;\tT-Wert={lg_t:.2f}",  # TODO
     ]
 
     return text
+
 
 def get_fn_csv(version):
     if version == "Rosenkohl":
@@ -122,11 +124,12 @@ def get_fn_csv(version):
 
 
 def mk_report(
-        client_id: int,
-        test_date: str,
-        test_type: str="lgvt",
-        version: str="Rosenkohl",
-        directory="."):
+    client_id: int,
+    test_date: str,
+    test_type: str = "lgvt",
+    version: str = "Rosenkohl",
+    directory=".",
+):
     out_path = Path(directory).joinpath(f"{client_id}_Auswertung_LGVT.md")
     fn_csv = get_fn_csv(version)
     t_day = datetime.strptime(test_date, "%Y-%m-%d").date()
