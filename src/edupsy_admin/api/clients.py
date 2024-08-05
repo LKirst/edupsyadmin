@@ -8,6 +8,7 @@ from ..core.logger import logger
 from ..core.encrypt import Encryption
 from ..core.config import config
 from .fill_form import fill_form
+from .taetigkeitsbericht_check_key import check_keyword
 
 
 Base = declarative_base()
@@ -82,7 +83,8 @@ class Client(Base):
         self.gender = gender
         self.entry_date = entry_date
         self.class_name = class_name
-        self.keyword_taetigkeitsbericht = keyword_taetigkeitsbericht
+        self.keyword_taetigkeitsbericht = check_keyword(
+                keyword_taetigkeitsbericht)
         self.notenschutz = notenschutz
         self.Nachteilsausgleich = nachteilsausgleich
         self.n_sessions = n_sessions
@@ -239,6 +241,8 @@ def set_client(
     if value:
         if key in ["notenschutz", "nachteilsausgleich"]:
             value = bool(int(value))
+        if key == "keyword_taetigkeitsbericht":
+            value = check_keyword(value)
         new_data = {key: value}
         clients_manager.edit_client(client_id, new_data)
     else:
