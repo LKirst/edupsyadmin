@@ -97,6 +97,7 @@ def _args(argv):
     _mk_report(subparsers, common)
     _set_client(subparsers, common)
     _get_na_ns(subparsers, common)
+    _taetigkeitsbericht(subparsers, common)
 
     args = parser.parse_args(argv)
     if not args.command:
@@ -205,7 +206,7 @@ def _mk_report(subparsers, common):
     return
 
 
-def taetigkeitsbericht(subparsers, common):
+def _taetigkeitsbericht(subparsers, common):
     """CLI adaptor for the api.taetigkeitsbericht_from_db.taetigkeitsbericht command.
 
     :param subparsers: subcommand parsers
@@ -213,7 +214,7 @@ def taetigkeitsbericht(subparsers, common):
     """
     parser = subparsers.add_parser("taetigkeitsbericht", parents=[common])
     parser.set_defaults(
-        command=taetigkeitsberitch,
+        command=taetigkeitsbericht,
         help="Create a PDF output for the Taetigkeitsbericht",
     )
     parser.add_argument(

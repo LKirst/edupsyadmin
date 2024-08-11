@@ -184,7 +184,7 @@ class ClientsManager:
             results = session.query(Client).all()
         return pd.DataFrame(results)
 
-    def edit_client(self, client_id: int, new_data):
+    def edit_client(self, client_id: int, new_data: dict):
         logger.debug(f"editing client (id = {client_id})")
         with self.Session() as session:
             client = session.query(Client).filter_by(client_id=client_id).first()
@@ -232,6 +232,10 @@ def set_client(
     key: str,
     value: str = None,
 ):
+    """
+    Set the value for a key given a client_id; if no client_id is passed,
+    print the current value.
+    """
     clients_manager = ClientsManager(
         database_url=database_url,
         app_uid=app_uid,
