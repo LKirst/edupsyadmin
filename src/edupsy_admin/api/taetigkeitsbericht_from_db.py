@@ -14,7 +14,6 @@ from .clients import get_data_raw
 
 pd.set_option("display.precision", 1)
 
-
 class Report(FPDF):
     def __init__(self, name):
         super().__init__()
@@ -52,7 +51,7 @@ def add_categories_to_df(df: pd.DataFrame, category_colnm: str) -> pd.DataFrame:
     for key in category_keys:
         subcategories = get_subcategories(key)
         df.loc[df[category_colnm] == key, subcategories] = df.loc[
-            df[category_colnm] == key, "nsitzungen"
+            df[category_colnm] == key, "n_sessions"
         ]
         categories_all.extend(subcategories)
 
@@ -73,14 +72,14 @@ def add_categories_to_df(df: pd.DataFrame, category_colnm: str) -> pd.DataFrame:
     return df, summary_categories
 
 
-def summary_statistics_nsitzungen(df: pd.DataFrame, min_per_ses=45) -> pd.DataFrame:
-    nsitzungen = df.groupby("school")["nsitzungen"].describe()
-    nsitzungen.loc[:, "sum"] = df.groupby("school")["nsitzungen"].agg("sum")
-    total = df["nsitzungen"].describe()
-    total["sum"] = df["nsitzungen"].agg("sum")
-    nsitzungen.loc["all", :] = total
-    nsitzungen["zeitstunden"] = nsitzungen["sum"] * min_per_ses / 60
-    return nsitzungen
+def summary_statistics_n_sessions(df: pd.DataFrame, min_per_ses=45) -> pd.DataFrame:
+    n_sessions = df.groupby("school")["n_sessions"].describe()
+    n_sessions.loc[:, "sum"] = df.groupby("school")["n_sessions"].agg("sum")
+    total = df["n_sessions"].describe()
+    total["sum"] = df["n_sessions"].agg("sum")
+    n_sessions.loc["all", :] = total
+    n_sessions["zeitstunden"] = n_sessions["sum"] * min_per_ses / 60
+    return n_sessions
 
 
 def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> pd.DataFrame:
@@ -186,7 +185,7 @@ def summary_statistics_wstd(
     if zstd_spsy_year_actual is not None:
         summarystats_wstd.loc["zstd_spsy_year_actual", "value"] = zstd_spsy_year_actual
         summarystats_wstd.loc["zstd_spsy_week_actual", "value"] = (
-            zstd_spsy_year_actual / WW_YEAR
+            zstd_spsy_year_actual / summarystats_wstd.loc["ww_year","value"]
         )
         summarystats_wstd.loc["perc_spsy_year_actual", "value"] = (
             zstd_spsy_year_actual
@@ -200,15 +199,15 @@ def create_taetigkeitsbericht_report(
     name: str,
     summary_wstd: pd.Series,
     summary_categories: pd.DataFrame = None,
-    summary_nsitzungen: pd.DataFrame = None,
+    summary_n_sessions: pd.DataFrame = None,
 ) -> None:
     if not os.path.exists("resources"):
         os.makedirs("resources")
     wstd_img = "resources/summary_wstd.png"
-    dfi.export(summarystats_wstd, wstd_img, table_conversion="matplotlib")
-    if summary_nsitzungen is not None:
-        nsitzungen_img = "resources/summary_nsitzungen.png"
-        dfi.export(summary_nsitzungen, nsitzungen_img, table_conversion="matplotlib")
+    dfi.export(summary_wstd, wstd_img, table_conversion="matplotlib")
+    if summary_n_sessions is not None:
+        n_sessions_img = "resources/summary_n_sessions.png"
+        dfi.export(summary_n_sessions, n_sessions_img, table_conversion="matplotlib")
 
     report = Report(name)
     if summary_categories is not None:
@@ -230,9 +229,9 @@ def create_taetigkeitsbericht_report(
             ]:
                 report.cell(w=50, h=9, border=0, txt=f"{val[colnm]:.0f}")
             report.ln(18)  # linebreak
-    if summarystats_nsitzungen is not None:
+    if summary_n_sessions is not None:
         report.add_page()
-        report.image(nsitzungen_img, x=15, y=report.HEIGHT * 1 / 4, w=180)
+        report.image(n_sessions_img, x=15, y=report.HEIGHT * 1 / 4, w=180)
     report.add_page()
     report.image(wstd_img, x=15, y=20, w=report.WIDTH - 20)
     report.output(basename_out + "_report.pdf")
@@ -242,7 +241,7 @@ def taetigkeitsbericht(
         app_uid,
         database_url,
         config_path,
-        wst_psy:int,
+        wstd_psy:int,
         nstudents:list,
         out_basename:str = "Taetigkeitsbericht_Out",
         min_per_ses:int = 45,
@@ -250,7 +249,7 @@ def taetigkeitsbericht(
         name:str = "Schulpsychologie"
         ) -> None:
     """
-    Create a PDF for the Taetigkeitsbericht.
+    Create a PDF for the Taetigkeitsbericht. This function assumes your db has the columns 'keyword_taetigkeitsbericht' and 'n_sessions'
 
     param wstd_psy [int]: Anrechnungsstunden in Wochenstunden
     param nstudents [list]: list of strings with item containing the name of
@@ -269,20 +268,20 @@ def taetigkeitsbericht(
 
     # Query the data
     df = get_data_raw(app_username, app_uid, database_url, config_path)
-    df, summary_categories = add_categories_to_df(df, "taetkey")
+    df, summary_categories = add_categories_to_df(df, "keyword_taetigkeitsbericht")
     df.to_csv(out_basename + "_df.csv")
     print(df)
     summary_categories.to_csv(out_basename + "_categories.csv")
     print(summary_categories)
 
-    # Summary statistics for nsitzungen
-    summarystats_nsitzungen = summary_statistics_nsitzungen(
+    # Summary statistics for n_sessions
+    summarystats_n_sessions = summary_statistics_n_sessions(
         df, min_per_ses=min_per_ses
     )
-    summarystats_nsitzungen.to_csv(out_basename + "_nsitzungen.csv")
-    print(summarystats_nsitzungen)
+    summarystats_n_sessions.to_csv(out_basename + "_n_sessions.csv")
+    print(summarystats_n_sessions)
 
-    zstd_spsy_year_actual = summarystats_nsitzungen.loc["all", "zeitstunden"]
+    zstd_spsy_year_actual = summarystats_n_sessions.loc["all", "zeitstunden"]
 
     # Summary statistics for Wochenstunden
     summarystats_wstd = summary_statistics_wstd(
@@ -296,5 +295,5 @@ def taetigkeitsbericht(
         name,
         summarystats_wstd,
         summary_categories,
-        summarystats_nsitzungen,
+        summarystats_n_sessions,
     )

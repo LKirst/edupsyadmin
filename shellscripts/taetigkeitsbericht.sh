@@ -1,5 +1,5 @@
 wstd_psy=3
 
 edupsy_admin -w DEBUG -c ~/bin/edupsy_admin/etc/config.yml\
-    taetigkeitsbericht lukas.liebermann $wst_psy\
-    FOS300 BOS80 BfsSp20 BfsKp20 BfsEV20 Faks40
+    taetigkeitsbericht lukas.liebermann $wstd_psy \
+    FOS543 BOS93 BfsSp37 BfsKp106 BfsEV34 Faks80

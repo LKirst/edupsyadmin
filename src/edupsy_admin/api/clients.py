@@ -181,8 +181,9 @@ class ClientsManager:
         """
         logger.debug(f"trying to query the entire database")
         with self.Session() as session:
-            results = session.query(Client).all()
-        return pd.DataFrame(results)
+            query = session.query(Client).statement
+            df = pd.read_sql_query(query, session.bind)
+        return df
 
     def edit_client(self, client_id: int, new_data: dict):
         logger.debug(f"editing client (id = {client_id})")
@@ -284,7 +285,7 @@ def get_data_raw(app_username: str, app_uid: str, database_url: str, config_path
         app_username=app_username,
         config_path=config_path,
     )
-    df = clients_manager.get_data_raw(school)
+    df = clients_manager.get_data_raw()
     return df
 
 
