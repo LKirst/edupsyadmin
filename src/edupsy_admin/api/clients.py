@@ -173,7 +173,8 @@ class ClientsManager:
                 }
                 for entry in results
             ]
-            return pd.DataFrame.from_dict(results_list_of_dict)
+            df = pd.DataFrame.from_dict(results_list_of_dict)
+            return df.sort_values('last_name')
 
     def get_data_raw(self):
         """
