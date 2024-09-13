@@ -41,6 +41,8 @@ class Client(Base):
     datetime_lastmodified = Column(DateTime)
     notenschutz = Column(Boolean)
     nachteilsausgleich = Column(Boolean)
+    nta_sprachen = Column(Integer)
+    nta_mathephys = Column(Integer)
     n_sessions = Column(Integer)
 
     def __init__(
@@ -170,6 +172,8 @@ class ClientsManager:
                     "last_name": encr.decrypt(entry.last_name_encr),
                     "notenschutz": entry.notenschutz,
                     "nachteilsausgleich": entry.nachteilsausgleich,
+                    "nta_sprachen": entry.nta_sprachen,
+                    "nta_mathephys": entry.nta_mathephys,
                 }
                 for entry in results
             ]
