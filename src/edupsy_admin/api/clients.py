@@ -9,6 +9,9 @@ from ..core.encrypt import Encryption
 from ..core.config import config
 from .fill_form import fill_form
 from .taetigkeitsbericht_check_key import check_keyword
+from .int_from_str import extract_number
+# TODO
+#from .academic_year import
 
 
 Base = declarative_base()
@@ -36,6 +39,9 @@ class Client(Base):
     gender = Column(String)
     entry_date = Column(String)
     class_name = Column(String)
+    class_int = Column(Integer)
+    estimated_date_of_graduation = Column(DateTime)
+    document_shredding_date = Column(DateTime)
     keyword_taetigkeitsbericht = Column(String)
     datetime_created = Column(DateTime)
     datetime_lastmodified = Column(DateTime)
@@ -85,6 +91,12 @@ class Client(Base):
         self.gender = gender
         self.entry_date = entry_date
         self.class_name = class_name
+        self.class_int = extract_number(class_name)
+
+        # TODO
+        #self.estimated_date_of_graduation =
+        #self.document_shredding_date =
+
         self.keyword_taetigkeitsbericht = check_keyword(
                 keyword_taetigkeitsbericht)
         self.notenschutz = notenschutz
@@ -297,10 +309,13 @@ def get_data_raw(app_username: str, app_uid: str, database_url: str, config_path
 def enter_client_untiscsv(clients_manager, csv):
     """Read client from csv"""
     untis_df = pd.read_csv(csv)
+
+    # check if id is known
     if "client_id" in untis_df.columns:
         client_id = untis_df["client_id"].item()
     else:
         client_id = None
+
     client_id_n = clients_manager.add_client(
         school="FOSBOS",
         gender=untis_df["gender"].item(),
@@ -328,11 +343,14 @@ def enter_client_untiscsv(clients_manager, csv):
 
 def enter_client_cli(clients_manager):
     """Create an unencrypted csvfile interactively"""
+
+    # check if id is known
     client_id = input("client_id (press ENTER if you don't know): ")
     if client_id:
         client_id = int(client_id)
     else:
         client_id = None
+
     client_id_n = clients_manager.add_client(
         school=input("School: "),
         gender=input("Gender (f/m): "),

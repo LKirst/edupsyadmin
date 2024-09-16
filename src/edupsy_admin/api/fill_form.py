@@ -6,8 +6,10 @@ from pathlib import Path
 from datetime import date, datetime
 from dateutil.parser import parse
 import pandas as pd
-from fillpdf import fillpdfs
 import shutil
+
+from fillpdf import fillpdfs
+from academic_year import get_this_academic_year_string
 
 from ..core.logger import logger
 from ..core.encrypt import Encryption
@@ -47,7 +49,7 @@ def add_convenience_data(data: dict) -> dict:
     except:
         logger.error("The birthday could not be parsed.")
         data["birthday"] = ""
-    data["school_year"] = "2023/24"
+    data["school_year"] = get_this_academic_year_string()
 
     return data
 
