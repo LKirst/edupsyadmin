@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Real
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime
 import pandas as pd
@@ -48,7 +48,7 @@ class Client(Base):
     nachteilsausgleich = Column(Boolean)
     nta_sprachen = Column(Integer)
     nta_mathephys = Column(Integer)
-    n_sessions = Column(Integer)
+    n_sessions = Column(Real)
 
     def __init__(
         self,
