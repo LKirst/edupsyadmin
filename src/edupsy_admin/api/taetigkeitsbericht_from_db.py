@@ -14,6 +14,7 @@ from .clients import get_data_raw
 
 pd.set_option("display.precision", 1)
 
+
 class Report(FPDF):
     def __init__(self, name):
         super().__init__()
@@ -102,7 +103,10 @@ def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> pd.DataFrame:
     wstds = pd.DataFrame(columns=["value", "description"])
 
     wstds.loc["wd_week", :] = [5, "Arbeitstage/Woche"]
-    wstds.loc["wd_year", :] = [251 - 30, "Arbeitstage/Jahr nach Abzug von 30 Tagen Urlaub"]
+    wstds.loc["wd_year", :] = [
+        251 - 30,
+        "Arbeitstage/Jahr nach Abzug von 30 Tagen Urlaub",
+    ]
     wstds.loc["ww_year", :] = [
         wstds.loc["wd_year", "value"] / wstds.loc["wd_week", "value"],
         "Arbeitswochen/Jahr",
@@ -129,14 +133,14 @@ def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> pd.DataFrame:
         ("h Arbeit / Jahr, die einer Wochenstunde entsprächen"),
     ]
     wstds.loc["zstd_spsy_year_target", :] = [
-        wstds.loc["zstd_spsy_1wstd_target","value"] * wstd_spsy,
+        wstds.loc["zstd_spsy_1wstd_target", "value"] * wstd_spsy,
         (
             "h Arbeit / Jahr, die den angegebenen Wochenstunden "
             "Schulpsychologie entsprächen"
         ),
     ]
     wstds.loc["zstd_spsy_week_target", :] = [
-        wstds.loc["zstd_spsy_year_target","value"] / wstds.loc["ww_year","value"],
+        wstds.loc["zstd_spsy_year_target", "value"] / wstds.loc["ww_year", "value"],
         (
             "h Arbeit in der Woche, die den angegebenen Wochenstunden "
             "Schulpsychologie entsprächen"
@@ -185,7 +189,7 @@ def summary_statistics_wstd(
     if zstd_spsy_year_actual is not None:
         summarystats_wstd.loc["zstd_spsy_year_actual", "value"] = zstd_spsy_year_actual
         summarystats_wstd.loc["zstd_spsy_week_actual", "value"] = (
-            zstd_spsy_year_actual / summarystats_wstd.loc["ww_year","value"]
+            zstd_spsy_year_actual / summarystats_wstd.loc["ww_year", "value"]
         )
         summarystats_wstd.loc["perc_spsy_year_actual", "value"] = (
             zstd_spsy_year_actual
@@ -236,18 +240,19 @@ def create_taetigkeitsbericht_report(
     report.image(wstd_img, x=15, y=20, w=report.WIDTH - 20)
     report.output(basename_out + "_report.pdf")
 
+
 def taetigkeitsbericht(
-        app_username,
-        app_uid,
-        database_url,
-        config_path,
-        wstd_psy:int,
-        nstudents:list,
-        out_basename:str = "Taetigkeitsbericht_Out",
-        min_per_ses:int = 45,
-        wstd_total:int = 23,
-        name:str = "Schulpsychologie"
-        ) -> None:
+    app_username,
+    app_uid,
+    database_url,
+    config_path,
+    wstd_psy: int,
+    nstudents: list,
+    out_basename: str = "Taetigkeitsbericht_Out",
+    min_per_ses: int = 45,
+    wstd_total: int = 23,
+    name: str = "Schulpsychologie",
+) -> None:
     """
     Create a PDF for the Taetigkeitsbericht. This function assumes your db has the columns 'keyword_taetigkeitsbericht' and 'n_sessions'
 
@@ -275,9 +280,7 @@ def taetigkeitsbericht(
     print(summary_categories)
 
     # Summary statistics for n_sessions
-    summarystats_n_sessions = summary_statistics_n_sessions(
-        df, min_per_ses=min_per_ses
-    )
+    summarystats_n_sessions = summary_statistics_n_sessions(df, min_per_ses=min_per_ses)
     summarystats_n_sessions.to_csv(out_basename + "_n_sessions.csv")
     print(summarystats_n_sessions)
 

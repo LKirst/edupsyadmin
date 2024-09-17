@@ -4,14 +4,19 @@ from dateutil import relativedelta
 from datetime import datetime, date
 
 
-def get_academic_year_string(end_of_year):
+def get_academic_year_string(end_of_year: date):
     return f"{int(end_of_year.year)-1}/{end_of_year.strftime('%y')}"
+
 
 def get_this_academic_year_string():
     return get_academic_year_string(get_estimated_end_of_academic_year())
 
+
 def get_estimated_end_of_academic_year(
-    date_current=date.now, grade_current=0, grade_target=0, last_month=7
+    date_current: date = date.now,
+    grade_current: int = 0,
+    grade_target: int = 0,
+    last_month: int = 7,
 ):
     remaining_years = grade_target - grade_current
     date_target = date_current + relativedelta.relativedelta(years=remaining_years)
@@ -21,14 +26,18 @@ def get_estimated_end_of_academic_year(
         end_of_year = datetime(year=date_target.year, month=last_month, day=31)
     return end_of_year
 
-def get_estimated_end_of_this_academic_year(grade_current, grade_target, last_month=7):
+
+def get_estimated_end_of_this_academic_year(
+    grade_current: int, grade_target: int, last_month: int = 7
+):
     date_current = date.today()
     date_target = get_estimated_end_of_academic_year(
         date_current, grade_current, grade_target, last_month
     )
     return date_target
 
-def get_date_destroy_records(date_graduation):
+
+def get_date_destroy_records(date_graduation: date):
     """
     Quelle der Regelung:
     Bekanntmachung des Bayerischen Staatsministeriums für Unterricht und Kultus
@@ -65,10 +74,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    date_target=get_estimated_end_of_this_academic_year(
-            args.grade_current,
-            args.grade_target,
-            args.last_month)
+    date_target = get_estimated_end_of_this_academic_year(
+        args.grade_current, args.grade_target, args.last_month
+    )
     if args.destroy_files:
         print("adding three years to the date of graduation")
         date_target = get_date_destroy_records(date_target)

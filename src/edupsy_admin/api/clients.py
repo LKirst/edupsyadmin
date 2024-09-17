@@ -10,8 +10,7 @@ from ..core.config import config
 from .fill_form import fill_form
 from .taetigkeitsbericht_check_key import check_keyword
 from .int_from_str import extract_number
-# TODO
-#from .academic_year import
+from .academic_year import get_estimated_end_of_academic_year, get_date_destroy_records
 
 
 Base = declarative_base()
@@ -91,14 +90,23 @@ class Client(Base):
         self.gender = gender
         self.entry_date = entry_date
         self.class_name = class_name
-        self.class_int = extract_number(class_name)
 
-        # TODO
-        #self.estimated_date_of_graduation =
-        #self.document_shredding_date =
+        try:
+            self.class_int = extract_number(class_name)
+        except TypeError:
+            self.class_int = None
 
-        self.keyword_taetigkeitsbericht = check_keyword(
-                keyword_taetigkeitsbericht)
+        if self.class_int is None:
+            logger.error("could not extract integer from class name")
+        else:
+            self.estimated_date_of_graduation = get_estimated_end_of_academic_year(
+                grade_current=self.class_int, grade_target=config[self.school]["end"]
+            )
+            self.document_shredding_date = get_date_destroy_records(
+                self.estimated_date_of_graduation
+            )
+
+        self.keyword_taetigkeitsbericht = check_keyword(keyword_taetigkeitsbericht)
         self.notenschutz = notenschutz
         self.Nachteilsausgleich = nachteilsausgleich
         self.n_sessions = n_sessions
@@ -190,7 +198,7 @@ class ClientsManager:
                 for entry in results
             ]
             df = pd.DataFrame.from_dict(results_list_of_dict)
-            return df.sort_values('last_name')
+            return df.sort_values("last_name")
 
     def get_data_raw(self):
         """
