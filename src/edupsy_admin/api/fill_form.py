@@ -8,9 +8,10 @@ from dateutil.parser import parse
 import pandas as pd
 import shutil
 
+from liquid import Template, exceptions
 from fillpdf import fillpdfs
-from academic_year import get_this_academic_year_string
 
+from academic_year import get_this_academic_year_string
 from ..core.logger import logger
 from ..core.encrypt import Encryption
 from ..core.config import config
@@ -54,7 +55,9 @@ def add_convenience_data(data: dict) -> dict:
     return data
 
 
-def write_form(fn, out_fn, data, verbose=False):
+def write_form_pdf(fn, out_fn, data, verbose=False):
+    """uses pypdf
+    """
     reader = PdfReader(open(fn, "rb"), strict=False)
     writer = PdfWriter()
 
@@ -83,7 +86,9 @@ def write_form(fn, out_fn, data, verbose=False):
         writer.write(output_stream)
 
 
-def write_form2(fn, out_fn, data, verbose=False):
+def write_form_pdf2(fn, out_fn, data, verbose=False):
+    """uses the library fillpdf
+    """
     fields = fillpdfs.get_form_fields(fn)
     logger.debug("Form fields:")
     logger.debug(fields)
@@ -98,6 +103,21 @@ def write_form2(fn, out_fn, data, verbose=False):
         )
         shutil.copyfile(fn, out_fn)
 
+def write_form_md(fn, out_fn, data):
+     with open(fn, "r", encoding="utf8") as text_file:
+        txt = text_file.read()
+        try:
+            template = Template(txt)
+        except exceptions.Error as e:
+            print(txt)
+            raise e
+        try:
+            msg = template.render(**sch)
+        except exceptions.Error as e:
+            print(e)
+            msg = ""
+    with open(out_fn, "w", encoding="utf8") as out_file:
+        out_fn.writelines(message)
 
 def fill_form(
     client_data: dict,
@@ -111,7 +131,9 @@ def fill_form(
         logger.info(f"Using the template {fn}")
         out_fn = Path(f"{data['client_id']}_{fn.name}")
         logger.info(f"Writing to {out_fn}")
-        if use_fillpdf:
-            write_form2(fn, out_fn, data, verbose=verbose)
+        if fn.endswith(".md")
+            write_form_md(fn, out_fn, data)
+        elif use_fillpdf:
+            write_form_pdf2(fn, out_fn, data, verbose=verbose)
         else:
-            write_form(fn, out_fn, data, verbose=verbose)
+            write_form_pdf(fn, out_fn, data, verbose=verbose)
