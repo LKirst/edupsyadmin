@@ -13,7 +13,7 @@ def get_this_academic_year_string():
 
 
 def get_estimated_end_of_academic_year(
-    date_current: date = date.now,
+    date_current: date = datetime.now(),
     grade_current: int = 0,
     grade_target: int = 0,
     last_month: int = 7,

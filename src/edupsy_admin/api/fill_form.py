@@ -11,7 +11,7 @@ import shutil
 from liquid import Template, exceptions
 from fillpdf import fillpdfs
 
-from academic_year import get_this_academic_year_string
+from .academic_year import get_this_academic_year_string
 from ..core.logger import logger
 from ..core.encrypt import Encryption
 from ..core.config import config
@@ -104,7 +104,7 @@ def write_form_pdf2(fn, out_fn, data, verbose=False):
         shutil.copyfile(fn, out_fn)
 
 def write_form_md(fn, out_fn, data):
-     with open(fn, "r", encoding="utf8") as text_file:
+    with open(fn, "r", encoding="utf8") as text_file:
         txt = text_file.read()
         try:
             template = Template(txt)
@@ -131,7 +131,7 @@ def fill_form(
         logger.info(f"Using the template {fn}")
         out_fn = Path(f"{data['client_id']}_{fn.name}")
         logger.info(f"Writing to {out_fn}")
-        if fn.endswith(".md")
+        if fn.endswith(".md"):
             write_form_md(fn, out_fn, data)
         elif use_fillpdf:
             write_form_pdf2(fn, out_fn, data, verbose=verbose)

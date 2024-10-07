@@ -1,9 +1,8 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Real, CheckConstraint, CHAR
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Float, CheckConstraint, CHAR
+from sqlalchemy.orm import declarative_base
 from datetime import datetime
 
 from ..core.logger import logger
-from ..core.encrypt import Encryption
 from ..core.config import config
 from .taetigkeitsbericht_check_key import check_keyword
 from .int_from_str import extract_number
@@ -11,7 +10,6 @@ from .academic_year import get_estimated_end_of_academic_year, get_date_destroy_
 
 
 Base = declarative_base()
-encr = Encryption()
 
 
 class Client(Base):
@@ -46,10 +44,11 @@ class Client(Base):
     nta_sprachen = Column(Integer)
     nta_mathephys = Column(Integer)
     nta_notes = Column(String)
-    n_sessions = Column(Real)
+    n_sessions = Column(Float)
 
     def __init__(
         self,
+        encr,
         school: str,
         gender: str,
         entry_date: str,
@@ -98,7 +97,7 @@ class Client(Base):
             logger.error("could not extract integer from class name")
         else:
             self.estimated_date_of_graduation = get_estimated_end_of_academic_year(
-                grade_current=self.class_int, grade_target=config[self.school]["end"]
+                grade_current=self.class_int, grade_target=config.school[self.school]["end"]
             )
             self.document_shredding_date = get_date_destroy_records(
                 self.estimated_date_of_graduation

@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 import pandas as pd
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy import create_engine
 
 from .clients import Client
 from ..core.logger import logger
@@ -11,23 +13,26 @@ from .taetigkeitsbericht_check_key import check_keyword
 from .int_from_str import extract_number
 from .academic_year import get_estimated_end_of_academic_year, get_date_destroy_records
 
+Base = declarative_base()
 encr = Encryption()
 
 class ClientsManager:
     def __init__(
         self, database_url: str, app_uid: str, app_username: str, config_path: str
     ):
+        logger.info(f"trying to connect to database at {database_url}")
         self.engine = create_engine(database_url, echo=True)
         self.Session = sessionmaker(bind=self.engine)
         encr.set_fernet(app_username, config_path, app_uid)
 
-        Base.metadata.create_all(self.engine)  # create the table if it doesn't exist
-        logger.debug(f"created connection to database at {database_url}")
+        # create the table if it doesn't exist
+        Base.metadata.create_all(self.engine, tables=[Client.__table__])
+        logger.info(f"created connection to database at {database_url}")
 
     def add_client(self, **client_data):
         logger.debug("trying to add client")
         with self.Session() as session:
-            new_client = Client(**client_data)
+            new_client = Client(encr,**client_data)
             session.add(new_client)
             session.commit()
             logger.debug(f"added client: {new_client}")
@@ -255,7 +260,7 @@ def enter_client_cli(clients_manager):
         first_name=input("First Name: "),
         last_name=input("Last Name: "),
         birthday=input("Birthday (YYYY-MM-DD): "),
-        street=input("Street: "),
+        street=input("Street and house number: "),
         city=input("City (postcode + name): "),
         telephone1=input("Telephone: "),
         email=input("Email: "),

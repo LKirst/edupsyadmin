@@ -10,7 +10,7 @@ import numpy as np
 import dataframe_image as dfi
 from fpdf import FPDF
 
-from .clients import get_data_raw
+from .managers import get_data_raw
 
 pd.set_option("display.precision", 1)
 

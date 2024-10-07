@@ -2,7 +2,8 @@
 
 """
 
-from .clients import (
+# TODO: Do I need this?
+from .managers import (
     ClientsManager,
     new_client,
     create_documentation,
