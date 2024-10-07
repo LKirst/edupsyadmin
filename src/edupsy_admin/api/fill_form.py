@@ -56,8 +56,7 @@ def add_convenience_data(data: dict) -> dict:
 
 
 def write_form_pdf(fn, out_fn, data, verbose=False):
-    """uses pypdf
-    """
+    """uses pypdf"""
     reader = PdfReader(open(fn, "rb"), strict=False)
     writer = PdfWriter()
 
@@ -87,8 +86,7 @@ def write_form_pdf(fn, out_fn, data, verbose=False):
 
 
 def write_form_pdf2(fn, out_fn, data, verbose=False):
-    """uses the library fillpdf
-    """
+    """uses the library fillpdf"""
     fields = fillpdfs.get_form_fields(fn)
     logger.debug("Form fields:")
     logger.debug(fields)
@@ -102,6 +100,7 @@ def write_form_pdf2(fn, out_fn, data, verbose=False):
             )
         )
         shutil.copyfile(fn, out_fn)
+
 
 def write_form_md(fn, out_fn, data):
     with open(fn, "r", encoding="utf8") as text_file:
@@ -118,6 +117,7 @@ def write_form_md(fn, out_fn, data):
             msg = ""
     with open(out_fn, "w", encoding="utf8") as out_file:
         out_fn.writelines(message)
+
 
 def fill_form(
     client_data: dict,

@@ -16,6 +16,7 @@ from .academic_year import get_estimated_end_of_academic_year, get_date_destroy_
 Base = declarative_base()
 encr = Encryption()
 
+
 class ClientsManager:
     def __init__(
         self, database_url: str, app_uid: str, app_username: str, config_path: str
@@ -32,7 +33,7 @@ class ClientsManager:
     def add_client(self, **client_data):
         logger.debug("trying to add client")
         with self.Session() as session:
-            new_client = Client(encr,**client_data)
+            new_client = Client(encr, **client_data)
             session.add(new_client)
             session.commit()
             logger.debug(f"added client: {new_client}")

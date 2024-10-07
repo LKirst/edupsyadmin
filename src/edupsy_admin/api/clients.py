@@ -1,4 +1,13 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Float, CheckConstraint, CHAR
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    Boolean,
+    Float,
+    CheckConstraint,
+    CHAR,
+)
 from sqlalchemy.orm import declarative_base
 from datetime import datetime
 
@@ -97,7 +106,8 @@ class Client(Base):
             logger.error("could not extract integer from class name")
         else:
             self.estimated_date_of_graduation = get_estimated_end_of_academic_year(
-                grade_current=self.class_int, grade_target=config.school[self.school]["end"]
+                grade_current=self.class_int,
+                grade_target=config.school[self.school]["end"],
             )
             self.document_shredding_date = get_date_destroy_records(
                 self.estimated_date_of_graduation

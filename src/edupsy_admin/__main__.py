@@ -3,6 +3,7 @@
     python -m edupsy_admin  ...
 
 """
+
 from .core import logger
 
 

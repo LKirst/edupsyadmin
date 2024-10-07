@@ -9,12 +9,12 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from .logger import logger
 from .config import config
 
-class Encryption():
+
+class Encryption:
 
     fernet = None
 
-    def set_fernet(
-            self, username: str, config_path: str, uid: str) -> None:
+    def set_fernet(self, username: str, config_path: str, uid: str) -> None:
         """use a password to derive a key
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
         """
@@ -38,14 +38,14 @@ class Encryption():
 
     def encrypt(self, data: str) -> bytes:
         if self.fernet is None:
-            logger.critical('call set_fernet() before calling encrypt()')
+            logger.critical("call set_fernet() before calling encrypt()")
         token = self.fernet.encrypt(data.encode())
         return token
 
     def decrypt(self, token: bytes) -> str:
         if self.fernet is None:
-            logger.critical('call set_fernet() before calling decrypt()')
-        data=self.fernet.decrypt(token).decode()
+            logger.critical("call set_fernet() before calling decrypt()")
+        data = self.fernet.decrypt(token).decode()
         return data
 
     def _load_or_create_salt(self, config_path: str) -> bytes:
@@ -64,7 +64,7 @@ class Encryption():
 
                 dictyaml = _convert_conf_to_dict(config)  # convert to dict for pyyaml
                 logger.debug(f"config as a dict: {dictyaml}")
-                yaml.dump(dictyaml, f) # I couldn't get safe_dump to work with bytes
+                yaml.dump(dictyaml, f)  # I couldn't get safe_dump to work with bytes
 
         return salt
 
@@ -78,8 +78,8 @@ class Encryption():
 
 
 def _convert_conf_to_dict(conf) -> dict:
-    if isinstance(conf,dict):
-        conf=dict(conf)
+    if isinstance(conf, dict):
+        conf = dict(conf)
     for key, value in conf.items():
         if isinstance(value, dict):
             conf[key] = dict(_convert_conf_to_dict(value))

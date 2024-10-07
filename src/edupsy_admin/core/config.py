@@ -4,6 +4,7 @@ This module defines a global configuration object. Other modules should use
 this object to store application-wide configuration values.
 
 """
+
 import os
 
 from dotenv import load_dotenv
