@@ -111,12 +111,12 @@ def write_form_md(fn, out_fn, data):
             print(txt)
             raise e
         try:
-            msg = template.render(**sch)
+            msg = template.render(**data)
         except exceptions.Error as e:
             print(e)
             msg = ""
     with open(out_fn, "w", encoding="utf8") as out_file:
-        out_fn.writelines(message)
+        out_file.writelines(msg)
 
 
 def fill_form(
@@ -131,7 +131,7 @@ def fill_form(
         logger.info(f"Using the template {fn}")
         out_fn = Path(f"{data['client_id']}_{fn.name}")
         logger.info(f"Writing to {out_fn}")
-        if fn.endswith(".md"):
+        if fn.suffix==".md":
             write_form_md(fn, out_fn, data)
         elif use_fillpdf:
             write_form_pdf2(fn, out_fn, data, verbose=verbose)
