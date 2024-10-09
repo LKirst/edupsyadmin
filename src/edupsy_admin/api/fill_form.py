@@ -51,6 +51,7 @@ def add_convenience_data(data: dict) -> dict:
         logger.error("The birthday could not be parsed.")
         data["birthday"] = ""
     data["school_year"] = get_this_academic_year_string()
+    data["document_shredding_date"] = data["document_shredding_date"].strftime("%d/%m/%Y")
 
     return data
 

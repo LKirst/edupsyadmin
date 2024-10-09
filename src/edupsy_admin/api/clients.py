@@ -93,6 +93,8 @@ class Client(Base):
         self.notes_encr = encr.encrypt(notes)
 
         self.school = school
+        if gender == 'w': # convert German 'w' to 'f'
+            gender = 'f'
         self.gender = gender
         self.entry_date = entry_date
         self.class_name = class_name
