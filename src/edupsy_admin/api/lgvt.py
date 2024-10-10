@@ -24,7 +24,7 @@ def askyn(prompt):
         raise IOError("Only y, n or q are allowed.")
 
 
-def get_lv_korrektur(lv_rw):
+def get_lv_korrektur(lv_rw: float):
     lv_korr_faktor = float(input("Korrekturfaktor LV:"))
     lv_rw_korr = lv_rw * lv_korr_faktor
     lv_rw_korr_floor = math.floor(lv_rw_korr)
@@ -38,7 +38,7 @@ def get_lv_korrektur(lv_rw):
     return lv_rw_korr, lv_pr_korr
 
 
-def get_indeces(fn, client_id, d_test, version):
+def get_indeces(fn: str, client_id: int, d_test: str, version: str):
     csv = pd.read_csv(fn)
     correct_answ = 0
     incorrect_answ = 0
