@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import os
+import math
 import argparse
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
 
 from .convert_measures import percentile_to_t
+from .managers import ClientsManager
 
 
 def askyn(prompt):
@@ -37,17 +39,14 @@ def get_lv_korrektur(lv_rw: float):
     lv_pr_korr = round(lv_pr_floor + lv_pr_diff * lv_rw_korr_nachkomma)
     return lv_rw_korr, lv_pr_korr
 
-
-def get_indeces(fn: str, client_id: int, d_test: str, version: str):
+def get_indeces(fn: str, name: str, schoolyear:int, d_test: str, version: str):
     csv = pd.read_csv(fn)
     correct_answ = 0
     incorrect_answ = 0
 
-    year = int(input("Klasse (ohne Buchstaben): "))
-
     text = [f"# Ergebnisse LGVT ({version})\n\n## Items"]
     text += [
-        f"\nName/Code: {client_id}; Klasse: {year}",
+        f"\nName/Code: {name}; Klasse: {schoolyear}",
         f"\nTestdatum: {d_test}",
     ]
 
@@ -68,7 +67,7 @@ def get_indeces(fn: str, client_id: int, d_test: str, version: str):
     lv_rw = correct_answ * 2 - incorrect_answ
     lgs_rw = words_until_last_item + words_after_last_item
     lg_rw = round((correct_answ / i) * 100)
-    if year < 11:
+    if schoolyear < 11:
         lv_rw_korr, lv_pr_korr = get_lv_korrektur(lv_rw)
         lgs_korr_faktor = float(input("Korrekturfaktor LGS:"))
         lgs_rw_korr = round(lgs_rw * lgs_korr_faktor)
@@ -124,6 +123,10 @@ def get_fn_csv(version):
 
 
 def mk_report(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    config_path: str,
     client_id: int,
     test_date: str,
     test_type: str = "lgvt",
@@ -133,7 +136,20 @@ def mk_report(
     out_path = Path(directory).joinpath(f"{client_id}_Auswertung_LGVT.md")
     fn_csv = get_fn_csv(version)
     t_day = datetime.strptime(test_date, "%Y-%m-%d").date()
-    results = get_indeces(fn_csv, client_id, t_day, version)
+
+    clients_manager = ClientsManager(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        config_path=config_path,
+    )
+    client_dict = clients_manager.get_decrypted_client(client_id)
+
+    name=client_dict["first_name"] + " " + client_dict["last_name"]
+    schoolyear=client_dict["class_int"]
+
+    results = get_indeces(fn_csv, name, schoolyear, t_day, version)
+
 
     with open(out_path, "w", encoding="utf-8") as f:
         for line in results:
