@@ -149,8 +149,10 @@ def _set_client(subparsers, common):
         help="Show or change a value for a client",
     )
     parser.add_argument("client_id", type=int)
-    parser.add_argument("key", help=("the variable you want to display or set"))
-    parser.add_argument("--value", help="The new value")
+    parser.add_argument(
+            "key_value_pairs",
+            type=str, nargs="+",
+            help="key-value pairs in the format key=value")
     return
 
 

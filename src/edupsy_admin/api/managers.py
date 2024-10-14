@@ -149,8 +149,7 @@ def set_client(
     database_url: str,
     config_path: str,
     client_id: str,
-    key: str,
-    value: str = None,
+    key_value_pairs: list[str]
 ):
     """
     Set the value for a key given a client_id; if no client_id is passed,
@@ -162,18 +161,14 @@ def set_client(
         app_username=app_username,
         config_path=config_path,
     )
-    if value:
+    pairs_list = [pair.split("=") for pair in key_value_pairs]
+    for key, value in pairs_list:
         if key in ["notenschutz", "nachteilsausgleich"]:
             value = bool(int(value))
         if key == "keyword_taetigkeitsbericht":
             value = check_keyword(value)
         new_data = {key: value}
         clients_manager.edit_client(client_id, new_data)
-    else:
-        client_dict = clients_manager.get_decrypted_client(client_id)
-        print("")
-        print(client_dict[key])
-        print("")
 
 
 def get_na_ns(
