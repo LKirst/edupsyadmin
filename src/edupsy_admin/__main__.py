@@ -10,7 +10,7 @@ from .core import logger
 def main():
     """Execute the application."""
     logger.debug("executing __main__.main()")
-    logger.warn("I have not implememented __main__.main() yet!")
+    logger.warning("I have not implememented __main__.main() yet!")
 
 
 # Make the script executable.

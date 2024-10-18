@@ -37,6 +37,7 @@ def create_report(path):
     iq_part1_min = int(input("IQ Teil 1 min: "))
     iq_part1_max = int(input("IQ Teil 1 max: "))
     iq_part2 = int(input("IQ Teil 2: "))
+    # TODO: Es kann nicht immer ein Gesamtiq berechnet werden => None akzeptieren
     iq_total_min = int(input("IQ Total min: "))
     iq_total_max = int(input("IQ Total max: "))
 
@@ -61,7 +62,7 @@ def create_report(path):
     heading = f"CFT 20-R (Testdatum: {testdate}; Code: {client_id})"
     report = Report(heading, text, fn_plot)
     report.print_page()
-    report.output(os.path.join(path, "{client_id}_Auswertung.pdf"), "F")
+    report.output(os.path.join(path, f"{client_id}_Auswertung.pdf"), "F")
 
     # remove the plot png
     os.remove(fn_plot)

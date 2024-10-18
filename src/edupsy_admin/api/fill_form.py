@@ -7,6 +7,7 @@ from datetime import date, datetime
 from dateutil.parser import parse
 import pandas as pd
 import shutil
+from importlib.resources import files
 
 from liquid import Template, exceptions
 from fillpdf import fillpdfs
@@ -15,6 +16,19 @@ from .academic_year import get_this_academic_year_string
 from ..core.logger import logger
 from ..core.encrypt import Encryption
 from ..core.config import config
+
+def get_subjects(school: str):
+    file_path = files("edupsy_admin.data").joinpath(
+            f"Faecher_{school}.md"
+    )
+    logger.info(f"trying to read school subjects file: {file_path}")
+    if file_path.exists() and file_path.is_file():
+        logger.debug(f"subjects file exists")
+        with file_path.open("r", encoding="utf-8") as file:
+            return file.read()
+    else:
+        logger.warning(f"school subjects file does not exist!")
+        return ""
 
 
 def add_convenience_data(data: dict) -> dict:
@@ -42,6 +56,22 @@ def add_convenience_data(data: dict) -> dict:
     data["school_street"] = schoolconfig["school_street"]
     data["school_head_w_school"] = schoolconfig["school_head_w_school"]
 
+    # Notenschutz and Nachteilsausgleich
+    if (data["nachteilsausgleich"] or data["notenschutz"]):
+        school_subjects = get_subjects(data["school"])
+        logger.debug(f"\nsubjects:\n{school_subjects}")
+    if data["notenschutz"]:
+        data["ns_subjects"] = school_subjects
+        data["ns_zeugnisbemerkung"]="Auf die Bewertung der Rechtschreibleistung wurde verzichtet."
+        data["ns_measures"] = "Verzicht auf die Bewertung der Rechtschreibleistung"
+    if data["nachteilsausgleich"]:
+        data["na_subjects"] = school_subjects
+        data["na_measures"] = (
+                f"Verlängerung der Arbeitszeit um {data['nta_sprachen']}% "
+                "bei schriftlichen Leistungsnachweisen und der "
+                "Vorbereitungszeit bei mündlichen Leistungsnachweisen"
+                )
+
     # for forms, I use the format dd/mm/YYYY; internally, I use YYYY-mm-dd
     today = date.today()
     data["date_today"] = today.strftime("%d/%m/%Y")
@@ -68,8 +98,8 @@ def write_form_pdf(fn, out_fn, data, verbose=False):
     if not fields:
         logger.debug(f"The file {fn} is not a form.")
     else:
-        logger.debug("\nForm fields:")
-        logger.debug(fields.keys())
+        logger.debug("\nForm fields:\n{fields.keys()}")
+        logger.debug(f"\nData keys:\n{data.keys()}")
         comb_key_fields = product(range(len(reader.pages)), fields.keys())
         for i, key in comb_key_fields:
             if key in data.keys():
@@ -89,8 +119,8 @@ def write_form_pdf(fn, out_fn, data, verbose=False):
 def write_form_pdf2(fn, out_fn, data, verbose=False):
     """uses the library fillpdf"""
     fields = fillpdfs.get_form_fields(fn)
-    logger.debug("Form fields:")
-    logger.debug(fields)
+    logger.debug(f"\nForm fields:\n{fields}")
+    logger.debug(f"\nData keys:\n{data.keys()}")
     if fields:
         fillpdfs.write_fillable_pdf(fn, out_fn, data)
     else:
