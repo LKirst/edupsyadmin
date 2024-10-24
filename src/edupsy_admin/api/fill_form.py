@@ -26,6 +26,7 @@ def get_subjects(school: str):
         logger.warning(f"school subjects file does not exist!")
         return ""
 
+
 def write_form_pdf(fn, out_fn, data, verbose=False):
     """uses pypdf"""
     reader = PdfReader(open(fn, "rb"), strict=False)

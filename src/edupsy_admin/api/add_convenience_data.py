@@ -4,6 +4,7 @@ from dateutil.parser import parse
 from ..core.logger import logger
 from ..core.config import config
 
+
 def add_convenience_data(data: dict) -> dict:
     """Add the information which can be generated from existing key value pairs.
 
@@ -61,4 +62,3 @@ def add_convenience_data(data: dict) -> dict:
     )
 
     return data
-
