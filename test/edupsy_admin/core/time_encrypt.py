@@ -11,10 +11,7 @@ SECRET_MESSAGE = b"This is a secret message"
 
 def setup():
     encr = Encryption()
-    encr.set_fernet(
-            "test_user_do_not_use",
-            "test/data/testconfig.yml",
-            "example.com")
+    encr.set_fernet("test_user_do_not_use", "test/data/testconfig.yml", "example.com")
     return encr
 
 
@@ -49,7 +46,7 @@ if __name__ == "__main__":
         "decrypt(encr,token)",
         setup="encr=setup();token=encrypt(encr)",
         globals=globals(),
-        number=number_calls
+        number=number_calls,
     )
     print(f"decrypt: {time_decrypt/number_calls}")
 

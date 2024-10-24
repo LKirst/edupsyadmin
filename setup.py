@@ -1,6 +1,7 @@
 """ Setup script for the edupsy_admin application.
 
 """
+
 from os import walk
 from pathlib import Path
 

@@ -17,10 +17,9 @@ from ..core.logger import logger
 from ..core.encrypt import Encryption
 from ..core.config import config
 
+
 def get_subjects(school: str):
-    file_path = files("edupsy_admin.data").joinpath(
-            f"Faecher_{school}.md"
-    )
+    file_path = files("edupsy_admin.data").joinpath(f"Faecher_{school}.md")
     logger.info(f"trying to read school subjects file: {file_path}")
     if file_path.exists() and file_path.is_file():
         logger.debug(f"subjects file exists")
@@ -57,20 +56,22 @@ def add_convenience_data(data: dict) -> dict:
     data["school_head_w_school"] = schoolconfig["school_head_w_school"]
 
     # Notenschutz and Nachteilsausgleich
-    if (data["nachteilsausgleich"] or data["notenschutz"]):
+    if data["nachteilsausgleich"] or data["notenschutz"]:
         school_subjects = get_subjects(data["school"])
         logger.debug(f"\nsubjects:\n{school_subjects}")
     if data["notenschutz"]:
         data["ns_subjects"] = school_subjects
-        data["ns_zeugnisbemerkung"]="Auf die Bewertung der Rechtschreibleistung wurde verzichtet."
+        data["ns_zeugnisbemerkung"] = (
+            "Auf die Bewertung der Rechtschreibleistung wurde verzichtet."
+        )
         data["ns_measures"] = "Verzicht auf die Bewertung der Rechtschreibleistung"
     if data["nachteilsausgleich"]:
         data["na_subjects"] = school_subjects
         data["na_measures"] = (
-                f"Verlängerung der Arbeitszeit um {data['nta_sprachen']}% "
-                "bei schriftlichen Leistungsnachweisen und der "
-                "Vorbereitungszeit bei mündlichen Leistungsnachweisen"
-                )
+            f"Verlängerung der Arbeitszeit um {data['nta_sprachen']}% "
+            "bei schriftlichen Leistungsnachweisen und der "
+            "Vorbereitungszeit bei mündlichen Leistungsnachweisen"
+        )
 
     # for forms, I use the format dd/mm/YYYY; internally, I use YYYY-mm-dd
     today = date.today()
@@ -81,7 +82,9 @@ def add_convenience_data(data: dict) -> dict:
         logger.error("The birthday could not be parsed.")
         data["birthday"] = ""
     data["school_year"] = get_this_academic_year_string()
-    data["document_shredding_date"] = data["document_shredding_date"].strftime("%d/%m/%Y")
+    data["document_shredding_date"] = data["document_shredding_date"].strftime(
+        "%d/%m/%Y"
+    )
 
     return data
 
@@ -162,7 +165,7 @@ def fill_form(
         logger.info(f"Using the template {fn}")
         out_fn = Path(f"{data['client_id']}_{fn.name}")
         logger.info(f"Writing to {out_fn}")
-        if fn.suffix==".md":
+        if fn.suffix == ".md":
             write_form_md(fn, out_fn, data)
         elif use_fillpdf:
             write_form_pdf2(fn, out_fn, data, verbose=verbose)

@@ -149,7 +149,7 @@ def set_client(
     database_url: str,
     config_path: str,
     client_id: str,
-    key_value_pairs: list[str]
+    key_value_pairs: list[str],
 ):
     """
     Set the value for a key given a client_id; if no client_id is passed,

@@ -7,6 +7,7 @@ precedence over the version in this project directory. Use a virtualenv test
 environment or setuptools develop mode to test against the development version.
 
 """
+
 import os
 import pytest
 import keyring
@@ -30,7 +31,7 @@ client_data = {
     "street": "123 Main St",
     "city": "New York",
     "telephone1": "555-1234",
-    "email": "john.doe@example.com"
+    "email": "john.doe@example.com",
 }
 
 
@@ -70,8 +71,8 @@ def clients_manager():
 def test_add_client(clients_manager):
     client_id = clients_manager.add_client(**client_data)
     client = clients_manager.get_decrypted_client(client_id=client_id)
-    assert client['first_name'] == "John"
-    assert client['last_name'] == "Doe"
+    assert client["first_name"] == "John"
+    assert client["last_name"] == "Doe"
 
 
 def test_edit_client(clients_manager):
@@ -80,9 +81,9 @@ def test_edit_client(clients_manager):
     updated_data = {"first_name_encr": "Jane", "last_name_encr": "Smith"}
     clients_manager.edit_client(client_id, updated_data)
     updated_client = clients_manager.get_decrypted_client(client_id)
-    assert updated_client['first_name'] == "Jane"
-    assert updated_client['last_name'] == "Smith"
-    assert updated_client['datetime_lastmodified'] > client['datetime_lastmodified']
+    assert updated_client["first_name"] == "Jane"
+    assert updated_client["last_name"] == "Smith"
+    assert updated_client["datetime_lastmodified"] > client["datetime_lastmodified"]
 
 
 def test_delete_client(clients_manager):
@@ -96,22 +97,25 @@ def test_delete_client(clients_manager):
 def test_enter_client_cli(clients_manager, monkeypatch):
     # simulate the commandline input
     inputs = iter(client_data)
+
     def mock_input(prompt):
         return client_data[next(inputs)]
+
     monkeypatch.setattr("builtins.input", mock_input)
 
     client_id = enter_client_cli(clients_manager)
     client = clients_manager.get_decrypted_client(client_id=client_id)
-    assert client['first_name'] == "John"
-    assert client['last_name'] == "Doe"
+    assert client["first_name"] == "John"
+    assert client["last_name"] == "Doe"
 
 
 def test_enter_client_untiscsv(clients_manager):
-    testcsv = 'test/data/webuntis_example.csv'
+    testcsv = "test/data/webuntis_example.csv"
     client_id = enter_client_untiscsv(clients_manager, testcsv)
     client = clients_manager.get_decrypted_client(client_id=client_id)
-    assert client['first_name'] == "Max"
-    assert client['last_name'] == "Mustermann"
+    assert client["first_name"] == "Max"
+    assert client["last_name"] == "Mustermann"
+
 
 # Make the script executable.
 if __name__ == "__main__":

@@ -39,7 +39,8 @@ def get_lv_korrektur(lv_rw: float):
     lv_pr_korr = round(lv_pr_floor + lv_pr_diff * lv_rw_korr_nachkomma)
     return lv_rw_korr, lv_pr_korr
 
-def get_indeces(fn: str, name: str, schoolyear:int, d_test: str, version: str):
+
+def get_indeces(fn: str, name: str, schoolyear: int, d_test: str, version: str):
     csv = pd.read_csv(fn)
     correct_answ = 0
     incorrect_answ = 0
@@ -145,11 +146,10 @@ def mk_report(
     )
     client_dict = clients_manager.get_decrypted_client(client_id)
 
-    name=client_dict["first_name"] + " " + client_dict["last_name"]
-    schoolyear=client_dict["class_int"]
+    name = client_dict["first_name"] + " " + client_dict["last_name"]
+    schoolyear = client_dict["class_int"]
 
     results = get_indeces(fn_csv, name, schoolyear, t_day, version)
-
 
     with open(out_path, "w", encoding="utf-8") as f:
         for line in results:

@@ -7,6 +7,7 @@ precedence over the version in this project directory. Use a virtualenv test
 environment or setuptools develop mode to test against the development version.
 
 """
+
 from shlex import split
 from subprocess import call
 from sys import executable
