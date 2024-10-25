@@ -4,27 +4,13 @@ from pypdf import PdfReader, PdfWriter
 from pathlib import Path
 import pandas as pd
 import shutil
-from importlib.resources import files
 
 from liquid import Template, exceptions
 from fillpdf import fillpdfs
 
-from .academic_year import get_this_academic_year_string
 from .add_convenience_data import add_convenience_data
 from ..core.logger import logger
 from ..core.encrypt import Encryption
-
-
-def get_subjects(school: str):
-    file_path = files("edupsy_admin.data").joinpath(f"Faecher_{school}.md")
-    logger.info(f"trying to read school subjects file: {file_path}")
-    if file_path.exists() and file_path.is_file():
-        logger.debug(f"subjects file exists")
-        with file_path.open("r", encoding="utf-8") as file:
-            return file.read()
-    else:
-        logger.warning(f"school subjects file does not exist!")
-        return ""
 
 
 def write_form_pdf(fn, out_fn, data, verbose=False):

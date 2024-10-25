@@ -1,9 +1,21 @@
 from datetime import date, datetime
 from dateutil.parser import parse
+from importlib.resources import files
 
+from .academic_year import get_this_academic_year_string
 from ..core.logger import logger
 from ..core.config import config
 
+def get_subjects(school: str):
+    file_path = files("edupsy_admin.data").joinpath(f"Faecher_{school}.md")
+    logger.info(f"trying to read school subjects file: {file_path}")
+    if file_path.exists() and file_path.is_file():
+        logger.debug(f"subjects file exists")
+        with file_path.open("r", encoding="utf-8") as file:
+            return file.read()
+    else:
+        logger.warning(f"school subjects file does not exist!")
+        return ""
 
 def add_convenience_data(data: dict) -> dict:
     """Add the information which can be generated from existing key value pairs.

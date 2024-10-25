@@ -105,17 +105,22 @@ class ClientsManager:
         return df
 
     def edit_client(self, client_id: int, new_data: dict):
+        # TODO: Warn if key does not exist
+        # TODO: If key does not exist, check if key + _encr exists and use it
         logger.debug(f"editing client (id = {client_id})")
         with self.Session() as session:
             client = session.query(Client).filter_by(client_id=client_id).first()
             if client:
                 for key, value in new_data.items():
+                    logger.debug(f"changing value for key: {key}")
                     if key.endswith("_encr"):
                         setattr(client, key, encr.encrypt(value))
                     else:
                         setattr(client, key, value)
                 client.datetime_lastmodified = datetime.now()
                 session.commit()
+            else:
+                logger.error("client could not be found!")
 
     def delete_client(self, client_id: int):
         logger.debug("deleting client")
