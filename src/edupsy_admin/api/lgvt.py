@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-import os
 import math
-import argparse
 import pandas as pd
 from pathlib import Path
 from datetime import datetime

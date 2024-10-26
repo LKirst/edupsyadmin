@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import (
     Column,
     Integer,
@@ -9,7 +10,6 @@ from sqlalchemy import (
     CHAR,
 )
 from sqlalchemy.orm import declarative_base
-from datetime import datetime
 
 from ..core.logger import logger
 from ..core.config import config

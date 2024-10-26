@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 from dateutil.parser import parse
 from importlib.resources import files
 

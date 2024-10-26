@@ -78,7 +78,7 @@ def test_set_fernet(capsys, configfile):
 
 def test_update_config(configfile):
     encr = Encryption()
-    dictyaml = _convert_conf_to_dict(config)
+    _convert_conf_to_dict(config)
     salt = encr._load_or_create_salt(config.core.config)
     dictyaml_salt_config = _convert_conf_to_dict(config)
     dictyaml_salt_target = {

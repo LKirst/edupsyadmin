@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 from edupsy_admin.api.datediff import mydatediff, mydatediff_interactive
 
 

@@ -22,4 +22,3 @@ edupsy_admin -w DEBUG -c ~/bin/edupsy_admin/etc/config.yml\
     ~/Templates/Beratung/LRSt_StellungnahmeKeinBefund.pdf\
     ~/Templates/Beratung/LRSt_AnschreibenKeinBefund.pdf
 fi
-

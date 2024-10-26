@@ -5,8 +5,6 @@ this object to store application-wide configuration values.
 
 """
 
-import os
-
 from dotenv import load_dotenv
 from yaml import Node
 from yaml import SafeLoader

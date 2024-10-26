@@ -1,4 +1,3 @@
-import argparse
 from itertools import product
 from pypdf import PdfReader, PdfWriter
 from pathlib import Path
