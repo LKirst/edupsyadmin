@@ -6,9 +6,10 @@ from dateutil.relativedelta import relativedelta
 DEFAULT_LAST_MONTH = 7
 DEFAULT_LAST_DAY = 31
 
+
 def get_academic_year_string(end_of_year: date) -> str:
     """
-    Returns the academic year as a string in the format '%y/%y'
+    Returns the academic year as a string in the format '%Y/%y'
     for a given end-of-year date.
     """
     return f"{int(end_of_year.year)-1}/{end_of_year.strftime('%y')}"
@@ -16,7 +17,7 @@ def get_academic_year_string(end_of_year: date) -> str:
 
 def get_this_academic_year_string() -> str:
     """
-    Returns the current academic year as a string in the format '%y/%y'.
+    Returns the current academic year as a string in the format '%Y/%y'.
     """
 
     return get_academic_year_string(get_estimated_end_of_academic_year())
