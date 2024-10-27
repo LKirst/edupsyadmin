@@ -75,7 +75,7 @@ class Client(Base):
         notes: str = "",
         notenschutz: bool = False,
         nachteilsausgleich: bool = False,
-        keyword_taetigkeitsbericht: str = "",
+        keyword_taetigkeitsbericht: str | None = "",
         n_sessions: int = 1,
     ):
         if client_id:
@@ -117,7 +117,7 @@ class Client(Base):
 
         self.keyword_taetigkeitsbericht = check_keyword(keyword_taetigkeitsbericht)
         self.notenschutz = notenschutz
-        self.Nachteilsausgleich = nachteilsausgleich
+        self.nachteilsausgleich = nachteilsausgleich
         self.n_sessions = n_sessions
 
         self.datetime_created = datetime.now()
