@@ -11,7 +11,7 @@ from platformdirs import user_data_path
 from . import __version__
 from .api.managers import new_client, create_documentation, set_client, get_na_ns
 
-# TODO: change the api so that mkreport is a function that works for CFT as well
+# TODO: change the api so that mkreport works for CFT as well as LGVT
 from .api.lgvt import mk_report
 from .api.taetigkeitsbericht_from_db import taetigkeitsbericht
 from .core.config import config
@@ -44,6 +44,17 @@ def main(argv=None) -> int:
     config.core.config = args.config_path
     if args.warn:
         config.core.logging = args.warn
+    if not args.app_username:
+        try:
+            args.app_username = config.core.app_username
+        except e:
+            logging.error(
+                (
+                    "Either pass app_username from the "
+                    "commandline or set app_username in the config.yml"
+                )
+            )
+            raise e
 
     # restart logging based on config
     logger.stop()  # clear handlers to prevent duplicate records
@@ -89,7 +100,10 @@ def _args(argv):
     subparsers = parser.add_subparsers(title="subcommands")
 
     common = ArgumentParser(add_help=False)  # common subcommand arguments
-    common.add_argument("app_username", help="username for encryption")
+    common.add_argument(
+        "--app_username",
+        help="username for encryption; if it is not set here, the app will try to read it from the config file",
+    )
     common.add_argument("--app_uid", default=APP_UID)
     common.add_argument("--database_url", default=DATABASE_URL)
     _new_client(subparsers, common)

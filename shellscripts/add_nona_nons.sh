@@ -1,6 +1,6 @@
 client=$1
 
-edupsy_admin -w DEBUG -c ~/bin/edupsy_admin/etc/config.yml set_client lukas.liebermann \
+edupsy_admin -w DEBUG set_client \
     $client \
     "nachteilsausgleich=0" \
     "notenschutz=0" \
