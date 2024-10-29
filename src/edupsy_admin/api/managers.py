@@ -150,12 +150,11 @@ def set_client(
     app_uid: str,
     database_url: str,
     config_path: str,
-    client_id: str,
+    client_id: int,
     key_value_pairs: list[str],
 ):
     """
-    Set the value for a key given a client_id; if no client_id is passed,
-    print the current value.
+    Set the value for a key given a client_id
     """
     clients_manager = ClientsManager(
         database_url=database_url,
@@ -179,7 +178,7 @@ def get_na_ns(
     database_url: str,
     config_path: str,
     school: str,
-    out: str = None,
+    out: str | None = None,
 ):
     clients_manager = ClientsManager(
         database_url=database_url,
