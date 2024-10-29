@@ -67,8 +67,8 @@ class ClientsManager:
                 .filter(
                     (
                         (
-                            (Client.notenschutz == True)
-                            or (Client.nachteilsausgleich == True)
+                            (Client.notenschutz is True)
+                            or (Client.nachteilsausgleich is True)
                         )
                         and (Client.school == school)
                     )
