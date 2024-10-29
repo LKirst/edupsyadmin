@@ -7,11 +7,8 @@ from sqlalchemy import create_engine
 from .clients import Client
 from ..core.logger import logger
 from ..core.encrypt import Encryption
-from ..core.config import config
 from .fill_form import fill_form
 from .taetigkeitsbericht_check_key import check_keyword
-from .int_from_str import extract_number
-from .academic_year import get_estimated_end_of_academic_year, get_date_destroy_records
 
 Base = declarative_base()
 encr = Encryption()

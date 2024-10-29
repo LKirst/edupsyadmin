@@ -1,7 +1,6 @@
 from itertools import product
 from pypdf import PdfReader, PdfWriter
 from pathlib import Path
-import pandas as pd
 import shutil
 
 from liquid import Template, exceptions
@@ -9,7 +8,6 @@ from fillpdf import fillpdfs
 
 from .add_convenience_data import add_convenience_data
 from ..core.logger import logger
-from ..core.encrypt import Encryption
 
 
 def write_form_pdf(fn, out_fn, data, verbose=False):
