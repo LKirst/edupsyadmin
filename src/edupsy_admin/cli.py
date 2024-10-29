@@ -47,14 +47,14 @@ def main(argv=None) -> int:
     if not args.app_username:
         try:
             args.app_username = config.core.app_username
-        except e:
-            logging.error(
+        except e as exc:
+            logger.error(
                 (
                     "Either pass app_username from the "
                     "commandline or set app_username in the config.yml"
                 )
             )
-            raise e
+            raise e from exc
 
     # restart logging based on config
     logger.stop()  # clear handlers to prevent duplicate records
@@ -102,7 +102,10 @@ def _args(argv):
     common = ArgumentParser(add_help=False)  # common subcommand arguments
     common.add_argument(
         "--app_username",
-        help="username for encryption; if it is not set here, the app will try to read it from the config file",
+        help=(
+            "username for encryption; if it is not set here, the app will "
+            "try to read it from the config file"
+        ),
     )
     common.add_argument("--app_uid", default=APP_UID)
     common.add_argument("--database_url", default=DATABASE_URL)
@@ -148,7 +151,6 @@ def _new_client(subparsers, common):
         action="store_true",
         help="Don't delete the csv after adding it to the db.",
     )
-    return
 
 
 def _set_client(subparsers, common):
@@ -169,7 +171,6 @@ def _set_client(subparsers, common):
         nargs="+",
         help="key-value pairs in the format key=value",
     )
-    return
 
 
 def _get_na_ns(subparsers, common):
@@ -185,7 +186,6 @@ def _get_na_ns(subparsers, common):
     )
     parser.add_argument("school", help="which school")
     parser.add_argument("--out", help="path for an output file")
-    return
 
 
 def _create_documentation(subparsers, common):
@@ -201,7 +201,6 @@ def _create_documentation(subparsers, common):
     )
     parser.add_argument("client_id", type=int)
     parser.add_argument("form_paths", nargs="+")
-    return
 
 
 def _mk_report(subparsers, common):
@@ -221,7 +220,6 @@ def _mk_report(subparsers, common):
     parser.add_argument(
         "--version", type=str, choices=["Rosenkohl", "Toechter", "Laufbursche"]
     )
-    return
 
 
 def _taetigkeitsbericht(subparsers, common):
@@ -270,15 +268,13 @@ def _taetigkeitsbericht(subparsers, common):
         default="Schulpsychologie",
         help="name for the header of the pdf report",
     )
-    return
 
 
 # Make the module executable.
 if __name__ == "__main__":
     try:
-        status = main()
+        STATUS = main()
     except:
         logger.critical("shutting down due to fatal error")
         raise  # print stack trace
-    else:
-        raise SystemExit(status)
+    raise SystemExit(STATUS)
