@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, date
+from typing import Optional
 from sqlalchemy import (
-    Column,
     Integer,
     String,
     DateTime,
@@ -9,7 +9,7 @@ from sqlalchemy import (
     CheckConstraint,
     CHAR,
 )
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
 
 from ..core.logger import logger
 from ..core.config import config
@@ -18,42 +18,41 @@ from .int_from_str import extract_number
 from .academic_year import get_estimated_end_of_academic_year, get_date_destroy_records
 
 
-Base = declarative_base()
-
-
-class Client(Base):
+class Client(DeclarativeBase):
     __tablename__ = "clients"
 
     # Variables of StringEncryptedType
-    first_name_encr = Column(String)
-    last_name_encr = Column(String)
-    birthday_encr = Column(String)
-    street_encr = Column(String)
-    city_encr = Column(String)
-    parent_encr = Column(String)
-    telephone1_encr = Column(String)
-    telephone2_encr = Column(String)
-    email_encr = Column(String)
-    notes_encr = Column(String)
+    first_name_encr: Mapped[str] = mapped_column(String)
+    last_name_encr: Mapped[str] = mapped_column(String)
+    birthday_encr: Mapped[Optional[str]] = mapped_column(String)
+    street_encr: Mapped[Optional[str]] = mapped_column(String)
+    city_encr: Mapped[Optional[str]] = mapped_column(String)
+    parent_encr: Mapped[Optional[str]] = mapped_column(String)
+    telephone1_encr: Mapped[Optional[str]] = mapped_column(String)
+    telephone2_encr: Mapped[Optional[str]] = mapped_column(String)
+    email_encr: Mapped[Optional[str]] = mapped_column(String)
+    notes_encr: Mapped[Optional[str]] = mapped_column(String)
 
     # Unencrypted variables
-    client_id = Column(Integer, primary_key=True)
-    school = Column(String)
-    gender = Column(CHAR(1), CheckConstraint("gender IN ('f', 'm')"))
-    entry_date = Column(String)
-    class_name = Column(String)
-    class_int = Column(Integer)
-    estimated_date_of_graduation = Column(DateTime)
-    document_shredding_date = Column(DateTime)
-    keyword_taetigkeitsbericht = Column(String)
-    datetime_created = Column(DateTime)
-    datetime_lastmodified = Column(DateTime)
-    notenschutz = Column(Boolean)
-    nachteilsausgleich = Column(Boolean)
-    nta_sprachen = Column(Integer)
-    nta_mathephys = Column(Integer)
-    nta_notes = Column(String)
-    n_sessions = Column(Float)
+    client_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    school: Mapped[str] = mapped_column(String)
+    # TODO: missing type annotation
+    gender = mapped_column(CHAR(1), CheckConstraint("gender IN ('f', 'm')"))
+    entry_date: Mapped[Optional[str]] = mapped_column(String)
+    class_name: Mapped[Optional[str]] = mapped_column(String)
+    class_int: Mapped[Optional[int]] = mapped_column(Integer)
+    # TODO: check if this works with date or if I have to pass datetime
+    estimated_date_of_graduation: Mapped[Optional[date]] = mapped_column(DateTime)
+    document_shredding_date: Mapped[Optional[date]] = mapped_column(DateTime)
+    keyword_taetigkeitsbericht: Mapped[Optional[str]] = mapped_column(String)
+    datetime_created: Mapped[datetime] = mapped_column(DateTime)
+    datetime_lastmodified: Mapped[datetime] = mapped_column(DateTime)
+    notenschutz: Mapped[Optional[bool]] = mapped_column(Boolean)
+    nachteilsausgleich: Mapped[Optional[bool]] = mapped_column(Boolean)
+    nta_sprachen: Mapped[Optional[int]] = mapped_column(Integer)
+    nta_mathephys: Mapped[Optional[int]] = mapped_column(Integer)
+    nta_notes: Mapped[Optional[str]] = mapped_column(String)
+    n_sessions: Mapped[Optional[float]] = mapped_column(Float)
 
     def __init__(
         self,
@@ -64,7 +63,7 @@ class Client(Base):
         class_name: str,
         first_name: str,
         last_name: str,
-        client_id: id = None,
+        client_id: int | None = None,
         birthday: str = "",
         street: str = "",
         city: str = "",
