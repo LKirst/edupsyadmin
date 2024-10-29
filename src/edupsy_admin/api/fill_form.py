@@ -10,7 +10,7 @@ from .add_convenience_data import add_convenience_data
 from ..core.logger import logger
 
 
-def write_form_pdf(fn, out_fn, data, verbose=False):
+def write_form_pdf(fn: Path, out_fn: Path, data: dict, verbose=False):
     """uses pypdf"""
     reader = PdfReader(open(fn, "rb"), strict=False)
     writer = PdfWriter()
@@ -40,7 +40,7 @@ def write_form_pdf(fn, out_fn, data, verbose=False):
         writer.write(output_stream)
 
 
-def write_form_pdf2(fn, out_fn, data, verbose=False):
+def write_form_pdf2(fn: Path, out_fn: Path, data: dict, verbose=False):
     """uses the library fillpdf"""
     fields = fillpdfs.get_form_fields(fn)
     logger.debug(f"\nForm fields:\n{fields}")
@@ -57,7 +57,7 @@ def write_form_pdf2(fn, out_fn, data, verbose=False):
         shutil.copyfile(fn, out_fn)
 
 
-def write_form_md(fn, out_fn, data):
+def write_form_md(fn: Path, out_fn: Path, data):
     with open(fn, "r", encoding="utf8") as text_file:
         txt = text_file.read()
         try:
@@ -82,13 +82,13 @@ def fill_form(
 ):
     data = add_convenience_data(client_data)
     for fn in form_paths:
-        fn = Path(fn)
-        logger.info(f"Using the template {fn}")
-        out_fn = Path(f"{data['client_id']}_{fn.name}")
-        logger.info(f"Writing to {out_fn}")
-        if fn.suffix == ".md":
-            write_form_md(fn, out_fn, data)
+        fp = Path(fn)
+        logger.info(f"Using the template {fp}")
+        out_fp = Path(f"{data['client_id']}_{fp.name}")
+        logger.info(f"Writing to {out_fp}")
+        if fp.suffix == ".md":
+            write_form_md(fp, out_fp, data)
         elif use_fillpdf:
-            write_form_pdf2(fn, out_fn, data, verbose=verbose)
+            write_form_pdf2(fp, out_fp, data, verbose=verbose)
         else:
-            write_form_pdf(fn, out_fn, data, verbose=verbose)
+            write_form_pdf(fp, out_fp, data, verbose=verbose)
