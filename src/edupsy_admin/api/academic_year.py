@@ -28,7 +28,7 @@ def get_this_academic_year_string() -> str:
 
 
 def get_estimated_end_of_academic_year(
-    date_current: date = None,
+    date_current: date | None = None,
     grade_current: int = 0,
     grade_target: int = 0,
     last_month: int = DEFAULT_LAST_MONTH,
