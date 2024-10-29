@@ -18,7 +18,11 @@ from .int_from_str import extract_number
 from .academic_year import get_estimated_end_of_academic_year, get_date_destroy_records
 
 
-class Client(DeclarativeBase):
+class Base(DeclarativeBase):
+    pass
+
+
+class Client(Base):
     __tablename__ = "clients"
 
     # Variables of StringEncryptedType
