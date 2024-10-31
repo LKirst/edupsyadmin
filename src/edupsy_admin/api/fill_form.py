@@ -4,7 +4,6 @@ import shutil
 
 from liquid import Template, exceptions
 
-from .add_convenience_data import add_convenience_data
 from ..core.logger import logger
 
 
@@ -113,15 +112,14 @@ def fill_form(
         that uses the library fillpdf or a function that uses pypdf2, defaults
         to True
     """
-    data = add_convenience_data(client_data)
     for fn in form_paths:
         fp = Path(fn)
         logger.info(f"Using the template {fp}")
-        out_fp = Path(f"{data['client_id']}_{fp.name}")
+        out_fp = Path(f"{client_data['client_id']}_{fp.name}")
         logger.info(f"Writing to {out_fp}")
         if fp.suffix == ".md":
-            write_form_md(fp, out_fp, data)
+            write_form_md(fp, out_fp, client_data)
         elif use_fillpdf:
-            write_form_pdf2(fp, out_fp, data)
+            write_form_pdf2(fp, out_fp, client_data)
         else:
-            write_form_pdf(fp, out_fp, data)
+            write_form_pdf(fp, out_fp, client_data)

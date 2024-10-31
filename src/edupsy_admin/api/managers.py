@@ -9,6 +9,7 @@ from ..core.logger import logger
 from ..core.encrypt import Encryption
 from .fill_form import fill_form
 from .taetigkeitsbericht_check_key import check_keyword
+from .add_convenience_data import add_convenience_data
 
 Base = declarative_base()
 encr = Encryption()
@@ -281,4 +282,5 @@ def create_documentation(
         config_path=config_path,
     )
     client_dict = clients_manager.get_decrypted_client(client_id)
-    fill_form(client_dict, form_paths)
+    client_dict_with_convenience_data = add_convenience_data(client_dict)
+    fill_form(client_dict_with_convenience_data, form_paths)
