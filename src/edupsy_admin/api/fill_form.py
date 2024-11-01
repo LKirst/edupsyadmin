@@ -113,7 +113,7 @@ def write_form_md(fn: Path, out_fn: Path, data: dict) -> None:
         try:
             msg = template.render(**data)
         except exceptions.Error as e:
-            logging.error(e)
+            logger.error(e)
             msg = ""
     with open(out_fn, "w", encoding="utf8") as out_file:
         out_file.writelines(msg)
