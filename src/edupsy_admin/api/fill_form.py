@@ -7,6 +7,25 @@ from liquid import Template, exceptions
 from ..core.logger import logger
 
 
+def modify_bool_for_pdf_form(data: dict) -> dict:
+    """
+    Replace every boolean True with 'Yes' and False with 'Off', which are
+    the values checkboxes accept in most PDF forms.
+
+    :param data: a dictionary of data
+    :return: a modified dictionary where booleans are replaced
+        with string values
+    """
+    updated_data = {}
+    logger.debug("Replacing True with 'Yes' and False with 'Off'")
+    for key, value in data.items():
+        if isinstance(value, bool):
+            updated_data[key] = "Yes" if value else "Off"
+        else:
+            updated_data[key] = value
+    return updated_data
+
+
 def write_form_pdf(fn: Path, out_fn: Path, data: dict) -> None:
     """
     Fill a pdf form with data using pypdf.
@@ -17,6 +36,8 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict) -> None:
     :raises FileExistsError: FileExistsError
     """
     from pypdf import PdfReader, PdfWriter
+
+    data_wo_bool = modify_bool_for_pdf_form(data)
 
     reader = PdfReader(open(fn, "rb"), strict=False)
     writer = PdfWriter()
@@ -29,14 +50,14 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict) -> None:
         logger.debug(f"The file {fn} is not a form.")
     else:
         logger.debug("\nForm fields:\n{fields.keys()}")
-        logger.debug(f"\nData keys:\n{data.keys()}")
+        logger.debug(f"\nData keys:\n{data_wo_bool.keys()}")
         comb_key_fields = product(range(len(reader.pages)), fields.keys())
         for i, key in comb_key_fields:
-            if key in data.keys():
+            if key in data_wo_bool.keys():
                 try:
-                    if data[key]:
+                    if data_wo_bool[key]:
                         writer.update_page_form_field_values(
-                            writer.pages[i], {key: data[key]}
+                            writer.pages[i], {key: data_wo_bool[key]}
                         )
                 except:
                     logger.debug(f"Couldn't fill in {key} on p. {i+1} of {fn.name}")
@@ -56,11 +77,13 @@ def write_form_pdf2(fn: Path, out_fn: Path, data: dict) -> None:
     """
     from fillpdf import fillpdfs
 
+    data_wo_bool = modify_bool_for_pdf_form(data)
+
     fields = fillpdfs.get_form_fields(fn)
     logger.debug(f"\nForm fields:\n{fields}")
-    logger.debug(f"\nData keys:\n{data.keys()}")
+    logger.debug(f"\nData keys:\n{data_wo_bool.keys()}")
     if fields:
-        fillpdfs.write_fillable_pdf(fn, out_fn, data)
+        fillpdfs.write_fillable_pdf(fn, out_fn, data_wo_bool)
     else:
         logger.info(
             (
@@ -99,6 +122,7 @@ def write_form_md(fn: Path, out_fn: Path, data: dict) -> None:
 def fill_form(
     client_data: dict,
     form_paths: list[str],
+    out_dir: str = ".",
     use_fillpdf: bool = True,
 ):
     """
@@ -115,7 +139,7 @@ def fill_form(
     for fn in form_paths:
         fp = Path(fn)
         logger.info(f"Using the template {fp}")
-        out_fp = Path(f"{client_data['client_id']}_{fp.name}")
+        out_fp = Path(out_dir, f"{client_data['client_id']}_{fp.name}")
         logger.info(f"Writing to {out_fp}")
         if fp.suffix == ".md":
             write_form_md(fp, out_fp, client_data)
