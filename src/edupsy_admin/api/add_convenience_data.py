@@ -7,10 +7,10 @@ from ..core.logger import logger
 from ..core.config import config
 
 
-def get_subjects(school: str):
+def get_subjects(school: str) -> str:
     file_path = files("edupsy_admin.data").joinpath(f"Faecher_{school}.md")
     logger.info(f"trying to read school subjects file: {file_path}")
-    if file_path.exists() and file_path.is_file():
+    if file_path.is_file():
         logger.debug(f"subjects file exists")
         with file_path.open("r", encoding="utf-8") as file:
             return file.read()
@@ -62,17 +62,19 @@ def add_convenience_data(data: dict) -> dict:
             "Vorbereitungszeit bei mündlichen Leistungsnachweisen"
         )
 
-    # for forms, I use the format dd/mm/YYYY; internally, I use YYYY-mm-dd
+    # for forms, I use the format dd.mm.YYYY; internally, I use YYYY-mm-dd
     today = date.today()
-    data["date_today"] = today.strftime("%d/%m/%Y")
+    data["date_today_de"] = today.strftime("%d.%m.%Y")
     try:
-        data["birthday"] = parse(data["birthday"], dayfirst=False).strftime("%d/%m/%Y")
+        data["birthday_de"] = parse(data["birthday"], dayfirst=False).strftime(
+            "%d.%m.%Y"
+        )
     except:
         logger.error("The birthday could not be parsed.")
-        data["birthday"] = ""
+        data["birthday_de"] = ""
     data["school_year"] = get_this_academic_year_string()
-    data["document_shredding_date"] = data["document_shredding_date"].strftime(
-        "%d/%m/%Y"
+    data["document_shredding_date_de"] = data["document_shredding_date"].strftime(
+        "%d.%m.%Y"
     )
 
     return data
