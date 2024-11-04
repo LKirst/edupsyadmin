@@ -124,7 +124,8 @@ def _args(argv):
     if not args.config_path:
         # Don't specify this as an argument default or else it will always be
         # included in the list.
-        args.config_path = "etc/config.yml"
+        # [TODO]: Find a way to not work with an absolute path!
+        args.config_path = os.path.expanduser("~/bin/edupsy_admin/etc/config.yml")
     return args
 
 
