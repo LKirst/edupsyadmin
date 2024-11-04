@@ -2,9 +2,9 @@ from datetime import date
 from dateutil.parser import parse
 from importlib.resources import files
 
-from .academic_year import get_this_academic_year_string
-from ..core.logger import logger
-from ..core.config import config
+from edupsy_admin.api.academic_year import get_this_academic_year_string
+from edupsy_admin.core.logger import logger
+from edupsy_admin.core.config import config
 
 
 def get_subjects(school: str) -> str:
