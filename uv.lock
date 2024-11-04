@@ -327,6 +327,7 @@ dependencies = [
     { name = "dataframe-image" },
     { name = "fpdf" },
     { name = "keyring" },
+    { name = "odfpy" },
     { name = "pandas" },
     { name = "platformdirs" },
     { name = "python-dotenv" },
@@ -342,6 +343,7 @@ requires-dist = [
     { name = "dataframe-image", specifier = ">=0.2.6" },
     { name = "fpdf", specifier = ">=1.7.2" },
     { name = "keyring", specifier = ">=25.5.0" },
+    { name = "odfpy", specifier = ">=1.4.1" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "platformdirs", specifier = ">=4.3.6" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
@@ -928,6 +930,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/24/d7/78a40ed1d80e23a774cb8a34ae8a9493ba1b4271dde96e56ccdbab1620ef/numpy-2.1.3-cp313-cp313t-win32.whl", hash = "sha256:08788d27a5fd867a663f6fc753fd7c3ad7e92747efc73c53bca2f19f8bc06f48", size = 6291907 },
     { url = "https://files.pythonhosted.org/packages/86/09/a5ab407bd7f5f5599e6a9261f964ace03a73e7c6928de906981c31c38082/numpy-2.1.3-cp313-cp313t-win_amd64.whl", hash = "sha256:2564fbdf2b99b3f815f2107c1bbc93e2de8ee655a69c261363a1172a79a257d4", size = 12644098 },
 ]
+
+[[package]]
+name = "odfpy"
+version = "1.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "defusedxml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/97/73/8ade73f6749177003f7ce3304f524774adda96e6aaab30ea79fd8fda7934/odfpy-1.4.1.tar.gz", hash = "sha256:db766a6e59c5103212f3cc92ec8dd50a0f3a02790233ed0b52148b70d3c438ec", size = 717045 }
 
 [[package]]
 name = "packaging"
