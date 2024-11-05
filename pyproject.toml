@@ -34,6 +34,7 @@ path = "src/edupsy_admin/__version__.py"
 
 [dependency-groups]
 dev = [
+    "bitwarden-keyring>=0.3.1",
     "pre-commit>=4.0.1",
     "pytest>=8.3.3",
     "reportlab>=4.2.5",

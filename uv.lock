@@ -118,6 +118,18 @@ wheels = [
 ]
 
 [[package]]
+name = "bitwarden-keyring"
+version = "0.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "keyring" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4d/a3/c44874b6b28f2c0d002922bed5b871cbb446671f1ae0584d6896bb301179/bitwarden-keyring-0.3.1.tar.gz", hash = "sha256:c46e15c2fcb3cfbf99636be9911166bfe5a813c8029e1bf2730e65870640617f", size = 8299 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/63/e01e94bd3b7415692d5e53c2a7f5109f8aafd75015b199061affd73f05f9/bitwarden_keyring-0.3.1-py2.py3-none-any.whl", hash = "sha256:9b46661b8551b215de64da0e5764fd5734c0a7fae34b190fe602af2f97160f7a", size = 6663 },
+]
+
+[[package]]
 name = "bleach"
 version = "6.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -377,6 +389,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "bitwarden-keyring" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "reportlab" },
@@ -402,6 +415,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "bitwarden-keyring", specifier = ">=0.3.1" },
     { name = "pre-commit", specifier = ">=4.0.1" },
     { name = "pytest", specifier = ">=8.3.3" },
     { name = "reportlab", specifier = ">=4.2.5" },
