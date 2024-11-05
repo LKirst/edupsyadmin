@@ -26,11 +26,15 @@ dependencies = [
     "sqlalchemy>=2.0.36",
 ]
 
-[tool.hatch.build]
-include = ["src/**", "etc/**"]
-
 [project.scripts]
 edupsy_admin = "edupsy_admin.cli:main"
 
 [tool.hatch.version]
 path = "src/edupsy_admin/__version__.py"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0.1",
+    "pytest>=8.3.3",
+    "reportlab>=4.2.5",
+]
