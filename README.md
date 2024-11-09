@@ -18,10 +18,6 @@ Install for the current user:
 
     $ pip install . --user
 
-Install for development (from the root folder of the package):
-
-    $ pip install -e .
-
 Run the application:
 
     $ edupsy_admin --help
