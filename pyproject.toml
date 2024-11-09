@@ -4,7 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "edupsy-admin"
-version = "0.2.0"
+authors=[
+    {name = "Lukas Liebermann"}
+]
+dynamic = ["version"]
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"

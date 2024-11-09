@@ -10,15 +10,8 @@ from setuptools import setup
 
 
 _config = {
-    "name": "edupsy_admin",
-    "url": "https://github.com/LKirst/edupsy_admin.git",
-    "author": "Lukas Liebermann",
-    "author_email": "lk_tech@mailbox.org",
     "package_dir": {"": "src"},
     "packages": find_packages("src"),
-    "entry_points": {
-        "console_scripts": ("edupsy_admin = edupsy_admin.cli:main",),
-    },
     "data_files": ("etc/",),
 }
 
