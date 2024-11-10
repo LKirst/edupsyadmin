@@ -5,7 +5,14 @@ documentation.
 
 ## Minimum Requirements
 
-- Python 3.10+
+- Python 3.11+
+
+## License
+
+This project is licensed under the terms of the MIT License. Portions of this
+project are derived from the python application project cookiecutter template
+by Michael Klatt, which is also licensed under the MIT license. See the
+LICENSE.txt file for details.
 
 ## Optional Requirements
 
