@@ -1,15 +1,15 @@
-""" Test suite for the core.encrypt module.
-"""
+"""Test suite for the core.encrypt module."""
 
 import os
-import pytest
-import keyring
-import yaml
 from pathlib import Path
 
+import keyring
+import pytest
+import yaml
+
 from edupsy_admin.core.config import config
-from edupsy_admin.core.logger import logger
 from edupsy_admin.core.encrypt import Encryption, _convert_conf_to_dict
+from edupsy_admin.core.logger import logger
 
 secret_message = "This is a secret message."
 
@@ -33,9 +33,17 @@ def configfile():
     logger.start(config.logging)
 
     # create a keyring entry for testing if it does not exist
-    cred = keyring.get_credential(config.uid, config.username)
-    if cred is None:
-        keyring.set_password(config.uid, config.username, "test_pw_do_not_use")
+    try:
+        cred = keyring.get_credential(config.uid, config.username)
+        if cred is None:
+            keyring.set_password(config.uid, config.username, "test_pw_do_not_use")
+    except Exception as e:
+        pytest.fail(
+            (
+                f"Failed to access keyring: {e}."
+                "Please ensure your keyring is unlocked and accessible."
+            )
+        )
 
     yield
     os.remove(config.core.config)
