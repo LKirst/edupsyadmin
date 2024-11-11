@@ -1,3 +1,1 @@
-"""Core implementation package.
-
-"""
+"""Core implementation package."""

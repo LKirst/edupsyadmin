@@ -1,6 +1,4 @@
-""" Implementation of the command line interface.
-
-"""
+"""Implementation of the command line interface."""
 
 import os
 from argparse import ArgumentParser
@@ -9,14 +7,13 @@ from inspect import getfullargspec
 from platformdirs import user_data_path
 
 from . import __version__
-from .api.managers import new_client, create_documentation, set_client, get_na_ns
 
 # TODO: change the api so that mkreport works for CFT as well as LGVT
 from .api.lgvt import mk_report
+from .api.managers import create_documentation, get_na_ns, new_client, set_client
 from .api.taetigkeitsbericht_from_db import taetigkeitsbericht
 from .core.config import config
 from .core.logger import logger
-
 
 __all__ = ("main",)
 

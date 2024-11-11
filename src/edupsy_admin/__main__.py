@@ -1,6 +1,6 @@
-""" Main application entry point.
+"""Main application entry point.
 
-    python -m edupsy_admin  ...
+python -m edupsy_admin  ...
 
 """
 

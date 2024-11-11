@@ -1,15 +1,12 @@
-""" Global application logging.
+"""Global application logging.
 
 All modules use the same global logging object. No messages will be emitted
 until the logger is started.
 
 """
 
-from logging import Formatter
+from logging import Formatter, NullHandler, StreamHandler
 from logging import Logger as _Logger
-from logging import NullHandler
-from logging import StreamHandler
-
 
 __all__ = "logger", "Logger"
 

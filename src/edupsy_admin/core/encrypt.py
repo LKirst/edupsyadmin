@@ -1,17 +1,17 @@
 import base64
 import os
+
 import keyring
 import yaml
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from .logger import logger
 from .config import config
+from .logger import logger
 
 
 class Encryption:
-
     fernet = None
 
     def set_fernet(self, username: str, config_path: str, uid: str) -> None:

@@ -1,13 +1,14 @@
 import unittest
 from datetime import date
+
 from edupsy_admin.api.academic_year import (
+    DEFAULT_LAST_DAY,
+    DEFAULT_LAST_MONTH,
     get_academic_year_string,
-    get_this_academic_year_string,
+    get_date_destroy_records,
     get_estimated_end_of_academic_year,
     get_estimated_end_of_this_academic_year,
-    get_date_destroy_records,
-    DEFAULT_LAST_MONTH,
-    DEFAULT_LAST_DAY,
+    get_this_academic_year_string,
 )
 
 TODAY = date.today()
@@ -17,7 +18,6 @@ if TODAY.month > DEFAULT_LAST_MONTH:
 
 
 class TestAcademicYearFunctions(unittest.TestCase):
-
     def test_get_academic_year_string(self):
         end_of_year = date(2023, 7, 31)
         self.assertEqual(get_academic_year_string(end_of_year), "2022/23")

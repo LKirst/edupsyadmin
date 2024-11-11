@@ -1,17 +1,17 @@
 import unittest
+
 from edupsy_admin.api.convert_measures import (
-    percentile_to_z,
-    percentile_to_t,
-    z_to_normaldist,
-    normaldist_to_z,
-    iq_to_z,
-    t_to_z,
     iq_to_t,
+    iq_to_z,
+    normaldist_to_z,
+    percentile_to_t,
+    percentile_to_z,
+    t_to_z,
+    z_to_normaldist,
 )
 
 
 class TestConversionFunctions(unittest.TestCase):
-
     def test_percentile_to_z(self):
         self.assertAlmostEqual(percentile_to_z(50), 0, places=5)
         self.assertAlmostEqual(percentile_to_z(84), 0.994, places=3)

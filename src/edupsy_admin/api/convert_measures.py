@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+
 from scipy.stats import norm
 
 IQ_MEAN = 100
@@ -94,7 +95,6 @@ def iq_to_t(iq: float) -> float:
 
 
 if __name__ == "__main__":
-
     formats = ["t", "z", "iq", "percentile"]
 
     parser = argparse.ArgumentParser()

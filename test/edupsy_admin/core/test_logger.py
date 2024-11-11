@@ -1,4 +1,4 @@
-""" Test suite for the core._logger module.
+"""Test suite for the core._logger module.
 
 The script can be executed on its own or incorporated into a larger test suite.
 However the tests are run, be aware of which version of the package is actually
@@ -8,11 +8,12 @@ environment or setuptools develop mode to test against the development version.
 
 """
 
-from logging import DEBUG
 from io import StringIO
+from logging import DEBUG
 
 import pytest
-from edupsy_admin.core.logger import *  # tests __all__
+
+from edupsy_admin.core.logger import Logger
 
 
 @pytest.fixture

@@ -1,20 +1,18 @@
-""" Global application configuration.
+"""Global application configuration.
 
 This module defines a global configuration object. Other modules should use
 this object to store application-wide configuration values.
 
 """
 
-from dotenv import load_dotenv
-from yaml import Node
-from yaml import SafeLoader
-from yaml import safe_load
 from os import environ
 from re import compile
 from string import Template
 
-from .logger import logger
+from dotenv import load_dotenv
+from yaml import Node, SafeLoader, safe_load
 
+from .logger import logger
 
 __all__ = "config", "YamlConfig"
 

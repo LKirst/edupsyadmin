@@ -1,7 +1,7 @@
-"""Test execution time of functions in the core.encrypt module.
-"""
+"""Test execution time of functions in the core.encrypt module."""
 
-import timeit, os
+import os
+import timeit
 from pathlib import Path
 
 from edupsy_admin.core.encrypt import Encryption
