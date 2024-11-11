@@ -1,21 +1,22 @@
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import Optional
+
 from sqlalchemy import (
+    CHAR,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Float,
     Integer,
     String,
-    DateTime,
-    Boolean,
-    Float,
-    CheckConstraint,
-    CHAR,
 )
-from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from ..core.logger import logger
 from ..core.config import config
-from .taetigkeitsbericht_check_key import check_keyword
+from ..core.logger import logger
+from .academic_year import get_date_destroy_records, get_estimated_end_of_academic_year
 from .int_from_str import extract_number
-from .academic_year import get_estimated_end_of_academic_year, get_date_destroy_records
+from .taetigkeitsbericht_check_key import check_keyword
 
 
 class Base(DeclarativeBase):
@@ -35,6 +36,7 @@ class Client(Base):
     telephone1_encr: Mapped[Optional[str]] = mapped_column(String)
     telephone2_encr: Mapped[Optional[str]] = mapped_column(String)
     email_encr: Mapped[Optional[str]] = mapped_column(String)
+    lrst_diagnosis_encr: Mapped[Optional[str]] = mapped_column(String)
     notes_encr: Mapped[Optional[str]] = mapped_column(String)
 
     # Unencrypted variables
@@ -79,6 +81,7 @@ class Client(Base):
         notenschutz: bool = False,
         nachteilsausgleich: bool = False,
         keyword_taetigkeitsbericht: str | None = "",
+        lrst_diagnosis: str | None = "",
         n_sessions: int = 1,
     ):
         if client_id:
@@ -93,6 +96,7 @@ class Client(Base):
         self.telephone1_encr = encr.encrypt(telephone1)
         self.telephone2_encr = encr.encrypt(telephone2)
         self.email_encr = encr.encrypt(email)
+        self.lrst_diagnosis_encr = encr.encrypt(lrst_diagnosis)
         self.notes_encr = encr.encrypt(notes)
 
         self.school = school
