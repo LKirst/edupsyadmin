@@ -1,4 +1,4 @@
-""" Test suite for the core.config module.
+"""Test suite for the core.config module.
 
 The script can be executed on its own or incorporated into a larger test suite.
 However the tests are run, be aware of which version of the package is actually
@@ -9,10 +9,19 @@ environment or setuptools develop mode to test against the development version.
 """
 
 from os import environ
-from pathlib import Path
 
 import pytest
-from edupsy_admin.core.config import *  # tests __all__
+
+from edupsy_admin.core.config import YamlConfig
+
+conf1_content = """
+str: $$str  # literal `$`, no substitution
+env: ${env1}${env2}
+var: ${var1}$var2
+"""
+conf2_content = """
+var: ${var1}$var3  # override `var` in conf1.yml
+"""
 
 
 class YamlConfigTest(object):
@@ -21,9 +30,14 @@ class YamlConfigTest(object):
     @classmethod
     @pytest.fixture
     def files(cls, tmp_path):
-        """Return configuration files for testing."""
-        files = "conf1.yml", "conf2.yml"
-        return tuple(Path("test/data", item) for item in files)
+        """Create configuration files for testing."""
+        # Create conf1.yml and conf2.yml in the temporary path
+        conf1_path = tmp_path / "conf1.yml"
+        conf2_path = tmp_path / "conf2.yml"
+        conf1_path.write_text(conf1_content.strip())
+        conf2_path.write_text(conf2_content.strip())
+
+        return conf1_path, conf2_path
 
     @classmethod
     @pytest.fixture
