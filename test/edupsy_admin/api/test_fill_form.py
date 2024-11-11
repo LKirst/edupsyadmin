@@ -1,12 +1,13 @@
 from pathlib import Path
-import pytest
+
 import pypdf
+import pytest
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
-from edupsy_admin.core.logger import logger
 from edupsy_admin.api.fill_form import fill_form
+from edupsy_admin.core.logger import logger
 
 # Sample client data
 client_data = {
@@ -67,6 +68,34 @@ def create_pdf_form(pdf_filename):
         borderWidth=3,
         borderColor=colors.black,
     )
+
+    # Radio buttons for gender selection
+    # TODO: test whether the correct value was set
+    c.drawString(100, 500, "Gender:")
+    c.acroForm.radio(
+        name="gender",
+        value="f",
+        x=100,
+        y=480,
+        size=20,
+        borderWidth=1,
+        borderColor=colors.black,
+        fillColor=colors.white,
+        forceBorder=True,
+    )
+    c.drawString(130, 480, "f")
+    c.acroForm.radio(
+        name="gender",
+        value="m",
+        x=100,
+        y=450,
+        size=20,
+        borderWidth=1,
+        borderColor=colors.black,
+        fillColor=colors.white,
+        forceBorder=True,
+    )
+    c.drawString(130, 450, "m")
 
     c.save()
 
