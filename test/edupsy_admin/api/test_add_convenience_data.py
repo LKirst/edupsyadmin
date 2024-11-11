@@ -40,6 +40,7 @@ def test_add_convenience_data(mock_get_subjects, mock_config):
     result = add_convenience_data(input_data)
 
     # Assertions
+    # TODO: Handle Umlaute in the config.yaml!
     assert result["name"] == "John Doe"
     assert result["address"] == "456 Example Rd, Example City"
     assert result["address_multiline"] == "John Doe\n456 Example Rd\nExample City"
