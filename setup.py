@@ -1,13 +1,9 @@
-""" Setup script for the edupsy_admin application.
-
-"""
+"""Setup script for the edupsy_admin application."""
 
 from os import walk
 from pathlib import Path
 
-from setuptools import find_packages
-from setuptools import setup
-
+from setuptools import find_packages, setup
 
 _config = {
     "package_dir": {"": "src"},
@@ -29,17 +25,9 @@ def main() -> int:
                 yield str(path.parent), (str(path),)
         return
 
-    def version():
-        """Get the local package version."""
-        namespace = {}
-        path = Path("src", _config["name"], "__version__.py")
-        exec(path.read_text(), namespace)
-        return namespace["__version__"]
-
     _config.update(
         {
             "data_files": list(data_files(*_config["data_files"])),
-            "version": version(),
         }
     )
     setup(**_config)
