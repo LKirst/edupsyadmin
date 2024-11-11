@@ -1,10 +1,11 @@
-import pytest
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
-from datetime import datetime
 
-from edupsy_admin.core.config import config
+import pytest
+
 from edupsy_admin.api.add_convenience_data import add_convenience_data
+from edupsy_admin.core.config import config
 
 # Sample input data
 input_data = {
@@ -23,6 +24,7 @@ input_data = {
 
 @pytest.fixture
 def mock_config():
+    # TODO: replace with tmp_path
     cfg_paths = [Path(__file__).parent.parent.parent / "data" / "sampleconfig.yml"]
     config.load(cfg_paths)
 
@@ -31,7 +33,6 @@ def mock_config():
     "edupsy_admin.api.add_convenience_data.get_subjects"
 )  # Mock the get_subjects function
 def test_add_convenience_data(mock_get_subjects, mock_config):
-
     # Mock the return value of get_subjects
     mock_get_subjects.return_value = "Math, Science, History"
 
@@ -54,9 +55,10 @@ def test_add_convenience_data(mock_get_subjects, mock_config):
         result["ns_measures"] == "Verzicht auf die Bewertung der Rechtschreibleistung"
     )
     assert result["na_subjects"] == "Math, Science, History"
-    assert (
-        result["na_measures"]
-        == "Verlängerung der Arbeitszeit um 50% bei schriftlichen Leistungsnachweisen und der Vorbereitungszeit bei mündlichen Leistungsnachweisen"
+    assert result["na_measures"] == (
+        "Verlängerung der Arbeitszeit um 50% bei schriftlichen "
+        "Leistungsnachweisen und der Vorbereitungszeit bei "
+        "mündlichen Leistungsnachweisen"
     )
     assert result["date_today_de"] is not None  # Check if date is added
     assert (
