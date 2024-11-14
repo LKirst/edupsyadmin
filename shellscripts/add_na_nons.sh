@@ -6,4 +6,5 @@ edupsy_admin -w DEBUG set_client \
     "nachteilsausgleich=1" \
     "notenschutz=0" \
     "nta_mathephys=10" \
-    "nta_sprachen=$nta_sprachen"
+    "nta_sprachen=$nta_sprachen" \
+    "lrst_diagnosis_encr=iLst"
