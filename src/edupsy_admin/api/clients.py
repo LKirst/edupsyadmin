@@ -13,6 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from ..core.config import config
+from ..core.encrypt import Encryption
 from ..core.logger import logger
 from .academic_year import get_date_destroy_records, get_estimated_end_of_academic_year
 from .int_from_str import extract_number
@@ -21,6 +22,9 @@ from .taetigkeitsbericht_check_key import check_keyword
 
 class Base(DeclarativeBase):
     pass
+
+
+encr = Encryption()
 
 
 class Client(Base):

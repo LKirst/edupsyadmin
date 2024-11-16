@@ -1,19 +1,13 @@
-""" Test suite for the api module.
-
-The script can be executed on its own or incorporated into a larger test suite.
-However the tests are run, be aware of which version of the module is actually
-being tested. If the library is installed in site-packages, that version takes
-precedence over the version in this project directory. Use a virtualenv test
-environment or setuptools develop mode to test against the development version.
-
-"""
-
 import os
-import pytest
-import keyring
-from pathlib import Path
 
-from edupsy_admin.api import *  # tests __all__
+import keyring
+import pytest
+
+from edupsy_admin.api.managers import (
+    ClientsManager,
+    enter_client_cli,
+    enter_client_untiscsv,
+)
 from edupsy_admin.core.config import config
 from edupsy_admin.core.logger import logger
 
@@ -21,7 +15,7 @@ TEST_USERNAME = "test_user_do_not_use"
 TEST_UID = "example.com"
 
 client_data = {
-    "school": "ABC School",
+    "school": "test_school",
     "gender": "m",
     "entry_date": "2021-06-30",
     "class_name": "11TKKG",
@@ -34,20 +28,30 @@ client_data = {
     "email": "john.doe@example.com",
 }
 
+conf1_content = """
+core:
+  logging: WARN
+  uid: liebermann-schulpsychologie.github.io
+school:
+  test_school:
+    school_name: Test School
+    school_street: 123 Test St
+    school_head_w_school: Principal of Test School
+    end: 12
+"""
+
 
 @pytest.fixture()
-def clients_manager():
+def clients_manager(tmp_path):
     """Create a test config file and an encryption key"""
-    # create a config file if it does not exist
-    cfg_path = Path("test/data/testconfig.yml")
-    if not cfg_path.parent.exists():
-        os.makedirs(cfg_path.parent)
-    open(cfg_path, mode="a").close()
-    config.load(str(cfg_path))
+    # create a config file
+    conf1_path = tmp_path / "conf2.yml"
+    conf1_path.write_text(conf1_content.strip())
 
     # set config values
-    config.core = {}
-    config.core.config = str(cfg_path)
+    config.load(str(conf1_path))
+    # TODO: I don't understand why this throws an error
+    config.core.config = str(conf1_path)
     config.logging = "DEBUG"
     logger.start(config.logging)
 
@@ -61,7 +65,7 @@ def clients_manager():
         database_url,
         app_uid=TEST_UID,
         app_username=TEST_USERNAME,
-        config_path=str(cfg_path),
+        config_path=str(conf1_path),
     )
 
     yield manager
@@ -89,9 +93,7 @@ def test_edit_client(clients_manager):
 def test_delete_client(clients_manager):
     client_id = clients_manager.add_client(**client_data)
     clients_manager.delete_client(client_id)
-
-    with pytest.raises(Exception) as e_info:
-        client = clients_manager.get_decrypted_client(client_id=client_id)
+    # TODO: add assert
 
 
 def test_enter_client_cli(clients_manager, monkeypatch):

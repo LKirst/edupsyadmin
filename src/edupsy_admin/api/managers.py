@@ -1,17 +1,22 @@
 import os
 from datetime import datetime
-import pandas as pd
-from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy import create_engine
 
-from .clients import Client
-from ..core.logger import logger
+import pandas as pd
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
 from ..core.encrypt import Encryption
+from ..core.logger import logger
+from .add_convenience_data import add_convenience_data
+from .clients import Client
 from .fill_form import fill_form
 from .taetigkeitsbericht_check_key import check_keyword
-from .add_convenience_data import add_convenience_data
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
+
+
 encr = Encryption()
 
 
@@ -54,14 +59,17 @@ class ClientsManager:
                         )
                     except:
                         logger.critical(
-                            f"attribute: {attributekey}; value: {client_dict[attributekey]}"
+                            (
+                                f"attribute: {attributekey}; "
+                                f"value: {client_dict[attributekey]}"
+                            )
                         )
                         raise
             client_dict.update(decr_vars)
             return client_dict
 
     def get_na_ns(self, school: str) -> pd.DataFrame:
-        logger.debug(f"trying to query nachteilsausgleich and notenschutz")
+        logger.debug("trying to query nachteilsausgleich and notenschutz")
         with self.Session() as session:
             results = (
                 session.query(Client)
@@ -96,7 +104,7 @@ class ClientsManager:
         """
         Get the data without decrypting encrypted data.
         """
-        logger.debug(f"trying to query the entire database")
+        logger.debug("trying to query the entire database")
         with self.Session() as session:
             query = session.query(Client).statement
             df = pd.read_sql_query(query, session.bind)
