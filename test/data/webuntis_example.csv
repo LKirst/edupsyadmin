@@ -1,2 +1,0 @@
-name,longName,foreName,gender,birthDate,klasse.name,entryDate,exitDate,text,id,externKey,medicalReportDuty,schulpflicht,majority,address.email,address.mobile,address.phone,address.city,address.postCode,address.street,attribute.Notenschutz,attribute.Nachteilsausgleich
-MustermMax1,Mustermann,Max,m,01.01.2000,11TKKG,12.09.2023,,,12345,4321,False,False,False,max.mustermann@example.de,491713920000,02214710000,München,80331,Beispiel Str. 55B,,

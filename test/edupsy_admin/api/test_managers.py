@@ -1,5 +1,3 @@
-import os
-
 import keyring
 import pytest
 
@@ -8,13 +6,13 @@ from edupsy_admin.api.managers import (
     enter_client_cli,
     enter_client_untiscsv,
 )
-from edupsy_admin.core.config import config
 from edupsy_admin.core.logger import logger
 
 TEST_USERNAME = "test_user_do_not_use"
 TEST_UID = "example.com"
 
 client_data = {
+    "client_id": None,
     "school": "test_school",
     "gender": "m",
     "entry_date": "2021-06-30",
@@ -28,32 +26,11 @@ client_data = {
     "email": "john.doe@example.com",
 }
 
-conf1_content = """
-core:
-  logging: WARN
-  uid: liebermann-schulpsychologie.github.io
-school:
-  test_school:
-    school_name: Test School
-    school_street: 123 Test St
-    school_head_w_school: Principal of Test School
-    end: 12
-"""
-
 
 @pytest.fixture()
-def clients_manager(tmp_path):
-    """Create a test config file and an encryption key"""
-    # create a config file
-    conf1_path = tmp_path / "conf2.yml"
-    conf1_path.write_text(conf1_content.strip())
-
-    # set config values
-    config.load(str(conf1_path))
-    # TODO: I don't understand why this throws an error
-    config.core.config = str(conf1_path)
-    config.logging = "DEBUG"
-    logger.start(config.logging)
+def clients_manager(tmp_path, mock_config):
+    """Create a clients_manager"""
+    logger.start("DEBUG")
 
     # create a keyring entry for testing if it does not exist
     cred = keyring.get_credential(TEST_UID, TEST_USERNAME)
@@ -65,21 +42,20 @@ def clients_manager(tmp_path):
         database_url,
         app_uid=TEST_UID,
         app_username=TEST_USERNAME,
-        config_path=str(conf1_path),
+        config_path=str(mock_config),
     )
 
     yield manager
-    os.remove(config.core.config)
 
 
-def test_add_client(clients_manager):
+def test_add_client(mock_config, clients_manager):
     client_id = clients_manager.add_client(**client_data)
     client = clients_manager.get_decrypted_client(client_id=client_id)
     assert client["first_name"] == "John"
     assert client["last_name"] == "Doe"
 
 
-def test_edit_client(clients_manager):
+def test_edit_client(mock_config, clients_manager):
     client_id = clients_manager.add_client(**client_data)
     client = clients_manager.get_decrypted_client(client_id=client_id)
     updated_data = {"first_name_encr": "Jane", "last_name_encr": "Smith"}
@@ -90,13 +66,13 @@ def test_edit_client(clients_manager):
     assert updated_client["datetime_lastmodified"] > client["datetime_lastmodified"]
 
 
-def test_delete_client(clients_manager):
+def test_delete_client(mock_config, clients_manager):
     client_id = clients_manager.add_client(**client_data)
     clients_manager.delete_client(client_id)
     # TODO: add assert
 
 
-def test_enter_client_cli(clients_manager, monkeypatch):
+def test_enter_client_cli(mock_config, clients_manager, monkeypatch):
     # simulate the commandline input
     inputs = iter(client_data)
 
@@ -111,9 +87,10 @@ def test_enter_client_cli(clients_manager, monkeypatch):
     assert client["last_name"] == "Doe"
 
 
-def test_enter_client_untiscsv(clients_manager):
-    testcsv = "test/data/webuntis_example.csv"
-    client_id = enter_client_untiscsv(clients_manager, testcsv)
+def test_enter_client_untiscsv(mock_config, clients_manager, mock_webuntis):
+    # TODO: the user should be able to set the (default) school somewhere
+    # for the webuntis import
+    client_id = enter_client_untiscsv(clients_manager, mock_webuntis)
     client = clients_manager.get_decrypted_client(client_id=client_id)
     assert client["first_name"] == "Max"
     assert client["last_name"] == "Mustermann"

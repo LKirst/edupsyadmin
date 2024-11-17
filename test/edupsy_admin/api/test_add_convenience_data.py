@@ -1,11 +1,7 @@
 from datetime import datetime
-from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from edupsy_admin.api.add_convenience_data import add_convenience_data
-from edupsy_admin.core.config import config
 
 # Sample input data
 input_data = {
@@ -20,13 +16,6 @@ input_data = {
     "document_shredding_date": datetime.now(),
     "nta_sprachen": 50,
 }
-
-
-@pytest.fixture
-def mock_config():
-    # TODO: replace with tmp_path
-    cfg_paths = [Path(__file__).parent.parent.parent / "data" / "sampleconfig.yml"]
-    config.load(cfg_paths)
 
 
 @patch(
