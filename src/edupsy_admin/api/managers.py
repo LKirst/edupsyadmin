@@ -72,14 +72,12 @@ class ClientsManager:
     def get_na_ns(self, school: str) -> pd.DataFrame:
         logger.debug("trying to query nachteilsausgleich and notenschutz")
         with self.Session() as session:
+            # TODO: this doesn't filter by school
             results = (
                 session.query(Client)
                 .filter(
                     (
-                        (
-                            (Client.notenschutz is True)
-                            or (Client.nachteilsausgleich is True)
-                        )
+                        ((Client.notenschutz == 1) or (Client.nachteilsausgleich == 1))
                         and (Client.school == school)
                     )
                 )
