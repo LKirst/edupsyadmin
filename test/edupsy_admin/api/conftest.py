@@ -5,7 +5,7 @@ from edupsy_admin.core.config import config
 conf_content = """
 core:
   logging: WARN
-  uid: liebermann-schulpsychologie.github.io
+  uid: example.com
 school:
   test_school:
     school_name: Test School
@@ -27,6 +27,13 @@ def mock_config(tmp_path):
     conf_path.write_text(conf_content.strip())
     print(f"conf_path: {conf_path}")
     config.load(str(conf_path))
+
+    config.core = {}
+    config.core.config = str(conf_path)
+    config.username = "test_user_do_not_use"
+    config.uid = "example.com"
+    config.logging = "DEBUG"
+
     yield conf_path
 
 

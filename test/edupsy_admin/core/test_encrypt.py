@@ -1,7 +1,6 @@
 """Test suite for the core.encrypt module."""
 
 import os
-from pathlib import Path
 
 import keyring
 import pytest
@@ -15,12 +14,10 @@ secret_message = "This is a secret message."
 
 
 @pytest.fixture
-def configfile():
+def configfile(tmp_path):
     """Create a test config file"""
-    # create a config file if it does not exist
-    cfg_path = Path("test/data/testconfig.yml")
-    if not cfg_path.parent.exists():
-        os.makedirs(cfg_path.parent)
+    # create a config file
+    cfg_path = tmp_path / "conf.yml"
     open(cfg_path, mode="a").close()
     config.load(str(cfg_path))
 
