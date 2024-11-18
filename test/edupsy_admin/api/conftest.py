@@ -12,6 +12,7 @@ school:
     school_street: 123 Test St
     school_head_w_school: Principal of Test School
     end: 12
+  default: test_school
 """
 
 # ruff: noqa: E501

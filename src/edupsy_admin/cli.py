@@ -145,6 +145,14 @@ def _new_client(subparsers, common):
         ),
     )
     parser.add_argument(
+        "--school",
+        help=(
+            "The label of the school as you use it in the config file. "
+            "If no label is passed, the default from the config "
+            "will be used."
+        ),
+    )
+    parser.add_argument(
         "--keepfile",
         action="store_true",
         help="Don't delete the csv after adding it to the db.",

@@ -88,9 +88,7 @@ def test_enter_client_cli(mock_config, clients_manager, monkeypatch):
 
 
 def test_enter_client_untiscsv(mock_config, clients_manager, mock_webuntis):
-    # TODO: the user should be able to set the (default) school somewhere
-    # for the webuntis import
-    client_id = enter_client_untiscsv(clients_manager, mock_webuntis)
+    client_id = enter_client_untiscsv(clients_manager, mock_webuntis, school=None)
     client = clients_manager.get_decrypted_client(client_id=client_id)
     assert client["first_name"] == "Max"
     assert client["last_name"] == "Mustermann"

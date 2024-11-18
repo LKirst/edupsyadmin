@@ -5,6 +5,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
+from ..core.config import config
 from ..core.encrypt import Encryption
 from ..core.logger import logger
 from .add_convenience_data import add_convenience_data
@@ -138,7 +139,13 @@ class ClientsManager:
 
 
 def new_client(
-    app_username, app_uid, database_url, config_path, csv=None, keepfile=False
+    app_username,
+    app_uid,
+    database_url,
+    config_path,
+    csv=None,
+    school=None,
+    keepfile=False,
 ):
     clients_manager = ClientsManager(
         database_url=database_url,
@@ -147,7 +154,7 @@ def new_client(
         config_path=config_path,
     )
     if csv:
-        enter_client_untiscsv(clients_manager, csv)
+        enter_client_untiscsv(clients_manager, csv, school)
         if not keepfile:
             os.remove(csv)
     else:
@@ -213,8 +220,8 @@ def get_data_raw(app_username: str, app_uid: str, database_url: str, config_path
     return df
 
 
-def enter_client_untiscsv(clients_manager, csv):
-    """Read client from csv"""
+def enter_client_untiscsv(clients_manager, csv: str | os.PathLike, school: str | None):
+    """Read client from a webuntis csv"""
     untis_df = pd.read_csv(csv)
 
     # check if id is known
@@ -223,8 +230,12 @@ def enter_client_untiscsv(clients_manager, csv):
     else:
         client_id = None
 
+    # check if school was passed and if not use the default from the config
+    if school is None:
+        school = config.school.default
+
     client_id_n = clients_manager.add_client(
-        school="FOSBOS",
+        school=school,
         gender=untis_df["gender"].item(),
         entry_date=datetime.strptime(untis_df["entryDate"].item(), "%d.%m.%Y").strftime(
             "%Y-%m-%d"
