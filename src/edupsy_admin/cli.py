@@ -4,7 +4,7 @@ import os
 from argparse import ArgumentParser
 from inspect import getfullargspec
 
-from platformdirs import user_data_path
+from platformdirs import user_config_dir, user_data_path
 
 from . import __version__
 
@@ -22,6 +22,10 @@ USER_DATA_DIR = user_data_path(
     appname="edupsy_admin", version=__version__, ensure_exists=True
 )
 DATABASE_URL = "sqlite:///" + os.path.join(USER_DATA_DIR, "edupsy_admin.db")
+USER_CONFIG_PATH = os.path.join(
+    user_config_dir(appname="edupsy_admin", version=__version__, ensure_exists=True),
+    "config.yml",
+)
 
 
 def main(argv=None) -> int:
@@ -81,7 +85,7 @@ def _args(argv):
     """
     parser = ArgumentParser()
     parser.add_argument(
-        "-c", "--config_path", action="append", help="config file [etc/config.yml]"
+        "-c", "--config_path", action="append", help=f"config file [{USER_CONFIG_PATH}]"
     )
     parser.add_argument(
         "-v",
@@ -121,8 +125,7 @@ def _args(argv):
     if not args.config_path:
         # Don't specify this as an argument default or else it will always be
         # included in the list.
-        # [TODO]: Find a way to not work with an absolute path!
-        args.config_path = os.path.expanduser("~/bin/edupsy_admin/etc/config.yml")
+        args.config_path = USER_CONFIG_PATH
     return args
 
 
