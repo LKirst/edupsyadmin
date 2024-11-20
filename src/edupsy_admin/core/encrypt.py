@@ -69,6 +69,8 @@ class Encryption:
         return salt
 
     def _retrieve_password(self, username: str, uid: str) -> bytes:
+        # TODO: Make sure the password is only retrieved once (for example in cli.py)
+        # Currently this is called both in managers.py and in clients.py
         logger.info(f"retrieving password for {uid} using keyring")
         cred = keyring.get_credential(uid, username)
         if not cred or not cred.password:
