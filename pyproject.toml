@@ -37,9 +37,18 @@ edupsy_admin = "edupsy_admin.cli:main"
 [tool.hatch.version]
 path = "src/edupsy_admin/__version__.py"
 
+[tool.commitizen]
+version = "0.2.0"
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_scheme = "pep440"
+version_provider = "pep621"
+update_changelog_on_bump = true
+
 [dependency-groups]
 dev = [
     "bitwarden-keyring>=0.3.1",
+    "commitizen>=3.31.0",
     "mypy>=1.13.0",
     "pandas-stubs>=2.2.3.241009",
     "pre-commit>=4.0.1",
