@@ -2,6 +2,7 @@ import keyring
 import pytest
 
 from edupsy_admin.api.managers import (
+    ClientNotFound,
     ClientsManager,
     enter_client_cli,
     enter_client_untiscsv,
@@ -69,7 +70,13 @@ def test_edit_client(mock_config, clients_manager):
 def test_delete_client(mock_config, clients_manager):
     client_id = clients_manager.add_client(**client_data)
     clients_manager.delete_client(client_id)
-    # TODO: add assert
+    try:
+        clients_manager.get_decrypted_client(client_id)
+        assert (
+            False
+        ), "Expected ClientNotFound exception when retrieving a deleted client"
+    except ClientNotFound as e:
+        assert e.client_id == client_id
 
 
 def test_enter_client_cli(mock_config, clients_manager, monkeypatch):

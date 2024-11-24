@@ -21,6 +21,12 @@ class Base(DeclarativeBase):
 encr = Encryption()
 
 
+class ClientNotFound(Exception):
+    def __init__(self, client_id: int):
+        self.client_id = client_id
+        super().__init__(f"Client with ID {client_id} not found.")
+
+
 class ClientsManager:
     def __init__(
         self, database_url: str, app_uid: str, app_username: str, config_path: str
@@ -47,9 +53,10 @@ class ClientsManager:
     def get_decrypted_client(self, client_id: int) -> dict:
         logger.debug(f"trying to access client (id = {client_id})")
         with self.Session() as session:
-            client_dict = (
-                session.query(Client).filter_by(client_id=client_id).first().__dict__
-            )
+            client = session.query(Client).filter_by(client_id=client_id).first()
+            if client is None:
+                raise ClientNotFound(client_id)
+            client_dict = client.__dict__
             decr_vars = {}
             for attributekey in client_dict.keys():
                 if attributekey.endswith("_encr"):
