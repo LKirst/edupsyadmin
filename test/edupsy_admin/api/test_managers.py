@@ -38,7 +38,8 @@ def clients_manager(tmp_path, mock_config):
     if cred is None:
         keyring.set_password(TEST_UID, TEST_USERNAME, "test_pw_do_not_use")
 
-    database_url = "sqlite:///test.sqlite"
+    database_path = tmp_path / "test.sqlite"
+    database_url = f"sqlite:///{database_path}"
     manager = ClientsManager(
         database_url,
         app_uid=TEST_UID,
