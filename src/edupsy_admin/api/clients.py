@@ -31,17 +31,19 @@ class Client(Base):
     __tablename__ = "clients"
 
     # Variables of StringEncryptedType
+    # These variables cannot be optional (i.e. cannot be None) because if
+    # they were, the encryption functions would raise an exception.
     first_name_encr: Mapped[str] = mapped_column(String)
     last_name_encr: Mapped[str] = mapped_column(String)
-    birthday_encr: Mapped[Optional[str]] = mapped_column(String)
-    street_encr: Mapped[Optional[str]] = mapped_column(String)
-    city_encr: Mapped[Optional[str]] = mapped_column(String)
-    parent_encr: Mapped[Optional[str]] = mapped_column(String)
-    telephone1_encr: Mapped[Optional[str]] = mapped_column(String)
-    telephone2_encr: Mapped[Optional[str]] = mapped_column(String)
-    email_encr: Mapped[Optional[str]] = mapped_column(String)
-    lrst_diagnosis_encr: Mapped[Optional[str]] = mapped_column(String)
-    notes_encr: Mapped[Optional[str]] = mapped_column(String)
+    birthday_encr: Mapped[str] = mapped_column(String)
+    street_encr: Mapped[str] = mapped_column(String)
+    city_encr: Mapped[str] = mapped_column(String)
+    parent_encr: Mapped[str] = mapped_column(String)
+    telephone1_encr: Mapped[str] = mapped_column(String)
+    telephone2_encr: Mapped[str] = mapped_column(String)
+    email_encr: Mapped[str] = mapped_column(String)
+    lrst_diagnosis_encr: Mapped[str] = mapped_column(String)
+    notes_encr: Mapped[str] = mapped_column(String)
 
     # Unencrypted variables
     client_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -85,7 +87,7 @@ class Client(Base):
         notenschutz: bool = False,
         nachteilsausgleich: bool = False,
         keyword_taetigkeitsbericht: str | None = "",
-        lrst_diagnosis: str | None = "",
+        lrst_diagnosis: str = "",
         n_sessions: int = 1,
     ):
         if client_id:
