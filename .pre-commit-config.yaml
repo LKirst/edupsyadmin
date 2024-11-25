@@ -11,3 +11,7 @@ repos:
     - id: ruff
       args: [ "--select", "F,E,W,I", "--fix" ]
     - id: ruff-format
+- repo: https://github.com/commitizen-tools/commitizen
+  rev: v3.31.0
+  hooks:
+    - id: commitizen
