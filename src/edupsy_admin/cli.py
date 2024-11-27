@@ -9,6 +9,7 @@ from platformdirs import user_config_dir, user_data_path
 from . import __version__
 
 # TODO: change the api so that mkreport works for CFT as well as LGVT
+from .api.flatten_pdf import DEFAULT_LIBRARY, flatten_pdfs
 from .api.lgvt import mk_report
 from .api.managers import create_documentation, get_na_ns, new_client, set_client
 from .api.taetigkeitsbericht_from_db import taetigkeitsbericht
@@ -115,6 +116,7 @@ def _args(argv):
     _mk_report(subparsers, common)
     _set_client(subparsers, common)
     _get_na_ns(subparsers, common)
+    _flatten_pdfs(subparsers, common)
     _taetigkeitsbericht(subparsers, common)
 
     args = parser.parse_args(argv)
@@ -229,6 +231,18 @@ def _mk_report(subparsers, common):
     parser.add_argument(
         "--version", type=str, choices=["Rosenkohl", "Toechter", "Laufbursche"]
     )
+
+
+def _flatten_pdfs(subparsers, common):
+    parser = subparsers.add_parser("flatten_pdfs", parents=[common])
+    parser.set_defaults(
+        command=flatten_pdfs,
+        help="Flatten pdf forms and join pdfs for printing",
+    )
+    parser.add_argument(
+        "--library", type=str, default=DEFAULT_LIBRARY, choices=["pdf2image", "fillpdf"]
+    )
+    parser.add_argument("form_paths", nargs="+")
 
 
 def _taetigkeitsbericht(subparsers, common):
