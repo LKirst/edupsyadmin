@@ -7,13 +7,13 @@ try:
     from pdf2image import convert_from_path
 
     installed_pdf2image = True
-except:
+except ModuleNotFoundError:
     installed_pdf2image = False
 try:
     from fillpdf import fillpdfs
 
     installed_fillpdf = True
-except:
+except ModuleNotFoundError:
     installed_fillpdf = False
 
 DEFAULT_LIBRARY = "pdf2image"
