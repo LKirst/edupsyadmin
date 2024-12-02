@@ -55,4 +55,5 @@ dev = [
     "pre-commit>=4.0.1",
     "pytest>=8.3.3",
     "reportlab>=4.2.5",
+    "sphinx>=8.1.3",
 ]
