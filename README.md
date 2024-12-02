@@ -1,6 +1,6 @@
-# edupsy_admin
+# edupsyadmin
 
-edupsy_admin provides tools to help school psychologists with their
+edupsyadmin provides tools to help school psychologists with their
 documentation.
 
 ## Minimum Requirements
@@ -27,7 +27,7 @@ Install for the current user:
 
 Run the application:
 
-    $ edupsy_admin --help
+    $ edupsyadmin --help
 
 Run the test suite:
 
