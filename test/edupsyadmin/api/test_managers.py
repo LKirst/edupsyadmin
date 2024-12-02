@@ -1,13 +1,13 @@
 import keyring
 import pytest
 
-from edupsy_admin.api.managers import (
+from edupsyadmin.api.managers import (
     ClientNotFound,
     ClientsManager,
     enter_client_cli,
     enter_client_untiscsv,
 )
-from edupsy_admin.core.logger import logger
+from edupsyadmin.core.logger import logger
 
 TEST_USERNAME = "test_user_do_not_use"
 TEST_UID = "example.com"

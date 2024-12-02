@@ -12,7 +12,7 @@ from os import environ
 
 import pytest
 
-from edupsy_admin.core.config import YamlConfig
+from edupsyadmin.core.config import YamlConfig
 
 conf1_content = """
 str: $$str  # literal `$`, no substitution

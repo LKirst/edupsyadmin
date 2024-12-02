@@ -13,7 +13,7 @@ from logging import DEBUG
 
 import pytest
 
-from edupsy_admin.core.logger import Logger
+from edupsyadmin.core.logger import Logger
 
 
 @pytest.fixture

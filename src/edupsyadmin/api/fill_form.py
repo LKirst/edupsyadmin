@@ -1,6 +1,6 @@
+import shutil
 from itertools import product
 from pathlib import Path
-import shutil
 
 from liquid import Template, exceptions
 

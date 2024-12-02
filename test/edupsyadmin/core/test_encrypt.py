@@ -6,9 +6,9 @@ import keyring
 import pytest
 import yaml
 
-from edupsy_admin.core.config import config
-from edupsy_admin.core.encrypt import Encryption, _convert_conf_to_dict
-from edupsy_admin.core.logger import logger
+from edupsyadmin.core.config import config
+from edupsyadmin.core.encrypt import Encryption, _convert_conf_to_dict
+from edupsyadmin.core.logger import logger
 
 secret_message = "This is a secret message."
 

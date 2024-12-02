@@ -4,7 +4,7 @@ import os
 import timeit
 from pathlib import Path
 
-from edupsy_admin.core.encrypt import Encryption
+from edupsyadmin.core.encrypt import Encryption
 
 SECRET_MESSAGE = b"This is a secret message"
 

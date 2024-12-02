@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# edupsy_admin documentation build configuration file.
+# edupsyadmin documentation build configuration file.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -45,7 +45,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'edupsy_admin'
+project = u'edupsyadmin'
 copyright = u'2024, Lukas Liebermann'
 author = u'Lukas Liebermann'
 
@@ -199,7 +199,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'edupsy_admindoc'
+htmlhelp_basename = 'edupsyadmindoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -221,7 +221,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'edupsy_admin.tex', u'edupsy_admin Documentation',
+  (master_doc, 'edupsyadmin.tex', u'edupsyadmin Documentation',
    u'Lukas Liebermann', 'manual'),
 ]
 
@@ -251,7 +251,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'projectname', u'edupsy_admin Documentation',
+    (master_doc, 'projectname', u'edupsyadmin Documentation',
      [author], 1)
 ]
 
@@ -265,8 +265,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'edupsy_admin', u'edupsy_admin Documentation',
-   author, 'edupsy_admin', 'One line description of project.',
+  (master_doc, 'edupsyadmin', u'edupsyadmin Documentation',
+   author, 'edupsyadmin', 'One line description of project.',
    'Miscellaneous'),
 ]
 

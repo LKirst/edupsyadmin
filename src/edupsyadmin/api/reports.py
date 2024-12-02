@@ -1,8 +1,9 @@
-from fpdf import FPDF
-import scipy.stats as stats
 import math
+
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.stats as stats
+from fpdf import FPDF
 
 
 class Report(FPDF):

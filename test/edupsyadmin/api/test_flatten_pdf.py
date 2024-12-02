@@ -2,8 +2,8 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
-from edupsy_admin.api.fill_form import fill_form
-from edupsy_admin.api.flatten_pdf import flatten_pdf
+from edupsyadmin.api.fill_form import fill_form
+from edupsyadmin.api.flatten_pdf import flatten_pdf
 
 # Sample client data
 client_data = {

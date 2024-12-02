@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pypdf
 
-from edupsy_admin.api.fill_form import fill_form
+from edupsyadmin.api.fill_form import fill_form
 
 # Sample client data
 client_data = {

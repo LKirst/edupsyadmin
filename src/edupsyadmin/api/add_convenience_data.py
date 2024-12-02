@@ -1,21 +1,22 @@
 from datetime import date
-from dateutil.parser import parse
 from importlib.resources import files
 
-from edupsy_admin.api.academic_year import get_this_academic_year_string
-from edupsy_admin.core.logger import logger
-from edupsy_admin.core.config import config
+from dateutil.parser import parse
+
+from edupsyadmin.api.academic_year import get_this_academic_year_string
+from edupsyadmin.core.config import config
+from edupsyadmin.core.logger import logger
 
 
 def get_subjects(school: str) -> str:
-    file_path = files("edupsy_admin.data").joinpath(f"Faecher_{school}.md")
+    file_path = files("edupsyadmin.data").joinpath(f"Faecher_{school}.md")
     logger.info(f"trying to read school subjects file: {file_path}")
     if file_path.is_file():
-        logger.debug(f"subjects file exists")
+        logger.debug("subjects file exists")
         with file_path.open("r", encoding="utf-8") as file:
             return file.read()
     else:
-        logger.warning(f"school subjects file does not exist!")
+        logger.warning("school subjects file does not exist!")
         return ""
 
 

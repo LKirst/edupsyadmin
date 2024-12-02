@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 from datetime import date
+
 from dateutil.relativedelta import relativedelta
 
 DEFAULT_LAST_MONTH = 7

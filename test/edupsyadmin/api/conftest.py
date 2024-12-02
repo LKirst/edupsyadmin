@@ -5,8 +5,8 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
-from edupsy_admin.core.config import config
-from edupsy_admin.core.logger import logger
+from edupsyadmin.core.config import config
+from edupsyadmin.core.logger import logger
 
 conf_content = """
 core:

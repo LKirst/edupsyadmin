@@ -2,9 +2,8 @@ import os
 import re
 from datetime import date
 
-import pandas as pd
-
 import dataframe_image as dfi
+import pandas as pd
 from fpdf import FPDF
 
 from .managers import get_data_raw
@@ -170,7 +169,7 @@ def summary_statistics_wstd(
     """
     summarystats_wstd = wstd_in_zstd(wstd_spsy, wstd_total)
 
-    pattern = re.compile("([^\d]+)(\d+)")
+    pattern = re.compile(r"([^\d]+)(\d+)")
     nstudents = {
         pattern.match(school).groups()[0]: int(pattern.match(school).groups()[1])
         for school in schools

@@ -1,4 +1,4 @@
-""" Test suite for the cli module.
+"""Test suite for the cli module.
 
 The script can be executed on its own or incorporated into a larger test suite.
 However the tests are run, be aware of which version of the module is actually
@@ -13,7 +13,8 @@ from subprocess import call
 from sys import executable
 
 import pytest
-from edupsy_admin.cli import *  # test __all__
+
+from edupsyadmin.cli import *  # test __all__
 
 
 @pytest.fixture(params=("--help", "hello"))
@@ -42,7 +43,7 @@ def test_main_none():
 def test_script(command):
     """Test command line execution."""
     # Call with the --help option as a basic sanity check.
-    cmdl = f"{executable} -m edupsy_admin.cli {command} --help"
+    cmdl = f"{executable} -m edupsyadmin.cli {command} --help"
     assert 0 == call(cmdl.split())
     return
 

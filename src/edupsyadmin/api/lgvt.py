@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import math
-import pandas as pd
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import pandas as pd
 
 from .convert_measures import percentile_to_t
 from .managers import ClientsManager
@@ -83,18 +84,18 @@ def get_indeces(fn: str, name: str, schoolyear: int, d_test: str, version: str):
     lg_t = percentile_to_t(lg_pr)
 
     text += [
-        f"\n## LV",
+        "\n## LV",
         f"\n- Summe richtige Lösungen: {correct_answ}",
         f"\n- Summe falsche Lösungen: {incorrect_answ}",
         f"\n- Gesamtzahl bearbeitete Items: {i}",
         f"\n- Rohwert LV: {lv_rw}; nach Tzp.-Korrektur: {lv_rw_korr}",
         f"\n- PR={lv_pr_korr} ;\tT-Wert={lv_t:.2f}",
-        f"\n## LGS",
+        "\n## LGS",
         f"\n- Wörter bis zur letzten Klammer: {words_until_last_item}",
         f"\n- Wörter nach der letzten Klammer: {words_after_last_item}",
         f"\n- Rohwert LGS: {lgs_rw}; nach Tzp.-Korrektur: {lgs_rw_korr}",
         f"\n- PR={lgs_pr_korr} ;\tT-Wert={lgs_t:.2f}",
-        f"\n## LGN",
+        "\n## LGN",
         f"\n- Rohwert LGN: {lg_rw}%",
         f"\n- PR={lg_pr} ;\tT-Wert={lg_t:.2f}",  # TODO
     ]

@@ -20,11 +20,11 @@ __all__ = ("main",)
 
 APP_UID = "liebermann-schulpsychologie.github.io"
 USER_DATA_DIR = user_data_path(
-    appname="edupsy_admin", version=__version__, ensure_exists=True
+    appname="edupsyadmin", version=__version__, ensure_exists=True
 )
-DATABASE_URL = "sqlite:///" + os.path.join(USER_DATA_DIR, "edupsy_admin.db")
+DATABASE_URL = "sqlite:///" + os.path.join(USER_DATA_DIR, "edupsyadmin.db")
 USER_CONFIG_PATH = os.path.join(
-    user_config_dir(appname="edupsy_admin", version=__version__, ensure_exists=True),
+    user_config_dir(appname="edupsyadmin", version=__version__, ensure_exists=True),
     "config.yml",
 )
 
@@ -92,7 +92,7 @@ def _args(argv):
         "-v",
         "--version",
         action="version",
-        version=f"edupsy_admin {__version__}",
+        version=f"edupsyadmin {__version__}",
         help="print version and exit",
     )
     parser.add_argument(

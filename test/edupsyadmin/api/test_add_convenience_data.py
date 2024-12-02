@@ -1,7 +1,7 @@
 from datetime import datetime
 from unittest.mock import patch
 
-from edupsy_admin.api.add_convenience_data import add_convenience_data
+from edupsyadmin.api.add_convenience_data import add_convenience_data
 
 # Sample input data
 input_data = {
@@ -19,7 +19,7 @@ input_data = {
 
 
 @patch(
-    "edupsy_admin.api.add_convenience_data.get_subjects"
+    "edupsyadmin.api.add_convenience_data.get_subjects"
 )  # Mock the get_subjects function
 def test_add_convenience_data(mock_get_subjects, mock_config):
     # Mock the return value of get_subjects

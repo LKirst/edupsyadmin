@@ -1,4 +1,4 @@
-"""Current version of the edupsy_admin application.
+"""Current version of the edupsyadmin application.
 
 This project uses the Semantic Versioning scheme in conjunction with PEP 0440:
 

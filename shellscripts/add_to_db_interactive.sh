@@ -1,1 +1,1 @@
-edupsy_admin new_client
+edupsyadmin new_client

@@ -9,7 +9,7 @@ client_id=${@:$OPTIND:1}
 
 if [ $diagnosis -eq 1 ]
 then
-edupsy_admin -w DEBUG \
+edupsyadmin -w DEBUG \
     create_documentation $client_id\
     ~/Templates/Beratung/LRSt_GenehmigungSchulleitung_bsmn.pdf\
     ~/Templates/Beratung/LRSt_Stellungnahme_bsmn.pdf\
@@ -17,7 +17,7 @@ edupsy_admin -w DEBUG \
     ~/Templates/Beratung/LRSt_Anschreiben_bsmn.pdf\
     ~/Templates/Beratung/LRSt_AntragNachUeberpruefung_bsmn.pdf
 else
-edupsy_admin -w DEBUG \
+edupsyadmin -w DEBUG \
     create_documentation $client_id\
     ~/Templates/Beratung/LRSt_StellungnahmeKeinBefund.pdf\
     ~/Templates/Beratung/LRSt_AnschreibenKeinBefund.pdf

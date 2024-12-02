@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-from dateutil import relativedelta
 from datetime import datetime
+
+from dateutil import relativedelta
 
 
 def mydatediff(d1, d2):

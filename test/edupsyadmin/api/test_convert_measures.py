@@ -1,6 +1,6 @@
 import unittest
 
-from edupsy_admin.api.convert_measures import (
+from edupsyadmin.api.convert_measures import (
     iq_to_t,
     iq_to_z,
     normaldist_to_z,
