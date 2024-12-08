@@ -1,9 +1,11 @@
+import argparse
+
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
 
-def create_pdf_form(pdf_filename):
+def create_pdf_form(pdf_filename: str) -> None:
     c = canvas.Canvas(pdf_filename, pagesize=A4)
     page_width, page_height = A4
 
@@ -76,7 +78,7 @@ def create_pdf_form(pdf_filename):
     c.acroForm.textfield(
         name="address_multiline",
         x=100,
-        y=300,
+        y=150,
         width=400,
         height=200,
         borderColor=colors.black,
@@ -89,3 +91,11 @@ def create_pdf_form(pdf_filename):
     )
 
     c.save()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Create a sample PDF form.")
+    parser.add_argument("filename", help="The name of the PDF file to create.")
+    args = parser.parse_args()
+
+    create_pdf_form(args.filename)
