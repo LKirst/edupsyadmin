@@ -15,14 +15,10 @@ homepage = "https://github.com/LKirst/edupsyadmin.git"
 license = { text = "MIT" }
 dependencies = [
     "cryptography>=43.0.3",
-    "dataframe-image>=0.2.6",
     "fillpdf>=0.7.3",
-    "fpdf>=1.7.2",
     "keyring>=25.5.0",
-    "matplotlib>=3.9.2",
     "odfpy>=1.4.1",
     "pandas>=2.2.3",
-    "pdf2image>=1.17.0",
     "platformdirs>=4.3.6",
     "pypdf>=5.1.0",
     "python-dotenv>=1.0.1",
@@ -35,6 +31,30 @@ dependencies = [
 [project.scripts]
 edupsyadmin = "edupsyadmin.cli:main"
 
+[project.optional-dependencies]
+flattenpdf = [
+    "pdf2image>=1.17.0",
+]
+reportsandtaetigkeitsber = [
+    "matplotlib>=3.9.2",
+    "fpdf>=1.7.2",
+    "dataframe-image>=0.2.6",
+]
+keyringbackends = [
+    "bitwarden-keyring>=0.3.1",
+]
+
+[dependency-groups]
+dev = [
+    "commitizen>=3.31.0",
+    "mypy>=1.13.0",
+    "pandas-stubs>=2.2.3.241009",
+    "pre-commit>=4.0.1",
+    "pytest>=8.3.3",
+    "reportlab>=4.2.5",
+    "sphinx>=8.1.3",
+]
+
 [tool.hatch.version]
 path = "src/edupsyadmin/__version__.py"
 
@@ -45,15 +65,3 @@ tag_format = "$version"
 version_scheme = "pep440"
 version_provider = "pep621"
 update_changelog_on_bump = true
-
-[dependency-groups]
-dev = [
-    "bitwarden-keyring>=0.3.1",
-    "commitizen>=3.31.0",
-    "mypy>=1.13.0",
-    "pandas-stubs>=2.2.3.241009",
-    "pre-commit>=4.0.1",
-    "pytest>=8.3.3",
-    "reportlab>=4.2.5",
-    "sphinx>=8.1.3",
-]
