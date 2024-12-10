@@ -208,7 +208,7 @@ def _create_documentation(subparsers, common):
     parser = subparsers.add_parser("create_documentation", parents=[common])
     parser.set_defaults(
         command=create_documentation,
-        help="Fill a pdf form",
+        help="Fill a pdf form or a text file with a liquid template",
     )
     parser.add_argument("client_id", type=int)
     parser.add_argument("form_paths", nargs="+")
@@ -223,7 +223,7 @@ def _mk_report(subparsers, common):
     parser = subparsers.add_parser("mk_report", parents=[common])
     parser.set_defaults(
         command=mk_report,
-        help="Create a test report",
+        help="Create a test report (experimental)",
     )
     parser.add_argument("client_id", type=int)
     parser.add_argument("test_date", type=str, help="Testdatum (YYYY-mm-dd)")
@@ -237,7 +237,7 @@ def _flatten_pdfs(subparsers, common):
     parser = subparsers.add_parser("flatten_pdfs", parents=[common])
     parser.set_defaults(
         command=flatten_pdfs,
-        help="Flatten pdf forms and join pdfs for printing",
+        help="Flatten pdf forms and join pdfs for printing (experimental)",
     )
     parser.add_argument(
         "--library", type=str, default=DEFAULT_LIBRARY, choices=["pdf2image", "fillpdf"]
@@ -254,7 +254,7 @@ def _taetigkeitsbericht(subparsers, common):
     parser = subparsers.add_parser("taetigkeitsbericht", parents=[common])
     parser.set_defaults(
         command=taetigkeitsbericht,
-        help="Create a PDF output for the Taetigkeitsbericht",
+        help="Create a PDF output for the Taetigkeitsbericht (experimental)",
     )
     parser.add_argument(
         "wstd_psy", type=int, help="Anrechnungsstunden in Wochenstunden"
