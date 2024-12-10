@@ -56,7 +56,7 @@ class Encryption:
         else:
             logger.info("creating new salt and writing it to the config file")
             salt = os.urandom(16)
-            with open(config_path, "a") as f:
+            with open(config_path, "a", encoding="UTF-8") as f:
                 if "core" in config.keys():
                     config.core.update({"salt": salt})
                 else:

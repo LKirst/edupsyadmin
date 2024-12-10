@@ -93,7 +93,7 @@ class YamlConfig(_AttrDict):
         tag = _ParameterTag(params)
         tag.add(SafeLoader)
         for path in [path] if isinstance(path, str) else path:
-            with open(path, "r") as stream:
+            with open(path, "r", encoding="UTF-8") as stream:
                 logger.info(f"reading config data from '{path}'")
                 data = safe_load(stream)
             try:
