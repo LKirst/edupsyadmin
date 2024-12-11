@@ -1,0 +1,16 @@
+﻿## Example runtime configuration for the edupsyadmin application.
+core:
+  logging: WARN
+  uid: liebermann-schulpsychologie.github.io
+  app_username: sample.username # replace this with your username
+school:
+  FirstSchool: # replace this with a shorthand name for your first school
+    school_head_w_school: "Außenstellenleitung der Berufsfachschule" # replace this with the title of your principle
+    school_name: Berufsfachschule Kinderpflege # replace this with the name of your school (written out)
+    school_street: Beispielstr. 1 # replae this with the street and house number of your school
+    end: 11 # replace this with the grade after which students (typically) graduate from / leave your school
+  SecondSchool: # replace this with a shorthand name for your second school
+    school_head_w_school: "Schulleitung der beruflichen Oberschulen Beispielstadt" # replace this with the title of your principle
+    school_name: Fachoberschule # replace this with the name of your school (written out)
+    school_street: Platzhalterweg 2 # replae this with the street and house number of your school
+    end: 13 # replace this with the grade after which students (typically) graduate from / leave your school

@@ -1,6 +1,8 @@
 """Implementation of the command line interface."""
 
+import importlib.resources
 import os
+import shutil
 from argparse import ArgumentParser
 from inspect import getfullargspec
 
@@ -42,6 +44,19 @@ def main(argv=None) -> int:
     logger.debug("starting execution")
 
     # config
+    if not os.path.exists(
+        args.config_path
+    ):  # if the config doesn't exist, copy a sample config
+        template_path = importlib.resources.path("edupsyadmin.data", "config.yml")
+        with template_path as source:
+            shutil.copy(source, args.config_path)
+        logger.error(
+            (
+                "Could not find the config file."
+                f"Created a sample config at {args.config_path}. "
+                "Fill it with your values."
+            )
+        )
     config.load(args.config_path)
     config.core.config = args.config_path
     if args.warn:
