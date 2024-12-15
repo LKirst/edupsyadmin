@@ -16,6 +16,4 @@ and backwards compatibility is not guaranteed for minor versions.
 
 """
 
-import importlib.metadata
-
-__version__ = importlib.metadata.version("edupsyadmin")
+__version__ = "1.0.0a0"
