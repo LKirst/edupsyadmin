@@ -3,14 +3,31 @@ core:
   logging: WARN
   uid: liebermann-schulpsychologie.github.io
   app_username: sample.username # replace this with your username
+schoolpsy:
+  schoolpsy_name: "Firstname Lastname"
+  schoolpsy_street: "Beispielstr. 1"
+  schoolpsy_town: "87700 Beispielstadt"
 school:
-  FirstSchool: # replace this with a shorthand name for your first school
-    school_head_w_school: "Außenstellenleitung der Berufsfachschule" # replace this with the title of your principle
-    school_name: Berufsfachschule Kinderpflege # replace this with the name of your school (written out)
-    school_street: Beispielstr. 1 # replae this with the street and house number of your school
-    end: 11 # replace this with the grade after which students (typically) graduate from / leave your school
-  SecondSchool: # replace this with a shorthand name for your second school
-    school_head_w_school: "Schulleitung der beruflichen Oberschulen Beispielstadt" # replace this with the title of your principle
-    school_name: Fachoberschule # replace this with the name of your school (written out)
-    school_street: Platzhalterweg 2 # replae this with the street and house number of your school
-    end: 13 # replace this with the grade after which students (typically) graduate from / leave your school
+  FirstSchool: # short name 1st school
+    school_head_w_school: "Außenstellenleitung der Berufsfachschule" # title of the principle
+    school_name: "Berufsfachschule Kinderpflege" # name of your school (written out)
+    school_street: "Beispielstr. 1" # street and house number of your school
+    end: 11 # grade after which students (typically) graduate from / leave your school
+  SecondSchool: # short name 2nd school (optional)
+    school_head_w_school: "Schulleitung der beruflichen Oberschulen Beispielstadt"
+    school_name: "Fachoberschule"
+    school_street: "Platzhalterweg 2"
+    end: 13
+fileset: # sets of file paths for create_documentation; replace with your sets
+  lrst:
+    - "~/Templates/Beratung/LiL_Mantelbogen.pdf"
+    - "~/Templates/Beratung/LRSt_GenehmigungSchulleitung.pdf"
+    - "~/Templates/Beratung/LRSt_Stellungnahme.pdf"
+    - "~/Templates/Beratung/LRSt_Informationsschreiben.pdf"
+    - "~/Templates/Beratung/LRSt_Anschreiben.pdf"
+  noLrst:
+    - "~/Templates/Beratung/LiL_Mantelbogen.pdf"
+    - "~/Templates/Beratung/LRSt_StellungnahmeKeinBefund.pdf"
+    - "~/Templates/Beratung/LRSt_AnschreibenKeinBefund.pdf"
+  mantelbogen:
+    - "~/Templates/Beratung/LiL_Mantelbogen.pdf"

@@ -297,7 +297,8 @@ def create_documentation(
     database_url: str,
     config_path: str,
     client_id: int,
-    form_paths: list,
+    form_set: str = None,
+    form_paths: list = [],
 ):
     clients_manager = ClientsManager(
         database_url=database_url,
@@ -305,6 +306,10 @@ def create_documentation(
         app_username=app_username,
         config_path=config_path,
     )
+    if form_set:
+        form_paths.extend(config[form_set])
+    elif not form_paths:
+        raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
     client_dict = clients_manager.get_decrypted_client(client_id)
     client_dict_with_convenience_data = add_convenience_data(client_dict)
     fill_form(client_dict_with_convenience_data, form_paths)

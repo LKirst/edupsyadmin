@@ -9,12 +9,12 @@ input_data = {
     "last_name": "Doe",
     "street": "456 Example Rd",
     "city": "Example City",
-    "school": "test_school",
+    "school": "FirstSchool",
     "nachteilsausgleich": True,
     "notenschutz": True,
     "birthday": "2000-01-01",
     "document_shredding_date": datetime.now(),
-    "nta_sprachen": 50,
+    "nta_sprachen": 25,
 }
 
 
@@ -33,9 +33,9 @@ def test_add_convenience_data(mock_get_subjects, mock_config):
     assert result["name"] == "John Doe"
     assert result["address"] == "456 Example Rd, Example City"
     assert result["address_multiline"] == "John Doe\n456 Example Rd\nExample City"
-    assert result["school_name"] == "Test School"
-    assert result["school_street"] == "123 Test St"
-    assert result["school_head_w_school"] == "Principal of Test School"
+    assert result["school_name"] == "Berufsfachschule Kinderpflege"
+    assert result["school_street"] == "Beispielstr. 1"
+    assert result["school_head_w_school"] == "Außenstellenleitung der Berufsfachschule"
     assert result["ns_subjects"] == "Math, Science, History"
     assert (
         result["ns_zeugnisbemerkung"]
@@ -46,7 +46,7 @@ def test_add_convenience_data(mock_get_subjects, mock_config):
     )
     assert result["na_subjects"] == "Math, Science, History"
     assert result["na_measures"] == (
-        "Verlängerung der Arbeitszeit um 50% bei schriftlichen "
+        "Verlängerung der regulären Arbeitszeit um 25% bei schriftlichen "
         "Leistungsnachweisen und der Vorbereitungszeit bei "
         "mündlichen Leistungsnachweisen"
     )
@@ -55,4 +55,4 @@ def test_add_convenience_data(mock_get_subjects, mock_config):
         result["birthday_de"] == "01.01.2000"
     )  # Check if birthday is parsed correctly
     # Verify that the school subjects were fetched
-    mock_get_subjects.assert_called_once_with("test_school")
+    mock_get_subjects.assert_called_once_with("FirstSchool")

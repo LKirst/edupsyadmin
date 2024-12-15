@@ -9,14 +9,15 @@ from inspect import getfullargspec
 from platformdirs import user_config_dir, user_data_path
 
 from . import __version__
+from .api.flatten_pdf import DEFAULT_LIBRARY, flatten_pdfs
 
 # TODO: change the api so that mkreport works for CFT as well as LGVT
-from .api.flatten_pdf import DEFAULT_LIBRARY, flatten_pdfs
 from .api.lgvt import mk_report
 from .api.managers import create_documentation, get_na_ns, new_client, set_client
 from .api.taetigkeitsbericht_from_db import taetigkeitsbericht
 from .core.config import config
 from .core.logger import logger
+from .info import info
 
 __all__ = ("main",)
 
@@ -24,8 +25,8 @@ APP_UID = "liebermann-schulpsychologie.github.io"
 USER_DATA_DIR = user_data_path(
     appname="edupsyadmin", version=__version__, ensure_exists=True
 )
-DATABASE_URL = "sqlite:///" + os.path.join(USER_DATA_DIR, "edupsyadmin.db")
-USER_CONFIG_PATH = os.path.join(
+DEFAULT_DB_URL = "sqlite:///" + os.path.join(USER_DATA_DIR, "edupsyadmin.db")
+DEFAULT_CONFIG_PATH = os.path.join(
     user_config_dir(appname="edupsyadmin", version=__version__, ensure_exists=True),
     "config.yml",
 )
@@ -47,7 +48,7 @@ def main(argv=None) -> int:
     if not os.path.exists(
         args.config_path
     ):  # if the config doesn't exist, copy a sample config
-        template_path = importlib.resources.path("edupsyadmin.data", "config.yml")
+        template_path = importlib.resources.path("edupsyadmin.data", "sampleconfig.yml")
         with template_path as source:
             shutil.copy(source, args.config_path)
         logger.error(
@@ -100,9 +101,7 @@ def _args(argv):
     :param argv: argument list to parse
     """
     parser = ArgumentParser()
-    parser.add_argument(
-        "-c", "--config_path", action="append", help=f"config file [{USER_CONFIG_PATH}]"
-    )
+    parser.add_argument("-c", "--config_path", action="append", help="config file path")
     parser.add_argument(
         "-v",
         "--version",
@@ -125,13 +124,14 @@ def _args(argv):
         ),
     )
     common.add_argument("--app_uid", default=APP_UID)
-    common.add_argument("--database_url", default=DATABASE_URL)
+    common.add_argument("--database_url", default=DEFAULT_DB_URL)
+    _info(subparsers, common)
     _new_client(subparsers, common)
-    _create_documentation(subparsers, common)
-    _mk_report(subparsers, common)
     _set_client(subparsers, common)
+    _create_documentation(subparsers, common)
     _get_na_ns(subparsers, common)
     _flatten_pdfs(subparsers, common)
+    _mk_report(subparsers, common)
     _taetigkeitsbericht(subparsers, common)
 
     args = parser.parse_args(argv)
@@ -142,8 +142,21 @@ def _args(argv):
     if not args.config_path:
         # Don't specify this as an argument default or else it will always be
         # included in the list.
-        args.config_path = USER_CONFIG_PATH
+        args.config_path = DEFAULT_CONFIG_PATH
     return args
+
+
+def _info(subparsers, common):
+    """CLI adaptor for the info command.
+
+    :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
+    """
+    parser = subparsers.add_parser(
+        "info",
+        parents=[common],
+    )
+    parser.set_defaults(command=info, help="Get useful information for debugging")
 
 
 def _new_client(subparsers, common):
@@ -226,7 +239,13 @@ def _create_documentation(subparsers, common):
         help="Fill a pdf form or a text file with a liquid template",
     )
     parser.add_argument("client_id", type=int)
-    parser.add_argument("form_paths", nargs="+")
+    parser.add_argument(
+        "form_set",
+        type=str,
+        default=None,
+        help="name of a set of file paths defined in the config file",
+    )
+    parser.add_argument("form_paths", nargs="*", help="form file paths")
 
 
 def _mk_report(subparsers, common):

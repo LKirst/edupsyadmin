@@ -1,3 +1,5 @@
+import importlib
+import shutil
 from pathlib import Path
 
 import pytest
@@ -40,8 +42,10 @@ def setup_logging() -> None:
 
 @pytest.fixture
 def mock_config(tmp_path):
+    template_path = importlib.resources.path("edupsyadmin.data", "sampleconfig.yml")
     conf_path = tmp_path / "conf.yml"
-    conf_path.write_text(conf_content.strip())
+    with template_path as source:
+        shutil.copy(source, conf_path)
     print(f"conf_path: {conf_path}")
     config.load(str(conf_path))
 

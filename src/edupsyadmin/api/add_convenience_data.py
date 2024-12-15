@@ -29,21 +29,24 @@ def add_convenience_data(data: dict) -> dict:
         A dictionary of data values. Must contain "last_name", "first_name",
         "street", "city".
     """
+    # client address
     data["name"] = data["first_name"] + " " + data["last_name"]
-
     try:
         data["address"] = data["street"] + ", " + data["city"]
         data["address_multiline"] = (
             data["name"] + "\n" + data["street"] + "\n" + data["city"]
         )
-    except:
-        logger.debug("Couldn't add home address.")
+    except TypeError:
+        logger.debug("Couldn't add home address because of missing data: {e}")
+
+    # school psychologist address
+    for i in ["schoolpsy_name", "schoolpsy_street", "schoolpsy_town"]:
+        data[i] = config.schoolpsy[i]
 
     # school address
     schoolconfig = config.school[data["school"]]
-    data["school_name"] = schoolconfig["school_name"]
-    data["school_street"] = schoolconfig["school_street"]
-    data["school_head_w_school"] = schoolconfig["school_head_w_school"]
+    for i in ["school_name", "school_street", "school_head_w_school"]:
+        data[i] = schoolconfig[i]
 
     # Notenschutz and Nachteilsausgleich
     if data["nachteilsausgleich"] or data["notenschutz"]:
@@ -58,11 +61,12 @@ def add_convenience_data(data: dict) -> dict:
     if data["nachteilsausgleich"]:
         data["na_subjects"] = school_subjects
         data["na_measures"] = (
-            f"Verlängerung der Arbeitszeit um {data['nta_sprachen']}% "
+            f"Verlängerung der regulären Arbeitszeit um {data['nta_sprachen']}% "
             "bei schriftlichen Leistungsnachweisen und der "
             "Vorbereitungszeit bei mündlichen Leistungsnachweisen"
         )
 
+    # dates
     # for forms, I use the format dd.mm.YYYY; internally, I use YYYY-mm-dd
     today = date.today()
     data["date_today_de"] = today.strftime("%d.%m.%Y")
@@ -70,8 +74,8 @@ def add_convenience_data(data: dict) -> dict:
         data["birthday_de"] = parse(data["birthday"], dayfirst=False).strftime(
             "%d.%m.%Y"
         )
-    except:
-        logger.error("The birthday could not be parsed.")
+    except ValueError:
+        logger.error("The birthday could not be parsed: {e}")
         data["birthday_de"] = ""
     data["school_year"] = get_this_academic_year_string()
     data["document_shredding_date_de"] = data["document_shredding_date"].strftime(
