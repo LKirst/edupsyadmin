@@ -403,6 +403,5 @@ config.yml
 # CSVs
 *.csv
 
-# Environment
-*.schoolpsy
-*.edupsy_admin
+# pypirc
+.pypirc
