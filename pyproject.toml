@@ -4,11 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "edupsyadmin"
-version = "0.2.0"
+version = "1.0.0a0"
 authors=[
     {name = "Lukas Liebermann"}
 ]
-dynamic = ["version"]
 description = "edupsyadmin provides tools to help school psychologists with their documentation"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -61,4 +60,5 @@ name = "cz_conventional_commits"
 tag_format = "$version"
 version_scheme = "pep440"
 version_provider = "pep621"
+version = "0.2.0"
 update_changelog_on_bump = true
