@@ -2,33 +2,43 @@ import os
 import re
 from datetime import date
 
-import dataframe_image as dfi
 import pandas as pd
-from fpdf import FPDF
 
 from .managers import get_data_raw
 
+try:
+    import dataframe_image as dfi
+
+    # TODO: use the fpdf2 fork
+    from fpdf import FPDF
+except ImportError:
+    # TODO: use logger
+    print(("To output a pdf-Taetigkeitsbericht, " "install dataframe_image and fpdf."))
+    pdflibs_imported = None
+
+
 pd.set_option("display.precision", 1)
 
+if pdflibs_imported:
 
-class Report(FPDF):
-    def __init__(self, name):
-        super().__init__()
-        self.WIDTH = 210
-        self.HEIGHT = 297
-        self.header_text = f"Tätigkeitsbericht {date.today()} ({name})"
+    class Report(FPDF):
+        def __init__(self, name):
+            super().__init__()
+            self.WIDTH = 210
+            self.HEIGHT = 297
+            self.header_text = f"Tätigkeitsbericht {date.today()} ({name})"
 
-    def header(self):
-        self.set_font("Arial", "B", 11)
-        self.cell(w=0, h=10, txt=self.header_text, border=0, ln=0, align="C")
-        self.ln(20)
+        def header(self):
+            self.set_font("Arial", "B", 11)
+            self.cell(w=0, h=10, txt=self.header_text, border=0, ln=0, align="C")
+            self.ln(20)
 
-    def footer(self):
-        # page numbers
-        self.set_y(-15)
-        self.set_font("Arial", "I", 8)
-        self.set_text_color(128)
-        self.cell(0, 10, "Page " + str(self.page_no()), border=0, ln=0, align="C")
+        def footer(self):
+            # page numbers
+            self.set_y(-15)
+            self.set_font("Arial", "I", 8)
+            self.set_text_color(128)
+            self.cell(0, 10, "Page " + str(self.page_no()), border=0, ln=0, align="C")
 
 
 def get_subcategories(categorykey: str, extrcategories: list[str] = None) -> list[str]:
@@ -201,40 +211,45 @@ def create_taetigkeitsbericht_report(
     summary_categories: pd.DataFrame = None,
     summary_n_sessions: pd.DataFrame = None,
 ) -> None:
-    if not os.path.exists("resources"):
-        os.makedirs("resources")
-    wstd_img = "resources/summary_wstd.png"
-    dfi.export(summary_wstd, wstd_img, table_conversion="matplotlib")
-    if summary_n_sessions is not None:
-        n_sessions_img = "resources/summary_n_sessions.png"
-        dfi.export(summary_n_sessions, n_sessions_img, table_conversion="matplotlib")
+    if pdflibs_imported:
+        if not os.path.exists("resources"):
+            os.makedirs("resources")
+        wstd_img = "resources/summary_wstd.png"
+        dfi.export(summary_wstd, wstd_img, table_conversion="matplotlib")
+        if summary_n_sessions is not None:
+            n_sessions_img = "resources/summary_n_sessions.png"
+            dfi.export(
+                summary_n_sessions, n_sessions_img, table_conversion="matplotlib"
+            )
 
-    report = Report(name)
-    if summary_categories is not None:
+        report = Report(name)
+        if summary_categories is not None:
+            report.add_page()
+            for nm, val in summary_categories.items():
+                report.cell(w=15, h=9, border=0, txt=f"{nm}:")
+                report.ln(6)
+                for text in [
+                    "einmaliger Kurzkontakt",
+                    "1-3 Sitzungen",
+                    "mehr als 3 Sitzungen",
+                ]:
+                    report.cell(w=50, h=9, border=0, txt=text)
+                report.ln(6)  # linebreak
+                for colnm in [
+                    "count_einm_kurzkont",
+                    "count_1to3_sessions",
+                    "count_mt3_sessions",
+                ]:
+                    report.cell(w=50, h=9, border=0, txt=f"{val[colnm]:.0f}")
+                report.ln(18)  # linebreak
+        if summary_n_sessions is not None:
+            report.add_page()
+            report.image(n_sessions_img, x=15, y=report.HEIGHT * 1 / 4, w=180)
         report.add_page()
-        for nm, val in summary_categories.items():
-            report.cell(w=15, h=9, border=0, txt=f"{nm}:")
-            report.ln(6)
-            for text in [
-                "einmaliger Kurzkontakt",
-                "1-3 Sitzungen",
-                "mehr als 3 Sitzungen",
-            ]:
-                report.cell(w=50, h=9, border=0, txt=text)
-            report.ln(6)  # linebreak
-            for colnm in [
-                "count_einm_kurzkont",
-                "count_1to3_sessions",
-                "count_mt3_sessions",
-            ]:
-                report.cell(w=50, h=9, border=0, txt=f"{val[colnm]:.0f}")
-            report.ln(18)  # linebreak
-    if summary_n_sessions is not None:
-        report.add_page()
-        report.image(n_sessions_img, x=15, y=report.HEIGHT * 1 / 4, w=180)
-    report.add_page()
-    report.image(wstd_img, x=15, y=20, w=report.WIDTH - 20)
-    report.output(basename_out + "_report.pdf")
+        report.image(wstd_img, x=15, y=20, w=report.WIDTH - 20)
+        report.output(basename_out + "_report.pdf")
+    else:
+        print("pdf libraries are not installed to generate a pdf output.")
 
 
 def taetigkeitsbericht(
@@ -250,7 +265,8 @@ def taetigkeitsbericht(
     name: str = "Schulpsychologie",
 ) -> None:
     """
-    Create a PDF for the Taetigkeitsbericht. This function assumes your db has the columns 'keyword_taetigkeitsbericht' and 'n_sessions'
+    Create a PDF for the Taetigkeitsbericht. This function assumes your db
+    has the columns 'keyword_taetigkeitsbericht' and 'n_sessions'
 
     param wstd_psy [int]: Anrechnungsstunden in Wochenstunden
     param nstudents [list]: list of strings with item containing the name of
