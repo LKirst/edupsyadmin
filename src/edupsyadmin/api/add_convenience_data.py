@@ -67,7 +67,7 @@ def add_convenience_data(data: dict) -> dict:
         )
 
     # Nachteilsaugleich measures
-    if data["diagnosis_lrst"] in ["lrst", "iLst"]:
+    if data["lrst_diagnosis"] in ["lrst", "iLst"]:
         data["nta_font"] = True
 
     # dates
