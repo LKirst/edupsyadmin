@@ -1,3 +1,14 @@
+## 1.0.0a1 (2024-12-16)
+
+### Fix
+
+- **teatigkeitsbericht_from_db.py**: make dataframe_image and fpdf truly optional
+- change version in __version__.py back to string
+
+### Refactor
+
+- remove superfluous version from pyproject.toml
+
 ## 1.0.0a0 (2024-12-15)
 
 ### BREAKING CHANGE
