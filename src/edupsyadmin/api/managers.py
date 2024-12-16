@@ -307,7 +307,7 @@ def create_documentation(
         config_path=config_path,
     )
     if form_set:
-        form_paths.extend(config[form_set])
+        form_paths.extend(config.form_set[form_set])
     elif not form_paths:
         raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
     client_dict = clients_manager.get_decrypted_client(client_id)
