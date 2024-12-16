@@ -11,6 +11,8 @@ try:
 
     # TODO: use the fpdf2 fork
     from fpdf import FPDF
+
+    pdflibs_imported = True
 except ImportError:
     # TODO: use logger
     print(("To output a pdf-Taetigkeitsbericht, " "install dataframe_image and fpdf."))
