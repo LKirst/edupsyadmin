@@ -240,7 +240,7 @@ def _create_documentation(subparsers, common):
     )
     parser.add_argument("client_id", type=int)
     parser.add_argument(
-        "form_set",
+        "--form_set",
         type=str,
         default=None,
         help="name of a set of file paths defined in the config file",
