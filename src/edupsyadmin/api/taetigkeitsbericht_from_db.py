@@ -4,6 +4,7 @@ from datetime import date
 
 import pandas as pd
 
+from ..core.logger import logger
 from .managers import get_data_raw
 
 try:
@@ -14,8 +15,6 @@ try:
 
     pdflibs_imported = True
 except ImportError:
-    # TODO: use logger
-    print(("To output a pdf-Taetigkeitsbericht, " "install dataframe_image and fpdf."))
     pdflibs_imported = None
 
 
@@ -251,7 +250,12 @@ def create_taetigkeitsbericht_report(
         report.image(wstd_img, x=15, y=20, w=report.WIDTH - 20)
         report.output(basename_out + "_report.pdf")
     else:
-        print("pdf libraries are not installed to generate a pdf output.")
+        logger.warn(
+            (
+                "pdf libraries (dataframe_image and fpdf) are not installed "
+                "to generate a pdf output."
+            )
+        )
 
 
 def taetigkeitsbericht(
