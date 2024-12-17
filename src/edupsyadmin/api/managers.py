@@ -310,6 +310,10 @@ def create_documentation(
         form_paths.extend(config.form_set[form_set])
     elif not form_paths:
         raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
+    form_paths_normalized = [
+        os.path.normpath(os.path.expanduser(p)) for p in form_paths
+    ]
+    logger.debug(f"Trying to fill the files: {form_paths_normalized}")
     client_dict = clients_manager.get_decrypted_client(client_id)
     client_dict_with_convenience_data = add_convenience_data(client_dict)
-    fill_form(client_dict_with_convenience_data, form_paths)
+    fill_form(client_dict_with_convenience_data, form_paths_normalized)
