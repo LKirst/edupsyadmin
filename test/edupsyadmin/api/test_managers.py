@@ -14,7 +14,7 @@ TEST_UID = "example.com"
 
 client_data = {
     "client_id": None,
-    "school": "test_school",
+    "school": "FirstSchool",
     "gender": "m",
     "entry_date": "2021-06-30",
     "class_name": "11TKKG",

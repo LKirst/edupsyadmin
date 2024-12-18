@@ -8,19 +8,6 @@ from sample_pdf_form import create_pdf_form
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 
-conf_content = """
-core:
-  logging: WARN
-  uid: example.com
-school:
-  test_school:
-    school_name: Test School
-    school_street: 123 Test St
-    school_head_w_school: Principal of Test School
-    end: 12
-  default: test_school
-"""
-
 # ruff: noqa: E501
 webuntis_content = """
 name,longName,foreName,gender,birthDate,klasse.name,entryDate,exitDate,text,id,externKey,medicalReportDuty,schulpflicht,majority,address.email,address.mobile,address.phone,address.city,address.postCode,address.street,attribute.Notenschutz,attribute.Nachteilsausgleich

@@ -235,9 +235,9 @@ def enter_client_untiscsv(clients_manager, csv: str | os.PathLike, school: str |
     else:
         client_id = None
 
-    # check if school was passed and if not use the default from the config
+    # check if school was passed and if not use the first from the config
     if school is None:
-        school = config.school.default
+        school = list(config.school.keys())[0]
 
     client_id_n = clients_manager.add_client(
         school=school,
@@ -274,8 +274,14 @@ def enter_client_cli(clients_manager):
     else:
         client_id = None
 
+    while True:
+        school = input("School: ")
+        if school in config.school.keys():
+            break
+        print(f"School must be one of the following strings: {config.schools.keys()}")
+
     client_id_n = clients_manager.add_client(
-        school=input("School: "),
+        school=school,
         gender=input("Gender (f/m): "),
         entry_date=input("Entry date (YYYY-MM-DD): "),
         class_name=input("Class name: "),
