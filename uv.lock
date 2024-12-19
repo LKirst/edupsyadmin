@@ -497,7 +497,7 @@ wheels = [
 
 [[package]]
 name = "edupsyadmin"
-version = "1.0.0a0"
+version = "1.0.0a1"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },

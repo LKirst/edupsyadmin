@@ -1,3 +1,14 @@
+## 1.0.0 (2024-12-19)
+
+### Fix
+
+- do input validation for school
+- **managers.py**: normalize form paths
+- use form_paths variable name consistently
+- **cli.py**: make form_paths optional in create documentation
+- **taetigkeitsbericht_from_db.py**: set pdflibs_imported when the libraries can be imported
+- **add_convenience_data.py**: correct wrong dict key
+
 ## 1.0.0a1 (2024-12-16)
 
 ### Fix
