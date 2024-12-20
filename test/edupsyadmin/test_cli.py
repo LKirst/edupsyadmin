@@ -14,10 +14,10 @@ from sys import executable
 
 import pytest
 
-from edupsyadmin.cli import *  # test __all__
+from edupsyadmin.cli import main
 
 
-@pytest.fixture(params=("--help", "hello"))
+@pytest.fixture(params=("--help", "info"))
 def command(request):
     """Return the command to run."""
     return request.param
