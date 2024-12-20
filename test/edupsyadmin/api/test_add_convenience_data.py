@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 from unittest.mock import patch
 
 from edupsyadmin.api.add_convenience_data import add_convenience_data
@@ -13,8 +13,9 @@ input_data = {
     "nachteilsausgleich": True,
     "notenschutz": True,
     "birthday": "2000-01-01",
-    "document_shredding_date": datetime.now(),
     "nta_sprachen": 25,
+    "document_shredding_date": date(2025, 12, 24),
+    "lrst_diagnosis": "lrst",
 }
 
 
@@ -29,7 +30,6 @@ def test_add_convenience_data(mock_get_subjects, mock_config):
     result = add_convenience_data(input_data)
 
     # Assertions
-    # TODO: Handle Umlaute in the config.yaml!
     assert result["name"] == "John Doe"
     assert result["address"] == "456 Example Rd, Example City"
     assert result["address_multiline"] == "John Doe\n456 Example Rd\nExample City"
@@ -50,9 +50,10 @@ def test_add_convenience_data(mock_get_subjects, mock_config):
         "Leistungsnachweisen und der Vorbereitungszeit bei "
         "mündlichen Leistungsnachweisen"
     )
+    assert result["nta_font"]
+    # Check dates
     assert result["date_today_de"] is not None  # Check if date is added
-    assert (
-        result["birthday_de"] == "01.01.2000"
-    )  # Check if birthday is parsed correctly
+    assert result["birthday_de"] == "01.01.2000"
+    assert result["document_shredding_date_de"] == "24.12.2025"
     # Verify that the school subjects were fetched
     mock_get_subjects.assert_called_once_with("FirstSchool")
