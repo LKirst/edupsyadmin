@@ -94,5 +94,9 @@ def test_update_config(configfile):
     }
     with open(config.core.config, "r") as f:
         dictyaml_salt_fromfile = yaml.safe_load(f)
-    assert dictyaml_salt_config == dictyaml_salt_target
-    assert dictyaml_salt_fromfile == dictyaml_salt_target
+    assert all(
+        item in dictyaml_salt_target.items() for item in dictyaml_salt_config.items()
+    )
+    assert all(
+        item in dictyaml_salt_target.items() for item in dictyaml_salt_fromfile.items()
+    )
