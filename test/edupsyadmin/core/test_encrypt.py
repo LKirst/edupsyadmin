@@ -16,9 +16,12 @@ secret_message = "This is a secret message."
 @pytest.fixture
 def configfile(tmp_path):
     """Create a test config file"""
-    # create a config file
-    cfg_path = tmp_path / "conf.yml"
-    open(cfg_path, mode="a").close()
+    # create an empty config file
+    cfg_path = tmp_path / "configfile.yml"
+    with open(cfg_path, mode="w"):
+        pass
+
+    # load the config
     config.load(str(cfg_path))
 
     # set config values
@@ -94,9 +97,12 @@ def test_update_config(configfile):
     }
     with open(config.core.config, "r") as f:
         dictyaml_salt_fromfile = yaml.safe_load(f)
+
+    # all items in dictyaml_salt_target should be in dictyaml_salt_config
+    # and in dictyaml_salt_fromfile
     assert all(
-        item in dictyaml_salt_target.items() for item in dictyaml_salt_config.items()
+        item in dictyaml_salt_config.items() for item in dictyaml_salt_target.items()
     )
     assert all(
-        item in dictyaml_salt_target.items() for item in dictyaml_salt_fromfile.items()
+        item in dictyaml_salt_fromfile.items() for item in dictyaml_salt_target.items()
     )

@@ -1,4 +1,5 @@
 import importlib.resources
+import os
 import shutil
 from pathlib import Path
 
@@ -30,7 +31,7 @@ def setup_logging() -> None:
 @pytest.fixture
 def mock_config(tmp_path):
     template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
-    conf_path = tmp_path / "conf.yml"
+    conf_path = tmp_path / "mock_conf.yml"
     shutil.copy(template_path, conf_path)
     print(f"conf_path: {conf_path}")
     config.load(str(conf_path))
@@ -42,6 +43,7 @@ def mock_config(tmp_path):
     config.logging = "DEBUG"
 
     yield conf_path
+    os.remove(conf_path)
 
 
 @pytest.fixture
