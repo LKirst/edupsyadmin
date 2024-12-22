@@ -65,14 +65,14 @@ def main(argv=None) -> int:
     if not args.app_username:
         try:
             args.app_username = config.core.app_username
-        except e as exc:
+        except KeyError as exc:
             logger.error(
                 (
                     "Either pass app_username from the "
                     "commandline or set app_username in the config.yml"
                 )
             )
-            raise e from exc
+            raise exc
 
     # restart logging based on config
     logger.stop()  # clear handlers to prevent duplicate records
