@@ -120,7 +120,7 @@ Create the development enviroment:
 
 Run the test suite:
 
-    $ .venv/bin/python -m pytest -v test/
+    $ .venv/bin/python -m pytest -v -n auto --cov=src test/
 
 Build documentation:
 
