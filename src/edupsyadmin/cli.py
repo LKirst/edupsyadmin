@@ -48,10 +48,11 @@ def main(argv=None) -> int:
     if not os.path.exists(
         args.config_path
     ):  # if the config doesn't exist, copy a sample config
-        template_path = importlib.resources.path("edupsyadmin.data", "sampleconfig.yml")
-        with template_path as source:
-            shutil.copy(source, args.config_path)
-        logger.error(
+        template_path = (
+            importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
+        )
+        shutil.copy(template_path, args.config_path)
+        logger.info(
             (
                 "Could not find the config file."
                 f"Created a sample config at {args.config_path}. "
