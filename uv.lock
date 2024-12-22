@@ -515,11 +515,11 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+bwbackend = [
+    { name = "bitwarden-keyring" },
+]
 flattenpdf = [
     { name = "pdf2image" },
-]
-keyringbackends = [
-    { name = "bitwarden-keyring" },
 ]
 reportsandtaetigkeitsber = [
     { name = "dataframe-image" },
@@ -540,7 +540,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "bitwarden-keyring", marker = "extra == 'keyringbackends'", specifier = ">=0.3.1" },
+    { name = "bitwarden-keyring", marker = "extra == 'bwbackend'", specifier = ">=0.3.1" },
     { name = "cryptography", specifier = ">=43.0.3" },
     { name = "dataframe-image", marker = "extra == 'reportsandtaetigkeitsber'", specifier = ">=0.2.6" },
     { name = "fillpdf", specifier = ">=0.7.3" },

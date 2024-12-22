@@ -40,7 +40,7 @@ reportsandtaetigkeitsber = [
     "fpdf>=1.7.2",
     "dataframe-image>=0.2.6",
 ]
-keyringbackends = [
+bwbackend = [
     "bitwarden-keyring>=0.3.1",
 ]
 
