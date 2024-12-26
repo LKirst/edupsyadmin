@@ -12,6 +12,15 @@ Install with uv:
 
     $ uv tool install edupsyadmin
 
+If you use uv, add the bin directory to your **environment path** permanently or just for the current session.
+To get the bin directory, run 
+
+    $ echo $UV_TOOL_BIN_DIR
+
+To add the bin directory to the path for your current session, run
+
+    $ uv tool update-shell
+
 Run the application:
 
     $ edupsyadmin --help
