@@ -99,6 +99,10 @@ your config.yaml.
 
 ## Examples
 
+Get information about the path to the config file and the path to the database:
+
+    $ edupsyadmin info
+
 Add a client interactively:
 
     $ edupsyadmin new_client
