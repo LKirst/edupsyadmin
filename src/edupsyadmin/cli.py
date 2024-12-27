@@ -174,22 +174,32 @@ def _new_client(subparsers, common):
     parser.add_argument(
         "--csv",
         help=(
-            "An untis csv with one row. If you pass no csv path, you can "
-            "interactively enter the data"
+            "An untis tab separated values file. If you pass no csv path, you can "
+            "interactively enter the data."
+        ),
+    )
+    parser.add_argument(
+        "--name",
+        help=(
+            "Only relevant if --csv is set."
+            "Name of the client from the name column of the csv."
         ),
     )
     parser.add_argument(
         "--school",
         help=(
-            "The label of the school as you use it in the config file. "
-            "If no label is passed, the default from the config "
-            "will be used."
+            "Only relevant if --csv is set. The label of the school as you "
+            "use it in the config file. If no label is passed, the first "
+            "school from the config will be used."
         ),
     )
     parser.add_argument(
         "--keepfile",
         action="store_true",
-        help="Don't delete the csv after adding it to the db.",
+        help=(
+            "Only relevant if --csv is set."
+            "Don't delete the csv after adding it to the db."
+        ),
     )
 
 

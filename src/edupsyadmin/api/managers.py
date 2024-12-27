@@ -225,13 +225,26 @@ def get_data_raw(app_username: str, app_uid: str, database_url: str, config_path
     return df
 
 
-def enter_client_untiscsv(clients_manager, csv: str | os.PathLike, school: str | None):
-    """Read client from a webuntis csv"""
-    untis_df = pd.read_csv(csv)
+def enter_client_untiscsv(
+    clients_manager: ClientsManager,
+    csv: str | os.PathLike,
+    school: str | None,
+    name: str,
+):
+    """
+    Read client from a webuntis csv
+
+    :param clients_manager: a ClientsManager instance used to add the client to the db
+    :param csv: path to a tab separated webuntis export file
+    :param school: short name of the school as set in the config file
+    :param name: name of the client as specified in the "name" column of the csv
+    """
+    untis_df = pd.read_csv(csv, sep="\t", encoding="utf-8")
+    client_series = untis_df[untis_df["name"] == name]
 
     # check if id is known
-    if "client_id" in untis_df.columns:
-        client_id = untis_df["client_id"].item()
+    if "client_id" in client_series.columns:
+        client_id = client_series["client_id"].item()
     else:
         client_id = None
 
@@ -241,24 +254,25 @@ def enter_client_untiscsv(clients_manager, csv: str | os.PathLike, school: str |
 
     client_id_n = clients_manager.add_client(
         school=school,
-        gender=untis_df["gender"].item(),
-        entry_date=datetime.strptime(untis_df["entryDate"].item(), "%d.%m.%Y").strftime(
-            "%Y-%m-%d"
-        ),
-        class_name=untis_df["klasse.name"].item(),
-        first_name=untis_df["foreName"].item(),
-        last_name=untis_df["longName"].item(),
-        birthday=datetime.strptime(untis_df["birthDate"].item(), "%d.%m.%Y").strftime(
-            "%Y-%m-%d"
-        ),
-        street=untis_df["address.street"].item(),
-        city=str(untis_df["address.postCode"].item())
+        gender=client_series["gender"].item(),
+        entry_date=datetime.strptime(
+            client_series["entryDate"].item(), "%d.%m.%Y"
+        ).strftime("%Y-%m-%d"),
+        class_name=client_series["klasse.name"].item(),
+        first_name=client_series["foreName"].item(),
+        last_name=client_series["longName"].item(),
+        birthday=datetime.strptime(
+            client_series["birthDate"].item(), "%d.%m.%Y"
+        ).strftime("%Y-%m-%d"),
+        street=client_series["address.street"].item(),
+        city=str(client_series["address.postCode"].item())
         + " "
-        + untis_df["address.city"].item(),
+        + client_series["address.city"].item(),
         telephone1=str(
-            untis_df["address.mobile"].item() or untis_df["address.phone"].item()
+            client_series["address.mobile"].item()
+            or client_series["address.phone"].item()
         ),
-        email=untis_df["address.email"].item(),
+        email=client_series["address.email"].item(),
         client_id=client_id,
     )
     return client_id_n
