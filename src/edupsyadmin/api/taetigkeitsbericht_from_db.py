@@ -15,7 +15,7 @@ try:
 
     pdflibs_imported = True
 except ImportError:
-    pdflibs_imported = None
+    pdflibs_imported = False
 
 
 pd.set_option("display.precision", 1)
@@ -42,7 +42,9 @@ if pdflibs_imported:
             self.cell(0, 10, "Page " + str(self.page_no()), border=0, ln=0, align="C")
 
 
-def get_subcategories(categorykey: str, extrcategories: list[str] = None) -> list[str]:
+def get_subcategories(
+    categorykey: str, extrcategories: list[str] | None = None
+) -> list[str]:
     if extrcategories is None:
         extrcategories = []
     extrcategories.append(categorykey)
@@ -53,7 +55,9 @@ def get_subcategories(categorykey: str, extrcategories: list[str] = None) -> lis
         return get_subcategories(root, extrcategories)
 
 
-def add_categories_to_df(df: pd.DataFrame, category_colnm: str) -> pd.DataFrame:
+def add_categories_to_df(
+    df: pd.DataFrame, category_colnm: str
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     category_keys = sorted(set(df.loc[:, category_colnm].unique()))
     categories_all = []
     for key in category_keys:
@@ -115,16 +119,16 @@ def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> pd.DataFrame:
         "Arbeitstage/Jahr nach Abzug von 30 Tagen Urlaub",
     ]
     wstds.loc["ww_year", :] = [
-        wstds.loc["wd_year", "value"] / wstds.loc["wd_week", "value"],
+        wstds.at["wd_year", "value"] / wstds.at["wd_week", "value"],
         "Arbeitswochen/Jahr",
     ]
     wstds.loc["zstd_week", :] = [40, "h/Woche"]
     wstds.loc["zstd_day", :] = [
-        wstds.loc["zstd_week", "value"] / wstds.loc["wd_week", "value"],
+        wstds.at["zstd_week", "value"] / wstds.at["wd_week", "value"],
         "h/Arbeitstag",
     ]
     wstds.loc["zstd_year", :] = [
-        wstds.loc["zstd_day", "value"] * wstds.loc["wd_year", "value"],
+        wstds.at["zstd_day", "value"] * wstds.at["wd_year", "value"],
         "h/Jahr",
     ]
     wstds.loc["wstd_total_target", :] = [
@@ -136,18 +140,18 @@ def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> pd.DataFrame:
         "n Wochenstunden Schulpsychologie (Anrechnungsstunden)",
     ]
     wstds.loc["zstd_spsy_1wstd_target", :] = [
-        wstds.loc["zstd_year", "value"] / wstd_total,
+        wstds.at["zstd_year", "value"] / wstd_total,
         ("h Arbeit / Jahr, die einer Wochenstunde entsprächen"),
     ]
     wstds.loc["zstd_spsy_year_target", :] = [
-        wstds.loc["zstd_spsy_1wstd_target", "value"] * wstd_spsy,
+        wstds.at["zstd_spsy_1wstd_target", "value"] * wstd_spsy,
         (
             "h Arbeit / Jahr, die den angegebenen Wochenstunden "
             "Schulpsychologie entsprächen"
         ),
     ]
     wstds.loc["zstd_spsy_week_target", :] = [
-        wstds.loc["zstd_spsy_year_target", "value"] / wstds.loc["ww_year", "value"],
+        wstds.at["zstd_spsy_year_target", "value"] / wstds.at["ww_year", "value"],
         (
             "h Arbeit in der Woche, die den angegebenen Wochenstunden "
             "Schulpsychologie entsprächen"
@@ -196,11 +200,11 @@ def summary_statistics_wstd(
     if zstd_spsy_year_actual is not None:
         summarystats_wstd.loc["zstd_spsy_year_actual", "value"] = zstd_spsy_year_actual
         summarystats_wstd.loc["zstd_spsy_week_actual", "value"] = (
-            zstd_spsy_year_actual / summarystats_wstd.loc["ww_year", "value"]
+            zstd_spsy_year_actual / summarystats_wstd.at["ww_year", "value"]
         )
         summarystats_wstd.loc["perc_spsy_year_actual", "value"] = (
             zstd_spsy_year_actual
-            / summarystats_wstd.loc["zstd_spsy_year_target", "value"]
+            / summarystats_wstd.at["zstd_spsy_year_target", "value"]
         ) * 100
     return summarystats_wstd
 
@@ -209,8 +213,8 @@ def create_taetigkeitsbericht_report(
     basename_out: str,
     name: str,
     summary_wstd: pd.Series,
-    summary_categories: pd.DataFrame = None,
-    summary_n_sessions: pd.DataFrame = None,
+    summary_categories: pd.DataFrame | None = None,
+    summary_n_sessions: pd.DataFrame | None = None,
 ) -> None:
     if pdflibs_imported:
         if not os.path.exists("resources"):

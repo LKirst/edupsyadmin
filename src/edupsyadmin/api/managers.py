@@ -317,7 +317,7 @@ def create_documentation(
     database_url: str,
     config_path: str,
     client_id: int,
-    form_set: str = None,
+    form_set: str | None = None,
     form_paths: list = [],
 ):
     clients_manager = ClientsManager(

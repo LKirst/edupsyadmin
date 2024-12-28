@@ -38,13 +38,15 @@ class Encryption:
 
     def encrypt(self, data: str) -> bytes:
         if self.fernet is None:
-            logger.critical("call set_fernet() before calling encrypt()")
+            raise RuntimeError("call set_fernet() before calling encrypt()")
         token = self.fernet.encrypt(data.encode())
         return token
 
-    def decrypt(self, token: bytes) -> str:
+    def decrypt(self, token: bytes | str) -> str:
         if self.fernet is None:
-            logger.critical("call set_fernet() before calling decrypt()")
+            raise RuntimeError("call set_fernet() before calling decrypt()")
+        if isinstance(token, str):
+            token = token.encode()
         data = self.fernet.decrypt(token).decode()
         return data
 

@@ -77,7 +77,7 @@ class YamlConfig(_AttrDict):
             self.load(path, root, params)
         return
 
-    def load(self, path, root=None, params=None):
+    def load(self, path, root=None, params=None) -> None:
         """Load data from YAML configuration files.
 
         Configuration values are read from a sequence of one or more YAML
@@ -137,7 +137,7 @@ class _ParameterTag(object):
         value = loader.construct_scalar(node)
         return Template(value).substitute(self._params)
 
-    def add(self, loader: type(SafeLoader)):
+    def add(self, loader: type[SafeLoader]) -> None:
         """Add this tag to the SafeLoader class.
 
         This adds a the tag constructor and an implicit resolver to the
