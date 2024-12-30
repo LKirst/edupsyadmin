@@ -2,7 +2,6 @@
 
 import os
 
-import keyring
 import pytest
 import yaml
 
@@ -32,25 +31,12 @@ def configfile(tmp_path):
     config.logging = "DEBUG"
     logger.start(config.logging)
 
-    # create a keyring entry for testing if it does not exist
-    try:
-        cred = keyring.get_credential(config.uid, config.username)
-        if cred is None:
-            keyring.set_password(config.uid, config.username, "test_pw_do_not_use")
-    except Exception as e:
-        pytest.fail(
-            (
-                f"Failed to access keyring: {e}."
-                "Please ensure your keyring is unlocked and accessible."
-            )
-        )
-
     yield
     os.remove(config.core.config)
 
 
 @pytest.fixture
-def encrypted_message(configfile):
+def encrypted_message(configfile, mock_keyring):
     """Create an encrypted message."""
     encr = Encryption()
     encr.set_fernet(config.username, config.core.config, config.uid)
@@ -58,30 +44,33 @@ def encrypted_message(configfile):
     return token
 
 
-def test_encrypt(configfile):
+def test_encrypt(configfile, mock_keyring):
     encr = Encryption()
     encr.set_fernet(config.username, config.core.config, config.uid)
     token = encr.encrypt(secret_message)
 
     assert isinstance(token, bytes)
     assert secret_message != token
+    mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
 
-def test_decrypt(encrypted_message):
+def test_decrypt(encrypted_message, mock_keyring):
     encr = Encryption()
     encr.set_fernet(config.username, config.core.config, config.uid)
     decrypted = encr.decrypt(encrypted_message)
 
     assert decrypted == secret_message
+    mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
 
-def test_set_fernet(capsys, configfile):
+def test_set_fernet(capsys, configfile, mock_keyring):
     encr = Encryption()
     encr.set_fernet(config.username, config.core.config, config.uid)
     encr.set_fernet(config.username, config.core.config, config.uid)
 
     _, stderr = capsys.readouterr()
     assert "fernet was already set; using existing fernet" in stderr
+    mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
 
 def test_update_config(configfile):

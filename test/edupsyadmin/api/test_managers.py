@@ -1,4 +1,3 @@
-import keyring
 import pytest
 
 from edupsyadmin.api.managers import (
@@ -29,14 +28,9 @@ client_data = {
 
 
 @pytest.fixture()
-def clients_manager(tmp_path, mock_config):
+def clients_manager(tmp_path, mock_config, mock_keyring):
     """Create a clients_manager"""
     logger.start("DEBUG")
-
-    # create a keyring entry for testing if it does not exist
-    cred = keyring.get_credential(TEST_UID, TEST_USERNAME)
-    if cred is None:
-        keyring.set_password(TEST_UID, TEST_USERNAME, "test_pw_do_not_use")
 
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
@@ -50,14 +44,14 @@ def clients_manager(tmp_path, mock_config):
     yield manager
 
 
-def test_add_client(mock_config, clients_manager):
+def test_add_client(clients_manager):
     client_id = clients_manager.add_client(**client_data)
     client = clients_manager.get_decrypted_client(client_id=client_id)
     assert client["first_name"] == "John"
     assert client["last_name"] == "Doe"
 
 
-def test_edit_client(mock_config, clients_manager):
+def test_edit_client(clients_manager):
     client_id = clients_manager.add_client(**client_data)
     client = clients_manager.get_decrypted_client(client_id=client_id)
     updated_data = {"first_name_encr": "Jane", "last_name_encr": "Smith"}
@@ -68,7 +62,7 @@ def test_edit_client(mock_config, clients_manager):
     assert updated_client["datetime_lastmodified"] > client["datetime_lastmodified"]
 
 
-def test_delete_client(mock_config, clients_manager):
+def test_delete_client(clients_manager):
     client_id = clients_manager.add_client(**client_data)
     clients_manager.delete_client(client_id)
     try:
@@ -80,7 +74,7 @@ def test_delete_client(mock_config, clients_manager):
         assert e.client_id == client_id
 
 
-def test_enter_client_cli(mock_config, clients_manager, monkeypatch):
+def test_enter_client_cli(clients_manager, monkeypatch):
     # simulate the commandline input
     inputs = iter(client_data)
 
@@ -95,7 +89,7 @@ def test_enter_client_cli(mock_config, clients_manager, monkeypatch):
     assert client["last_name"] == "Doe"
 
 
-def test_enter_client_untiscsv(mock_config, clients_manager, mock_webuntis):
+def test_enter_client_untiscsv(clients_manager, mock_webuntis):
     client_id = enter_client_untiscsv(
         clients_manager, mock_webuntis, school=None, name="MustermMax1"
     )
