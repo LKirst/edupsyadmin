@@ -13,7 +13,7 @@ Install with uv:
     $ uv tool install edupsyadmin
 
 If you use uv, add the bin directory to your **environment path** permanently or just for the current session.
-To get the bin directory, run 
+To get the bin directory, run
 
     $ echo $UV_TOOL_BIN_DIR
 
@@ -96,6 +96,11 @@ your config.yaml.
 - Internet or network address: `liebermann-schulpsychologie.github.io`
 - User name: `the_user_name_from_your_config_file`
 - Password: `a_secure_password`
+
+## The database
+
+The information you enter, is stored in an SQLite database with the fields
+described in [client_model_documentation.md](client_model_documentation.md)
 
 ## Examples
 
