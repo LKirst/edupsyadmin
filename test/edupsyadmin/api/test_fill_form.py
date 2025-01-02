@@ -22,12 +22,11 @@ client_dict_specialchars = {
 
 
 @pytest.mark.parametrize("client_data", [client_dict_simple, client_dict_specialchars])
-def test_fill_form(pdf_form: str, tmp_path: Path, client_data: dict) -> None:
+def test_fill_form(pdf_forms: list, tmp_path: Path, client_data: dict) -> None:
     """Test the fill_form function."""
-    form_paths = [pdf_form]
-    fill_form(client_data, form_paths, out_dir=tmp_path, use_fillpdf=True)
+    fill_form(client_data, pdf_forms, out_dir=tmp_path, use_fillpdf=True)
 
-    output_pdf_path = tmp_path / f"{client_data['client_id']}_test_form.pdf"
+    output_pdf_path = tmp_path / f"{client_data['client_id']}_{pdf_forms[0].name}"
     assert output_pdf_path.exists(), "Output PDF was not created."
 
     with open(output_pdf_path, "rb") as f:

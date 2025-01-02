@@ -2,57 +2,20 @@ import pytest
 
 from edupsyadmin.api.managers import (
     ClientNotFound,
-    ClientsManager,
     enter_client_cli,
     enter_client_untiscsv,
 )
-from edupsyadmin.core.logger import logger
-
-TEST_USERNAME = "test_user_do_not_use"
-TEST_UID = "example.com"
-
-client_data = {
-    "client_id": None,
-    "school": "FirstSchool",
-    "gender": "m",
-    "entry_date": "2021-06-30",
-    "class_name": "11TKKG",
-    "first_name": "John",
-    "last_name": "Doe",
-    "birthday": "1990-01-01",
-    "street": "123 Main St",
-    "city": "New York",
-    "telephone1": "555-1234",
-    "email": "john.doe@example.com",
-}
 
 
-@pytest.fixture()
-def clients_manager(tmp_path, mock_config, mock_keyring):
-    """Create a clients_manager"""
-    logger.start("DEBUG")
-
-    database_path = tmp_path / "test.sqlite"
-    database_url = f"sqlite:///{database_path}"
-    manager = ClientsManager(
-        database_url,
-        app_uid=TEST_UID,
-        app_username=TEST_USERNAME,
-        config_path=str(mock_config),
-    )
-
-    yield manager
-
-
-def test_add_client(clients_manager):
-    client_id = clients_manager.add_client(**client_data)
+def test_add_client(clients_manager, sample_client_dict):
+    client_id = clients_manager.add_client(**sample_client_dict)
     client = clients_manager.get_decrypted_client(client_id=client_id)
     assert client["first_name"] == "John"
     assert client["last_name"] == "Doe"
 
 
-def test_edit_client(clients_manager):
-    client_id = clients_manager.add_client(**client_data)
+def test_edit_client(clients_manager, sample_client_dict):
+    client_id = clients_manager.add_client(**sample_client_dict)
     client = clients_manager.get_decrypted_client(client_id=client_id)
     updated_data = {"first_name_encr": "Jane", "last_name_encr": "Smith"}
     clients_manager.edit_client(client_id, updated_data)
@@ -62,8 +25,8 @@ def test_edit_client(clients_manager):
     assert updated_client["datetime_lastmodified"] > client["datetime_lastmodified"]
 
 
-def test_delete_client(clients_manager):
-    client_id = clients_manager.add_client(**client_data)
+def test_delete_client(clients_manager, sample_client_dict):
+    client_id = clients_manager.add_client(**sample_client_dict)
     clients_manager.delete_client(client_id)
     try:
         clients_manager.get_decrypted_client(client_id)
@@ -74,12 +37,12 @@ def test_delete_client(clients_manager):
         assert e.client_id == client_id
 
 
-def test_enter_client_cli(clients_manager, monkeypatch):
+def test_enter_client_cli(clients_manager, monkeypatch, sample_client_dict):
     # simulate the commandline input
-    inputs = iter(client_data)
+    inputs = iter(sample_client_dict)
 
     def mock_input(prompt):
-        return client_data[next(inputs)]
+        return sample_client_dict[next(inputs)]
 
     monkeypatch.setattr("builtins.input", mock_input)
 
@@ -89,7 +52,7 @@ def test_enter_client_cli(clients_manager, monkeypatch):
     assert client["last_name"] == "Doe"
 
 
-def test_enter_client_untiscsv(clients_manager, mock_webuntis):
+def test_enter_client_untiscsv(clients_manager, mock_webuntis, sample_client_dict):
     client_id = enter_client_untiscsv(
         clients_manager, mock_webuntis, school=None, name="MustermMax1"
     )

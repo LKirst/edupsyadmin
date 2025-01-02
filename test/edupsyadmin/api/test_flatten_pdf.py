@@ -14,14 +14,18 @@ client_data = {
 }
 
 
-def test_flatten_form(pdf_form: str, tmp_path: Path) -> None:
+def test_flatten_form(pdf_forms: list, tmp_path: Path) -> None:
     # fill a form
-    fill_form(client_data, [pdf_form], out_dir=tmp_path, use_fillpdf=True)
-    filled_pdf_path = tmp_path / f"{client_data['client_id']}_test_form.pdf"
+    fill_form(client_data, pdf_forms, out_dir=tmp_path, use_fillpdf=True)
+    filled_pdf_path = tmp_path / f"{client_data['client_id']}_{pdf_forms[0].name}"
+    assert filled_pdf_path.is_file()
 
     # flatten the form
-    flattened_pdf_path = tmp_path / f"print_{client_data['client_id']}_test_form.pdf"
+    flattened_pdf_path = (
+        tmp_path / f"print_{client_data['client_id']}_{pdf_forms[0].name}"
+    )
     flatten_pdf(filled_pdf_path, "pdf2image")
+    assert flattened_pdf_path.is_file()
     with open(flattened_pdf_path, "rb") as f:
         reader = PdfReader(f)
         form_data = reader.get_fields()
