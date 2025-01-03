@@ -49,13 +49,13 @@ def mock_config(tmp_path: Path) -> Generator[Path, None, None]:
     template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
     conf_path = tmp_path / "mock_conf.yml"
     shutil.copy(template_path, conf_path)
-    print(f"conf_path: {conf_path}")
+    print(f"mock_config fixture - conf_path: {conf_path}")
     config.load(str(conf_path))
 
     # set or override some config values
     config.core.config = str(conf_path)
-    config.username = "test_user_do_not_use"
-    config.uid = "example.com"
+    config.core.app_username = "test_user_do_not_use"
+    config.core.app_uid = "example.com"
     config.logging = "DEBUG"
 
     yield conf_path
