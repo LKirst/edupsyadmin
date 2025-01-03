@@ -4,7 +4,7 @@ from pathlib import Path
 
 from liquid import Template, exceptions
 
-from ..core.logger import logger
+from edupsyadmin.core.logger import logger
 
 
 def modify_bool_for_pdf_form(data: dict) -> dict:
@@ -124,7 +124,7 @@ def fill_form(
     form_paths: list[str],
     out_dir: str = ".",
     use_fillpdf: bool = True,
-):
+) -> None:
     """
     A wrapper function for different functions to fill out forms and
     templates based on client data.
@@ -139,6 +139,8 @@ def fill_form(
     for fn in form_paths:
         fp = Path(fn)
         logger.info(f"Using the template {fp}")
+        if not fp.is_file():
+            raise FileNotFoundError(f"The template file does not exist: {fp}")
         out_fp = Path(out_dir, f"{client_data['client_id']}_{fp.name}")
         logger.info(f"Writing to {out_fp}")
         if fp.suffix == ".md":
