@@ -15,8 +15,10 @@ from subprocess import call
 from sys import executable
 
 import pytest
+import yaml
 
 from edupsyadmin.cli import main
+from edupsyadmin.core.encrypt import _convert_conf_to_dict
 
 
 @pytest.fixture
@@ -68,38 +70,23 @@ def test_script(command):
 
 @pytest.mark.parametrize("pdf_forms", [3], indirect=True)
 def test_create_documentation(mock_keyring, client, pdf_forms, change_wd):
-    # import the config here to make sure you use the instance of mock_config
-    # passed to the clients_manager and client fixture
     from edupsyadmin.core.config import config
 
-    lrst_form_set_config = [
-        "~/Templates/Beratung/LiL_Mantelbogen.pdf",
-        "~/Templates/Beratung/LRSt_GenehmigungSchulleitung.pdf",
-        "~/Templates/Beratung/LRSt_Stellungnahme.pdf",
-        "~/Templates/Beratung/LRSt_Informationsschreiben.pdf",
-        "~/Templates/Beratung/LRSt_Anschreiben.pdf",
-    ]
-    assert config.form_set.lrst == lrst_form_set_config
-
-    # TODO: this doesn't seem to work because create_documenation fills the files
-    # read from the original config file
-    config.form_set.lrst = pdf_forms
-    print(
-        (
-            "test_create_documentation - after modified pdf_forms: "
-            f"dict(config) {dict(config)}"
-        )
-    )
+    client_id, database_url = client
+    config.form_set.lrst = [str(path) for path in pdf_forms]  # override the sample_pdfs
+    with open(str(config.core.config), "w", encoding="UTF-8") as f:
+        dictyaml = _convert_conf_to_dict(config)  # convert to dict for pyyaml
+        yaml.dump(dictyaml, f)  # write the config to file for main()
 
     args = [
         "-c",
         str(config.core.config),
         "create_documentation",
         "--database_url",
-        str(client[1]),
+        database_url,
         "--form_set",
         "lrst",
-        str(client[0]),
+        str(client_id),
     ]
     assert 0 == main(args)
 
