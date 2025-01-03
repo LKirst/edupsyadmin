@@ -32,6 +32,7 @@ class ClientsManager:
         self, database_url: str, app_uid: str, app_username: str, config_path: str
     ):
         logger.info(f"trying to connect to database at {database_url}")
+        self.database_url = database_url
         self.engine = create_engine(database_url, echo=True)
         self.Session = sessionmaker(bind=self.engine)
         encr.set_fernet(app_username, config_path, app_uid)
