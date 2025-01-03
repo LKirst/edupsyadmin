@@ -56,7 +56,7 @@ def mock_config(tmp_path: Path) -> Generator[Path, None, None]:
     config.core.config = str(conf_path)
     config.core.app_username = "test_user_do_not_use"
     config.core.app_uid = "example.com"
-    config.logging = "DEBUG"
+    config.core.logging = "DEBUG"
 
     yield conf_path
     os.remove(conf_path)
