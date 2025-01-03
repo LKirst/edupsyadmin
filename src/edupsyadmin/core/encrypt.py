@@ -51,7 +51,6 @@ class Encryption:
         return data
 
     def _load_or_create_salt(self, config_path: str) -> bytes:
-        config.load(config_path)
         if "core" in config.keys() and "salt" in config.core.keys():
             logger.info("using existing salt from the config file")
             salt = config.core.salt
