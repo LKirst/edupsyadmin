@@ -45,20 +45,20 @@ def main(argv=None) -> int:
     logger.debug("starting execution")
 
     # config
-    if not os.path.exists(
-        args.config_path
-    ):  # if the config doesn't exist, copy a sample config
-        template_path = (
-            importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
-        )
-        shutil.copy(template_path, args.config_path)
-        logger.info(
-            (
-                "Could not find the config file."
-                f"Created a sample config at {args.config_path}. "
-                "Fill it with your values."
+    for path in args.config_path:
+        # if the config doesn't exist, copy a sample config
+        if not os.path.exists(path):
+            template_path = (
+                importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
             )
-        )
+            shutil.copy(template_path, args.config_path)
+            logger.info(
+                (
+                    "Could not find the specified config file."
+                    f"Created a sample config at {args.config_path}. "
+                    "Fill it with your values."
+                )
+            )
     config.load(args.config_path)
     config.core.config = args.config_path
     if args.warn:
@@ -102,6 +102,8 @@ def _args(argv):
     :param argv: argument list to parse
     """
     parser = ArgumentParser()
+    # append allows multiple instances of the same object
+    # args.config_path will therefore be a list!
     parser.add_argument("-c", "--config_path", action="append", help="config file path")
     parser.add_argument(
         "-v",
