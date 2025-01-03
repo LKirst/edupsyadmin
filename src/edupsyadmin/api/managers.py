@@ -5,13 +5,13 @@ import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-from ..core.config import config
-from ..core.encrypt import Encryption
-from ..core.logger import logger
-from .add_convenience_data import add_convenience_data
-from .clients import Client
-from .fill_form import fill_form
-from .taetigkeitsbericht_check_key import check_keyword
+from edupsyadmin.api.add_convenience_data import add_convenience_data
+from edupsyadmin.api.clients import Client
+from edupsyadmin.api.fill_form import fill_form
+from edupsyadmin.api.taetigkeitsbericht_check_key import check_keyword
+from edupsyadmin.core.config import config
+from edupsyadmin.core.encrypt import Encryption
+from edupsyadmin.core.logger import logger
 
 
 class Base(DeclarativeBase):
@@ -40,7 +40,7 @@ class ClientsManager:
         Base.metadata.create_all(self.engine, tables=[Client.__table__])
         logger.info(f"created connection to database at {database_url}")
 
-    def add_client(self, **client_data):
+    def add_client(self, **client_data) -> int:
         logger.debug("trying to add client")
         with self.Session() as session:
             new_client = Client(encr, **client_data)
@@ -106,7 +106,7 @@ class ClientsManager:
             df = pd.DataFrame.from_dict(results_list_of_dict)
             return df.sort_values("last_name")
 
-    def get_data_raw(self):
+    def get_data_raw(self) -> pd.DataFrame:
         """
         Get the data without decrypting encrypted data.
         """
@@ -173,7 +173,7 @@ def set_client(
     config_path: str,
     client_id: int,
     key_value_pairs: list[str],
-):
+) -> None:
     """
     Set the value for a key given a client_id
     """
@@ -200,7 +200,7 @@ def get_na_ns(
     config_path: str,
     school: str,
     out: str | None = None,
-):
+) -> None:
     clients_manager = ClientsManager(
         database_url=database_url,
         app_uid=app_uid,
@@ -214,7 +214,9 @@ def get_na_ns(
         print(df)
 
 
-def get_data_raw(app_username: str, app_uid: str, database_url: str, config_path: str):
+def get_data_raw(
+    app_username: str, app_uid: str, database_url: str, config_path: str
+) -> pd.DataFrame:
     clients_manager = ClientsManager(
         database_url=database_url,
         app_uid=app_uid,
@@ -230,7 +232,7 @@ def enter_client_untiscsv(
     csv: str | os.PathLike,
     school: str | None,
     name: str,
-):
+) -> int:
     """
     Read client from a webuntis csv
 
@@ -238,6 +240,7 @@ def enter_client_untiscsv(
     :param csv: path to a tab separated webuntis export file
     :param school: short name of the school as set in the config file
     :param name: name of the client as specified in the "name" column of the csv
+    return: client_id
     """
     untis_df = pd.read_csv(csv, sep="\t", encoding="utf-8")
     client_series = untis_df[untis_df["name"] == name]
@@ -278,10 +281,7 @@ def enter_client_untiscsv(
     return client_id_n
 
 
-def enter_client_cli(clients_manager):
-    """Create an unencrypted csvfile interactively"""
-
-    # check if id is known
+def enter_client_cli(clients_manager: ClientsManager) -> int:
     client_id = input("client_id (press ENTER if you don't know): ")
     if client_id:
         client_id = int(client_id)
@@ -318,8 +318,8 @@ def create_documentation(
     config_path: str,
     client_id: int,
     form_set: str | None = None,
-    form_paths: list = [],
-):
+    form_paths: list[str] = [],
+) -> None:
     clients_manager = ClientsManager(
         database_url=database_url,
         app_uid=app_uid,
