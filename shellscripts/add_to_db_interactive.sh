@@ -1,1 +1,0 @@
-edupsyadmin new_client
