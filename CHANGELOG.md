@@ -1,3 +1,28 @@
+## 1.0.0b0 (2025-01-04)
+
+### BREAKING CHANGE
+
+- new_client --csv now requires a --name argument
+
+### Feat
+
+- handle the extraction of a student from a webuntis csv with several rows
+
+### Fix
+
+- **encrypt.py**: don't load the config file in encrypt.py
+- **cli.py**: handle config files correctly
+- **cli.py**: catch KeyError exception when no app_username is set
+
+### Refactor
+
+- remove redundant scripts
+- **fill_form.py**: raise FileNotFoundError
+- refactor tests
+- mock keyring for testing
+- use importlib.resources.files instead of deprecated path
+- **pyproject.toml**: change name of dependency group to bwbackend
+
 ## 1.0.0a2 (2024-12-19)
 
 ### Fix
