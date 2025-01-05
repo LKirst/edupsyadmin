@@ -1,3 +1,4 @@
+import os
 import shutil
 from itertools import product
 from pathlib import Path
@@ -140,7 +141,9 @@ def fill_form(
         fp = Path(fn)
         logger.info(f"Using the template {fp}")
         if not fp.is_file():
-            raise FileNotFoundError(f"The template file does not exist: {fp}")
+            raise FileNotFoundError(
+                (f"The template file does not exist: {fp}; " f"cwd is: {os.getcwd()}")
+            )
         out_fp = Path(out_dir, f"{client_data['client_id']}_{fp.name}")
         logger.info(f"Writing to {out_fp}")
         if fp.suffix == ".md":
