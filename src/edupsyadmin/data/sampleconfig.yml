@@ -1,7 +1,7 @@
 ﻿## Example runtime configuration for the edupsyadmin application.
 core:
   logging: WARN
-  uid: liebermann-schulpsychologie.github.io
+  app_uid: liebermann-schulpsychologie.github.io
   app_username: sample.username # replace this with your username
 schoolpsy:
   schoolpsy_name: "Firstname Lastname"
