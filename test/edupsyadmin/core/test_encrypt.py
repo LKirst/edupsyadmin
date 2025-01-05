@@ -1,7 +1,5 @@
 """Test suite for the core.encrypt module."""
 
-import os
-
 import pytest
 import yaml
 
@@ -13,40 +11,17 @@ secret_message = "This is a secret message."
 
 
 @pytest.fixture
-def configfile(tmp_path):
-    """Create a test config file"""
-    # create an empty config file
-    cfg_path = tmp_path / "configfile.yml"
-    with open(cfg_path, mode="w"):
-        pass
-
-    # load the config
-    config.load(str(cfg_path))
-
-    # set config values
-    config.core = {}
-    config.core.config = str(cfg_path)
-    config.username = "test_user_do_not_use"
-    config.uid = "example.com"
-    config.logging = "DEBUG"
-    logger.start(config.logging)
-
-    yield
-    os.remove(config.core.config)
-
-
-@pytest.fixture
-def encrypted_message(configfile, mock_keyring):
+def encrypted_message(mock_config, mock_keyring):
     """Create an encrypted message."""
     encr = Encryption()
-    encr.set_fernet(config.username, config.core.config, config.uid)
+    encr.set_fernet(config.core.app_username, mock_config, config.core.app_uid)
     token = encr.encrypt(secret_message)
     return token
 
 
-def test_encrypt(configfile, mock_keyring):
+def test_encrypt(mock_config, mock_keyring):
     encr = Encryption()
-    encr.set_fernet(config.username, config.core.config, config.uid)
+    encr.set_fernet(config.core.app_username, mock_config, config.core.app_uid)
     token = encr.encrypt(secret_message)
 
     assert isinstance(token, bytes)
@@ -54,37 +29,41 @@ def test_encrypt(configfile, mock_keyring):
     mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
 
-def test_decrypt(encrypted_message, mock_keyring):
+def test_decrypt(encrypted_message, mock_config, mock_keyring):
     encr = Encryption()
-    encr.set_fernet(config.username, config.core.config, config.uid)
+    encr.set_fernet(config.core.app_username, mock_config, config.core.app_uid)
     decrypted = encr.decrypt(encrypted_message)
 
     assert decrypted == secret_message
     mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
 
-def test_set_fernet(capsys, configfile, mock_keyring):
+def test_set_fernet(capsys, mock_config, mock_keyring):
+    logger.start("DEBUG")  # TODO: Why is this necessary despite the logging fixture?
     encr = Encryption()
-    encr.set_fernet(config.username, config.core.config, config.uid)
-    encr.set_fernet(config.username, config.core.config, config.uid)
+    encr.set_fernet(config.core.app_username, mock_config, config.core.app_uid)
+    encr.set_fernet(config.core.app_username, mock_config, config.core.app_uid)
 
-    _, stderr = capsys.readouterr()
+    stdout, stderr = capsys.readouterr()
     assert "fernet was already set; using existing fernet" in stderr
     mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
 
-def test_update_config(configfile):
+def test_update_config(mock_config):
     encr = Encryption()
     _convert_conf_to_dict(config)
-    salt = encr._load_or_create_salt(config.core.config)
+    salt = encr._load_or_create_salt(mock_config)
     dictyaml_salt_config = _convert_conf_to_dict(config)
     dictyaml_salt_target = {
-        "core": {"config": config.core.config, "salt": salt},
-        "username": "test_user_do_not_use",
-        "uid": "example.com",
-        "logging": "DEBUG",
+        "core": {
+            "logging": "DEBUG",
+            "app_uid": "example.com",
+            "app_username": "test_user_do_not_use",
+            "config": str(mock_config),
+            "salt": salt,
+        }
     }
-    with open(config.core.config, "r") as f:
+    with open(mock_config, "r") as f:
         dictyaml_salt_fromfile = yaml.safe_load(f)
 
     # all items in dictyaml_salt_target should be in dictyaml_salt_config
