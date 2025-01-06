@@ -114,7 +114,7 @@ Add a client interactively:
 
 Add a client to the database from a Webuntis csv export:
 
-    $ edupsyadmin new_client --csv ./path/to/your/file.csv
+    $ edupsyadmin new_client --csv ./path/to/your/file.csv --name "short_name_of_client"
 
 Change values for the database entry with `client_id=42`:
 
