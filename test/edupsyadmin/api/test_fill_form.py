@@ -13,10 +13,9 @@ def test_fill_form(
     mock_config, pdf_forms: list, tmp_path: Path, sample_client_dict: dict
 ) -> None:
     """Test the fill_form function."""
-    sample_client_dict["document_shredding_date"] = datetime.date(
-        year=2024, month=12, day=24
-    )
-    clientd = add_convenience_data(sample_client_dict)
+    clientd = sample_client_dict.copy()
+    clientd["document_shredding_date"] = datetime.date(year=2024, month=12, day=24)
+    clientd = add_convenience_data(clientd)
     fill_form(clientd, pdf_forms, out_dir=tmp_path, use_fillpdf=True)
 
     for i, form in enumerate(pdf_forms):
