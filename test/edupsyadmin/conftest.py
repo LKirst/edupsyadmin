@@ -91,7 +91,7 @@ def mock_webuntis(tmp_path: Path) -> Path:
             "nta_sprachen": 10,
         },
         {
-            "client_id": None,
+            "client_id": 2,
             "school": "SecondSchool",
             "gender": "f",
             "entry_date": "2021-06-30",
