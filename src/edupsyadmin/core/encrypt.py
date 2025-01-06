@@ -14,7 +14,7 @@ from .logger import logger
 class Encryption:
     fernet = None
 
-    def set_fernet(self, username: str, config_path: str, uid: str) -> None:
+    def set_fernet(self, username: str, config_file: str, uid: str) -> None:
         """use a password to derive a key
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
         """
@@ -22,7 +22,7 @@ class Encryption:
             logger.debug("fernet was already set; using existing fernet")
             return
 
-        salt = self._load_or_create_salt(config_path)
+        salt = self._load_or_create_salt(config_file)
         password = self._retrieve_password(username, uid)
 
         # derive a key using the password and salt
@@ -50,21 +50,21 @@ class Encryption:
         data = self.fernet.decrypt(token).decode()
         return data
 
-    def _load_or_create_salt(self, config_path: str) -> bytes:
+    def _load_or_create_salt(self, config_file: str) -> bytes:
         if "core" in config.keys() and "salt" in config.core.keys():
             logger.info("using existing salt from the config file")
             salt = config.core.salt
         else:
             logger.info("creating new salt and writing it to the config file")
             salt = os.urandom(16)
-            with open(config_path, "a", encoding="UTF-8") as f:
+            with open(config_file, "a", encoding="UTF-8") as f:
                 if "core" in config.keys():
                     config.core.update({"salt": salt})
                 else:
                     config.update({"core": {"salt": salt}})
 
                 dictyaml = _convert_conf_to_dict(config)  # convert to dict for pyyaml
-                logger.debug(f"config as a dict: {dictyaml}")
+                logger.debug(f"config as a dict before dump: {dictyaml}")
                 yaml.dump(dictyaml, f)  # I couldn't get safe_dump to work with bytes
 
         return salt

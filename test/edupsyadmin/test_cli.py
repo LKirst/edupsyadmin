@@ -68,19 +68,38 @@ def test_script(command):
     return
 
 
+def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
+    database_path = tmp_path / "test.sqlite"
+    database_url = f"sqlite:///{database_path}"
+    args = [
+        "-c",
+        str(mock_config[0]),
+        "new_client",
+        "--database_url",
+        database_url,
+        "--csv",
+        str(mock_webuntis),
+        "--name",
+        "MustermErika1",
+        "--school",
+        "FirstSchool",
+    ]
+    assert 0 == main(args)
+
+
 @pytest.mark.parametrize("pdf_forms", [3], indirect=True)
 def test_create_documentation(mock_keyring, client, pdf_forms, change_wd):
     from edupsyadmin.core.config import config
 
     client_id, database_url = client
     config.form_set.lrst = [str(path) for path in pdf_forms]  # override the sample_pdfs
-    with open(str(config.core.config), "w", encoding="UTF-8") as f:
+    with open(str(config.core.config[0]), "w", encoding="UTF-8") as f:
         dictyaml = _convert_conf_to_dict(config)  # convert to dict for pyyaml
         yaml.dump(dictyaml, f)  # write the config to file for main()
 
     args = [
         "-c",
-        str(config.core.config),
+        str(config.core.config[0]),
         "create_documentation",
         "--database_url",
         database_url,

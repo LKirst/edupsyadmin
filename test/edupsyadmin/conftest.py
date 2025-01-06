@@ -45,21 +45,21 @@ def mock_keyring(monkeypatch):
 
 
 @pytest.fixture
-def mock_config(tmp_path: Path) -> Generator[Path, None, None]:
+def mock_config(tmp_path: Path) -> Generator[list[str], None, None]:
     template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
-    conf_path = tmp_path / "mock_conf.yml"
-    shutil.copy(template_path, conf_path)
+    conf_path = [str(tmp_path / "mock_conf.yml")]
+    shutil.copy(template_path, conf_path[0])
     print(f"mock_config fixture - conf_path: {conf_path}")
-    config.load(str(conf_path))
+    config.load(conf_path)
 
     # set or override some config values
-    config.core.config = str(conf_path)
+    config.core.config = conf_path
     config.core.app_username = "test_user_do_not_use"
     config.core.app_uid = "example.com"
     config.core.logging = "DEBUG"
 
     yield conf_path
-    os.remove(conf_path)
+    os.remove(conf_path[0])
 
 
 @pytest.fixture
@@ -123,7 +123,7 @@ def clients_manager(tmp_path, mock_config, mock_keyring):
         database_url,
         app_uid=TEST_UID,
         app_username=TEST_USERNAME,
-        config_path=str(mock_config),
+        config_path=mock_config,
     )
 
     yield manager

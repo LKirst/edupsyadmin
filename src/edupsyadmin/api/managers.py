@@ -1,4 +1,5 @@
 import os
+import warnings
 from datetime import datetime
 
 import pandas as pd
@@ -29,13 +30,21 @@ class ClientNotFound(Exception):
 
 class ClientsManager:
     def __init__(
-        self, database_url: str, app_uid: str, app_username: str, config_path: str
+        self, database_url: str, app_uid: str, app_username: str, config_path: list[str]
     ):
         logger.info(f"trying to connect to database at {database_url}")
         self.database_url = database_url
         self.engine = create_engine(database_url, echo=True)
         self.Session = sessionmaker(bind=self.engine)
-        encr.set_fernet(app_username, config_path, app_uid)
+        if len(config) > 1:
+            warnings.warn(
+                (
+                    "Multiple configuration files detected. "
+                    "Only the first one will be checked for a salt value."
+                ),
+                UserWarning,
+            )
+        encr.set_fernet(app_username, config_path[0], app_uid)
 
         # create the table if it doesn't exist
         Base.metadata.create_all(self.engine, tables=[Client.__table__])
@@ -148,9 +157,10 @@ def new_client(
     app_username,
     app_uid,
     database_url,
-    config_path,
+    config_path: list[str],
     csv=None,
     school=None,
+    name=None,
     keepfile=False,
 ):
     clients_manager = ClientsManager(
@@ -160,7 +170,7 @@ def new_client(
         config_path=config_path,
     )
     if csv:
-        enter_client_untiscsv(clients_manager, csv, school)
+        enter_client_untiscsv(clients_manager, csv, school, name)
         if not keepfile:
             os.remove(csv)
     else:
@@ -171,7 +181,7 @@ def set_client(
     app_username: str,
     app_uid: str,
     database_url: str,
-    config_path: str,
+    config_path: list[str],
     client_id: int,
     key_value_pairs: list[str],
 ) -> None:
@@ -198,7 +208,7 @@ def get_na_ns(
     app_username: str,
     app_uid: str,
     database_url: str,
-    config_path: str,
+    config_path: list[str],
     school: str,
     out: str | None = None,
 ) -> None:
@@ -216,7 +226,7 @@ def get_na_ns(
 
 
 def get_data_raw(
-    app_username: str, app_uid: str, database_url: str, config_path: str
+    app_username: str, app_uid: str, database_url: str, config_path: list[str]
 ) -> pd.DataFrame:
     clients_manager = ClientsManager(
         database_url=database_url,
@@ -316,7 +326,7 @@ def create_documentation(
     app_username: str,
     app_uid: str,
     database_url: str,
-    config_path: str,
+    config_path: list[str],
     client_id: int,
     form_set: str | None = None,
     form_paths: list[str] = [],
