@@ -1,3 +1,18 @@
+## 1.0.0b1 (2025-01-06)
+
+### Feat
+
+- **add_convenience_data.py**: add schoolpsy_address_multiline to convenience data
+
+### Fix
+
+- **sampleconfig.yml**: change the field name for uid from uid to app_uid
+
+### Refactor
+
+- **clients.py**: add nta arguments to the constructor for clients
+- **test_encrypt.py**: use the mock_config fixture from conftest.py
+
 ## 1.0.0b0 (2025-01-04)
 
 ### BREAKING CHANGE
