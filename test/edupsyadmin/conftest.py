@@ -85,8 +85,10 @@ def mock_webuntis(tmp_path: Path) -> Path:
             "city": "New York",
             "telephone1": "555-1234",
             "email": "john.doe@example.com",
-            "notenschutz": True,
-            "nachteilsausgleich": False,
+            "notenschutz": False,
+            "nachteilsausgleich": True,
+            "lrst_diagnosis": "iLrst",
+            "nta_sprachen": 10,
         },
         {
             "client_id": None,
@@ -103,6 +105,8 @@ def mock_webuntis(tmp_path: Path) -> Path:
             "email": "example@example.com",
             "notenschutz": True,
             "nachteilsausgleich": True,
+            "lrst_diagnosis": "lrst",
+            "nta_sprachen": None,
         },
     ]
 )
