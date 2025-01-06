@@ -88,6 +88,9 @@ class Client(Base):
         nachteilsausgleich: bool = False,
         keyword_taetigkeitsbericht: str | None = "",
         lrst_diagnosis: str = "",
+        nta_sprachen: int | None = None,
+        nta_mathephys: int | None = None,
+        nta_notes: int | None = None,
         n_sessions: int = 1,
     ):
         if client_id:
@@ -131,6 +134,9 @@ class Client(Base):
         self.keyword_taetigkeitsbericht = check_keyword(keyword_taetigkeitsbericht)
         self.notenschutz = notenschutz
         self.nachteilsausgleich = nachteilsausgleich
+        self.nta_sprachen = nta_sprachen
+        self.nta_mathephys = nta_mathephys
+        self.nta_notes = nta_notes
         self.n_sessions = n_sessions
 
         self.datetime_created = datetime.now()
