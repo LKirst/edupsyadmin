@@ -110,12 +110,20 @@ def pdf_forms(tmp_path: Path, request: pytest.FixtureRequest) -> list[Path]:
     @pytest.mark.parametrize("pdf_forms", [3], indirect=True)
     to create the desired number of files
     """
+    files = [
+        Path("test/edupsyadmin/data/sample_form_mantelbogen.pdf").resolve(),
+        Path("test/edupsyadmin/data/sample_form_anschreiben.pdf").resolve(),
+    ]
+    print(f"cwd: {os.getcwd()}")
     num_files = getattr(request, "param", 1)
     pdf_form_paths = []
     for i in range(num_files):
-        filename = f"sample_form_{i + 1}.pdf"
-        pdf_form_path = tmp_path / filename
-        create_pdf_form(str(pdf_form_path))
-        pdf_form_paths.append(pdf_form_path)
+        filename = "sample_form_reportlab.pdf"
+        if i == 0:
+            pdf_form_path = tmp_path / filename
+            create_pdf_form(str(pdf_form_path))
+            pdf_form_paths.append(pdf_form_path)
+        else:
+            pdf_form_paths.append(files[i - 1])
     logger.debug(f"PDF forms fixture created at {pdf_form_paths}")
     return pdf_form_paths
