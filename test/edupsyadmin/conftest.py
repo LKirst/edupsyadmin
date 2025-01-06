@@ -70,22 +70,44 @@ def mock_webuntis(tmp_path: Path) -> Path:
     return webuntis_path
 
 
-@pytest.fixture
-def sample_client_dict():
-    return {
-        "client_id": None,
-        "school": "FirstSchool",
-        "gender": "m",
-        "entry_date": "2021-06-30",
-        "class_name": "11TKKG",
-        "first_name": "John",
-        "last_name": "Doe",
-        "birthday": "1990-01-01",
-        "street": "123 Main St",
-        "city": "New York",
-        "telephone1": "555-1234",
-        "email": "john.doe@example.com",
-    }
+@pytest.fixture(
+    params=[
+        {
+            "client_id": None,
+            "school": "FirstSchool",
+            "gender": "m",
+            "entry_date": "2021-06-30",
+            "class_name": "11TKKG",
+            "first_name": "John",
+            "last_name": "Doe",
+            "birthday": "1990-01-01",
+            "street": "123 Main St",
+            "city": "New York",
+            "telephone1": "555-1234",
+            "email": "john.doe@example.com",
+            "notenschutz": True,
+            "nachteilsausgleich": False,
+        },
+        {
+            "client_id": None,
+            "school": "SecondSchool",
+            "gender": "f",
+            "entry_date": "2021-06-30",
+            "class_name": "Ki12",
+            "first_name": "Äöüß",
+            "last_name": "Müller",
+            "birthday": "1990-01-01",
+            "street": "Umlautstraße 5ä",
+            "city": "München",
+            "telephone1": "+555-1234",
+            "email": "example@example.com",
+            "notenschutz": True,
+            "nachteilsausgleich": True,
+        },
+    ]
+)
+def sample_client_dict(request) -> dict[str, any]:
+    return request.param
 
 
 @pytest.fixture()

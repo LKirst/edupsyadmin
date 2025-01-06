@@ -10,8 +10,8 @@ from edupsyadmin.api.managers import (
 def test_add_client(clients_manager, sample_client_dict):
     client_id = clients_manager.add_client(**sample_client_dict)
     client = clients_manager.get_decrypted_client(client_id=client_id)
-    assert client["first_name"] == "John"
-    assert client["last_name"] == "Doe"
+    assert client["first_name"] == sample_client_dict["first_name"]
+    assert client["last_name"] == sample_client_dict["last_name"]
 
 
 def test_edit_client(clients_manager, sample_client_dict):
@@ -48,8 +48,8 @@ def test_enter_client_cli(clients_manager, monkeypatch, sample_client_dict):
 
     client_id = enter_client_cli(clients_manager)
     client = clients_manager.get_decrypted_client(client_id=client_id)
-    assert client["first_name"] == "John"
-    assert client["last_name"] == "Doe"
+    assert client["first_name"] == sample_client_dict["first_name"]
+    assert client["last_name"] == sample_client_dict["last_name"]
 
 
 def test_enter_client_untiscsv(clients_manager, mock_webuntis, sample_client_dict):
