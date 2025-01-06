@@ -1,3 +1,9 @@
+## 1.0.0 (2025-01-06)
+
+### Fix
+
+- handle the fact that config_path is a list not a string
+
 ## 1.0.0b1 (2025-01-06)
 
 ### Feat
