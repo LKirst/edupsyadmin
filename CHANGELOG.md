@@ -1,3 +1,44 @@
+## 2.0.0b0 (2025-01-06)
+
+### Feat
+
+- **add_convenience_data.py**: add schoolpsy_address_multiline to convenience data
+
+### Fix
+
+- handle the fact that config_path is a list not a string
+- **sampleconfig.yml**: change the field name for uid from uid to app_uid
+
+### Refactor
+
+- **clients.py**: add nta arguments to the constructor for clients
+- **test_encrypt.py**: use the mock_config fixture from conftest.py
+
+## 1.0.0b0 (2025-01-04)
+
+### BREAKING CHANGE
+
+- new_client --csv now requires a --name argument
+
+### Feat
+
+- handle the extraction of a student from a webuntis csv with several rows
+
+### Fix
+
+- **encrypt.py**: don't load the config file in encrypt.py
+- **cli.py**: handle config files correctly
+- **cli.py**: catch KeyError exception when no app_username is set
+
+### Refactor
+
+- remove redundant scripts
+- **fill_form.py**: raise FileNotFoundError
+- refactor tests
+- mock keyring for testing
+- use importlib.resources.files instead of deprecated path
+- **pyproject.toml**: change name of dependency group to bwbackend
+
 ## 1.0.0 (2025-01-06)
 
 ### Fix
