@@ -42,6 +42,16 @@ def add_convenience_data(data: dict) -> dict:
     # school psychologist address
     for i in ["schoolpsy_name", "schoolpsy_street", "schoolpsy_town"]:
         data[i] = config.schoolpsy[i]
+    data["schoolpsy_address_multiline"] = (
+        data["schoolpsy_name"]
+        + "\n"
+        + data["schoolpsy_street"]
+        + "\n"
+        + data["schoolpsy_town"]
+    )
+    data["schoolpsy_address_singleline"] = data["schoolpsy_address_multiline"].replace(
+        "\n", ", "
+    )
 
     # school address
     schoolconfig = config.school[data["school"]]
