@@ -65,6 +65,7 @@ want to appear in your documentation:
     school_head_w_school: "Title of your head of school"
     school_name: "Name of your school written out"
     school_street: "Street and house number of your school"
+    school_town: "Postecode and town"
     end: 11
   ```
 
