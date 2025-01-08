@@ -5,7 +5,7 @@ this object to store application-wide configuration values.
 
 """
 
-from os import environ
+from os import PathLike, environ
 from re import compile
 from string import Template
 
@@ -65,7 +65,9 @@ class YamlConfig(_AttrDict):
 
     """
 
-    def __init__(self, path=None, root=None, params=None):
+    def __init__(
+        self, path: list[str | PathLike] | str | PathLike = None, root=None, params=None
+    ):
         """Initialize this object.
 
         :param path: config file path to load
@@ -77,7 +79,9 @@ class YamlConfig(_AttrDict):
             self.load(path, root, params)
         return
 
-    def load(self, path, root=None, params=None) -> None:
+    def load(
+        self, path: list[str | PathLike] | str | PathLike, root=None, params=None
+    ) -> None:
         """Load data from YAML configuration files.
 
         Configuration values are read from a sequence of one or more YAML
