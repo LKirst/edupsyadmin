@@ -18,7 +18,7 @@ TEST_USERNAME = "test_user_do_not_use"
 TEST_UID = "example.com"
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="session")
 def setup_logging() -> Generator[None, None, None]:
     """
     Fixture to set up logging. Remember to use the
@@ -30,8 +30,14 @@ def setup_logging() -> Generator[None, None, None]:
     logger.stop()
 
 
-@pytest.fixture
-def mock_keyring(monkeypatch):
+@pytest.fixture(scope="session")
+def monkeysession():
+    with pytest.MonkeyPatch.context() as mp:
+        yield mp
+
+
+@pytest.fixture(scope="session")
+def mock_keyring(monkeysession):
     class MockCredential:
         def __init__(self, password: str):
             self.password = password
@@ -39,7 +45,7 @@ def mock_keyring(monkeypatch):
     mock_get_credential = Mock(
         side_effect=lambda service, username: MockCredential(password="mocked_password")
     )
-    monkeypatch.setattr(keyring, "get_credential", mock_get_credential)
+    monkeysession.setattr(keyring, "get_credential", mock_get_credential)
 
     return mock_get_credential
 
@@ -108,13 +114,14 @@ def mock_webuntis(tmp_path: Path) -> Path:
             "lrst_diagnosis": "lrst",
             "nta_sprachen": None,
         },
-    ]
+    ],
+    scope="session",
 )
 def sample_client_dict(request) -> dict[str, any]:
     return request.param
 
 
-@pytest.fixture()
+@pytest.fixture
 def clients_manager(tmp_path, mock_config, mock_keyring):
     """Create a clients_manager"""
     database_path = tmp_path / "test.sqlite"
