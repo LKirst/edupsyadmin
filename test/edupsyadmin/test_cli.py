@@ -92,7 +92,11 @@ def test_create_documentation(mock_keyring, client, pdf_forms, change_wd):
     from edupsyadmin.core.config import config
 
     client_id, database_url = client
-    config.form_set.lrst = [str(path) for path in pdf_forms]  # override the sample_pdfs
+
+    # change some config values in the config file
+    config.form_set.lrst = [str(path) for path in pdf_forms]
+    config.core.app_uid = "example.com"
+    config.core.app_username = "test_user_do_not_use"
     with open(str(config.core.config[0]), "w", encoding="UTF-8") as f:
         dictyaml = _convert_conf_to_dict(config)  # convert to dict for pyyaml
         yaml.dump(dictyaml, f)  # write the config to file for main()
@@ -108,6 +112,8 @@ def test_create_documentation(mock_keyring, client, pdf_forms, change_wd):
         str(client_id),
     ]
     assert 0 == main(args)
+
+    mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
     # I've changed the wd with a fixture, so I can check without an absolute path
     output_paths = [f"{client[0]}_{Path(path).name}" for path in pdf_forms]
