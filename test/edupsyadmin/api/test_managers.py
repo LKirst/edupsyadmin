@@ -63,6 +63,7 @@ class ManagersTest:
         client = clients_manager.get_decrypted_client(client_id=client_id)
         assert client["first_name"] == "Max"
         assert client["last_name"] == "Mustermann"
+        assert client["school"] == "FirstSchool"
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
 
