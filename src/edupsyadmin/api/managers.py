@@ -1,9 +1,10 @@
+import logging  # just for interaction with the sqlalchemy logger
 import os
 import warnings
 from datetime import datetime
 
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from edupsyadmin.api.add_convenience_data import add_convenience_data
@@ -32,9 +33,13 @@ class ClientsManager:
     def __init__(
         self, database_url: str, app_uid: str, app_username: str, config_path: list[str]
     ):
+        # set up logging for sqlalchemy
+        logging.getLogger("sqlalchemy.engine").setLevel(config.core.logging)
+
+        # connect to database
         logger.info(f"trying to connect to database at {database_url}")
         self.database_url = database_url
-        self.engine = create_engine(database_url, echo=True)
+        self.engine = create_engine(database_url)
         self.Session = sessionmaker(bind=self.engine)
         if len(config) > 1:
             warnings.warn(
@@ -44,6 +49,8 @@ class ClientsManager:
                 ),
                 UserWarning,
             )
+
+        # set fernet for encryption
         encr.set_fernet(app_username, config_path[0], app_uid)
 
         # create the table if it doesn't exist
@@ -56,7 +63,7 @@ class ClientsManager:
             new_client = Client(encr, **client_data)
             session.add(new_client)
             session.commit()
-            logger.debug(f"added client: {new_client}")
+            logger.info(f"added client: {new_client}")
             client_id = new_client.client_id
             return client_id
 
@@ -86,35 +93,33 @@ class ClientsManager:
             client_dict.update(decr_vars)
             return client_dict
 
-    def get_na_ns(self, school: str) -> pd.DataFrame:
-        logger.debug("trying to query nachteilsausgleich and notenschutz")
+    def get_clients_overview(self, nta_nos=True) -> pd.DataFrame:
+        logger.debug("trying to query client data")
+        stmt = select(Client)
         with self.Session() as session:
-            # TODO: this doesn't filter by school
-            results = (
-                session.query(Client)
-                .filter(
-                    (
-                        ((Client.notenschutz == 1) or (Client.nachteilsausgleich == 1))
-                        and (Client.school == school)
-                    )
+            if nta_nos:
+                stmt = stmt.where(
+                    (Client.notenschutz == 1) or (Client.nachteilsausgleich == 1)
                 )
-                .all()
-            )
+            results = session.scalars(stmt).all()
             results_list_of_dict = [
                 {
                     "id": entry.client_id,
-                    "class_name": entry.class_name,
-                    "first_name": encr.decrypt(entry.first_name_encr),
+                    "school": entry.school,
                     "last_name": encr.decrypt(entry.last_name_encr),
+                    "first_name": encr.decrypt(entry.first_name_encr),
+                    "class_name": entry.class_name,
                     "notenschutz": entry.notenschutz,
                     "nachteilsausgleich": entry.nachteilsausgleich,
                     "nta_sprachen": entry.nta_sprachen,
                     "nta_mathephys": entry.nta_mathephys,
+                    "n_sessions": entry.n_sessions,
+                    "keyword_taetigkeitsbericht": entry.keyword_taetigkeitsbericht,
                 }
                 for entry in results
             ]
             df = pd.DataFrame.from_dict(results_list_of_dict)
-            return df.sort_values("last_name")
+            return df.sort_values(["school", "last_name"])
 
     def get_data_raw(self) -> pd.DataFrame:
         """
@@ -154,14 +159,14 @@ class ClientsManager:
 
 
 def new_client(
-    app_username,
-    app_uid,
-    database_url,
+    app_username: str,
+    app_uid: str,
+    database_url: str,
     config_path: list[str],
-    csv=None,
-    school=None,
-    name=None,
-    keepfile=False,
+    csv: str | os.PathLike | None = None,
+    school: str | None = None,
+    name: str | None = None,
+    keepfile: bool = False,
 ):
     clients_manager = ClientsManager(
         database_url=database_url,
@@ -204,12 +209,13 @@ def set_client(
         clients_manager.edit_client(client_id, new_data)
 
 
-def get_na_ns(
+def get_clients(
     app_username: str,
     app_uid: str,
     database_url: str,
     config_path: list[str],
-    school: str,
+    nta_nos: bool = False,
+    client_id: int | None = None,
     out: str | None = None,
 ) -> None:
     clients_manager = ClientsManager(
@@ -218,11 +224,24 @@ def get_na_ns(
         app_username=app_username,
         config_path=config_path,
     )
-    df = clients_manager.get_na_ns(school)
+    if client_id:
+        df = pd.DataFrame.from_dict(clients_manager.get_decrypted_client(client_id))
+    else:
+        df = clients_manager.get_clients_overview(nta_nos=nta_nos)
     if out:
         df.to_csv(out, index=False)
     else:
-        print(df)
+        with pd.option_context(
+            "display.max_columns",
+            None,
+            "display.width",
+            None,
+            "display.max_colwidth",
+            None,
+            "display.expand_frame_repr",
+            False,
+        ):
+            print(df)
 
 
 def get_data_raw(

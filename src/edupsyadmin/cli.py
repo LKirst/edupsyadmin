@@ -13,7 +13,7 @@ from .api.flatten_pdf import DEFAULT_LIBRARY, flatten_pdfs
 
 # TODO: change the api so that mkreport works for CFT as well as LGVT
 from .api.lgvt import mk_report
-from .api.managers import create_documentation, get_na_ns, new_client, set_client
+from .api.managers import create_documentation, get_clients, new_client, set_client
 from .api.taetigkeitsbericht_from_db import taetigkeitsbericht
 from .core.config import config
 from .core.logger import logger
@@ -63,7 +63,13 @@ def main(argv=None) -> int:
     config.core.config = args.config_path
     if args.warn:
         config.core.logging = args.warn
+
+    # restart logging based on config
+    logger.stop()  # clear handlers to prevent duplicate records
+    logger.start(config.core.logging)
+
     if not args.app_username:
+        logger.debug(f"using config.core.app_username: {config.core.app_username}")
         try:
             args.app_username = config.core.app_username
         except KeyError as exc:
@@ -74,10 +80,8 @@ def main(argv=None) -> int:
                 )
             )
             raise exc
-
-    # restart logging based on config
-    logger.stop()  # clear handlers to prevent duplicate records
-    logger.start(config.core.logging)
+    else:
+        logger.debug(f"using username passed as cli argument: {args.app_username}")
 
     # handle commandline args
     command = args.command
@@ -132,7 +136,7 @@ def _args(argv):
     _new_client(subparsers, common)
     _set_client(subparsers, common)
     _create_documentation(subparsers, common)
-    _get_na_ns(subparsers, common)
+    _get_clients(subparsers, common)
     _flatten_pdfs(subparsers, common)
     _mk_report(subparsers, common)
     _taetigkeitsbericht(subparsers, common)
@@ -225,19 +229,26 @@ def _set_client(subparsers, common):
     )
 
 
-def _get_na_ns(subparsers, common):
+def _get_clients(subparsers, common):
     """CLI adaptor for the api.clients.get_na_ns command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("get_na_ns", parents=[common])
+    parser = subparsers.add_parser("get_clients", parents=[common])
     parser.set_defaults(
-        command=get_na_ns,
-        help="Show notenschutz and nachteilsausgleich",
+        command=get_clients,
+        help="Show clients overview or single client",
     )
-    parser.add_argument("school", help="which school")
+    parser.add_argument(
+        "--nta_nos",
+        action="store_true",
+        help="show only students with Nachteilsausgleich or Notenschutz",
+    )
     parser.add_argument("--out", help="path for an output file")
+    parser.add_argument(
+        "--client_id", type=int, help="id for a single client to display"
+    )
 
 
 def _create_documentation(subparsers, common):

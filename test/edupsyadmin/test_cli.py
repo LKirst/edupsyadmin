@@ -22,7 +22,7 @@ from edupsyadmin.core.encrypt import _convert_conf_to_dict
 
 
 @pytest.fixture
-def client(mock_keyring, clients_manager, sample_client_dict):
+def mock_client(mock_keyring, clients_manager, sample_client_dict):
     """Fixture to set up a client for testing."""
     client_id = clients_manager.add_client(**sample_client_dict)
     return client_id, clients_manager.database_url
@@ -87,11 +87,31 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
     assert 0 == main(args)
 
 
+def test_get_clients(
+    capsys, mock_keyring, mock_config, clients_manager, sample_client_dict, tmp_path
+):
+    clients_manager.add_client(**sample_client_dict)
+    database_path = tmp_path / "test.sqlite"
+    database_url = f"sqlite:///{database_path}"
+    args = [
+        "-c",
+        str(mock_config[0]),
+        "get_clients",
+        "--database_url",
+        database_url,
+    ]
+    assert 0 == main(args)
+    mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
+    stdout, stderr = capsys.readouterr()
+    assert sample_client_dict["first_name"] in stdout
+    assert sample_client_dict["last_name"] in stdout
+
+
 @pytest.mark.parametrize("pdf_forms", [3], indirect=True)
-def test_create_documentation(mock_keyring, client, pdf_forms, change_wd):
+def test_create_documentation(mock_keyring, mock_client, pdf_forms, change_wd):
     from edupsyadmin.core.config import config
 
-    client_id, database_url = client
+    client_id, database_url = mock_client
 
     # change some config values in the config file
     config.form_set.lrst = [str(path) for path in pdf_forms]
@@ -113,10 +133,11 @@ def test_create_documentation(mock_keyring, client, pdf_forms, change_wd):
     ]
     assert 0 == main(args)
 
+    # TODO: why does this fail if I run `pytest test/edupsyadmin/test_cli.py`
     mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
     # I've changed the wd with a fixture, so I can check without an absolute path
-    output_paths = [f"{client[0]}_{Path(path).name}" for path in pdf_forms]
+    output_paths = [f"{client_id}_{Path(path).name}" for path in pdf_forms]
     for path in output_paths:
         assert os.path.exists(
             path
