@@ -1,20 +1,21 @@
 import base64
 import os
+from pathlib import Path
 
 import keyring
-import yaml
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from .config import config
-from .logger import logger
+from edupsyadmin.core.logger import logger
 
 
 class Encryption:
     fernet = None
 
-    def set_fernet(self, username: str, config_file: str, uid: str) -> None:
+    def set_fernet(
+        self, username: str, user_data_dir: str | os.PathLike, uid: str
+    ) -> None:
         """use a password to derive a key
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
         """
@@ -22,7 +23,7 @@ class Encryption:
             logger.debug("fernet was already set; using existing fernet")
             return
 
-        salt = self._load_or_create_salt(config_file)
+        salt = self._load_or_create_salt(user_data_dir)
         password = self._retrieve_password(username, uid)
 
         # derive a key using the password and salt
@@ -50,23 +51,16 @@ class Encryption:
         data = self.fernet.decrypt(token).decode()
         return data
 
-    def _load_or_create_salt(self, config_file: str) -> bytes:
-        if "core" in config.keys() and "salt" in config.core.keys():
-            logger.info("using existing salt from the config file")
-            salt = config.core.salt
+    def _load_or_create_salt(self, salt_path: str | os.PathLike) -> bytes:
+        if Path(salt_path).is_file():
+            logger.info("using existing salt from {salt_path}")
+            with open(salt_path, "rb") as binary_file:
+                salt = binary_file.read()
         else:
-            logger.info("creating new salt and writing it to the config file")
+            logger.info(f"creating new salt and writing to {salt_path}")
             salt = os.urandom(16)
-            with open(config_file, "a", encoding="UTF-8") as f:
-                if "core" in config.keys():
-                    config.core.update({"salt": salt})
-                else:
-                    config.update({"core": {"salt": salt}})
-
-                dictyaml = _convert_conf_to_dict(config)  # convert to dict for pyyaml
-                logger.debug(f"config as a dict before dump: {dictyaml}")
-                yaml.dump(dictyaml, f)  # I couldn't get safe_dump to work with bytes
-
+            with open(salt_path, "wb") as binary_file:
+                binary_file.write(salt)
         return salt
 
     def _retrieve_password(self, username: str, uid: str) -> bytes:
@@ -78,12 +72,3 @@ class Encryption:
             raise ValueError(f"Password not found for uid: {uid}, username: {username}")
 
         return cred.password.encode()
-
-
-def _convert_conf_to_dict(conf) -> dict:
-    if isinstance(conf, dict):
-        conf = dict(conf)
-    for key, value in conf.items():
-        if isinstance(value, dict):
-            conf[key] = dict(_convert_conf_to_dict(value))
-    return conf
