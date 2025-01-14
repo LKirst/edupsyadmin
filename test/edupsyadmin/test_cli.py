@@ -18,7 +18,7 @@ import pytest
 import yaml
 
 from edupsyadmin.cli import main
-from edupsyadmin.core.encrypt import _convert_conf_to_dict
+from edupsyadmin.core.config import convert_config_to_dict
 
 
 @pytest.fixture
@@ -118,7 +118,7 @@ def test_create_documentation(mock_keyring, mock_client, pdf_forms, change_wd):
     config.core.app_uid = "example.com"
     config.core.app_username = "test_user_do_not_use"
     with open(str(config.core.config[0]), "w", encoding="UTF-8") as f:
-        dictyaml = _convert_conf_to_dict(config)  # convert to dict for pyyaml
+        dictyaml = convert_config_to_dict(config)  # convert to dict for pyyaml
         yaml.dump(dictyaml, f)  # write the config to file for main()
 
     args = [
