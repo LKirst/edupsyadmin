@@ -1,6 +1,5 @@
 import logging  # just for interaction with the sqlalchemy logger
 import os
-import warnings
 from datetime import datetime
 
 import pandas as pd
@@ -45,14 +44,6 @@ class ClientsManager:
         self.database_url = database_url
         self.engine = create_engine(database_url)
         self.Session = sessionmaker(bind=self.engine)
-        if len(config) > 1:
-            warnings.warn(
-                (
-                    "Multiple configuration files detected. "
-                    "Only the first one will be checked for a salt value."
-                ),
-                UserWarning,
-            )
 
         # set fernet for encryption
         encr.set_fernet(app_username, salt_path, app_uid)
