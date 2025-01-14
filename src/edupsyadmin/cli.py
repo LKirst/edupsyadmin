@@ -30,6 +30,10 @@ DEFAULT_CONFIG_PATH = os.path.join(
     user_config_dir(appname="edupsyadmin", version=__version__, ensure_exists=True),
     "config.yml",
 )
+DEFAULT_SALT_PATH = os.path.join(
+    user_config_dir(appname="edupsyadmin", version=__version__, ensure_exists=True),
+    "salt.txt",
+)
 
 
 def main(argv=None) -> int:
@@ -109,6 +113,7 @@ def _args(argv):
     # append allows multiple instances of the same object
     # args.config_path will therefore be a list!
     parser.add_argument("-c", "--config_path", action="append", help="config file path")
+    parser.add_argument("-s", "--salt_path", help="salt file path")
     parser.add_argument(
         "-v",
         "--version",
@@ -150,6 +155,8 @@ def _args(argv):
         # Don't specify this as an argument default or else it will always be
         # included in the list.
         args.config_path = DEFAULT_CONFIG_PATH
+    if not args.salt_path:
+        args.salt_path = DEFAULT_SALT_PATH
     return args
 
 

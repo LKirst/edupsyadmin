@@ -12,11 +12,6 @@ UID = "example.com"
 
 class EncryptionTest:
     @pytest.fixture
-    def mock_salt_path(self, tmp_path):
-        salt_path = tmp_path / "salt.txt"
-        yield salt_path
-
-    @pytest.fixture
     def encrypted_message(self, mock_salt_path: str, mock_keyring):
         """Create an encrypted message."""
         encr = Encryption()

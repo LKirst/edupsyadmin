@@ -31,7 +31,11 @@ class ClientNotFound(Exception):
 
 class ClientsManager:
     def __init__(
-        self, database_url: str, app_uid: str, app_username: str, config_path: list[str]
+        self,
+        database_url: str,
+        app_uid: str,
+        app_username: str,
+        salt_path: str | os.PathLike,
     ):
         # set up logging for sqlalchemy
         logging.getLogger("sqlalchemy.engine").setLevel(config.core.logging)
@@ -51,7 +55,7 @@ class ClientsManager:
             )
 
         # set fernet for encryption
-        encr.set_fernet(app_username, config_path[0], app_uid)
+        encr.set_fernet(app_username, salt_path, app_uid)
 
         # create the table if it doesn't exist
         Base.metadata.create_all(self.engine, tables=[Client.__table__])
@@ -162,7 +166,7 @@ def new_client(
     app_username: str,
     app_uid: str,
     database_url: str,
-    config_path: list[str],
+    salt_path: str | os.PathLike,
     csv: str | os.PathLike | None = None,
     school: str | None = None,
     name: str | None = None,
@@ -172,7 +176,7 @@ def new_client(
         database_url=database_url,
         app_uid=app_uid,
         app_username=app_username,
-        config_path=config_path,
+        salt_path=salt_path,
     )
     if csv:
         enter_client_untiscsv(clients_manager, csv, school, name)
@@ -186,7 +190,7 @@ def set_client(
     app_username: str,
     app_uid: str,
     database_url: str,
-    config_path: list[str],
+    salt_path: str | os.PathLike,
     client_id: int,
     key_value_pairs: list[str],
 ) -> None:
@@ -197,7 +201,7 @@ def set_client(
         database_url=database_url,
         app_uid=app_uid,
         app_username=app_username,
-        config_path=config_path,
+        salt_path=salt_path,
     )
     pairs_list = [pair.split("=") for pair in key_value_pairs]
     for key, value in pairs_list:
@@ -213,7 +217,7 @@ def get_clients(
     app_username: str,
     app_uid: str,
     database_url: str,
-    config_path: list[str],
+    salt_path: str | os.PathLike,
     nta_nos: bool = False,
     client_id: int | None = None,
     out: str | None = None,
@@ -222,7 +226,7 @@ def get_clients(
         database_url=database_url,
         app_uid=app_uid,
         app_username=app_username,
-        config_path=config_path,
+        salt_path=salt_path,
     )
     if client_id:
         df = pd.DataFrame.from_dict(clients_manager.get_decrypted_client(client_id))
@@ -245,13 +249,13 @@ def get_clients(
 
 
 def get_data_raw(
-    app_username: str, app_uid: str, database_url: str, config_path: list[str]
+    app_username: str, app_uid: str, database_url: str, salt_path: str | os.PathLike
 ) -> pd.DataFrame:
     clients_manager = ClientsManager(
         database_url=database_url,
         app_uid=app_uid,
         app_username=app_username,
-        config_path=config_path,
+        salt_path=salt_path,
     )
     df = clients_manager.get_data_raw()
     return df
@@ -345,7 +349,7 @@ def create_documentation(
     app_username: str,
     app_uid: str,
     database_url: str,
-    config_path: list[str],
+    salt_path: str | os.PathLike,
     client_id: int,
     form_set: str | None = None,
     form_paths: list[str] = [],
@@ -354,7 +358,7 @@ def create_documentation(
         database_url=database_url,
         app_uid=app_uid,
         app_username=app_username,
-        config_path=config_path,
+        salt_path=salt_path,
     )
     if form_set:
         form_paths.extend(config.form_set[form_set])

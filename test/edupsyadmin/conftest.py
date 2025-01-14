@@ -69,6 +69,12 @@ def mock_config(tmp_path: Path) -> Generator[list[str], None, None]:
 
 
 @pytest.fixture
+def mock_salt_path(tmp_path):
+    salt_path = tmp_path / "salt.txt"
+    yield salt_path
+
+
+@pytest.fixture
 def mock_webuntis(tmp_path: Path) -> Path:
     webuntis_path = tmp_path / "webuntis.csv"
     create_sample_webuntis_export(webuntis_path)
@@ -122,7 +128,7 @@ def sample_client_dict(request) -> dict[str, any]:
 
 
 @pytest.fixture
-def clients_manager(tmp_path, mock_config, mock_keyring):
+def clients_manager(tmp_path, mock_salt_path, mock_config, mock_keyring):
     """Create a clients_manager"""
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
@@ -130,7 +136,7 @@ def clients_manager(tmp_path, mock_config, mock_keyring):
         database_url,
         app_uid=TEST_UID,
         app_username=TEST_USERNAME,
-        config_path=mock_config,
+        salt_path=mock_salt_path,
     )
 
     yield manager
