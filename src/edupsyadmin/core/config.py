@@ -154,4 +154,13 @@ class _ParameterTag(object):
         return
 
 
+def convert_config_to_dict(conf) -> dict:
+    if isinstance(conf, dict):
+        conf = dict(conf)
+    for key, value in conf.items():
+        if isinstance(value, dict):
+            conf[key] = dict(convert_config_to_dict(value))
+    return conf
+
+
 config = YamlConfig()
