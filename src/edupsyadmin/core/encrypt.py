@@ -53,7 +53,7 @@ class Encryption:
 
     def _load_or_create_salt(self, salt_path: str | os.PathLike) -> bytes:
         if Path(salt_path).is_file():
-            logger.info("using existing salt from {salt_path}")
+            logger.info(f"using existing salt from {salt_path}")
             with open(salt_path, "rb") as binary_file:
                 salt = binary_file.read()
         else:
