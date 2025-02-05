@@ -20,7 +20,7 @@ class Encryption:
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
         """
         if self.fernet is not None:
-            logger.debug("fernet was already set; using existing fernet")
+            logger.debug("using existing fernet")
             return
 
         salt = self._load_or_create_salt(user_data_dir)
@@ -53,11 +53,11 @@ class Encryption:
 
     def _load_or_create_salt(self, salt_path: str | os.PathLike) -> bytes:
         if Path(salt_path).is_file():
-            logger.info(f"using existing salt from {salt_path}")
+            logger.info(f"using existing salt from `{salt_path}`")
             with open(salt_path, "rb") as binary_file:
                 salt = binary_file.read()
         else:
-            logger.info(f"creating new salt and writing to {salt_path}")
+            logger.info(f"creating new salt and writing to `{salt_path}`")
             salt = os.urandom(16)
             with open(salt_path, "wb") as binary_file:
                 binary_file.write(salt)
@@ -66,9 +66,16 @@ class Encryption:
     def _retrieve_password(self, username: str, uid: str) -> bytes:
         # TODO: Make sure the password is only retrieved once (for example in cli.py)
         # Currently this is called both in managers.py and in clients.py
-        logger.info(f"retrieving password for {uid} using keyring")
+        logger.info(
+            (
+                f"retrieving password for uid: '{uid}' "
+                f"and username: '{username}' using keyring"
+            )
+        )
         cred = keyring.get_credential(uid, username)
         if not cred or not cred.password:
-            raise ValueError(f"Password not found for uid: {uid}, username: {username}")
+            raise ValueError(
+                f"Password not found for uid: '{uid}', username: '{username}'"
+            )
 
         return cred.password.encode()
