@@ -45,7 +45,7 @@ class EncryptionTest:
         encr.set_fernet(USER_NAME, mock_salt_path, UID)
 
         stdout, stderr = capsys.readouterr()
-        assert "fernet was already set; using existing fernet" in stderr
+        assert "using existing fernet" in stderr
         mock_keyring.assert_called_with(UID, USER_NAME)
 
     def test_update_salt_file(self, mock_salt_path):
