@@ -42,6 +42,7 @@ class Client(Base):
     telephone1_encr: Mapped[str] = mapped_column(String)
     telephone2_encr: Mapped[str] = mapped_column(String)
     email_encr: Mapped[str] = mapped_column(String)
+    # TODO: could I just use the keyword taetigkeitsbericht instead?
     lrst_diagnosis_encr: Mapped[str] = mapped_column(String)
     notes_encr: Mapped[str] = mapped_column(String)
 
