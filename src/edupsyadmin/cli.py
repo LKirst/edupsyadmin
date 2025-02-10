@@ -154,7 +154,7 @@ def _args(argv):
     if not args.config_path:
         # Don't specify this as an argument default or else it will always be
         # included in the list.
-        args.config_path = DEFAULT_CONFIG_PATH
+        args.config_path = [DEFAULT_CONFIG_PATH]
     if not args.salt_path:
         args.salt_path = DEFAULT_SALT_PATH
     return args
