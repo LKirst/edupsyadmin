@@ -7,15 +7,18 @@ from unittest.mock import Mock
 
 import keyring
 import pytest
+import yaml
 from sample_pdf_form import create_pdf_form
 from sample_webuntis_export import create_sample_webuntis_export
 
 from edupsyadmin.api.managers import ClientsManager
-from edupsyadmin.core.config import config
-from edupsyadmin.core.logger import logger
+from edupsyadmin.core.config import config, convert_config_to_dict
+from edupsyadmin.core.logger import Logger, logger
 
 TEST_USERNAME = "test_user_do_not_use"
 TEST_UID = "example.com"
+
+testing_logger = Logger("conftest_logger")
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -26,6 +29,7 @@ def setup_logging() -> Generator[None, None, None]:
     logging messages even if the test doesn't fail.
     """
     logger.start(level="DEBUG")
+    testing_logger.start(level="DEBUG")
     yield
     logger.stop()
 
@@ -50,19 +54,38 @@ def mock_keyring(monkeysession):
     return mock_get_credential
 
 
-@pytest.fixture
-def mock_config(tmp_path: Path) -> Generator[list[str], None, None]:
+@pytest.mark.parametrize("pdf_forms", [3], indirect=True)
+@pytest.fixture(scope="function")
+def mock_config(
+    tmp_path_factory: pytest.TempPathFactory, pdf_forms, request
+) -> Generator[list[str], None, None]:
     template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
-    conf_path = [str(tmp_path / "mock_conf.yml")]
+    conf_path = [str(tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml")]
     shutil.copy(template_path, conf_path[0])
-    print(f"mock_config fixture - conf_path: {conf_path}")
+    testing_logger.debug(
+        (
+            f"mock_config fixture (test: {request.node.name}) - "
+            f"conf_path: {conf_path}"
+        )
+    )
     config.load(conf_path)
 
     # set or override some config values
     config.core.config = conf_path
-    config.core.app_username = "test_user_do_not_use"
-    config.core.app_uid = "example.com"
+    config.core.app_username = f"user read from file - {request.node.name}"
     config.core.logging = "DEBUG"
+    config.form_set.lrst = [str(path) for path in pdf_forms]
+
+    # write the changed config to file
+    with open(str(config.core.config[0]), "w", encoding="UTF-8") as f:
+        dictyaml = convert_config_to_dict(config)  # convert to dict for pyyaml
+        yaml.dump(dictyaml, f)
+
+    # set different username than written to file to test which one is used
+    config.core.app_username = f"user set in fixture - {request.node.name}"
+
+    # app uid is not set in the config, so don't write it to file
+    config.core.app_uid = "example.com"
 
     yield conf_path
     os.remove(conf_path[0])
@@ -78,7 +101,7 @@ def mock_salt_path(tmp_path):
 def mock_webuntis(tmp_path: Path) -> Path:
     webuntis_path = tmp_path / "webuntis.csv"
     create_sample_webuntis_export(webuntis_path)
-    print(f"webuntis_path: {webuntis_path}")
+    testing_logger.debug(f"webuntis_path: {webuntis_path}")
     return webuntis_path
 
 
@@ -153,7 +176,7 @@ def pdf_forms(tmp_path: Path, request: pytest.FixtureRequest) -> list[Path]:
         Path("test/edupsyadmin/data/sample_form_mantelbogen.pdf").resolve(),
         Path("test/edupsyadmin/data/sample_form_anschreiben.pdf").resolve(),
     ]
-    print(f"cwd: {os.getcwd()}")
+    testing_logger.debug(f"cwd: {os.getcwd()}")
     num_files = getattr(request, "param", 1)
     pdf_form_paths = []
     for i in range(num_files):

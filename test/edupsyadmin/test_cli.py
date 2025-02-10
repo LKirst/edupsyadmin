@@ -15,10 +15,11 @@ from subprocess import call
 from sys import executable
 
 import pytest
-import yaml
 
 from edupsyadmin.cli import main
-from edupsyadmin.core.config import convert_config_to_dict
+from edupsyadmin.core.logger import Logger
+
+testing_logger = Logger("clitest_logger")
 
 
 @pytest.fixture
@@ -42,30 +43,32 @@ def command(request):
     return request.param
 
 
-def test_main(command):
-    """Test the main() function."""
-    try:
-        status = main(split(command))
-    except SystemExit as ex:
-        status = ex.code
-    assert status == 0
-    return
+class BasicSanityCheckTest:
+    def test_main(self, command):
+        """Test the main() function."""
+        try:
+            status = main(split(command))
+        except SystemExit as ex:
+            status = ex.code
+        assert status == 0
+        return
+
+    def test_main_none(self):
+        """Test the main() function with no arguments."""
+        with pytest.raises(SystemExit) as exinfo:
+            main([])  # displays a help message and exits gracefully
+        assert exinfo.value.code == 1
+
+    def test_script(self, command):
+        """Test command line execution."""
+        # Call with the --help option as a basic sanity check.
+        # This creates a new Python interpreter instance that doesn't inherit mocks.
+        cmdl = f"{executable} -m edupsyadmin.cli {command} --help"
+        assert 0 == call(cmdl.split())
+        return
 
 
-def test_main_none():
-    """Test the main() function with no arguments."""
-    with pytest.raises(SystemExit) as exinfo:
-        main([])  # displays a help message and exits gracefully
-    assert exinfo.value.code == 1
-
-
-def test_script(command):
-    """Test command line execution."""
-    # Call with the --help option as a basic sanity check.
-    # This creates a new Python interpreter instance that doesn't inherit mocks.
-    cmdl = f"{executable} -m edupsyadmin.cli {command} --help"
-    assert 0 == call(cmdl.split())
-    return
+# TODO: Test defaults for app_uid and database_url
 
 
 def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
@@ -75,6 +78,8 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
         "-c",
         str(mock_config[0]),
         "new_client",
+        "--app_uid",
+        "example.com",
         "--database_url",
         database_url,
         "--csv",
@@ -85,46 +90,91 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
         "FirstSchool",
     ]
     assert 0 == main(args)
+    mock_keyring.assert_called_with(
+        "example.com", "user read from file - test_new_client"
+    )
 
 
-def test_get_clients(
-    capsys, mock_keyring, mock_config, clients_manager, sample_client_dict, tmp_path
-):
-    clients_manager.add_client(**sample_client_dict)
+def test_get_clients(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
+    # add a client
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
     args = [
         "-c",
         str(mock_config[0]),
+        "new_client",
+        "--app_uid",
+        "example.com",
+        "--database_url",
+        database_url,
+        "--csv",
+        str(mock_webuntis),
+        "--name",
+        "MustermErika1",
+        "--school",
+        "FirstSchool",
+    ]
+    assert 0 == main(args)
+    mock_keyring.assert_called_with(
+        "example.com", "user read from file - test_get_clients"
+    )
+
+    # test get_clients
+    args = [
+        "-c",
+        str(mock_config[0]),
         "get_clients",
+        "--app_uid",
+        "example.com",
         "--database_url",
         database_url,
     ]
     assert 0 == main(args)
-    mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
+    mock_keyring.assert_called_with(
+        "example.com", "user read from file - test_get_clients"
+    )
     stdout, stderr = capsys.readouterr()
-    assert sample_client_dict["first_name"] in stdout
-    assert sample_client_dict["last_name"] in stdout
+    assert "Mustermann" in stdout
+    assert "Erika" in stdout
 
 
-@pytest.mark.parametrize("pdf_forms", [3], indirect=True)
-def test_create_documentation(mock_keyring, mock_client, pdf_forms, change_wd):
-    from edupsyadmin.core.config import config
+def test_create_documentation(
+    tmp_path, mock_webuntis, mock_keyring, mock_config, pdf_forms, change_wd
+):
+    testing_logger.start(level="DEBUG")
+    testing_logger.debug(f"config path: {mock_config[0]}")
 
-    client_id, database_url = mock_client
-
-    # change some config values in the config file
-    config.form_set.lrst = [str(path) for path in pdf_forms]
-    config.core.app_uid = "example.com"
-    config.core.app_username = "test_user_do_not_use"
-    with open(str(config.core.config[0]), "w", encoding="UTF-8") as f:
-        dictyaml = convert_config_to_dict(config)  # convert to dict for pyyaml
-        yaml.dump(dictyaml, f)  # write the config to file for main()
-
+    # add a client
+    database_path = tmp_path / "test.sqlite"
+    database_url = f"sqlite:///{database_path}"
     args = [
         "-c",
-        str(config.core.config[0]),
+        str(mock_config[0]),
+        "new_client",
+        "--app_uid",
+        "example.com",
+        "--database_url",
+        database_url,
+        "--csv",
+        str(mock_webuntis),
+        "--name",
+        "MustermErika1",
+        "--school",
+        "FirstSchool",
+    ]
+    assert 0 == main(args)
+    mock_keyring.assert_called_with(
+        "example.com", "user read from file - test_create_documentation"
+    )
+
+    # create documentation
+    client_id = 1
+    args = [
+        "-c",
+        str(mock_config[0]),
         "create_documentation",
+        "--app_uid",
+        "example.com",
         "--database_url",
         database_url,
         "--form_set",
@@ -132,9 +182,9 @@ def test_create_documentation(mock_keyring, mock_client, pdf_forms, change_wd):
         str(client_id),
     ]
     assert 0 == main(args)
-
-    # TODO: why does this fail if I run `pytest test/edupsyadmin/test_cli.py`
-    mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
+    mock_keyring.assert_called_with(
+        "example.com", "user read from file - test_create_documentation"
+    )
 
     # I've changed the wd with a fixture, so I can check without an absolute path
     output_paths = [f"{client_id}_{Path(path).name}" for path in pdf_forms]
