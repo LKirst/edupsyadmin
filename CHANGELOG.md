@@ -1,3 +1,25 @@
+## 2.0.0 (2025-02-11)
+
+### BREAKING CHANGE
+
+- the salt value will no longer be read from the config.yml file
+
+### Feat
+
+- **encrypt.py**: use a separate salt file instead of the config.yml
+- add get_clients to the cli and managers.py
+
+### Fix
+
+- **cli.py**: change the default for --config to a list
+- **encrypt.py**: add a missing f before a logging fstring
+- use salt_path consistently
+
+### Refactor
+
+- **managers.py**: remove superfluous warning
+- move the convert_config_to_dict function removed in the last commit to config.py
+
 ## 2.0.0b1 (2025-01-07)
 
 ## 2.0.0b0 (2025-01-06)
