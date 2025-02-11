@@ -399,6 +399,8 @@ config.yml
 
 # PDFS
 *.pdf
+!test/edupsyadmin/data/sample_form_mantelbogen.pdf
+!test/edupsyadmin/data/sample_form_anschreiben.pdf
 
 # CSVs
 *.csv
