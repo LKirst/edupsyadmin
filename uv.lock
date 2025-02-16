@@ -591,7 +591,9 @@ dev = [
     { name = "pytest-xdist" },
     { name = "reportlab" },
     { name = "sphinx" },
+    { name = "types-defusedxml" },
     { name = "types-fpdf2" },
+    { name = "types-greenlet" },
     { name = "types-openpyxl" },
     { name = "types-python-dateutil" },
     { name = "types-pyyaml" },
@@ -629,7 +631,9 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.6.1" },
     { name = "reportlab", specifier = ">=4.2.5" },
     { name = "sphinx", specifier = ">=8.1.3" },
+    { name = "types-defusedxml", specifier = ">=0.7.0.20240218" },
     { name = "types-fpdf2", specifier = ">=2.8.2.20241223" },
+    { name = "types-greenlet", specifier = ">=3.1.0.20241221" },
     { name = "types-openpyxl", specifier = ">=3.1.5.20241225" },
     { name = "types-python-dateutil", specifier = ">=2.9.0.20241206" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20241221" },
@@ -844,7 +848,7 @@ name = "importlib-metadata"
 version = "8.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp" },
+    { name = "zipp", marker = "python_full_version < '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/33/08/c1395a292bb23fd03bdf572a1357c5a733d3eecbab877641ceacab23db6e/importlib_metadata-8.6.1.tar.gz", hash = "sha256:310b41d755445d74569f993ccfc22838295d9fe005425094fad953d7f15c8580", size = 55767 }
 wheels = [
@@ -2396,6 +2400,15 @@ wheels = [
 ]
 
 [[package]]
+name = "types-defusedxml"
+version = "0.7.0.20240218"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5c/04/acc0a4ef3ea7eff334e3bc73e7a7af54f06684dfea405c0c81fb28a243ab/types-defusedxml-0.7.0.20240218.tar.gz", hash = "sha256:05688a7724dc66ea74c4af5ca0efc554a150c329cb28c13a64902cab878d06ed", size = 5493 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/82/a3/6c007483045d362f45cc30955eb07644a3e8a0d57ee6293f5b540b127558/types_defusedxml-0.7.0.20240218-py3-none-any.whl", hash = "sha256:2b7f3c5ca14fdbe728fab0b846f5f7eb98c4bd4fd2b83d25f79e923caa790ced", size = 7827 },
+]
+
+[[package]]
 name = "types-fpdf2"
 version = "2.8.2.20241223"
 source = { registry = "https://pypi.org/simple" }
@@ -2405,6 +2418,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/9b/1c/6deaaacadaf9dec494f7990ac1481a9c1fc16cc86867f84a710cf4bd861e/types_fpdf2-2.8.2.20241223.tar.gz", hash = "sha256:d7018a7079a3e8cfc3249c0439f1af73b02db646836a3d555413a7b8a7ce90c1", size = 37785 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/55/51dcb5c60e890f6eccf8f5391b658a881e92274693a7d8a546134fc87ea7/types_fpdf2-2.8.2.20241223-py3-none-any.whl", hash = "sha256:61c8aad7f34296d1ad658f1511b59f9b269d96e04f3884499363c40e79972fd7", size = 44573 },
+]
+
+[[package]]
+name = "types-greenlet"
+version = "3.1.0.20241221"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4d/64/53a1602fe89ade4cf72bc37624f90183e7804cb436ce70a6992c61398253/types_greenlet-3.1.0.20241221.tar.gz", hash = "sha256:7bcf57f53e1036c9acb942ea87bf776c39995e63357a4502541eebe5db0b5897", size = 8212 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/be/83/48803a45598403a883953f0786dcce130eedef8295630d38a7fa7bc8c3ce/types_greenlet-3.1.0.20241221-py3-none-any.whl", hash = "sha256:77515243c2f8b9c745b6924eeea202c1d2a18acecad3519da2afa677be6ee208", size = 8731 },
 ]
 
 [[package]]
