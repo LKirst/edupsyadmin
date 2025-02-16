@@ -49,20 +49,19 @@ def main(argv=None) -> int:
     logger.debug("starting execution")
 
     # config
-    for path in args.config_path:
-        # if the config doesn't exist, copy a sample config
-        if not os.path.exists(path):
-            template_path = (
-                importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
+    # if the (first) config file doesn't exist, copy a sample config
+    if not os.path.exists(args.config_path[0]):
+        template_path = str(
+            importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
+        )
+        shutil.copy(template_path, args.config_path[0])
+        logger.warning(
+            (
+                "Could not find the specified config file. "
+                f"Created a sample config at {args.config_path[0]}. "
+                "Fill it with your values."
             )
-            shutil.copy(template_path, args.config_path)
-            logger.info(
-                (
-                    "Could not find the specified config file."
-                    f"Created a sample config at {args.config_path}. "
-                    "Fill it with your values."
-                )
-            )
+        )
     config.load(args.config_path)
     config.core.config = args.config_path
     if args.warn:
