@@ -71,6 +71,26 @@ class BasicSanityCheckTest:
 # TODO: Test defaults for app_uid and database_url
 
 
+def test_config_template(mock_keyring, tmp_path_factory):
+    tmp_dir = tmp_path_factory.mktemp("tmp", numbered=True)
+    database_path = tmp_dir / "test.sqlite"
+    database_url = f"sqlite:///{database_path}"
+    config_path = str(tmp_dir / "mock_conf.yml")
+    args = [
+        "-c",
+        config_path,
+        "info",
+        "--app_uid",
+        "example.com",
+        "--database_url",
+        database_url,
+    ]
+    assert 0 == main(args)
+    assert os.path.isfile(
+        config_path
+    ), f"Config file was not initialized: {config_path}"
+
+
 def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
