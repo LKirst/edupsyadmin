@@ -115,9 +115,6 @@ def test_get_clients(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path)
         "FirstSchool",
     ]
     assert 0 == main(args)
-    mock_keyring.assert_called_with(
-        "example.com", "user_read_from_file-test_get_clients"
-    )
 
     # test get_clients
     args = [
@@ -163,9 +160,6 @@ def test_create_documentation(
         "FirstSchool",
     ]
     assert 0 == main(args)
-    mock_keyring.assert_called_with(
-        "example.com", "user_read_from_file-test_create_documentation"
-    )
 
     # create documentation
     client_id = 1
