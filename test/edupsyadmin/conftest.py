@@ -54,7 +54,6 @@ def mock_keyring(monkeysession):
     return mock_get_credential
 
 
-@pytest.mark.parametrize("pdf_forms", [3], indirect=True)
 @pytest.fixture(scope="function")
 def mock_config(
     tmp_path_factory: pytest.TempPathFactory, pdf_forms, request
@@ -166,20 +165,14 @@ def clients_manager(tmp_path, mock_salt_path, mock_config, mock_keyring):
 
 
 @pytest.fixture
-def pdf_forms(tmp_path: Path, request: pytest.FixtureRequest) -> list[Path]:
-    """
-    Use with
-    @pytest.mark.parametrize("pdf_forms", [3], indirect=True)
-    to create the desired number of files
-    """
+def pdf_forms(tmp_path: Path) -> list[Path]:
     files = [
         Path("test/edupsyadmin/data/sample_form_mantelbogen.pdf").resolve(),
         Path("test/edupsyadmin/data/sample_form_anschreiben.pdf").resolve(),
     ]
     testing_logger.debug(f"cwd: {os.getcwd()}")
-    num_files = getattr(request, "param", 1)
     pdf_form_paths = []
-    for i in range(num_files):
+    for i in range(3):
         filename = "sample_form_reportlab.pdf"
         if i == 0:
             pdf_form_path = tmp_path / filename
@@ -187,5 +180,5 @@ def pdf_forms(tmp_path: Path, request: pytest.FixtureRequest) -> list[Path]:
             pdf_form_paths.append(pdf_form_path)
         else:
             pdf_form_paths.append(files[i - 1])
-    logger.debug(f"PDF forms fixture created at {pdf_form_paths}")
+    testing_logger.debug(f"PDF forms fixture created at {pdf_form_paths}")
     return pdf_form_paths

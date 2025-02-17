@@ -2,13 +2,11 @@ import datetime
 from pathlib import Path
 
 import pypdf
-import pytest
 
 from edupsyadmin.api.add_convenience_data import add_convenience_data
 from edupsyadmin.api.fill_form import fill_form
 
 
-@pytest.mark.parametrize("pdf_forms", [3], indirect=True)
 def test_fill_form(
     mock_config, pdf_forms: list, tmp_path: Path, sample_client_dict: dict
 ) -> None:
