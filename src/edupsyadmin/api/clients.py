@@ -42,7 +42,10 @@ class Client(Base):
     telephone1_encr: Mapped[str] = mapped_column(String)
     telephone2_encr: Mapped[str] = mapped_column(String)
     email_encr: Mapped[str] = mapped_column(String)
-    # TODO: could I just use the keyword taetigkeitsbericht instead?
+    # I need lrst_diagnosis as a variable separate from keyword_taetigkeitsbericht,
+    # because LRSt can be present even if it is not the most important topic
+    # TODO: If keyword_taetigkeitsbericht is not encrypted, lrst_diagnosis
+    # does not have to be encrypted either
     lrst_diagnosis_encr: Mapped[str] = mapped_column(String)
     notes_encr: Mapped[str] = mapped_column(String)
 
