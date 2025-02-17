@@ -1,3 +1,9 @@
+## 2.0.1 (2025-02-17)
+
+### Fix
+
+- **cli.py**: use args.config_path[0] to copy the sample config if missing
+
 ## 2.0.0 (2025-02-11)
 
 ### BREAKING CHANGE
