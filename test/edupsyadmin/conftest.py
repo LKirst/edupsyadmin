@@ -72,7 +72,7 @@ def mock_config(
 
     # set or override some config values
     config.core.config = conf_path
-    config.core.app_username = f"user read from file - {request.node.name}"
+    config.core.app_username = f"user_read_from_file-{request.node.name}"
     config.core.logging = "DEBUG"
     config.form_set.lrst = [str(path) for path in pdf_forms]
 
@@ -82,7 +82,7 @@ def mock_config(
         yaml.dump(dictyaml, f)
 
     # set different username than written to file to test which one is used
-    config.core.app_username = f"user set in fixture - {request.node.name}"
+    config.core.app_username = f"user_set_in_fixture-{request.node.name}"
 
     # app uid is not set in the config, so don't write it to file
     config.core.app_uid = "example.com"

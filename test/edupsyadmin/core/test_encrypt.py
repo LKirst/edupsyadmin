@@ -6,8 +6,8 @@ from edupsyadmin.core.encrypt import Encryption
 from edupsyadmin.core.logger import logger
 
 secret_message = "This is a secret message."
-USER_NAME = "test_user_do_not_use"
-UID = "example.com"
+USER_NAME = "encryptiontest_user_do_not_use"
+UID = "encryptionexample.com"
 
 
 class EncryptionTest:

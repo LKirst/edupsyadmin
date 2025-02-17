@@ -91,7 +91,7 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
     ]
     assert 0 == main(args)
     mock_keyring.assert_called_with(
-        "example.com", "user read from file - test_new_client"
+        "example.com", "user_read_from_file-test_new_client"
     )
 
 
@@ -116,7 +116,7 @@ def test_get_clients(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path)
     ]
     assert 0 == main(args)
     mock_keyring.assert_called_with(
-        "example.com", "user read from file - test_get_clients"
+        "example.com", "user_read_from_file-test_get_clients"
     )
 
     # test get_clients
@@ -131,7 +131,7 @@ def test_get_clients(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path)
     ]
     assert 0 == main(args)
     mock_keyring.assert_called_with(
-        "example.com", "user read from file - test_get_clients"
+        "example.com", "user_read_from_file-test_get_clients"
     )
     stdout, stderr = capsys.readouterr()
     assert "Mustermann" in stdout
@@ -164,7 +164,7 @@ def test_create_documentation(
     ]
     assert 0 == main(args)
     mock_keyring.assert_called_with(
-        "example.com", "user read from file - test_create_documentation"
+        "example.com", "user_read_from_file-test_create_documentation"
     )
 
     # create documentation
@@ -183,7 +183,7 @@ def test_create_documentation(
     ]
     assert 0 == main(args)
     mock_keyring.assert_called_with(
-        "example.com", "user read from file - test_create_documentation"
+        "example.com", "user_read_from_file-test_create_documentation"
     )
 
     # I've changed the wd with a fixture, so I can check without an absolute path
