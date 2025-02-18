@@ -126,7 +126,7 @@ def mk_report(
     app_username: str,
     app_uid: str,
     database_url: str,
-    config_path: str,
+    salt_path: str,
     client_id: int,
     test_date: str,
     test_type: str = "lgvt",
@@ -141,7 +141,7 @@ def mk_report(
         database_url=database_url,
         app_uid=app_uid,
         app_username=app_username,
-        config_path=config_path,
+        salt_path=salt_path,
     )
     client_dict = clients_manager.get_decrypted_client(client_id)
 
