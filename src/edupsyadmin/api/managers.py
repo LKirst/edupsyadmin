@@ -63,7 +63,7 @@ class ClientsManager:
             return client_id
 
     def get_decrypted_client(self, client_id: int) -> dict:
-        logger.debug(f"trying to access client (id = {client_id})")
+        logger.debug(f"trying to access client (client_id = {client_id})")
         with self.Session() as session:
             client = session.query(Client).filter_by(client_id=client_id).first()
             if client is None:
@@ -99,7 +99,7 @@ class ClientsManager:
             results = session.scalars(stmt).all()
             results_list_of_dict = [
                 {
-                    "id": entry.client_id,
+                    "client_id": entry.client_id,
                     "school": entry.school,
                     "last_name": encr.decrypt(entry.last_name_encr),
                     "first_name": encr.decrypt(entry.first_name_encr),
@@ -236,7 +236,7 @@ def get_clients(
             "display.expand_frame_repr",
             False,
         ):
-            print(df)
+            print(df.set_index("client_id"))
 
 
 def get_data_raw(
