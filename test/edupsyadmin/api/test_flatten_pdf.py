@@ -11,6 +11,8 @@ client_data = {
     "first_name": "John",
     "notenschutz": False,
     "nachteilsausgleich": True,
+    "gender": "f",
+    "address_multiline": "Somestreet 42\n12345 Sometown",
 }
 
 
