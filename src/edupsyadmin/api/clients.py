@@ -2,7 +2,6 @@ from datetime import date, datetime
 from typing import Optional
 
 from sqlalchemy import (
-    CHAR,
     Boolean,
     CheckConstraint,
     DateTime,
@@ -35,6 +34,7 @@ class Client(Base):
     # they were, the encryption functions would raise an exception.
     first_name_encr: Mapped[str] = mapped_column(String)
     last_name_encr: Mapped[str] = mapped_column(String)
+    gender_encr: Mapped[str] = mapped_column(String)
     birthday_encr: Mapped[str] = mapped_column(String)
     street_encr: Mapped[str] = mapped_column(String)
     city_encr: Mapped[str] = mapped_column(String)
@@ -42,25 +42,25 @@ class Client(Base):
     telephone1_encr: Mapped[str] = mapped_column(String)
     telephone2_encr: Mapped[str] = mapped_column(String)
     email_encr: Mapped[str] = mapped_column(String)
-    # I need lrst_diagnosis as a variable separate from keyword_taetigkeitsbericht,
-    # because LRSt can be present even if it is not the most important topic
-    # TODO: If keyword_taetigkeitsbericht is not encrypted, lrst_diagnosis
-    # does not have to be encrypted either
-    lrst_diagnosis_encr: Mapped[str] = mapped_column(String)
     notes_encr: Mapped[str] = mapped_column(String)
 
     # Unencrypted variables
     client_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     school: Mapped[str] = mapped_column(String)
-    # TODO: missing type annotation
-    gender = mapped_column(CHAR(1), CheckConstraint("gender IN ('f', 'm')"))
     entry_date: Mapped[Optional[str]] = mapped_column(String)
     class_name: Mapped[Optional[str]] = mapped_column(String)
     class_int: Mapped[Optional[int]] = mapped_column(Integer)
-    # TODO: check if this works with date or if I have to pass datetime
     estimated_date_of_graduation: Mapped[Optional[date]] = mapped_column(DateTime)
     document_shredding_date: Mapped[Optional[date]] = mapped_column(DateTime)
     keyword_taetigkeitsbericht: Mapped[Optional[str]] = mapped_column(String)
+    # I need lrst_diagnosis as a variable separate from keyword_taetigkeitsbericht,
+    # because LRSt can be present even if it is not the most important topic
+    lrst_diagnosis: Mapped[Optional[str]] = mapped_column(
+        String,
+        CheckConstraint(
+            ("lrst_diagnosis IN ('lrst', 'iLst', 'iRst') OR " "lrst_diagnosis IS NULL")
+        ),
+    )
     datetime_created: Mapped[datetime] = mapped_column(DateTime)
     datetime_lastmodified: Mapped[datetime] = mapped_column(DateTime)
     notenschutz: Mapped[Optional[bool]] = mapped_column(Boolean)
@@ -91,7 +91,7 @@ class Client(Base):
         notenschutz: bool = False,
         nachteilsausgleich: bool = False,
         keyword_taetigkeitsbericht: str | None = "",
-        lrst_diagnosis: str = "",
+        lrst_diagnosis: str | None = None,
         nta_sprachen: int | None = None,
         nta_mathephys: int | None = None,
         nta_notes: int | None = None,
@@ -109,13 +109,13 @@ class Client(Base):
         self.telephone1_encr = encr.encrypt(telephone1)
         self.telephone2_encr = encr.encrypt(telephone2)
         self.email_encr = encr.encrypt(email)
-        self.lrst_diagnosis_encr = encr.encrypt(lrst_diagnosis)
         self.notes_encr = encr.encrypt(notes)
 
-        self.school = school
         if gender == "w":  # convert German 'w' to 'f'
             gender = "f"
-        self.gender = gender
+        self.gender_encr = encr.encrypt(gender)
+
+        self.school = school
         self.entry_date = entry_date
         self.class_name = class_name
 
@@ -136,6 +136,7 @@ class Client(Base):
             )
 
         self.keyword_taetigkeitsbericht = check_keyword(keyword_taetigkeitsbericht)
+        self.lrst_diagnosis = lrst_diagnosis
         self.notenschutz = notenschutz
         self.nachteilsausgleich = nachteilsausgleich
         self.nta_sprachen = nta_sprachen
@@ -150,8 +151,7 @@ class Client(Base):
         representation = (
             f"<Client(id='{self.client_id}', "
             f"sc='{self.school}', "
-            f"cl='{self.class_name}', "
-            f"ge='{self.gender}'"
+            f"cl='{self.class_name}'"
             f")>"
         )
         return representation

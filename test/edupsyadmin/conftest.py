@@ -121,7 +121,7 @@ def mock_webuntis(tmp_path: Path) -> Path:
             "email": "john.doe@example.com",
             "notenschutz": False,
             "nachteilsausgleich": True,
-            "lrst_diagnosis": "iLrst",
+            "lrst_diagnosis": "iLst",
             "nta_sprachen": 10,
         },
         {
