@@ -7,9 +7,9 @@ from ..core.logger import logger
 
 def get_taet_categories():
     categoryfile = files("edupsyadmin.data").joinpath(
-        "taetigkeitsbericht_categories_SJ202324.ods"
+        "taetigkeitsbericht_categories_SJ202425.ods"
     )
-    categories = pd.read_excel(categoryfile)["taetkey"]
+    categories = pd.read_csv(categoryfile)["taetkey"]
     return set(categories)
 
 

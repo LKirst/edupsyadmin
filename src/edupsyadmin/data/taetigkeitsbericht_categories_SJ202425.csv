@@ -1,0 +1,53 @@
+taetkey,description
+slbb.slb.wchslbundesl,Schullaufbahnberatung: Wechsel aus anderem Bundesland
+slbb.slb.wchslstaat,Schullaufbahnberatung: Wechsel aus einem anderen Staat
+slbb.slb.sonstige,"Schullaufbahnberatung: Schullwahl, Wechsel, Abschlüsse"
+slbb.einsch,Einschulung
+slbb.uebertweiterf,Übertritt an weiterführende Schulen
+slbb.berufustudienw,Berufs- und Studienwahlorientierung
+slbb.sonstiges,Schullaufbahnberatungberatung: Sonstiges
+ppb.besbeg,Besondere Begabungen
+ppb.inkl,Inklusion
+ppb.integrmigr,Integration / Migration
+lrst.sp.erst,Erstellen schulpsy. Stellungnahme: erstmalig (inkl. Stellungnahme bei Ablehnung)
+lrst.sp.ern,Erstellen schulpsy. Stellungnahme: erneut (inkl. Stellungnahme bei Ablehnung)
+lrst.fa.erst,"Erstellen schulpsy. Stellungnahme: aufgrund eines fachärztlichen Zeugnisses, erstmalig"
+lrst.fa.ern,"Erstellen schulpsy. Stellungnahme: aufgrund eines fachärztlichen Zeugnisses, erneut"
+sl.dyskalkulie,Dyskalkulie
+sl.sonstige,Weitere Lern- und Leistungsprobleme
+schulabsentismus,Schulabsentismus
+subkl.a.pruefungs,Subklinische Fragestellungen: Prüfungsangst
+subkl.a.schulangst,"Subklinische Fragestellungen: Schulangst, Angst aufgrund von in der Schule bedrohlich empfundenen bzw. bedrohlich erlebten Situationen"
+subkl.a.schulphobie,Subklinische Fragestellungen: Trennungsangst
+subkl.allgverhaltenspr,Subklinische Fragestellungen: Allgemeine Verhaltensprobleme
+subkl.gewaltaggr,Subklinische Fragestellungen: Gewalt / Aggression
+konfl.mobbing,Subklinische Fragestellungen: Mobbing / Cybermobbing
+geschlechterdys,Geschlechtsdysphorie
+konfl.peer,Konflikte zwischen Schülerinnen
+pubertaet,pubertätsbedingte Probleme
+familbel,familiäre Belastungen
+kl.angstst,Klinische Fragestellungen: Angststörung
+kl.depr,Klinische Fragestellungen: Depression
+kl.essst,Klinische Fragestellungen: Essstörungen
+kl.sucht,Klinische Fragestellungen: Sucht
+kl.suiz,Klinische Fragestellungen: Suizidalität
+kl.trauma,Klinische Fragestellungen: Trauma
+kl.zwang,Klinische Fragestellungen: Zwang
+kl.adhs,Klinische Fragestellungen: ADHS
+kl.autism,Klinische Fragestellungen: Autismus-Spektrum-Störung
+kl.sonst,Klinische Fragestellungen: Sonstiges
+chronischeerkr,"Chronische Erkrankungen (z.B. Migräne, Diabetes, Epilepsie)"
+konfl.lehrkr,Konflikte mit Lehrkräften
+sonstiges,Sonstiges
+bsl.systs,"Beratung von Schule und Lehrkräften: zum System Schule (z. B. Konzeptentwicklung, Schulprojekte)"
+bsl.susokl,Beratung von Schule und Lehrkräften: bezüglich einzelner Schülerinnen und Schüler bzw. Klassen und Schülergruppen
+bsl.lkpers,Beratung von Schule und Lehrkräften: von Lehrkräften zu persönlichen Fragestellungen
+bsl.sl,Beratung von Schule und Lehrkräften: von Schulleitungen
+bsl.konfl.suse,"Beratung von Schule und Lehrkräften: bei Konflikten mit Schülerinnen und Schülern, Eltern"
+bsl.konfl.peer,Beratung von Schule und Lehrkräften: bei Konflikten zwischen Schülerinnen und Schülern
+bsl.konfl.mobbing,Konfliktberatung bei Konflikten zwischen Schülerinnen und Schülern
+bsl.sonstige,Weitere Beratung von Schule und Lehrkräften
+superv.kollegfb,Leitung kollegialer Fallberatung
+superv.einzel,Leitung Einzelsupervision
+superv.gruppe,Leitung Gruppensupervision
+superv.fuehr,Leitung Coaching von Führungskräften
