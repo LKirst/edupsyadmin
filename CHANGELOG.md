@@ -1,3 +1,19 @@
+## 3.0.0 (2025-02-24)
+
+### BREAKING CHANGE
+
+- the lrst_diagnosis variable is no longer encrypted and the taetigkeitsbericht keyword is now encrypted in the database
+
+### Fix
+
+- **lgvt.py**: change config_path to salt_path
+
+### Refactor
+
+- read taetigkeitsbericht keys from a csv file instead of ods
+- encrypt gender and leave lrst_diagnosis unencrypted
+- **clients.py**: change todo comment for lrst_diagnosis
+
 ## 2.0.1 (2025-02-17)
 
 ### Fix
