@@ -4,13 +4,10 @@ python -m edupsyadmin  ...
 
 """
 
-from .core import logger
-
 
 def main():
     """Execute the application."""
-    logger.debug("executing __main__.main()")
-    logger.warning("I have not implememented __main__.main() yet!")
+    raise NotImplementedError
 
 
 # Make the script executable.
