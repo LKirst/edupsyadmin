@@ -109,6 +109,7 @@ class ClientsManager:
                     "nta_sprachen": entry.nta_sprachen,
                     "nta_mathephys": entry.nta_mathephys,
                     "n_sessions": entry.n_sessions,
+                    "lrst_diagnosis": entry.lrst_diagnosis,
                     "keyword_taetigkeitsbericht": entry.keyword_taetigkeitsbericht,
                 }
                 for entry in results
