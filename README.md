@@ -138,7 +138,7 @@ Run the test suite:
 
 Build documentation:
 
-    $ .venv/bin/python -m sphinx -M html doc doc/_build
+    $ .venv/bin/python -m sphinx -M html docs docs/_build
 
 ## License
 
