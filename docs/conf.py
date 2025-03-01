@@ -5,15 +5,12 @@
 
 from datetime import datetime
 
-from edupsyadmin import __version__
-
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "edupsyadmin"
 author = "Lukas Liebermann"
 copyright = f"{datetime.now().year}, {author}"
-release = __version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
