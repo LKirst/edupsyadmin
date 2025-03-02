@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from edupsyadmin import __version__
+from edupsyadmin.api.clients import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,7 +21,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -40,7 +41,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    # I can't use config.get_main_option("sqlalchemy.url")
+    # I cannot set the url in the ini file because the path includes the app version
+    # url = config.get_main_option("sqlalchemy.url")
     USER_DATA_DIR = user_data_path(
         appname="edupsyadmin", version=__version__, ensure_exists=True
     )
@@ -64,8 +66,18 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    # I cannot set the url in the ini file because the path includes the app version
+    # connectable = engine_from_config(
+    #     config.get_section(config.config_ini_section, {}),
+    #     prefix="sqlalchemy.",
+    #     poolclass=pool.NullPool,
+    # )
+    USER_DATA_DIR = user_data_path(
+        appname="edupsyadmin", version=__version__, ensure_exists=True
+    )
+    url = "sqlite:///" + os.path.join(USER_DATA_DIR, "edupsyadmin.db")
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        {"sqlalchemy.url": url},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

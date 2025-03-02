@@ -67,8 +67,15 @@ class Client(Base):
     nachteilsausgleich: Mapped[Optional[bool]] = mapped_column(Boolean)
     nta_sprachen: Mapped[Optional[int]] = mapped_column(Integer)
     nta_mathephys: Mapped[Optional[int]] = mapped_column(Integer)
+    nta_font: Mapped[bool] = mapped_column(Boolean)
+    nta_aufgabentypen: Mapped[bool] = mapped_column(Boolean)
+    nta_strukturierungshilfen: Mapped[bool] = mapped_column(Boolean)
+    nta_arbeitsmittel: Mapped[bool] = mapped_column(Boolean)
+    nta_ersatz_gewichtung: Mapped[bool] = mapped_column(Boolean)
+    nta_vorlesen: Mapped[bool] = mapped_column(Boolean)
+    nta_other_details: Mapped[str] = mapped_column(String)
     nta_notes: Mapped[Optional[str]] = mapped_column(String)
-    n_sessions: Mapped[Optional[float]] = mapped_column(Float)
+    n_sessions: Mapped[float] = mapped_column(Float)
 
     def __init__(
         self,
@@ -94,6 +101,13 @@ class Client(Base):
         lrst_diagnosis: str | None = None,
         nta_sprachen: int | None = None,
         nta_mathephys: int | None = None,
+        nta_font: bool = False,
+        nta_aufgabentypen: bool = False,
+        nta_strukturierungshilfen: bool = False,
+        nta_arbeitsmittel: bool = False,
+        nta_ersatz_gewichtung: bool = False,
+        nta_vorlesen: bool = False,
+        nta_other_details: str | None = None,
         nta_notes: int | None = None,
         n_sessions: int = 1,
     ):
