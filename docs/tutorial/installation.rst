@@ -4,7 +4,7 @@ Einstieg
 .. tip::
 
     Einige Schritte in diesem Einstieg mögen kompliziert wirken, aber sie müssen
-    *nur einmal*, beim ersten Einrichten durchgeführt werden. Also nicht
+    **nur einmal**, beim ersten Einrichten durchgeführt werden. Also nicht
     einschüchtern lassen!
 
 .. note::
@@ -16,8 +16,8 @@ Einstieg
 Installation
 ------------
 
-Als erstes öffne ein Terminal. Auf Windows, drücke dafür die Tasten :kbd:`Win +
-X``. Dann wähle "Windows Powershell".
+Als erstes öffne ein Terminal. Auf Windows, drücke dafür die Tasten
+:kbd:`Win-X`. Dann wähle "Windows Powershell".
 
 Zur Installation verwenden wir winget. Kontrolliere zunächst, ob winget
 installiert ist:
@@ -54,10 +54,10 @@ verfügbar für diese Sitzung. Wir wollen aber, dass edupsyadmin dauerhaft
 verfügbar ist. Dafür fügen wir den Pfad dauerhaft zur PATH-Umgebungsvariable
 hinzu.
 
-1. Copiere den Pfad aus der Warnung. Im Beispiel oben wäre dieser
+1. Kopiere den Pfad aus der Warnung. Im Beispiel oben wäre dieser
    ``C:\Users\DeinNutzername\.local\bin``
 
-2. Drücke die Tasten :kbd:`Win + S`, um die Suche zu öffnen.
+2. Drücke die Tasten :kbd:`Win-S`, um die Suche zu öffnen.
 
 3. Gebe in die Suche ein "Umgebungsvariablen für dieses Konto bearbeiten" und
    wähle den Vorschlag mit der höchsten Übereinstimmung aus.
@@ -68,7 +68,7 @@ hinzu.
 5. Wähle darunter ``Bearbeiten`` aus (im Abschnitt zu Benutzervariablen,
    *nicht* im Abschnitt zu Systemvariablen).
 
-6. In dem Fenster, das sich öffnet, wähle rechts `Neu` und füge dann links den
+6. In dem Fenster, das sich öffnet, wähle rechts ``Neu`` und füge dann links den
    Pfad ein, den du in Schritt 1 kopiert hast.
 
 7. Klicke in beiden noch offenen Fenstern ``OK``.
@@ -125,7 +125,7 @@ erscheinen sollen.
 
     MeinEinpraegsamerSchultitel`
 
-4. Füge die Daten für deine Schule hinzu. Die Variable `end` wird verwendet, um
+4. Füge die Daten für deine Schule hinzu. Die Variable ``end`` wird verwendet, um
    das Datum für die Vernichtung der Unterlagen (3 Jahre nach dem
    voraussichtlichen Abschlussdatum) zu schätzen. Es benennt die
    Jahrgangsstufe, nach der die Schüler:innen typischerweise die Schule
@@ -154,11 +154,11 @@ erscheinen sollen.
 Anmeldedaten speichern
 ----------------------
 
-edupsyadmin verwendet `keyring` für die Verschlüsselungsanmeldedaten. `keyring`
-hat mehrere Backends. Unter Windows ist der Standard der Windows Credential
-Manager (Deutsch: Anmeldeinformationsverwaltung).
+edupsyadmin verwendet ``keyring`` für die Verschlüsselungsanmeldedaten.
+``keyring`` hat mehrere Backends. Unter Windows ist der Standard der Windows
+Credential Manager (Deutsch: Anmeldeinformationsverwaltung).
 
-1. Drücke dafür die Tasten :kbd:`Win + S`. Dann suche nach
+1. Drücke dafür die Tasten :kbd:`Win-S`. Dann suche nach
    "Anmeldeinformationsverwaltung" und öffne sie.
 
 2. Wähle ``Windows-Anmeldeinformationen``.
@@ -168,8 +168,8 @@ Manager (Deutsch: Anmeldeinformationsverwaltung).
 4. Verwende den Benutzernamen aus deiner config.yaml Datei und lege ein
    Passwort fest. Die Internet- oder Netzwerkadresse kannst du wie unten übernehmen.
 
-    Internet- oder Netzwerkadresse: `liebermann-schulpsychologie.github.io`
+    Internet- oder Netzwerkadresse: ``liebermann-schulpsychologie.github.io``
 
-    Benutzername: `der_nutzer_name_aus_der_konfigurationsdatei`
+    Benutzername: ``der_nutzer_name_aus_der_konfigurationsdatei``
 
-    Kennwort: `ein_sicheres_passwort`
+    Kennwort: ``ein_sicheres_passwort``
