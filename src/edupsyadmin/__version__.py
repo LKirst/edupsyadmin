@@ -16,4 +16,4 @@ and backwards compatibility is not guaranteed for minor versions.
 
 """
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"

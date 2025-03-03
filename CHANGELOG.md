@@ -1,3 +1,15 @@
+## 3.1.0 (2025-03-03)
+
+### Feat
+
+- **clients.py**: add types of nta as new columns to database
+
+### Refactor
+
+- **managers.py**: show lrst_diagnosis in the overview
+- expose core and init for imports of edupsyadmin
+- remove obsolete shellscripts
+
 ## 3.0.0 (2025-02-24)
 
 ### BREAKING CHANGE
