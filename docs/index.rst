@@ -6,16 +6,18 @@
 Dokumentation für edupsyadmin
 =============================
 
-Inhalt:
+Den einfachsten Einstieg in edupsyadmin bietet das folgende Tutorial:
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Inhalt:
 
-   usage/installation
+   tutorial/installation
+   tutorial/update
+   tutorial/addingclients
 
 
-Indices and Tabellen
+Indices und Tabellen
 ====================
 
 * :ref:`genindex`
