@@ -6,20 +6,39 @@
 Dokumentation für edupsyadmin
 =============================
 
+Über edupsyadmin
+----------------
+
+Edupsyadmin bietet Werkzeuge, um Schulpsychologen bei ihrer Dokumentation zu
+unterstützen.
+
+- Dokumentation: https://edupsyadmin.readthedocs.io
+
+- Quellcode: https://github.com/LKirst/edupsyadmin
+
+- Issues: https://github.com/LKirst/edupsyadmin/issues
+
+.. tip::
+
+    Unter dem oben genannten Link zu "Issues" kannst du berichten, wenn du Probleme
+    mit edupsyadmin hast oder Wünsche zu Änderungen an der App.
+
 Den einfachsten Einstieg in edupsyadmin bietet das folgende Tutorial:
+
+.. note::
+
+   Dieses Tutorial ist in Arbeit. Es werden bald mehr Informationen hinzugefügt.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Inhalt:
+   :caption: Tutorial
 
    tutorial/installation
    tutorial/update
    tutorial/addingclients
+   tutorial/creatingdocumentation
 
+Autor
+-----
 
-Indices und Tabellen
-====================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+edupsyadmin wurde von Lukas Liebermann geschrieben.
