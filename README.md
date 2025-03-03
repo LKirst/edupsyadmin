@@ -118,7 +118,7 @@ Change values for the database entry with `client_id=42`:
 edupsyadmin set_client 42 \
   "nachteilsausgleich=1" \
   "notenschutz=0" \
-  "lrst_diagnosis_encr=iLst"
+  "lrst_diagnosis=iLst"
 ```
 
 Fill a PDF form for the database entry with `client_id=42`:
