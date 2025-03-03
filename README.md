@@ -121,9 +121,18 @@ edupsyadmin set_client 42 \
   "lrst_diagnosis=iLst"
 ```
 
+See an overview of all clients in the database:
+
+    $ edupsyadmin get_clients
+
 Fill a PDF form for the database entry with `client_id=42`:
 
     $ edupsyadmin create_documentation 42 ./path/to/your/file.pdf
+
+Fill all files that belong to the form_set `lrst` (as defined in the
+config.yml) with the data for `client_id=42`:
+
+    $ edupsyadmin create_documentation 42 --form_set lrst
 
 ## Development
 
