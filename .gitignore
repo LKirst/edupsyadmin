@@ -392,7 +392,6 @@ $RECYCLE.BIN/
 
 # Sphinx build artifacts
 doc/_build/
-doc/_static/
 doc/_templates/
 
 # Config
@@ -406,9 +405,6 @@ config.yml
 *.pdf
 !test/edupsyadmin/data/sample_form_mantelbogen.pdf
 !test/edupsyadmin/data/sample_form_anschreiben.pdf
-
-# CSVs
-*.csv
 
 # pypirc
 .pypirc

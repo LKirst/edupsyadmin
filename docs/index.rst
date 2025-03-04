@@ -34,9 +34,9 @@ Den einfachsten Einstieg in edupsyadmin bietet das folgende Tutorial:
    :caption: Tutorial
 
    tutorial/installation
-   tutorial/update
    tutorial/addingclients
    tutorial/creatingdocumentation
+   tutorial/update
 
 Autor
 -----
