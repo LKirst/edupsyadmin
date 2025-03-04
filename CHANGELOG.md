@@ -1,3 +1,9 @@
+## 3.1.1 (2025-03-04)
+
+### Fix
+
+- **taetigkeitsbericht_check_key.py**: fix the path to the taetigkeitsbericht_categories file
+
 ## 3.1.0 (2025-03-03)
 
 ### Feat
