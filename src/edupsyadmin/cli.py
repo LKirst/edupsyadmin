@@ -235,6 +235,9 @@ def _set_client(subparsers, common):
     )
 
 
+# TODO: add _delete_client
+
+
 def _get_clients(subparsers, common):
     """CLI adaptor for the api.clients.get_na_ns command.
 
