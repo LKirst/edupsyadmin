@@ -73,7 +73,7 @@ class Client(Base):
     nta_arbeitsmittel: Mapped[bool] = mapped_column(Boolean)
     nta_ersatz_gewichtung: Mapped[bool] = mapped_column(Boolean)
     nta_vorlesen: Mapped[bool] = mapped_column(Boolean)
-    nta_other_details: Mapped[str] = mapped_column(String)
+    nta_other_details: Mapped[Optional[str]] = mapped_column(String)
     nta_notes: Mapped[Optional[str]] = mapped_column(String)
     n_sessions: Mapped[float] = mapped_column(Float)
 
@@ -155,6 +155,14 @@ class Client(Base):
         self.nachteilsausgleich = nachteilsausgleich
         self.nta_sprachen = nta_sprachen
         self.nta_mathephys = nta_mathephys
+        self.nta_notes = nta_notes
+        self.nta_font = nta_font
+        self.nta_aufgabentypen = nta_aufgabentypen
+        self.nta_strukturierungshilfen = nta_strukturierungshilfen
+        self.nta_arbeitsmittel = nta_arbeitsmittel
+        self.nta_ersatz_gewichtung = nta_ersatz_gewichtung
+        self.nta_vorlesen = nta_vorlesen
+        self.nta_other_details = nta_other_details
         self.nta_notes = nta_notes
         self.n_sessions = n_sessions
 
