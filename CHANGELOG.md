@@ -1,3 +1,9 @@
+## 3.1.2 (2025-03-10)
+
+### Fix
+
+- **clients.py**: initialize nta boolean attributes properly
+
 ## 3.1.1 (2025-03-04)
 
 ### Fix
