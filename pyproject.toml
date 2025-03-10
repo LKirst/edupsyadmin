@@ -17,7 +17,6 @@ dependencies = [
     "cryptography>=43.0.3",
     "fillpdf>=0.7.3",
     "keyring>=25.5.0",
-    "odfpy>=1.4.1",
     "pandas>=2.2.3",
     "platformdirs>=4.3.6",
     "pypdf>=5.1.0",
