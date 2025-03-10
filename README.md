@@ -96,7 +96,8 @@ your config.yaml.
 ## The database
 
 The information you enter, is stored in an SQLite database with the fields
-described in [client_model_documentation.md](client_model_documentation.md)
+described [in the documentation for
+edupsyadmin](https://edupsyadmin.readthedocs.io/en/latest/clients_model.html#)
 
 ## Examples
 
