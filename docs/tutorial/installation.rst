@@ -17,7 +17,8 @@ Installation
 ------------
 
 Als erstes öffne ein Terminal. Auf Windows, drücke dafür die Tasten
-:kbd:`Win-X`. Dann wähle "Windows Powershell".
+:kbd:`Win-X`. Dann wähle "Windows Powershell" oder "(Windows) Terminal". Es
+sind keine Administratorrechte nötig.
 
 Zur Installation verwenden wir winget. Kontrolliere zunächst, ob winget
 installiert ist:
