@@ -38,6 +38,15 @@ Den einfachsten Einstieg in edupsyadmin bietet das folgende Tutorial:
    tutorial/creatingdocumentation
    tutorial/update
 
+Dokumentation der Datenbank
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Datenbank
+
+   clients_model
+
+
 Autor
 -----
 
