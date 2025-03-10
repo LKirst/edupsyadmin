@@ -13,7 +13,13 @@ from .api.flatten_pdf import DEFAULT_LIBRARY, flatten_pdfs
 
 # TODO: change the api so that mkreport works for CFT as well as LGVT
 from .api.lgvt import mk_report
-from .api.managers import create_documentation, get_clients, new_client, set_client
+from .api.managers import (
+    create_documentation,
+    delete_client,
+    get_clients,
+    new_client,
+    set_client,
+)
 from .api.taetigkeitsbericht_from_db import taetigkeitsbericht
 from .core.config import config
 from .core.logger import logger
@@ -235,7 +241,19 @@ def _set_client(subparsers, common):
     )
 
 
-# TODO: add _delete_client
+def _delete_client(subparsers, common):
+    """CLI adaptor for the api.managers.delete_client command.
+
+    :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
+    """
+    # TODO: Write test
+    parser = subparsers.add_parser("delete_client", parents=[common])
+    parser.set_defaults(
+        command=delete_client,
+        help="Delete a client in the database",
+    )
+    parser.add_argument("client_id", type=int, help="id of the client to delete")
 
 
 def _get_clients(subparsers, common):

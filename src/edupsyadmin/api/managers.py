@@ -363,3 +363,19 @@ def create_documentation(
     client_dict = clients_manager.get_decrypted_client(client_id)
     client_dict_with_convenience_data = add_convenience_data(client_dict)
     fill_form(client_dict_with_convenience_data, form_paths_normalized)
+
+
+def delete_client(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike,
+    client_id: int,
+) -> None:
+    clients_manager = ClientsManager(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        salt_path=salt_path,
+    )
+    clients_manager.delete_client(client_id)
