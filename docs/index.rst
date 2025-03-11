@@ -42,9 +42,10 @@ Dokumentation der Datenbank
 
 .. toctree::
    :maxdepth: 2
-   :caption: Datenbank
+   :caption: Datenbank und Keywords
 
    clients_model
+   taetigkeitsbericht_keywords
 
 
 Autor
