@@ -28,7 +28,7 @@ steht ``1`` für "wahr/ja" und ``0`` für "falsch/nein".
 
 .. code-block:: console
 
-    edupsyadmin set_client 2 \
+    $ edupsyadmin set_client 2 \
       "nachteilsausgleich=1" \
       "notenschutz=0" \
       "lrst_diagnosis=iLst"
@@ -44,3 +44,14 @@ Zeige eine Übersicht aller Klienten in der Datenbank an:
 
 Hier sollten nun die zwei hinzugefügten Klienten angezeigt werden. In der
 ersten Spalte ist die ``client_id`` gelistet.
+
+Einträge löschen
+----------------
+
+Lösche den Eintrag mit ``client_id=1``:
+
+.. code-block:: console
+
+    $ edupsyadmin delete_client 1
+
+Mit ``edupsyadmin get_clients`` kannst du nun prüfen, ob der Eintrag entfernt wurde.
