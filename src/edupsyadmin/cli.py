@@ -150,6 +150,7 @@ def _args(argv):
     _flatten_pdfs(subparsers, common)
     _mk_report(subparsers, common)
     _taetigkeitsbericht(subparsers, common)
+    _delete_client(subparsers, common)
 
     args = parser.parse_args(argv)
     if not args.command:
