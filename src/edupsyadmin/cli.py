@@ -8,7 +8,7 @@ from inspect import getfullargspec
 
 from platformdirs import user_config_dir, user_data_path
 
-from . import __version__
+from . import __version__, tui
 from .api.flatten_pdf import DEFAULT_LIBRARY, flatten_pdfs
 
 # TODO: change the api so that mkreport works for CFT as well as LGVT
@@ -230,7 +230,7 @@ def _set_client(subparsers, common):
     """
     parser = subparsers.add_parser("set_client", parents=[common])
     parser.set_defaults(
-        command=set_client,
+        command=_handle_set_client,
         help="Show or change a value for a client",
     )
     parser.add_argument("client_id", type=int)
@@ -376,6 +376,29 @@ def _taetigkeitsbericht(subparsers, common):
         type=str,
         default="Schulpsychologie",
         help="name for the header of the pdf report",
+    )
+
+
+def _handle_set_client(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike,
+    client_id: int,
+    key_value_pairs: list[str] | None = None,
+) -> None:
+    if not key_value_pairs:
+        key_value_dict = tui.edit_client()
+        # TODO: It should not be necessary to convert to string and then back to dict
+        key_value_pairs = [f"{key}={value}" for key, value in key_value_dict.items()]
+
+    set_client(
+        app_username=app_username,
+        app_uid=app_uid,
+        database_url=database_url,
+        salt_path=salt_path,
+        client_id=client_id,
+        key_value_pairs=key_value_pairs,
     )
 
 
