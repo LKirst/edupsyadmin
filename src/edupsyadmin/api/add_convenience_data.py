@@ -76,10 +76,6 @@ def add_convenience_data(data: dict) -> dict:
             "Vorbereitungszeit bei mündlichen Leistungsnachweisen"
         )
 
-    # Nachteilsaugleich measures
-    if data["lrst_diagnosis"] in ["lrst", "iLst"]:
-        data["nta_font"] = True
-
     # dates
     # for forms, I use the format dd.mm.YYYY; internally, I use YYYY-mm-dd
     today = date.today()
