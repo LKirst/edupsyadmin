@@ -58,6 +58,19 @@ def add_convenience_data(data: dict) -> dict:
     for i in ["school_name", "school_street", "school_head_w_school"]:
         data[i] = schoolconfig[i]
 
+    # lrst_diagnosis
+    diagnosis = data["lrst_diagnosis"]
+    if diagnosis == "lrst":
+        data["lrst_diagnosis_long"] = "Lese-Rechtschreibstörung"
+    elif diagnosis == "iLst":
+        data["lrst_diagnosis_long"] = "isolierte Lesestörung"
+    elif diagnosis == "iRst":
+        data["lrst_diagnosis_long"] = "isolierte Rechtschreibstörung"
+    else:
+        raise ValueError(
+            f"lrst_diagnosis can be only lrst, iLst or iRst, but was {diagnosis}"
+        )
+
     # Notenschutz and Nachteilsausgleich
     if data["nachteilsausgleich"] or data["notenschutz"]:
         school_subjects = get_subjects(data["school"])
