@@ -14,6 +14,17 @@ from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import Encryption
 from edupsyadmin.core.logger import logger
 
+BOOLEAN_COLS = [
+    "notenschutz",
+    "nachteilsausgleich",
+    "nta_font",
+    "nta_aufgabentypen",
+    "nta_strukturierungshilfen",
+    "nta_arbeitsmittel",
+    "nta_ersatz_gewichtung",
+    "nta_vorlesen",
+]
+
 
 class Base(DeclarativeBase):
     pass
@@ -197,7 +208,7 @@ def set_client(
     )
     pairs_list = [pair.split("=") for pair in key_value_pairs]
     for key, value in pairs_list:
-        if key in ["notenschutz", "nachteilsausgleich"]:
+        if key in BOOLEAN_COLS:
             value = bool(int(value))
         if key == "keyword_taetigkeitsbericht":
             value = check_keyword(value)
