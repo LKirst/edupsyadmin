@@ -1,3 +1,17 @@
+## 3.2.0 (2025-03-17)
+
+### Feat
+
+- **add_convenience_data.py**: add lrst_diagnosis_long for forms
+- add a delete_client subcommand to the cli
+
+### Fix
+
+- **shellscripts**: update lrst shellscripts
+- **managers.py**: handle 0 and 1 instead of True/False for set_client
+- **add_convenience_data.py**: remove automatic setting of nta_font
+- **cli.py**: fix call of the delete_client subcommand
+
 ## 3.1.2 (2025-03-10)
 
 ### Fix
