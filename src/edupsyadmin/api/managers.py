@@ -232,11 +232,13 @@ def get_clients(
         salt_path=salt_path,
     )
     if client_id:
-        df = pd.DataFrame.from_dict(clients_manager.get_decrypted_client(client_id))
+        original_df = pd.DataFrame([clients_manager.get_decrypted_client(client_id)]).T
+        df = original_df[~original_df.index.str.endswith("_encr")]
     else:
-        df = clients_manager.get_clients_overview(nta_nos=nta_nos)
+        original_df = clients_manager.get_clients_overview(nta_nos=nta_nos)
+        df = original_df.set_index("client_id")
     if out:
-        df.to_csv(out, index=False)
+        df.to_csv(out)
     else:
         with pd.option_context(
             "display.max_columns",
@@ -248,7 +250,7 @@ def get_clients(
             "display.expand_frame_repr",
             False,
         ):
-            print(df.set_index("client_id"))
+            print(df)
 
 
 def get_data_raw(
