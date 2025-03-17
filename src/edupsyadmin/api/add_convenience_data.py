@@ -66,7 +66,7 @@ def add_convenience_data(data: dict) -> dict:
         data["lrst_diagnosis_long"] = "isolierte Lesestörung"
     elif diagnosis == "iRst":
         data["lrst_diagnosis_long"] = "isolierte Rechtschreibstörung"
-    else:
+    elif diagnosis is not None:
         raise ValueError(
             f"lrst_diagnosis can be only lrst, iLst or iRst, but was {diagnosis}"
         )
