@@ -145,7 +145,7 @@ def fill_form(
                 (f"The template file does not exist: {fp}; " f"cwd is: {os.getcwd()}")
             )
         out_fp = Path(out_dir, f"{client_data['client_id']}_{fp.name}")
-        logger.info(f"Writing to {out_fp}")
+        logger.info(f"Writing to {out_fp.resolve()}")
         if fp.suffix == ".md":
             write_form_md(fp, out_fp, client_data)
         elif use_fillpdf:
