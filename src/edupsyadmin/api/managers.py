@@ -119,8 +119,13 @@ class ClientsManager:
                     "nachteilsausgleich": entry.nachteilsausgleich,
                     "nta_sprachen": entry.nta_sprachen,
                     "nta_mathephys": entry.nta_mathephys,
-                    "n_sessions": entry.n_sessions,
+                    "nta_font": entry.nta_font,
+                    "nta_aufgabentypen": entry.nta_aufgabentypen,
+                    "nta_strukturierungshilfen": entry.nta_strukturierungshilfen,
+                    "nta_ersatz_gewichtung": entry.nta_ersatz_gewichtung,
+                    "nta_vorlesen": entry.nta_vorlesen,
                     "lrst_diagnosis": entry.lrst_diagnosis,
+                    "n_sessions": entry.n_sessions,
                     "keyword_taetigkeitsbericht": entry.keyword_taetigkeitsbericht,
                 }
                 for entry in results
