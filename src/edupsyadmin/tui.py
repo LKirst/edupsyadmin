@@ -1,13 +1,13 @@
 import os
 
 from textual.app import App
-from textual.widgets import Button, Checkbox, Input
+from textual.widgets import Button, Checkbox, Input, Label
 
 from edupsyadmin.api.managers import ClientsManager
 
 
 class StudentEntryApp(App):
-    def __init__(self, client_id: int, data: dict):
+    def __init__(self, client_id: int, data: dict = {}):
         super().__init__()
         self.client_id = client_id
         self.data = data
@@ -51,6 +51,9 @@ class StudentEntryApp(App):
             "nta_vorlesen",
         ]
 
+        # Create heading with client_id
+        yield Label(f"Data for client_id: {self.client_id}")
+
         # Create input fields
         for field, field_type in fields.items():
             default_value = str(self.data[field]) if field in self.data else ""
@@ -61,19 +64,19 @@ class StudentEntryApp(App):
         # Create checkboxes
         for field in boolean_fields:
             default_value = self.data[field] if field in self.data else False
-            checkbox_widget = Checkbox(label=field, checked=default_value)
+            checkbox_widget = Checkbox(label=field, value=default_value)
             self.checkboxes[field] = checkbox_widget
             yield checkbox_widget
 
         # Submit button
-        self.submit_button = Button(label="Submit", on_click=self.on_submit)
+        self.submit_button = Button(label="Submit")
         yield self.submit_button
 
-    def on_submit(self):
+    def on_button_pressed(self):
         # Collect data
         self.data = {field: self.inputs[field].value for field in self.inputs}
         self.data.update(
-            {field: self.checkboxes[field].checked for field in self.checkboxes}
+            {field: self.checkboxes[field].value for field in self.checkboxes}
         )
 
         # Convert string inputs to their respective types
@@ -109,7 +112,7 @@ def edit_client(
     current_data = manager.get_decrypted_client(client_id=client_id)
 
     # display a form with current values filled in
-    app = StudentEntryApp(client_id)
+    app = StudentEntryApp(client_id, data=current_data)
     app.run()
 
     # return changed values
@@ -132,3 +135,11 @@ def _find_changed_values(original: dict, updates: dict) -> dict:
             changed_values[key] = new_value
 
     return changed_values
+
+
+if __name__ == "__main__":
+    # just for testing
+    app = StudentEntryApp(42)
+    app.run()
+    new_data = app.get_data()
+    print(f"The data collected is: {new_data}")
