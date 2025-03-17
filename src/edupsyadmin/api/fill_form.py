@@ -8,20 +8,23 @@ from liquid import Template, exceptions
 from edupsyadmin.core.logger import logger
 
 
-def modify_bool_for_pdf_form(data: dict) -> dict:
+def modify_bool_and_none_for_pdf_form(data: dict) -> dict:
     """
-    Replace every boolean True with 'Yes' and False with 'Off', which are
-    the values checkboxes accept in most PDF forms.
+    Replace every boolean True with 'Yes' and False with 'Off', which are the
+    values checkboxes accept in most PDF forms. Replace None with empty
+    strings.
 
     :param data: a dictionary of data
     :return: a modified dictionary where booleans are replaced
-        with string values
+        with string values and None values are replaced with an empty string
     """
     updated_data = {}
     logger.debug("Replacing True with 'Yes' and False with 'Off'")
     for key, value in data.items():
         if isinstance(value, bool):
             updated_data[key] = "Yes" if value else "Off"
+        elif value is None:
+            updated_data[key] = ""
         else:
             updated_data[key] = value
     return updated_data
@@ -38,7 +41,7 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict) -> None:
     """
     from pypdf import PdfReader, PdfWriter
 
-    data_wo_bool = modify_bool_for_pdf_form(data)
+    data_wo_bool = modify_bool_and_none_for_pdf_form(data)
 
     reader = PdfReader(open(fn, "rb"), strict=False)
     writer = PdfWriter()
@@ -78,7 +81,7 @@ def write_form_pdf2(fn: Path, out_fn: Path, data: dict) -> None:
     """
     from fillpdf import fillpdfs
 
-    data_wo_bool = modify_bool_for_pdf_form(data)
+    data_wo_bool = modify_bool_and_none_for_pdf_form(data)
 
     fields = fillpdfs.get_form_fields(fn)
     logger.debug(f"\nForm fields:\n{fields}")
