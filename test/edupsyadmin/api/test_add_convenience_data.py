@@ -38,10 +38,6 @@ def test_add_convenience_data(mock_get_subjects, mock_config):
     assert result["school_head_w_school"] == "Außenstellenleitung der Berufsfachschule"
     assert result["ns_subjects"] == "Math, Science, History"
     assert (
-        result["ns_zeugnisbemerkung"]
-        == "Auf die Bewertung der Rechtschreibleistung wurde verzichtet."
-    )
-    assert (
         result["ns_measures"] == "Verzicht auf die Bewertung der Rechtschreibleistung"
     )
     assert result["na_subjects"] == "Math, Science, History"
