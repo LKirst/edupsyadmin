@@ -23,6 +23,12 @@ sind keine Administratorrechte nötig.
 Zur Installation verwenden wir winget. Kontrolliere zunächst, ob winget
 installiert ist:
 
+.. note::
+
+    Das `$` Zeichen in den folgenden Anleitungen steht dafür, dass in der
+    Kommandozeile ein Befehl eingegeben werden muss. Es ist nicht Teil des
+    Befehls und muss nicht mit eingegeben werden.
+
 .. code-block:: console
 
     $ winget --help
