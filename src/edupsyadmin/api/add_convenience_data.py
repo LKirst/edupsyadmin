@@ -77,9 +77,6 @@ def add_convenience_data(data: dict) -> dict:
         logger.debug(f"\nsubjects:\n{school_subjects}")
     if data["notenschutz"]:
         data["ns_subjects"] = school_subjects
-        data["ns_zeugnisbemerkung"] = (
-            "Auf die Bewertung der Rechtschreibleistung wurde verzichtet."
-        )
         data["ns_measures"] = "Verzicht auf die Bewertung der Rechtschreibleistung"
     if data["nachteilsausgleich"]:
         data["na_subjects"] = school_subjects
