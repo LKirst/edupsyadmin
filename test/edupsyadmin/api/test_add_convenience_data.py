@@ -50,7 +50,7 @@ def test_add_convenience_data(mock_get_subjects, mock_config):
         "Leistungsnachweisen und der Vorbereitungszeit bei "
         "mündlichen Leistungsnachweisen"
     )
-    assert result["nta_font"]
+    assert result["lrst_diagnosis_long"] == "Lese-Rechtschreib-Störung"
     # Check dates
     assert result["date_today_de"] is not None  # Check if date is added
     assert result["birthday_de"] == "01.01.2000"

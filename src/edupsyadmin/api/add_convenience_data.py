@@ -61,7 +61,7 @@ def add_convenience_data(data: dict) -> dict:
     # lrst_diagnosis
     diagnosis = data["lrst_diagnosis"]
     if diagnosis == "lrst":
-        data["lrst_diagnosis_long"] = "Lese-Rechtschreibstörung"
+        data["lrst_diagnosis_long"] = "Lese-Rechtschreib-Störung"
     elif diagnosis == "iLst":
         data["lrst_diagnosis_long"] = "isolierte Lesestörung"
     elif diagnosis == "iRst":
