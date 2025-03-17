@@ -74,7 +74,7 @@ def main(argv=None) -> int:
         config.core.logging = args.warn
 
     # restart logging based on config
-    # logger.stop()  # clear handlers to prevent duplicate records
+    logger.stop()  # clear handlers to prevent duplicate records
     logger.start(config.core.logging)
 
     if not args.app_username:
