@@ -1,3 +1,11 @@
+## 3.2.1 (2025-03-17)
+
+### Fix
+
+- **fill_form.py**: replace None with an empty string for fill_form
+- **add_convenience_data.py**: allow None values for lrst_diagnosis
+- **add_convenience_data.py**: correct spelling of Lese-Rechtschreib-Störung
+
 ## 3.2.0 (2025-03-17)
 
 ### Feat
