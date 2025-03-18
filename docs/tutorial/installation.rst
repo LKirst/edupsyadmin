@@ -20,6 +20,10 @@ Als erstes öffne ein Terminal. Auf Windows, drücke dafür die Tasten
 :kbd:`Win-X`. Dann wähle "Windows Powershell" oder "(Windows) Terminal". Es
 sind keine Administratorrechte nötig.
 
+.. note:: Die :kbd:`Win` Taste ist die Taste mit dem Windows Symbol |WinKey|.
+
+.. |WinKey| unicode:: U+229E
+
 Zur Installation verwenden wir winget. Kontrolliere zunächst, ob winget
 installiert ist:
 
