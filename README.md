@@ -70,8 +70,8 @@ want to appear in your documentation:
    use.
 
   ```
-  fileset:
-    name_of_my_fileset:
+  form_set:
+    name_of_my_form_set:
       - "path/to/my/first_file.pdf"
       - "path/to/my/second_file.pdf"
   ```

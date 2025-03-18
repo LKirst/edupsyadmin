@@ -152,15 +152,25 @@ erscheinen sollen.
 
 5. Wiederhole Schritt 3 und 4 für jede Schule, an der du tätig bist.
 
-6. Ändere die Pfade unter filesets, um auf die (Sets von) Dateien zu
-   verweisen, die du verwenden möchtest.
+6. Ändere die Pfade unter ``form_set``, um auf die (Sets von) PDF-Formularen zu
+   verweisen, die du verwenden möchtest. Bitte lade für unser Beispiel folgende
+   zwei Beispiel-PDFs herunter und speichere Sie:
+
+    Erste Datei: `sample_form_mantelbogen.pdf
+    <https://github.com/LKirst/edupsyadmin/blob/main/test/edupsyadmin/data/sample_form_mantelbogen.pdf>`_.
+
+    Zweite Datei `sample_form_stellungnahme.pdf
+    <https://github.com/LKirst/edupsyadmin/blob/main/test/edupsyadmin/data/sample_form_stellungnahme.pdf>`_.
+
+    Im Explorer, klicke mit der rechten Maustaste auf eine Datei und wähle "Als
+    Pfad kopieren". Kopiere den Pfad in ein form_set (in die Anführungszeichen):
 
 .. code-block::
 
-    fileset:
+    form_set:
         name_meines_filesets:
-            - "pfad/zu/meiner/ersten_datei.pdf"
-            - "pfad/zu/meiner/zweiten_datei.pdf"
+            - "pfad/zu/meiner/ersten_datei/sample_form_mantelbogen.pdf"
+            - "pfad/zu/meiner/zweiten_datei/sample_form_stellungnahme.pdf"
 
 7. Speichere die Änderungen.
 
