@@ -162,6 +162,8 @@ erscheinen sollen.
             - "pfad/zu/meiner/ersten_datei.pdf"
             - "pfad/zu/meiner/zweiten_datei.pdf"
 
+7. Speichere die Änderungen.
+
 Anmeldedaten speichern
 ----------------------
 
