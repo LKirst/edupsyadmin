@@ -181,12 +181,12 @@ Daten, die in deiner Dokumentation erscheinen sollen.
     <https://github.com/LKirst/edupsyadmin/blob/main/test/edupsyadmin/data/sample_form_stellungnahme.pdf>`_.
 
     Im Explorer, klicke mit der rechten Maustaste auf eine Datei und wähle "Als
-    Pfad kopieren". Kopiere den Pfad in ein form_set (in die einfachen Anführungszeichen):
+    Pfad kopieren". Kopiere den Pfad in ein form_set (in die einfachen Anführungszeichen). Unser form_set nennen wir für diese Tutorial `tutorialset`.
 
 .. code-block::
 
     form_set:
-        name_meines_filesets:
+        tutorialset:
             - 'pfad/zu/meiner/ersten_datei/sample_form_mantelbogen.pdf'
             - 'pfad/zu/meiner/zweiten_datei/sample_form_stellungnahme.pdf'
 
