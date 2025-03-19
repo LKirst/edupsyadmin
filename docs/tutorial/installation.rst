@@ -130,11 +130,12 @@ erscheinen sollen.
     schoolpsy_town: "Postleitzahl und Stadt"
 
 3. Ändere unter ``school`` den Kurznamen deiner Schule zu etwas einprägsamerem
-   als ``FirstSchool``. Verwende keine Leerzeichen oder Sonderzeichen:
+   als ``FirstSchool``. Verwende keine Leerzeichen oder Sonderzeichen. In
+   diesem Tutorial verwenden wir den Schulnamen ``TutorialSchule``.
 
 .. code-block::
 
-    MeinEinpraegsamerSchultitel`
+    TutorialSchule
 
 4. Füge die Daten für deine Schule hinzu. Die Variable ``end`` wird verwendet, um
    das Datum für die Vernichtung der Unterlagen (3 Jahre nach dem

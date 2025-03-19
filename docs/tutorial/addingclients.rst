@@ -13,11 +13,12 @@ Füge einen Klienten interaktiv hinzu:
 Füge einen weiteren Klienten aus einem Webuntis-CSV-Export zur Datenbank hinzu.
 Verwende dafür die Beispieldatei `samplewebuntisfile.csv
 <https://raw.githubusercontent.com/LKirst/edupsyadmin/refs/heads/main/docs/_static/samplewebuntisfile.csv>`_.
-Die Datei kannst du speichern, indem du :kbd:`Strg-S` klickst.
+Die Datei kannst du speichern, indem du :kbd:`Strg-S` klickst. Wir ordnen den
+Schüler unserer, in der Konfiguration angelegten ``TutorialSchule`` zu.
 
 .. code-block:: console
 
-    $ edupsyadmin new_client --csv ./pfad/zu/samblewebuntisfile.csv --name "MustermMax1"
+    $ edupsyadmin new_client --csv "./pfad/zu/samblewebuntisfile.csv" --name "MustermMax1" --school TutorialSchule
 
 Einträge bearbeiten
 -------------------
