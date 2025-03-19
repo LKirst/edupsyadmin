@@ -104,10 +104,26 @@ Konfigurationsdatei zu finden, führe aus:
 
    $ edupsyadmin info
 
-Im Ausgabeergebnis siehst du deinen ``config_path``. Öffne die Datei mit einem
-Editor, der keine Formatierungen hinzufügt (zum Beispiel Notepad unter
-Windows). Ändere alle Werte zu den Daten, die in deiner Dokumentation
-erscheinen sollen.
+Der output dieses Befehls wird ähnlich aussehen wie hier:
+
+.. code-block:: console
+   :emphasize-lines: 6
+
+   $ edupsyadmin info
+   2025-03-19 11:00:00,713;WARNING;edupsyadmin;Could not find the specified config file. Created a sample config at C:\Users\DeinNutzerName\AppData\Local\edupsyadmin\edupsyadmin\3.3.0\config.yml. Fill it with your values.
+   edupsyadmin version: 3.3.0
+   app_username: sample.username
+   database_url: sqlite:///C:\Users\DeinNutzerName\AppData\Local\edupsyadmin\edupsyadmin\3.3.0\edupsyadmin.db
+   config_path: ['C:\\Users\\DeinNutzerName\\AppData\\Local\\edupsyadmin\\edupsyadmin\\3.3.0\\config.yml']
+   keyring backend: keyring.backends.chainer.ChainerBackend (priority: 10)
+   salt_path: C:\Users\DeinNutzerName\AppData\Local\edupsyadmin\edupsyadmin\3.3.0\salt.txt
+
+Im Ausgabeergebnis siehst du deinen ``config_path``.  In dem Beispiel oben ist
+die relevante Zeile markiert. Der Pfad im Beispiel wäre
+``C:\\Users\\DeinNutzerName\\AppData\\Local\\edupsyadmin\\edupsyadmin\\3.3.0\\config.yml'``
+Öffne die Datei mit einem Editor, der keine Formatierungen hinzufügt (zum
+Beispiel Notepad unter Windows). Ändere alle Werte zu den
+Daten, die in deiner Dokumentation erscheinen sollen.
 
 .. caution::
 
@@ -131,7 +147,8 @@ erscheinen sollen.
 
 3. Ändere unter ``school`` den Kurznamen deiner Schule zu etwas einprägsamerem
    als ``FirstSchool``. Verwende keine Leerzeichen oder Sonderzeichen. In
-   diesem Tutorial verwenden wir den Schulnamen ``TutorialSchule``.
+   diesem Tutorial verwenden wir den Schulnamen ``TutorialSchule`` (kann
+   nachträglich geändert werden).
 
 .. code-block::
 
