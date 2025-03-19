@@ -163,14 +163,19 @@ erscheinen sollen.
     <https://github.com/LKirst/edupsyadmin/blob/main/test/edupsyadmin/data/sample_form_stellungnahme.pdf>`_.
 
     Im Explorer, klicke mit der rechten Maustaste auf eine Datei und wähle "Als
-    Pfad kopieren". Kopiere den Pfad in ein form_set (in die Anführungszeichen):
+    Pfad kopieren". Kopiere den Pfad in ein form_set (in die einfachen Anführungszeichen):
 
 .. code-block::
 
     form_set:
         name_meines_filesets:
-            - "pfad/zu/meiner/ersten_datei/sample_form_mantelbogen.pdf"
-            - "pfad/zu/meiner/zweiten_datei/sample_form_stellungnahme.pdf"
+            - 'pfad/zu/meiner/ersten_datei/sample_form_mantelbogen.pdf'
+            - 'pfad/zu/meiner/zweiten_datei/sample_form_stellungnahme.pdf'
+
+.. caution::
+
+    Verwende für die Pfade in deinen form_sets einfache `'`, nicht doppelte
+    Anführungszeichen `"`.
 
 7. Speichere die Änderungen.
 
