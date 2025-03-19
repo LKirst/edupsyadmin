@@ -1,3 +1,20 @@
+## 3.3.0 (2025-03-19)
+
+### Feat
+
+- **managers.py**: show all nta columns for get_clients
+
+### Fix
+
+- handle backslashes in windows paths for form_set
+- **managers.py**: fix get_clients when used with a single client_id
+- **cli.py**: remove duplicate logging
+
+### Refactor
+
+- **uv.lock**: update dependencies
+- **add_convenience_data.py**: remove ns_zeugnisbemerkung
+
 ## 3.2.1 (2025-03-17)
 
 ### Fix
