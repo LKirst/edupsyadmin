@@ -93,6 +93,7 @@ class YamlConfig(_AttrDict):
         :param root: place config values at this root
         :param params: mapping of parameter substitutions
         """
+        # TODO: Remove dotenv call
         load_dotenv()
         tag = _ParameterTag(params)
         tag.add(SafeLoader)
