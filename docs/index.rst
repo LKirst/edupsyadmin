@@ -33,6 +33,7 @@ Den einfachsten Einstieg in edupsyadmin bietet das folgende Tutorial:
    :maxdepth: 2
    :caption: Tutorial
 
+   tutorial/helpfunction
    tutorial/installation
    tutorial/addingclients
    tutorial/creatingdocumentation
