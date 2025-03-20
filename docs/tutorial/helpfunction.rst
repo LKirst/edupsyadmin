@@ -85,5 +85,5 @@ Reihenfolge übergeben musst. Die options sind hingegen optionale Parameter, mit
 denen du das Verhalten des Unterbefehls beeinflussen kannst. Insgesamt siehst
 du hier, dass der Unterbefehl "create_documentation" zwei positional arguments
 (client_id und form_paths) und mehrere optionale Optionen akzeptiert.
-Argumente oder Optionen, die bei ``usage:`` in eckigen Klammern stehen sind
+Argumente oder Optionen, die bei ``usage:`` in eckigen Klammern stehen, sind
 optional.
