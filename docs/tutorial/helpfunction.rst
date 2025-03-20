@@ -8,7 +8,7 @@ Hilfe Funktion
     diesem Kapitel zurück. Dann wird deutlicher sein, wofür die Hilfe Funktion
     nützlich ist.
 
-Die "--help" Option ist eine sehr nützliche Funktion, die dir dabei hilft, die
+Die ``--help`` Option ist eine nützliche Funktion, die dir dabei hilft, die
 verschiedenen Befehle und Optionen des edupsyadmin-Tools zu verstehen.
 
 Beispiel 1: Allgemeine Hilfe anzeigen
@@ -22,11 +22,10 @@ Befehl aus:
     $ edupsyadmin --help
 
 Dies wird dir eine Übersicht über alle verfügbaren Optionen und Unterbefehle
-anzeigen. Im Beispiel unten, sind die möglichen Unterbefehle markiert (zweimal
-im Beispiel).
+anzeigen. Im Beispiel unten, sind die möglichen Unterbefehle markiert.
 
 .. code-block:: console
-   :emphasize-lines: 3,15
+   :emphasize-lines: 16-24
 
     $ edupsyadmin --help
     usage: edupsyadmin [-h] [-c CONFIG_PATH] [-s SALT_PATH] [-v] [-w WARN]
@@ -42,7 +41,16 @@ im Beispiel).
       -w WARN, --warn WARN  logger warning level [WARN]
 
     subcommands:
-      {info,new_client,set_client,create_documentation,get_clients,flatten_pdfs,taetigkeitsbericht,delete_client}
+      {info,new_client,set_client,create_documentation,get_clients,flatten_pdfs,mk_report,taetigkeitsbericht,delete_client}
+        info                Get useful information for debugging
+        new_client          Add a new client
+        set_client          Change values for a client
+        create_documentation
+                            Fill a pdf form or a text file with a liquid template
+        get_clients         Show clients overview or single client
+        flatten_pdfs        Flatten pdf forms (experimental)
+        taetigkeitsbericht  Create a PDF output for the Taetigkeitsbericht (experimental)
+        delete_client       Delete a client in the database
 
 Die Hilfe zeigt uns, dass wir den edupsyadmin Befehl mit verschiedenen
 Unterbefehlen zusammen ausführen (z.B. ``edupsyadmin info``, ``edupsyadmin
@@ -58,14 +66,17 @@ wie folgt:
 
     $ edupsyadmin create_documentation --help
 
-Dies wird dir die Optionen und Argumente für den "create_documentation"
+Dies wird dir die Optionen und Argumente für den ``create_documentation``
 Unterbefehl anzeigen:
 
 .. code-block:: console
-   :emphasize-lines: 2,4,8
+   :emphasize-lines: 2,3,7,11
 
     $ edupsyadmin create_documentation --help
-    usage: edupsyadmin create_documentation [-h] [--app_username APP_USERNAME] [--app_uid APP_UID] [--database_url DATABASE_URL] [--form_set FORM_SET] client_id [form_paths ...]
+    usage: edupsyadmin create_documentation [-h] [--app_username APP_USERNAME] [--app_uid APP_UID] [--database_url DATABASE_URL] [--form_set FORM_SET]
+                                            client_id [form_paths ...]
+
+    Fill a pdf form or a text file with a liquid template
 
     positional arguments:
       client_id

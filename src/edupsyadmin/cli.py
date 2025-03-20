@@ -175,8 +175,10 @@ def _info(subparsers, common):
     parser = subparsers.add_parser(
         "info",
         parents=[common],
+        description="Show app version and what paths the app uses",
+        help="Get useful information for debugging",
     )
-    parser.set_defaults(command=info, help="Get useful information for debugging")
+    parser.set_defaults(command=info)
 
 
 def _new_client(subparsers, common):
@@ -185,10 +187,14 @@ def _new_client(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("new_client", parents=[common])
+    parser = subparsers.add_parser(
+        "new_client",
+        parents=[common],
+        help="Add a new client",
+        description="Add a new client",
+    )
     parser.set_defaults(
         command=new_client,
-        help="Add a new client",
     )
     parser.add_argument(
         "--csv",
@@ -228,10 +234,14 @@ def _set_client(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("set_client", parents=[common])
+    parser = subparsers.add_parser(
+        "set_client",
+        parents=[common],
+        help="Change values for a client",
+        description="Change values for a client",
+    )
     parser.set_defaults(
         command=set_client,
-        help="Show or change a value for a client",
     )
     parser.add_argument("client_id", type=int)
     parser.add_argument(
@@ -249,10 +259,11 @@ def _delete_client(subparsers, common):
     :param common: parser for common subcommand arguments
     """
     # TODO: Write test
-    parser = subparsers.add_parser("delete_client", parents=[common])
+    parser = subparsers.add_parser(
+        "delete_client", parents=[common], help="Delete a client in the database"
+    )
     parser.set_defaults(
         command=delete_client,
-        help="Delete a client in the database",
     )
     parser.add_argument("client_id", type=int, help="id of the client to delete")
 
@@ -263,10 +274,14 @@ def _get_clients(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("get_clients", parents=[common])
+    parser = subparsers.add_parser(
+        "get_clients",
+        parents=[common],
+        help="Show clients overview or single client",
+        description="Show clients overview or single client",
+    )
     parser.set_defaults(
         command=get_clients,
-        help="Show clients overview or single client",
     )
     parser.add_argument(
         "--nta_nos",
@@ -285,10 +300,14 @@ def _create_documentation(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("create_documentation", parents=[common])
+    parser = subparsers.add_parser(
+        "create_documentation",
+        parents=[common],
+        help="Fill a pdf form or a text file with a liquid template",
+        description="Fill a pdf form or a text file with a liquid template",
+    )
     parser.set_defaults(
         command=create_documentation,
-        help="Fill a pdf form or a text file with a liquid template",
     )
     parser.add_argument("client_id", type=int)
     parser.add_argument(
@@ -309,7 +328,6 @@ def _mk_report(subparsers, common):
     parser = subparsers.add_parser("mk_report", parents=[common])
     parser.set_defaults(
         command=mk_report,
-        help="Create a test report (experimental)",
     )
     parser.add_argument("client_id", type=int)
     parser.add_argument("test_date", type=str, help="Testdatum (YYYY-mm-dd)")
@@ -320,10 +338,14 @@ def _mk_report(subparsers, common):
 
 
 def _flatten_pdfs(subparsers, common):
-    parser = subparsers.add_parser("flatten_pdfs", parents=[common])
+    parser = subparsers.add_parser(
+        "flatten_pdfs",
+        parents=[common],
+        help="Flatten pdf forms (experimental)",
+        description="Flatten pdf forms (experimental)",
+    )
     parser.set_defaults(
         command=flatten_pdfs,
-        help="Flatten pdf forms and join pdfs for printing (experimental)",
     )
     parser.add_argument(
         "--library", type=str, default=DEFAULT_LIBRARY, choices=["pdf2image", "fillpdf"]
@@ -337,10 +359,13 @@ def _taetigkeitsbericht(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("taetigkeitsbericht", parents=[common])
+    parser = subparsers.add_parser(
+        "taetigkeitsbericht",
+        parents=[common],
+        help="Create a PDF output for the Taetigkeitsbericht (experimental)",
+    )
     parser.set_defaults(
         command=taetigkeitsbericht,
-        help="Create a PDF output for the Taetigkeitsbericht (experimental)",
     )
     parser.add_argument(
         "wstd_psy", type=int, help="Anrechnungsstunden in Wochenstunden"
