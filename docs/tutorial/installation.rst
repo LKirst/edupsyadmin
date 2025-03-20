@@ -104,7 +104,7 @@ Konfigurationsdatei zu finden, führe aus:
 
    $ edupsyadmin info
 
-Der output dieses Befehls wird ähnlich aussehen wie hier:
+Der Output dieses Befehls wird ähnlich aussehen wie hier:
 
 .. code-block:: console
    :emphasize-lines: 6
@@ -120,10 +120,10 @@ Der output dieses Befehls wird ähnlich aussehen wie hier:
 
 Im Ausgabeergebnis siehst du deinen ``config_path``.  In dem Beispiel oben ist
 die relevante Zeile markiert. Der Pfad im Beispiel wäre
-``C:\\Users\\DeinNutzerName\\AppData\\Local\\edupsyadmin\\edupsyadmin\\3.3.0\\config.yml'``
-Öffne die Datei mit einem Editor, der keine Formatierungen hinzufügt (zum
-Beispiel Notepad unter Windows). Ändere alle Werte zu den
-Daten, die in deiner Dokumentation erscheinen sollen.
+``C:\\Users\\DeinNutzerName\\AppData\\Local\\edupsyadmin\\edupsyadmin\\3.3.0\\config.yml``
+(ohne Klammern und Anführungszeichen).  Öffne die Datei mit einem Editor, der
+keine Formatierungen hinzufügt (zum Beispiel Notepad unter Windows). Ändere
+alle Werte zu den Daten, die in deiner Dokumentation erscheinen sollen.
 
 .. caution::
 
@@ -181,7 +181,9 @@ Daten, die in deiner Dokumentation erscheinen sollen.
     <https://github.com/LKirst/edupsyadmin/blob/main/test/edupsyadmin/data/sample_form_stellungnahme.pdf>`_.
 
     Im Explorer, klicke mit der rechten Maustaste auf eine Datei und wähle "Als
-    Pfad kopieren". Kopiere den Pfad in ein form_set (in die einfachen Anführungszeichen). Unser form_set nennen wir für diese Tutorial `tutorialset`.
+    Pfad kopieren". Kopiere den Pfad in ein form_set (in die einfachen
+    Anführungszeichen). Unser form_set nennen wir für diese Tutorial
+    ``tutorialset``.
 
 .. code-block::
 
