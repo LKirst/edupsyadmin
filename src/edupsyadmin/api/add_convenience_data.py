@@ -16,7 +16,7 @@ def get_subjects(school: str) -> str:
         with file_path.open("r", encoding="utf-8") as file:
             return file.read()
     else:
-        logger.warning("school subjects file does not exist!")
+        logger.debug("school subjects file does not exist")
         return ""
 
 

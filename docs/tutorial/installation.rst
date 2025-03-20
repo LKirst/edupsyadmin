@@ -107,10 +107,9 @@ Konfigurationsdatei zu finden, führe aus:
 Der Output dieses Befehls wird ähnlich aussehen wie hier:
 
 .. code-block:: console
-   :emphasize-lines: 6
+   :emphasize-lines: 5
 
    $ edupsyadmin info
-   2025-03-19 11:00:00,713;WARNING;edupsyadmin;Could not find the specified config file. Created a sample config at C:\Users\DeinNutzerName\AppData\Local\edupsyadmin\edupsyadmin\3.3.0\config.yml. Fill it with your values.
    edupsyadmin version: 3.3.0
    app_username: sample.username
    database_url: sqlite:///C:\Users\DeinNutzerName\AppData\Local\edupsyadmin\edupsyadmin\3.3.0\edupsyadmin.db

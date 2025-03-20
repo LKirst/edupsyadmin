@@ -61,7 +61,7 @@ def main(argv=None) -> int:
             importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
         )
         shutil.copy(template_path, args.config_path[0])
-        logger.warning(
+        logger.info(
             (
                 "Could not find the specified config file. "
                 f"Created a sample config at {args.config_path[0]}. "
