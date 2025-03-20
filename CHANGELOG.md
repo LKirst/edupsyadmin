@@ -1,3 +1,9 @@
+## 3.3.1 (2025-03-20)
+
+### Refactor
+
+- change logging level from warning to lower level where possible
+
 ## 3.3.0 (2025-03-19)
 
 ### Feat
