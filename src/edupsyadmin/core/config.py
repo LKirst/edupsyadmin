@@ -5,11 +5,10 @@ this object to store application-wide configuration values.
 
 """
 
-from os import PathLike, environ
+from os import PathLike
 from re import compile
 from string import Template
 
-from dotenv import load_dotenv
 from yaml import Node, SafeLoader, safe_load
 
 from .logger import logger
@@ -57,10 +56,6 @@ class _AttrDict(dict):
 class YamlConfig(_AttrDict):
     """Store YAML configuration data.
 
-    Parameters can be embedded in the YAML file using e.g. $param or ${param}.
-    Parameter lookup is performed against the current environment and an
-    optional user-specified mapping (user parameters take precedence).
-
     After loading, data can be accessed as dict values or object attributes.
 
     """
@@ -93,8 +88,6 @@ class YamlConfig(_AttrDict):
         :param root: place config values at this root
         :param params: mapping of parameter substitutions
         """
-        # TODO: Remove dotenv call
-        load_dotenv()
         tag = _ParameterTag(params)
         tag.add(SafeLoader)
         for path in [path] if isinstance(path, str) else path:
@@ -125,11 +118,9 @@ class _ParameterTag(object):
 
         :param params: key-value replacement mapping
         """
-        self._params = environ.copy()
-        try:
+        self._params = {}
+        if params:
             self._params.update(params)
-        except TypeError:
-            pass  # params is None
         return
 
     def __call__(self, loader: SafeLoader, node: Node) -> str:
