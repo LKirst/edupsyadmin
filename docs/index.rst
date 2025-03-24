@@ -20,14 +20,38 @@ unterstützen.
 
 .. tip::
 
-    Unter dem oben genannten Link zu "Issues" kannst du berichten, wenn du Probleme
-    mit edupsyadmin hast oder Wünsche zu Änderungen an der App.
+    Unter dem oben genannten Link zu "Issues" kannst du berichten, wenn du
+    Probleme mit edupsyadmin hast oder Wünsche zu Änderungen an der App. Bitte
+    gebe bei Fragen zu Problemen immer die Version von edupsyadmin an, die du
+    verwendest.
 
-Den einfachsten Einstieg in edupsyadmin bietet das folgende Tutorial:
+Warum edupsyadmin?
+------------------
 
-.. note::
+edupsyadmin beschleunigt sowohl die Dokumentation einzelner Beratungsfälle und
+als auch die Erstellung des Tätigkeitsberichts.
 
-   Dieses Tutorial ist in Arbeit. Es werden bald mehr Informationen hinzugefügt.
+Schulpsychologen müssen dieselben Daten immer wieder für unterschiedlichen
+Formulare abschreiben. Zum Beispiel müssen teils dieselben Daten aufgeführt
+werden auf
+
+- dem Mantelbogen der schulpsychologischen Dokumentation
+
+- der schulpsychologischen Stellungnahme
+
+- dem Anschreiben zur Stellungnahme
+
+- dem Vordruck der Gewährung der Schulleitung
+
+Mit edupsyadmin lassen sich die Daten aus Webuntis importieren oder einmalig
+händisch eingeben. Auf dieser Grundlage lassen sich dann alle Formulare mit
+einem Befehl ausfüllen. Da das Abschreiben ausbleibt, werden so auch
+Fehlerquellen minimiert.
+
+Zu jedem mit edupsyadmin gespeicherten Fall kann außerdem ein
+Tätigkeitsbericht-Schlüsselbegriff und die Anzahl der auf den Fall verwendeten
+Stunden gespeichert werden. Dann kann edupsyadmin die Daten berechnen, die der
+Tätigkeitsbericht verlangt.
 
 .. toctree::
    :maxdepth: 2
