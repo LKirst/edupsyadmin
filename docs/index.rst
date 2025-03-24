@@ -28,10 +28,10 @@ unterstützen.
 Warum edupsyadmin?
 ------------------
 
-edupsyadmin beschleunigt sowohl die Dokumentation einzelner Beratungsfälle und
+edupsyadmin beschleunigt sowohl die Dokumentation einzelner Beratungsfälle
 als auch die Erstellung des Tätigkeitsberichts.
 
-Schulpsychologen müssen dieselben Daten immer wieder für unterschiedlichen
+Schulpsychologen müssen dieselben Daten immer wieder für unterschiedliche
 Formulare abschreiben. Zum Beispiel müssen teils dieselben Daten aufgeführt
 werden auf
 
