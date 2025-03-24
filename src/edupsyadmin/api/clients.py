@@ -125,7 +125,9 @@ class Client(Base):
         doc="Gibt an, ob einige Fächer vom Notenschutz ausgenommen sind",
     )
     _nos_rs_ausn_faecher: Mapped[Optional[str]] = mapped_column(
-        String, doc="Fächer, die vom Notenschutz ausgenommen sind"
+        "nos_rs_ausn_faecher",
+        String,
+        doc="Fächer, die vom Notenschutz ausgenommen sind",
     )
     nos_les: Mapped[bool] = mapped_column(
         Boolean,
@@ -145,29 +147,38 @@ class Client(Base):
         default=False,
         doc="Gibt an, ob der Klient eine Zeitverlängerung als NTA hat",
     )
-    _nta_zeitv_vieltext: Mapped[Optional[int]] = mapped_column(Integer)
-    _nta_zeitv_wenigtext: Mapped[Optional[int]] = mapped_column(Integer)
+    _nta_zeitv_vieltext: Mapped[Optional[int]] = mapped_column(
+        "nta_zeitv_vieltext", Integer
+    )
+    _nta_zeitv_wenigtext: Mapped[Optional[int]] = mapped_column(
+        "nta_zeitv_wenigtext", Integer
+    )
     _nta_font: Mapped[bool] = mapped_column(
+        "nta_font",
         Boolean,
         default=False,
         doc="Gibt an, ob der Klient eine Schriftanpassung als NTA hat",
     )
     _nta_aufg: Mapped[bool] = mapped_column(
+        "nta_aufg",
         Boolean,
         default=False,
         doc="Gibt an, ob der Klient eine Aufgabenanpassung als NTA hat",
     )
     _nta_struktur: Mapped[bool] = mapped_column(
+        "nta_struktur",
         Boolean,
         default=False,
         doc="Gibt an, ob der Klient eine Strukturanpassung als NTA hat",
     )
     _nta_arbeitsm: Mapped[bool] = mapped_column(
+        "nta_arbeitsm",
         Boolean,
         default=False,
         doc="Gibt an, ob der Klient eine Arbeitsmittelanpassung als NTA hat",
     )
     _nta_ersgew: Mapped[bool] = mapped_column(
+        "nta_ersgew",
         Boolean,
         default=False,
         doc=(
@@ -176,17 +187,21 @@ class Client(Base):
         ),
     )
     _nta_vorlesen: Mapped[bool] = mapped_column(
+        "nta_vorlesen",
         Boolean,
         default=False,
         doc="Gibt an, ob der Klient Vorlesen als NTA hat",
     )
     _nta_other: Mapped[bool] = mapped_column(
+        "nta_other",
         Boolean,
         default=False,
         doc="Gibt an, ob der Klient andere Formen des NTAs hat",
     )
     _nta_other_details: Mapped[Optional[str]] = mapped_column(
-        String, doc="Details zu anderen Formen des NTAs für den Klienten"
+        "nta_other_details",
+        String,
+        doc="Details zu anderen Formen des NTAs für den Klienten",
     )
     nta_notes: Mapped[Optional[str]] = mapped_column(String, doc="Notizen zu NTA")
 
