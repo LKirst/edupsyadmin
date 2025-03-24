@@ -75,6 +75,7 @@ class ClientsManager:
             return client_id
 
     def get_decrypted_client(self, client_id: int) -> dict:
+        # TODO: move encryption logic to clients.py with getters and setters
         logger.debug(f"trying to access client (client_id = {client_id})")
         with self.Session() as session:
             client = session.query(Client).filter_by(client_id=client_id).first()
