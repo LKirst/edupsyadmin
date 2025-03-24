@@ -233,7 +233,12 @@ def get_clients(
     )
     if client_id:
         original_df = pd.DataFrame([clients_manager.get_decrypted_client(client_id)]).T
-        df = original_df[~original_df.index.str.endswith("_encr")]
+        df = original_df[
+            ~(
+                original_df.index.str.endswith("_encr")
+                | (original_df.index == "_sa_instance_state")
+            )
+        ]
     else:
         original_df = clients_manager.get_clients_overview(nta_nos=nta_nos)
         df = original_df.set_index("client_id")
