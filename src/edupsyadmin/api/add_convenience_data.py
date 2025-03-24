@@ -76,12 +76,13 @@ def add_convenience_data(data: dict) -> dict:
         school_subjects = get_subjects(data["school"])
         logger.debug(f"\nsubjects:\n{school_subjects}")
     if data["notenschutz"]:
-        data["ns_subjects"] = school_subjects
-        data["ns_measures"] = "Verzicht auf die Bewertung der Rechtschreibleistung"
+        data["nos_subjects"] = school_subjects
+        data["nos_measures"] = "Verzicht auf die Bewertung der Rechtschreibleistung"
     if data["nachteilsausgleich"]:
-        data["na_subjects"] = school_subjects
-        data["na_measures"] = (
-            f"Verlängerung der regulären Arbeitszeit um {data['nta_sprachen']}% "
+        data["nta_subjects"] = school_subjects
+        data["nta_measures"] = (
+            "Verlängerung der regulären Arbeitszeit um bis zu "
+            f"{data['nta_zeitv_vieltext']}% "
             "bei schriftlichen Leistungsnachweisen und der "
             "Vorbereitungszeit bei mündlichen Leistungsnachweisen"
         )

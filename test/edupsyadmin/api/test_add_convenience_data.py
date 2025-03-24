@@ -13,7 +13,7 @@ input_data = {
     "nachteilsausgleich": True,
     "notenschutz": True,
     "birthday": "2000-01-01",
-    "nta_sprachen": 25,
+    "nta_zeitv_vieltext": 25,
     "document_shredding_date": date(2025, 12, 24),
     "lrst_diagnosis": "lrst",
 }
@@ -36,13 +36,13 @@ def test_add_convenience_data(mock_get_subjects, mock_config):
     assert result["school_name"] == "Berufsfachschule Kinderpflege"
     assert result["school_street"] == "Beispielstr. 1"
     assert result["school_head_w_school"] == "Außenstellenleitung der Berufsfachschule"
-    assert result["ns_subjects"] == "Math, Science, History"
+    assert result["nos_subjects"] == "Math, Science, History"
     assert (
-        result["ns_measures"] == "Verzicht auf die Bewertung der Rechtschreibleistung"
+        result["nos_measures"] == "Verzicht auf die Bewertung der Rechtschreibleistung"
     )
-    assert result["na_subjects"] == "Math, Science, History"
-    assert result["na_measures"] == (
-        "Verlängerung der regulären Arbeitszeit um 25% bei schriftlichen "
+    assert result["nta_subjects"] == "Math, Science, History"
+    assert result["nta_measures"] == (
+        "Verlängerung der regulären Arbeitszeit um bis zu 25% bei schriftlichen "
         "Leistungsnachweisen und der Vorbereitungszeit bei "
         "mündlichen Leistungsnachweisen"
     )

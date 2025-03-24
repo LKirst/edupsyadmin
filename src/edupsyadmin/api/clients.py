@@ -9,6 +9,7 @@ from sqlalchemy import (
     Integer,
     String,
 )
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from ..core.config import config
@@ -32,27 +33,71 @@ class Client(Base):
     # Variables of StringEncryptedType
     # These variables cannot be optional (i.e. cannot be None) because if
     # they were, the encryption functions would raise an exception.
-    first_name_encr: Mapped[str] = mapped_column(String)
-    last_name_encr: Mapped[str] = mapped_column(String)
-    gender_encr: Mapped[str] = mapped_column(String)
-    birthday_encr: Mapped[str] = mapped_column(String)
-    street_encr: Mapped[str] = mapped_column(String)
-    city_encr: Mapped[str] = mapped_column(String)
-    parent_encr: Mapped[str] = mapped_column(String)
-    telephone1_encr: Mapped[str] = mapped_column(String)
-    telephone2_encr: Mapped[str] = mapped_column(String)
-    email_encr: Mapped[str] = mapped_column(String)
-    notes_encr: Mapped[str] = mapped_column(String)
+    first_name_encr: Mapped[str] = mapped_column(
+        String, doc="Verschlüsselter Vorname des Klienten"
+    )
+    last_name_encr: Mapped[str] = mapped_column(
+        String, doc="Verschlüsselter Nachname des Klienten"
+    )
+    gender_encr: Mapped[str] = mapped_column(
+        String, doc="Verschlüsseltes Geschlecht des Klienten"
+    )
+    birthday_encr: Mapped[str] = mapped_column(
+        String, doc="Verschlüsseltes Geburtsdatum des Klienten (JJJJ-MM-TT)"
+    )
+    street_encr: Mapped[str] = mapped_column(
+        String, doc="Verschlüsselte Straßenadresse und Hausnummer des Klienten"
+    )
+    city_encr: Mapped[str] = mapped_column(
+        String, doc="Verschlüsselter Postleitzahl und Stadt des Klienten"
+    )
+    parent_encr: Mapped[str] = mapped_column(
+        String,
+        doc="Verschlüsselter Name des Elternteils/Erziehungsberechtigten des Klienten",
+    )
+    telephone1_encr: Mapped[str] = mapped_column(
+        String, doc="Verschlüsselte primäre Telefonnummer des Klienten"
+    )
+    telephone2_encr: Mapped[str] = mapped_column(
+        String, doc="Verschlüsselte sekundäre Telefonnummer des Klienten"
+    )
+    email_encr: Mapped[str] = mapped_column(
+        String, doc="Verschlüsselte E-Mail-Adresse des Klienten"
+    )
+    notes_encr: Mapped[str] = mapped_column(
+        String, doc="Verschlüsselte Notizen zum Klienten"
+    )
 
     # Unencrypted variables
-    client_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    school: Mapped[str] = mapped_column(String)
-    entry_date: Mapped[Optional[str]] = mapped_column(String)
-    class_name: Mapped[Optional[str]] = mapped_column(String)
-    class_int: Mapped[Optional[int]] = mapped_column(Integer)
-    estimated_date_of_graduation: Mapped[Optional[date]] = mapped_column(DateTime)
-    document_shredding_date: Mapped[Optional[date]] = mapped_column(DateTime)
-    keyword_taetigkeitsbericht: Mapped[Optional[str]] = mapped_column(String)
+    client_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, doc="Primärschlüssel-Identifikator für den Klienten"
+    )
+    school: Mapped[str] = mapped_column(
+        String,
+        doc=(
+            "Schule, die der Klient besucht "
+            "(Kurzname wie in der Konfiguration festgelegt)"
+        ),
+    )
+    entry_date: Mapped[Optional[str]] = mapped_column(
+        String, doc="Eintrittsdatum des Klienten in das System"
+    )
+    class_name: Mapped[Optional[str]] = mapped_column(
+        String, doc="Klassenname des Klienten (einschließlich Buchstaben)"
+    )
+    class_int: Mapped[Optional[int]] = mapped_column(
+        Integer, doc="Numerische Darstellung der Klasse des Klienten"
+    )
+    estimated_date_of_graduation: Mapped[Optional[date]] = mapped_column(
+        DateTime, doc="Voraussichtliches Abschlussdatum des Klienten"
+    )
+    document_shredding_date: Mapped[Optional[date]] = mapped_column(
+        DateTime,
+        doc="Datum für die Dokumentenvernichtung im Zusammenhang mit dem Klienten",
+    )
+    keyword_taetigkeitsbericht: Mapped[Optional[str]] = mapped_column(
+        String, doc="Schlüsselwort für die Kategorie des Klienten im Tätigkeitsbericht"
+    )
     # I need lrst_diagnosis as a variable separate from keyword_taetigkeitsbericht,
     # because LRSt can be present even if it is not the most important topic
     lrst_diagnosis: Mapped[Optional[str]] = mapped_column(
@@ -60,26 +105,103 @@ class Client(Base):
         CheckConstraint(
             ("lrst_diagnosis IN ('lrst', 'iLst', 'iRst') OR " "lrst_diagnosis IS NULL")
         ),
+        doc="Diagnose im Zusammenhang mit LRSt, iLst oder iRst",
     )
-    datetime_created: Mapped[datetime] = mapped_column(DateTime)
-    datetime_lastmodified: Mapped[datetime] = mapped_column(DateTime)
-    notenschutz: Mapped[Optional[bool]] = mapped_column(Boolean)
-    nachteilsausgleich: Mapped[Optional[bool]] = mapped_column(Boolean)
-    nta_sprachen: Mapped[Optional[int]] = mapped_column(Integer)
-    nta_mathephys: Mapped[Optional[int]] = mapped_column(Integer)
-    nta_font: Mapped[bool] = mapped_column(Boolean)
-    nta_aufgabentypen: Mapped[bool] = mapped_column(Boolean)
-    nta_strukturierungshilfen: Mapped[bool] = mapped_column(Boolean)
-    nta_arbeitsmittel: Mapped[bool] = mapped_column(Boolean)
-    nta_ersatz_gewichtung: Mapped[bool] = mapped_column(Boolean)
-    nta_vorlesen: Mapped[bool] = mapped_column(Boolean)
-    nta_other_details: Mapped[Optional[str]] = mapped_column(String)
-    nta_notes: Mapped[Optional[str]] = mapped_column(String)
-    n_sessions: Mapped[float] = mapped_column(Float)
+    datetime_created: Mapped[datetime] = mapped_column(
+        DateTime, doc="Zeitstempel, wann der Klienten-Datensatz erstellt wurde"
+    )
+    datetime_lastmodified: Mapped[datetime] = mapped_column(
+        DateTime, doc="Zeitstempel, wann der Klienten-Datensatz zuletzt geändert wurde"
+    )
+
+    # Notenschutz
+    notenschutz: Mapped[bool] = mapped_column(
+        Boolean, default=False, doc="Gibt an, ob der Klient Notenschutz hat"
+    )
+    # TODO: Add nos_rs
+    nos_rs_ausn: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc="Gibt an, ob einige Fächer vom Notenschutz ausgenommen sind",
+    )
+    _nos_rs_ausn_faecher: Mapped[Optional[str]] = mapped_column(
+        String, doc="Fächer, die vom Notenschutz ausgenommen sind"
+    )
+    nos_les: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc="Gibt an, ob der Klient Notenschutz für das Lesen hat",
+    )
+
+    # Nachteilsausgleich
+    # TODO: move all doc strings to the getter methods for sphinx documentation
+    nachteilsausgleich: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc="Gibt an, ob der Klient Nachteilsausgleich (NTA) hat",
+    )
+    nta_zeitv: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc="Gibt an, ob der Klient eine Zeitverlängerung als NTA hat",
+    )
+    _nta_zeitv_vieltext: Mapped[Optional[int]] = mapped_column(Integer)
+    _nta_zeitv_wenigtext: Mapped[Optional[int]] = mapped_column(Integer)
+    _nta_font: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc="Gibt an, ob der Klient eine Schriftanpassung als NTA hat",
+    )
+    _nta_aufg: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc="Gibt an, ob der Klient eine Aufgabenanpassung als NTA hat",
+    )
+    _nta_struktur: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc="Gibt an, ob der Klient eine Strukturanpassung als NTA hat",
+    )
+    _nta_arbeitsm: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc="Gibt an, ob der Klient eine Arbeitsmittelanpassung als NTA hat",
+    )
+    _nta_ersgew: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc=(
+            "Gibt an, ob der Klient einen Ersatz schriftlicher durch "
+            "mündliche Leistungsnachweise oder eine alternative Gewichtung als NTA hat"
+        ),
+    )
+    _nta_vorlesen: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc="Gibt an, ob der Klient Vorlesen als NTA hat",
+    )
+    _nta_other: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc="Gibt an, ob der Klient andere Formen des NTAs hat",
+    )
+    _nta_other_details: Mapped[Optional[str]] = mapped_column(
+        String, doc="Details zu anderen Formen des NTAs für den Klienten"
+    )
+    nta_notes: Mapped[Optional[str]] = mapped_column(String, doc="Notizen zu NTA")
+
+    n_sessions: Mapped[float] = mapped_column(
+        Float,
+        doc=(
+            "Anzahl der mit dem Klienten verbundenen Zeitstunden "
+            "(einschließlich Vorbereitung und Auswertung von Tests); eine "
+            "Unterrichtsstunde entspricht 0,75 Zeitstunden."
+        ),
+    )
 
     def __init__(
         self,
-        encr,
+        encr: Encryption,
         school: str,
         gender: str,
         entry_date: str,
@@ -96,21 +218,23 @@ class Client(Base):
         email: str = "",
         notes: str = "",
         notenschutz: bool = False,
-        nachteilsausgleich: bool = False,
-        keyword_taetigkeitsbericht: str | None = "",
-        lrst_diagnosis: str | None = None,
-        nta_sprachen: int | None = None,
-        nta_mathephys: int | None = None,
+        nos_rs_ausn_faecher: str | None = None,
+        nos_les: bool = False,
+        nta_zeitv_vieltext: int | None = None,
+        nta_zeitv_wenigtext: int | None = None,
         nta_font: bool = False,
-        nta_aufgabentypen: bool = False,
-        nta_strukturierungshilfen: bool = False,
-        nta_arbeitsmittel: bool = False,
-        nta_ersatz_gewichtung: bool = False,
+        nta_aufg: bool = False,
+        nta_struktur: bool = False,
+        nta_arbeitsm: bool = False,
+        nta_ersgew: bool = False,
         nta_vorlesen: bool = False,
         nta_other_details: str | None = None,
-        nta_notes: int | None = None,
+        nta_notes: str | None = None,
+        nachteilsausgleich: bool | None = None,
+        lrst_diagnosis: str | None = None,
+        keyword_taetigkeitsbericht: str | None = "",
         n_sessions: int = 1,
-    ):
+    ) -> None:
         if client_id:
             self.client_id = client_id
 
@@ -151,23 +275,167 @@ class Client(Base):
 
         self.keyword_taetigkeitsbericht = check_keyword(keyword_taetigkeitsbericht)
         self.lrst_diagnosis = lrst_diagnosis
+
+        # Notenschutz
         self.notenschutz = notenschutz
-        self.nachteilsausgleich = nachteilsausgleich
-        self.nta_sprachen = nta_sprachen
-        self.nta_mathephys = nta_mathephys
-        self.nta_notes = nta_notes
+        self.nos_rs_ausn_faecher = nos_rs_ausn_faecher
+        if nos_rs_ausn_faecher:
+            self.nos_rs_ausn = True
+        else:
+            self.nos_rs_ausn = False
+        self.nos_les = nos_les
+
+        # Nachteilsausgleich
+        self.nta_zeitv_vieltext = nta_zeitv_vieltext
+        self.nta_zeitv_wenigtext = nta_zeitv_wenigtext
+        if self.nta_zeitv_vieltext or self.nta_zeitv_wenigtext:
+            self.nta_zeitv = True
+        else:
+            self.nta_zeitv = False
         self.nta_font = nta_font
-        self.nta_aufgabentypen = nta_aufgabentypen
-        self.nta_strukturierungshilfen = nta_strukturierungshilfen
-        self.nta_arbeitsmittel = nta_arbeitsmittel
-        self.nta_ersatz_gewichtung = nta_ersatz_gewichtung
+        self.nta_aufg = nta_aufg
+        self.nta_struktur = nta_struktur
+        self.nta_arbeitsm = nta_arbeitsm
+        self.nta_ersgew = nta_ersgew
         self.nta_vorlesen = nta_vorlesen
         self.nta_other_details = nta_other_details
+        if self.nta_other_details:
+            self.nta_other = True
+        else:
+            self.nta_other = False
         self.nta_notes = nta_notes
+        if nachteilsausgleich is None:
+            self.nachteilsausgleich = self._update_nachteilsausgleich()
+        else:
+            # TODO: remove nachteilsausgleich as an argument in init
+            self.nachteilsausgleich = nachteilsausgleich
+
         self.n_sessions = n_sessions
 
         self.datetime_created = datetime.now()
         self.datetime_lastmodified = self.datetime_created
+
+    def _update_nachteilsausgleich(self) -> None:
+        self.nachteilsausgleich = any(
+            (
+                self.nta_zeitv,
+                self.nta_font,
+                self.nta_aufg,
+                self.nta_arbeitsm,
+                self.nta_ersgew,
+                self.nta_vorlesen,
+                self.nta_other,
+            )
+        )
+
+    @hybrid_property
+    def nta_zeitv_vieltext(self) -> int | None:
+        """
+        Zeitverlängerung in Fächern mit längeren Lesetexten bzw.
+        Schreibaufgaben (z.B. in den Sprachen) in Prozent der regulär
+        angesetzten Zeit
+        """
+        return self._nta_zeitv_vieltext
+
+    @nta_zeitv_vieltext.setter
+    def nta_zeitv_vieltext(self, nta_zeitv_vieltext: int) -> None:
+        if nta_zeitv_vieltext is not None and nta_zeitv_vieltext > 0:
+            self.nta_zeitv = True
+            self.nachteilsausgleich = True
+        else:
+            self.nta_zeitv = False
+        self._nta_zeitv_vieltext = nta_zeitv_vieltext
+
+    @hybrid_property
+    def nta_zeitv_wenigtext(self) -> int | None:
+        """
+        Zeitverlängerung in Fächern mit kürzeren Lesetexten bzw.
+        Schreibaufgaben (z.B. in Mathematik) in Prozent der regulär angesetzen
+        Zeit
+        """
+        return self._nta_zeitv_wenigtext
+
+    @nta_zeitv_wenigtext.setter
+    def nta_zeitv_wenigtext(self, nta_zeitv_wenigtext: int) -> None:
+        if nta_zeitv_wenigtext is not None and nta_zeitv_wenigtext > 0:
+            self.nta_zeitv = True
+        else:
+            self.nta_zeitv = False
+        self._nta_zeitv_wenigtext = nta_zeitv_wenigtext
+        self._update_nachteilsausgleich()
+
+    @hybrid_property
+    def nos_rs_ausn_faecher(self) -> str | None:
+        return self._nos_rs_ausn_faecher
+
+    @nos_rs_ausn_faecher.setter
+    def nos_rs_ausn_faecher(self, value: str | None) -> None:
+        self._nos_rs_ausn_faecher = value
+        self.nos_rs_ausn = bool(value)
+
+    @hybrid_property
+    def nta_other_details(self) -> str | None:
+        return self._nta_other_details
+
+    @nta_other_details.setter
+    def nta_other_details(self, value: str | None) -> None:
+        self._nta_other_details = value
+        self._nta_other = bool(value)
+        self._update_nachteilsausgleich()
+
+    @hybrid_property
+    def nta_font(self) -> bool:
+        return self._nta_font
+
+    @nta_font.setter
+    def nta_font(self, value: bool) -> None:
+        self._nta_font = value
+        self._update_nachteilsausgleich()
+
+    @hybrid_property
+    def nta_aufg(self) -> bool:
+        return self._nta_aufg
+
+    @nta_aufg.setter
+    def nta_aufg(self, value: bool) -> None:
+        self._nta_aufg = value
+        self._update_nachteilsausgleich()
+
+    @hybrid_property
+    def nta_arbeitsm(self) -> bool:
+        return self._nta_arbeitsm
+
+    @nta_arbeitsm.setter
+    def nta_arbeitsm(self, value: bool) -> None:
+        self._nta_arbeitsm = value
+        self._update_nachteilsausgleich()
+
+    @hybrid_property
+    def nta_ersgew(self) -> bool:
+        return self._nta_ersgew
+
+    @nta_ersgew.setter
+    def nta_ersgew(self, value: bool) -> None:
+        self._nta_ersgew = value
+        self._update_nachteilsausgleich()
+
+    @hybrid_property
+    def nta_vorlesen(self) -> bool:
+        return self._nta_vorlesen
+
+    @nta_vorlesen.setter
+    def nta_vorlesen(self, value: bool) -> None:
+        self._nta_vorlesen = value
+        self._update_nachteilsausgleich()
+
+    @hybrid_property
+    def nta_other(self) -> bool:
+        return self._nta_other
+
+    @nta_other.setter
+    def nta_other(self, value: bool) -> None:
+        self._nta_other = value
+        self._update_nachteilsausgleich()
 
     def __repr__(self):
         representation = (
