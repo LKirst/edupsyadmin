@@ -9,8 +9,7 @@ from sqlalchemy import (
     Integer,
     String,
 )
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, validates
 
 from ..core.config import config
 from ..core.encrypt import Encryption
@@ -70,7 +69,7 @@ class Client(Base):
 
     # Unencrypted variables
     client_id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, doc="Primärschlüssel-Identifikator für den Klienten"
+        Integer, primary_key=True, doc="ID des Klienten"
     )
     school: Mapped[str] = mapped_column(
         String,
@@ -124,8 +123,7 @@ class Client(Base):
         default=False,
         doc="Gibt an, ob einige Fächer vom Notenschutz ausgenommen sind",
     )
-    _nos_rs_ausn_faecher: Mapped[Optional[str]] = mapped_column(
-        "nos_rs_ausn_faecher",
+    nos_rs_ausn_faecher: Mapped[Optional[str]] = mapped_column(
         String,
         doc="Fächer, die vom Notenschutz ausgenommen sind",
     )
@@ -136,7 +134,6 @@ class Client(Base):
     )
 
     # Nachteilsausgleich
-    # TODO: move all doc strings to the getter methods for sphinx documentation
     nachteilsausgleich: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
@@ -147,38 +144,43 @@ class Client(Base):
         default=False,
         doc="Gibt an, ob der Klient eine Zeitverlängerung als NTA hat",
     )
-    _nta_zeitv_vieltext: Mapped[Optional[int]] = mapped_column(
-        "nta_zeitv_vieltext", Integer
+    nta_zeitv_vieltext: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        doc=(
+            "Zeitverlängerung in Fächern mit längeren Lesetexten bzw. "
+            "Schreibaufgaben (z.B. in den Sprachen) in Prozent der regulär "
+            "angesetzten Zeit"
+        ),
     )
-    _nta_zeitv_wenigtext: Mapped[Optional[int]] = mapped_column(
-        "nta_zeitv_wenigtext", Integer
+    nta_zeitv_wenigtext: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        doc=(
+            "Zeitverlängerung in Fächern mit kürzeren Lesetexten bzw. "
+            "Schreibaufgaben (z.B. in Mathematik) in Prozent der regulär angesetzen "
+            "Zeit"
+        ),
     )
-    _nta_font: Mapped[bool] = mapped_column(
-        "nta_font",
+    nta_font: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         doc="Gibt an, ob der Klient eine Schriftanpassung als NTA hat",
     )
-    _nta_aufg: Mapped[bool] = mapped_column(
-        "nta_aufg",
+    nta_aufg: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         doc="Gibt an, ob der Klient eine Aufgabenanpassung als NTA hat",
     )
-    _nta_struktur: Mapped[bool] = mapped_column(
-        "nta_struktur",
+    nta_struktur: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         doc="Gibt an, ob der Klient eine Strukturanpassung als NTA hat",
     )
-    _nta_arbeitsm: Mapped[bool] = mapped_column(
-        "nta_arbeitsm",
+    nta_arbeitsm: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         doc="Gibt an, ob der Klient eine Arbeitsmittelanpassung als NTA hat",
     )
-    _nta_ersgew: Mapped[bool] = mapped_column(
-        "nta_ersgew",
+    nta_ersgew: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         doc=(
@@ -186,20 +188,17 @@ class Client(Base):
             "mündliche Leistungsnachweise oder eine alternative Gewichtung als NTA hat"
         ),
     )
-    _nta_vorlesen: Mapped[bool] = mapped_column(
-        "nta_vorlesen",
+    nta_vorlesen: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         doc="Gibt an, ob der Klient Vorlesen als NTA hat",
     )
-    _nta_other: Mapped[bool] = mapped_column(
-        "nta_other",
+    nta_other: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         doc="Gibt an, ob der Klient andere Formen des NTAs hat",
     )
-    _nta_other_details: Mapped[Optional[str]] = mapped_column(
-        "nta_other_details",
+    nta_other_details: Mapped[Optional[str]] = mapped_column(
         String,
         doc="Details zu anderen Formen des NTAs für den Klienten",
     )
@@ -343,114 +342,63 @@ class Client(Base):
             )
         )
 
-    @hybrid_property
-    def nta_zeitv_vieltext(self) -> int | None:
-        """
-        Zeitverlängerung in Fächern mit längeren Lesetexten bzw.
-        Schreibaufgaben (z.B. in den Sprachen) in Prozent der regulär
-        angesetzten Zeit
-        """
-        return self._nta_zeitv_vieltext
+    @validates("nos_rs_ausn_faecher")
+    def validate_nos_rs_ausn_faecher(self, key: str, value: str | None) -> str | None:
+        self.nos_rs_ausn = (value is not None) and (value > 0)
+        return value
 
-    @nta_zeitv_vieltext.setter
-    def nta_zeitv_vieltext(self, nta_zeitv_vieltext: int) -> None:
-        if nta_zeitv_vieltext is not None and nta_zeitv_vieltext > 0:
-            self.nta_zeitv = True
-            self.nachteilsausgleich = True
-        else:
-            self.nta_zeitv = False
-        self._nta_zeitv_vieltext = nta_zeitv_vieltext
-
-    @hybrid_property
-    def nta_zeitv_wenigtext(self) -> int | None:
-        """
-        Zeitverlängerung in Fächern mit kürzeren Lesetexten bzw.
-        Schreibaufgaben (z.B. in Mathematik) in Prozent der regulär angesetzen
-        Zeit
-        """
-        return self._nta_zeitv_wenigtext
-
-    @nta_zeitv_wenigtext.setter
-    def nta_zeitv_wenigtext(self, nta_zeitv_wenigtext: int) -> None:
-        if nta_zeitv_wenigtext is not None and nta_zeitv_wenigtext > 0:
-            self.nta_zeitv = True
-        else:
-            self.nta_zeitv = False
-        self._nta_zeitv_wenigtext = nta_zeitv_wenigtext
+    @validates("nta_zeitv_vieltext")
+    def validate_nta_zeitv_vieltext(self, key: str, value: int | None) -> int | None:
+        self.nta_zeitv = (value is not None) and (value > 0)
         self._update_nachteilsausgleich()
+        return value
 
-    @hybrid_property
-    def nos_rs_ausn_faecher(self) -> str | None:
-        return self._nos_rs_ausn_faecher
-
-    @nos_rs_ausn_faecher.setter
-    def nos_rs_ausn_faecher(self, value: str | None) -> None:
-        self._nos_rs_ausn_faecher = value
-        self.nos_rs_ausn = bool(value)
-
-    @hybrid_property
-    def nta_other_details(self) -> str | None:
-        return self._nta_other_details
-
-    @nta_other_details.setter
-    def nta_other_details(self, value: str | None) -> None:
-        self._nta_other_details = value
-        self._nta_other = bool(value)
+    @validates("nta_zeitv_wenigtext")
+    def validate_nta_zeitv_wenigtext(self, key: str, value: int | None) -> int | None:
+        self.nta_zeitv = (value is not None) and (value > 0)
         self._update_nachteilsausgleich()
+        return value
 
-    @hybrid_property
-    def nta_font(self) -> bool:
-        return self._nta_font
-
-    @nta_font.setter
-    def nta_font(self, value: bool) -> None:
-        self._nta_font = value
+    @validates("nta_zeitv")
+    def validate_nta_zeitv(self, key: str, value: bool) -> bool:
         self._update_nachteilsausgleich()
+        return value
 
-    @hybrid_property
-    def nta_aufg(self) -> bool:
-        return self._nta_aufg
-
-    @nta_aufg.setter
-    def nta_aufg(self, value: bool) -> None:
-        self._nta_aufg = value
+    @validates("nta_font")
+    def validate_nta_font(self, key: str, value: bool) -> bool:
         self._update_nachteilsausgleich()
+        return value
 
-    @hybrid_property
-    def nta_arbeitsm(self) -> bool:
-        return self._nta_arbeitsm
-
-    @nta_arbeitsm.setter
-    def nta_arbeitsm(self, value: bool) -> None:
-        self._nta_arbeitsm = value
+    @validates("nta_aufg")
+    def validate_nta_aufg(self, key: str, value: bool) -> bool:
         self._update_nachteilsausgleich()
+        return value
 
-    @hybrid_property
-    def nta_ersgew(self) -> bool:
-        return self._nta_ersgew
-
-    @nta_ersgew.setter
-    def nta_ersgew(self, value: bool) -> None:
-        self._nta_ersgew = value
+    @validates("nta_arbeitsm")
+    def validate_nta_arbeitsm(self, key: str, value: bool) -> bool:
         self._update_nachteilsausgleich()
+        return value
 
-    @hybrid_property
-    def nta_vorlesen(self) -> bool:
-        return self._nta_vorlesen
-
-    @nta_vorlesen.setter
-    def nta_vorlesen(self, value: bool) -> None:
-        self._nta_vorlesen = value
+    @validates("nta_ersgew")
+    def validate_nta_ersgew(self, key: str, value: bool) -> bool:
         self._update_nachteilsausgleich()
+        return value
 
-    @hybrid_property
-    def nta_other(self) -> bool:
-        return self._nta_other
-
-    @nta_other.setter
-    def nta_other(self, value: bool) -> None:
-        self._nta_other = value
+    @validates("nta_vorlesen")
+    def validate_nta_vorlesen(self, key: str, value: bool) -> bool:
         self._update_nachteilsausgleich()
+        return value
+
+    @validates("nta_other")
+    def validate_nta_other(self, key: str, value: bool) -> bool:
+        self._update_nachteilsausgleich()
+        return value
+
+    @validates("nta_other_details")
+    def validate_nta_other_details(self, key: str, value: str) -> str:
+        self.nta_other = (value is not None) and value != ""
+        self._update_nachteilsausgleich()
+        return value
 
     def __repr__(self):
         representation = (
