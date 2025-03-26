@@ -48,7 +48,11 @@ händisch eingeben. Auf dieser Grundlage lassen sich dann alle Formulare mit
 einem Befehl ausfüllen. Da das Abschreiben ausbleibt, werden so auch
 Fehlerquellen minimiert.
 
-Zu jedem mit edupsyadmin gespeicherten Fall kann außerdem ein
+edupsyadmin schätzt aus den gespeicherten Daten das Datum, an dem die Akten
+vernichtet werden können (3 Jahre nach Ende des Besuchs der Schule), sodass
+dieses Datum auf dem Mantelbogen vermerkt werden kann.
+
+Zu jedem mit edupsyadmin gespeicherten Fall kann ein
 Tätigkeitsbericht-Schlüsselbegriff und die Anzahl der auf den Fall verwendeten
 Stunden gespeichert werden. Dann kann edupsyadmin die Daten berechnen, die der
 Tätigkeitsbericht verlangt.
