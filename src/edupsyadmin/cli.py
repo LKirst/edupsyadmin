@@ -8,22 +8,22 @@ from inspect import getfullargspec
 
 from platformdirs import user_config_dir, user_data_path
 
-from . import __version__
-from .api.flatten_pdf import DEFAULT_LIBRARY, flatten_pdfs
+from edupsyadmin import __version__
+from edupsyadmin.api.flatten_pdf import DEFAULT_LIBRARY, flatten_pdfs
 
 # TODO: change the api so that mkreport works for CFT as well as LGVT
-from .api.lgvt import mk_report
-from .api.managers import (
+from edupsyadmin.api.lgvt import mk_report
+from edupsyadmin.api.managers import (
     create_documentation,
     delete_client,
     get_clients,
     new_client,
     set_client,
 )
-from .api.taetigkeitsbericht_from_db import taetigkeitsbericht
-from .core.config import config
-from .core.logger import logger
-from .info import info
+from edupsyadmin.api.taetigkeitsbericht_from_db import taetigkeitsbericht
+from edupsyadmin.core.config import config
+from edupsyadmin.core.logger import logger
+from edupsyadmin.info import info
 
 __all__ = ("main",)
 
