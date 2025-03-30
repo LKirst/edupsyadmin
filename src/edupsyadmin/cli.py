@@ -1,29 +1,18 @@
 """Implementation of the command line interface."""
 
+import importlib
 import importlib.resources
 import os
 import shutil
+import sys
 from argparse import ArgumentParser
 from inspect import getfullargspec
 
 from platformdirs import user_config_dir, user_data_path
 
 from edupsyadmin import __version__
-from edupsyadmin.api.flatten_pdf import DEFAULT_LIBRARY, flatten_pdfs
-
-# TODO: change the api so that mkreport works for CFT as well as LGVT
-from edupsyadmin.api.lgvt import mk_report
-from edupsyadmin.api.managers import (
-    create_documentation,
-    delete_client,
-    get_clients,
-    new_client,
-    set_client,
-)
-from edupsyadmin.api.taetigkeitsbericht_from_db import taetigkeitsbericht
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
-from edupsyadmin.info import info
 
 __all__ = ("main",)
 
@@ -40,6 +29,22 @@ DEFAULT_SALT_PATH = os.path.join(
     user_config_dir(appname="edupsyadmin", version=__version__, ensure_exists=True),
     "salt.txt",
 )
+
+
+# Lazy import utility function
+def lazy_import(name):
+    """
+    Lazy import utility function. This function is from the Python
+    documentation
+    (https://docs.python.org/3/library/importlib.html#implementing-lazy-imports).
+    """
+    spec = importlib.util.find_spec(name)
+    loader = importlib.util.LazyLoader(spec.loader)
+    spec.loader = loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    loader.exec_module(module)
+    return module
 
 
 def main(argv=None) -> int:
@@ -172,6 +177,8 @@ def _info(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
+    # Lazy import within the function
+    info = lazy_import("edupsyadmin.info").info
     parser = subparsers.add_parser(
         "info",
         parents=[common],
@@ -187,6 +194,8 @@ def _new_client(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
+    # Lazy import within the function
+    new_client = lazy_import("edupsyadmin.api.managers").new_client
     parser = subparsers.add_parser(
         "new_client",
         parents=[common],
@@ -234,6 +243,8 @@ def _set_client(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
+    # Lazy import within the function
+    set_client = lazy_import("edupsyadmin.api.managers").set_client
     parser = subparsers.add_parser(
         "set_client",
         parents=[common],
@@ -258,6 +269,8 @@ def _delete_client(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
+    # Lazy import within the function
+    delete_client = lazy_import("edupsyadmin.api.managers").delete_client
     # TODO: Write test
     parser = subparsers.add_parser(
         "delete_client", parents=[common], help="Delete a client in the database"
@@ -274,6 +287,8 @@ def _get_clients(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
+    # Lazy import within the function
+    get_clients = lazy_import("edupsyadmin.api.managers").get_clients
     parser = subparsers.add_parser(
         "get_clients",
         parents=[common],
@@ -300,6 +315,8 @@ def _create_documentation(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
+    # Lazy import within the function
+    create_documentation = lazy_import("edupsyadmin.api.managers").create_documentation
     parser = subparsers.add_parser(
         "create_documentation",
         parents=[common],
@@ -325,6 +342,8 @@ def _mk_report(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
+    # Lazy import within the function
+    mk_report = lazy_import("edupsyadmin.api.lgvt").mk_report
     parser = subparsers.add_parser("mk_report", parents=[common])
     parser.set_defaults(
         command=mk_report,
@@ -338,6 +357,9 @@ def _mk_report(subparsers, common):
 
 
 def _flatten_pdfs(subparsers, common):
+    # Lazy import within the function
+    flatten_pdfs = lazy_import("edupsyadmin.api.flatten_pdf").flatten_pdfs
+    DEFAULT_LIBRARY = lazy_import("edupsyadmin.api.flatten_pdf").DEFAULT_LIBRARY
     parser = subparsers.add_parser(
         "flatten_pdfs",
         parents=[common],
@@ -359,6 +381,10 @@ def _taetigkeitsbericht(subparsers, common):
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
+    # Lazy import within the function
+    taetigkeitsbericht = lazy_import(
+        "edupsyadmin.api.taetigkeitsbericht_from_db"
+    ).taetigkeitsbericht
     parser = subparsers.add_parser(
         "taetigkeitsbericht",
         parents=[common],
