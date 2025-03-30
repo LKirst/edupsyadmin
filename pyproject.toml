@@ -61,6 +61,7 @@ dev = [
     "types-greenlet>=3.1.0.20241221",
     "sphinx-rtd-theme>=3.0.2",
     "alembic>=1.14.1",
+    "snakeviz>=2.2.2",
 ]
 
 [tool.commitizen]
