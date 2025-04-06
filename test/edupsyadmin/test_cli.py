@@ -77,6 +77,8 @@ def test_config_template(mock_keyring, tmp_path_factory):
     database_url = f"sqlite:///{database_path}"
     config_path = str(tmp_dir / "mock_conf.yml")
     args = [
+        "-w",
+        "DEBUG",
         "-c",
         config_path,
         "info",
@@ -95,6 +97,8 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
     args = [
+        "-w",
+        "DEBUG",
         "-c",
         str(mock_config[0]),
         "new_client",
@@ -120,6 +124,8 @@ def test_get_clients(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path)
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
     args = [
+        "-w",
+        "DEBUG",
         "-c",
         str(mock_config[0]),
         "new_client",
@@ -138,6 +144,8 @@ def test_get_clients(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path)
 
     # test get_clients
     args = [
+        "-w",
+        "DEBUG",
         "-c",
         str(mock_config[0]),
         "get_clients",
@@ -165,6 +173,8 @@ def test_create_documentation(
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
     args = [
+        "-w",
+        "DEBUG",
         "-c",
         str(mock_config[0]),
         "new_client",
@@ -184,6 +194,8 @@ def test_create_documentation(
     # create documentation
     client_id = 1
     args = [
+        "-w",
+        "DEBUG",
         "-c",
         str(mock_config[0]),
         "create_documentation",
