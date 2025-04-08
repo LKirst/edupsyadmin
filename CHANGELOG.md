@@ -1,3 +1,26 @@
+## 4.0.0a0 (2025-04-08)
+
+### BREAKING CHANGE
+
+- add new variable to db model (nos_rs)
+- several nta client attributes were renamed which will break any forms you used with edupsyadmin
+
+### Feat
+
+- **clients.py**: add nos_rs to db model
+- add some nta attributes to clients, rename some, add setters and getters
+
+### Fix
+
+- **cli.py**: make lazy imports truly lazy
+- **clients.py**: replace getters and setters with @validates functions
+- **clients.py**: add correct column name to mapped_column calls with private attributes
+
+### Refactor
+
+- **cli.py**: use lazy import to speed up execution
+- **config.py**: remove the option to use environment variables for config
+
 ## 3.3.1 (2025-03-20)
 
 ### Refactor
