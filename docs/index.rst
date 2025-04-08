@@ -43,12 +43,12 @@ werden auf
 
 - dem Vordruck der Gewährung der Schulleitung
 
-  Mit edupsyadmin lassen sich die Daten aus Webuntis importieren
-  oder einmalig händisch eingeben. Auf dieser Grundlage lassen sich
-  dann `PDF-Formulare
-  <https://de.wikipedia.org/wiki/Portable_Document_Format#Formularprozesse>`_
-  mit einem Befehl ausfüllen. Da das Abschreiben ausbleibt, werden
-  so auch Fehlerquellen minimiert.
+Mit edupsyadmin lassen sich die Daten aus Webuntis importieren oder
+einmalig händisch eingeben. Auf dieser Grundlage lassen sich dann
+`PDF-Formulare
+<https://de.wikipedia.org/wiki/Portable_Document_Format#Formularprozesse>`_
+mit einem Befehl ausfüllen. Da das Abschreiben ausbleibt, werden so auch
+Fehlerquellen minimiert.
 
 edupsyadmin schätzt aus den gespeicherten Daten das Datum, an dem die Akten
 vernichtet werden können (3 Jahre nach Ende des Besuchs der Schule), sodass
