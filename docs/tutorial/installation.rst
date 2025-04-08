@@ -126,8 +126,11 @@ alle Werte zu den Daten, die in deiner Dokumentation erscheinen sollen.
 
 .. caution::
 
-    In dem Yaml-Dateiformat der Konfigurationsdatei haben Leerzeichen Bedeutung.
-    Verändere also bitte keine Einrückung (die Anzahl Leerzeichen vor einem Wert).
+    In dem `Yaml-Dateiformat
+    <https://de.wikipedia.org/wiki/YAML>`_ der
+    Konfigurationsdatei haben Leerzeichen Bedeutung.  Verändere
+    also bitte keine Einrückung (die Anzahl Leerzeichen vor
+    einem Wert).
 
 1. Ersetze zuerst ``sample.username`` durch deinen Benutzernamen (keine Leerzeichen
    und keine Sonderzeichen) in der Zeile mit ``app_username``:
