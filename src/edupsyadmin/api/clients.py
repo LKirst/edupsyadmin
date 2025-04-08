@@ -117,15 +117,22 @@ class Client(Base):
     notenschutz: Mapped[bool] = mapped_column(
         Boolean, default=False, doc="Gibt an, ob der Klient Notenschutz hat"
     )
-    # TODO: Add nos_rs
+    nos_rs: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc="Gibt an, ob der Klient Notenschutz für die Rechtschreibung hat",
+    )
     nos_rs_ausn: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
-        doc="Gibt an, ob einige Fächer vom Notenschutz ausgenommen sind",
+        doc=(
+            "Gibt an, ob einige Fächer vom Notenschutz (Rechtschreibung) "
+            "ausgenommen sind"
+        ),
     )
     nos_rs_ausn_faecher: Mapped[Optional[str]] = mapped_column(
         String,
-        doc="Fächer, die vom Notenschutz ausgenommen sind",
+        doc="Fächer, die vom Notenschutz (Rechtschreibung) ausgenommen sind",
     )
     nos_les: Mapped[bool] = mapped_column(
         Boolean,
@@ -231,9 +238,11 @@ class Client(Base):
         telephone2: str = "",
         email: str = "",
         notes: str = "",
-        notenschutz: bool = False,
+        notenschutz: bool | None = None,
+        nos_rs: bool = False,
         nos_rs_ausn_faecher: str | None = None,
         nos_les: bool = False,
+        nachteilsausgleich: bool | None = None,
         nta_zeitv_vieltext: int | None = None,
         nta_zeitv_wenigtext: int | None = None,
         nta_font: bool = False,
@@ -244,7 +253,6 @@ class Client(Base):
         nta_vorlesen: bool = False,
         nta_other_details: str | None = None,
         nta_notes: str | None = None,
-        nachteilsausgleich: bool | None = None,
         lrst_diagnosis: str | None = None,
         keyword_taetigkeitsbericht: str | None = "",
         n_sessions: int = 1,
@@ -291,13 +299,18 @@ class Client(Base):
         self.lrst_diagnosis = lrst_diagnosis
 
         # Notenschutz
-        self.notenschutz = notenschutz
+        self.nos_rs = nos_rs
         self.nos_rs_ausn_faecher = nos_rs_ausn_faecher
         if nos_rs_ausn_faecher:
             self.nos_rs_ausn = True
         else:
             self.nos_rs_ausn = False
         self.nos_les = nos_les
+        if notenschutz is None:
+            self.notenschutz = self.nos_rs or self.nos_les
+        else:
+            # TODO: remove notenschutz as an argument in init
+            self.notenschutz = notenschutz
 
         # Nachteilsausgleich
         self.nta_zeitv_vieltext = nta_zeitv_vieltext
@@ -345,6 +358,16 @@ class Client(Base):
     @validates("nos_rs_ausn_faecher")
     def validate_nos_rs_ausn_faecher(self, key: str, value: str | None) -> str | None:
         self.nos_rs_ausn = (value is not None) and (value > 0)
+        return value
+
+    @validates("nos_rs")
+    def validate_nos_rs(self, key: str, value: bool) -> bool:
+        self.nachteilsausgleich = self.nos_rs or self.nos_les
+        return value
+
+    @validates("nos_les")
+    def validate_nos_les(self, key: str, value: bool) -> bool:
+        self.nachteilsausgleich = self.nos_rs or self.nos_les
         return value
 
     @validates("nta_zeitv_vieltext")
