@@ -209,6 +209,7 @@ def set_client(
     pairs_list = [pair.split("=") for pair in key_value_pairs]
     for key, value in pairs_list:
         if key in BOOLEAN_COLS:
+            # TODO: Add try-except
             value = bool(int(value))
         if key == "keyword_taetigkeitsbericht":
             value = check_keyword(value)
