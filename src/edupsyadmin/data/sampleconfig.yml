@@ -6,19 +6,19 @@ core:
 schoolpsy:
   schoolpsy_name: "Firstname Lastname"
   schoolpsy_street: "Beispielstr. 1"
-  schoolpsy_town: "87700 Beispielstadt"
+  schoolpsy_city: "87700 Beispielstadt"
 school:
   FirstSchool: # short name 1st school
     school_head_w_school: "Außenstellenleitung der Berufsfachschule" # title of the principle
     school_name: "Berufsfachschule Kinderpflege" # name of your school (written out)
     school_street: "Beispielstr. 1" # street and house number of your school
-    school_town: "87700 Beispielstadt" # postcode and town of your school
+    school_city: "87700 Beispielstadt" # postcode and town of your school
     end: 11 # grade after which students (typically) graduate from / leave your school
   SecondSchool: # short name 2nd school (optional)
     school_head_w_school: "Schulleitung der beruflichen Oberschulen Beispielstadt"
     school_name: "Fachoberschule"
     school_street: "Platzhalterweg 2"
-    school_town: "87700 Beispielstadt"
+    school_city: "87700 Beispielstadt"
     end: 13
 form_set: # sets of file paths for create_documentation; replace with your sets
   lrst:

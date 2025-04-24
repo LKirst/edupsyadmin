@@ -31,22 +31,21 @@ def test_add_convenience_data(mock_get_subjects, mock_config):
 
     # Assertions
     assert result["name"] == "John Doe"
-    assert result["address"] == "456 Example Rd, Example City"
-    assert result["address_multiline"] == "John Doe\n456 Example Rd\nExample City"
+    assert result["addr_s_nname"] == "456 Example Rd, Example City"
+    assert result["addr_m_wname"] == "John Doe\n456 Example Rd\nExample City"
     assert result["school_name"] == "Berufsfachschule Kinderpflege"
     assert result["school_street"] == "Beispielstr. 1"
-    assert result["school_head_w_school"] == "Außenstellenleitung der Berufsfachschule"
-    assert result["nos_subjects"] == "Math, Science, History"
     assert (
-        result["nos_measures"] == "Verzicht auf die Bewertung der Rechtschreibleistung"
+        result["school_addr_s_wname"]
+        == "Berufsfachschule Kinderpflege, Beispielstr. 1, 87700 Beispielstadt"
     )
-    assert result["nta_subjects"] == "Math, Science, History"
-    assert result["nta_measures"] == (
-        "Verlängerung der regulären Arbeitszeit um bis zu 25% bei schriftlichen "
-        "Leistungsnachweisen und der Vorbereitungszeit bei "
-        "mündlichen Leistungsnachweisen"
-    )
+    assert result["school_head_w_school"] == "Außenstellenleitung der Berufsfachschule"
+    assert result["school_subjects"] == "Math, Science, History"
     assert result["lrst_diagnosis_long"] == "Lese-Rechtschreib-Störung"
+    assert (
+        result["schoolpsy_addr_m_wname"]
+        == "Firstname Lastname\nBeispielstr. 1\n87700 Beispielstadt"
+    )
     # Check dates
     assert result["date_today_de"] is not None  # Check if date is added
     assert result["birthday_de"] == "01.01.2000"

@@ -8,4 +8,9 @@ Unten beschriebene Variablen der Datenbank, die auf "_encr" enden
 .. autoclass:: edupsyadmin.api.clients.Client
    :members:
 
-.. TODO: add documentation for add_convenience_data
+Auf Grundlage der Daten der Datenbank werden mit der Funktion
+`add_convenience_data` folgende  weitere Variablen zusammengesetzt, die auch in
+Formularen verwendet werden können:
+
+.. automodule:: edupsyadmin.api.add_convenience_data
+   :members: add_convenience_data
