@@ -402,13 +402,21 @@ class Client(Base):
         return value
 
     @validates("nta_zeitv_vieltext")
-    def validate_nta_zeitv_vieltext(self, key: str, value: int | None) -> int | None:
+    def validate_nta_zeitv_vieltext(
+        self, key: str, value: str | int | None
+    ) -> int | None:
+        if isinstance(value, str):
+            value = int(value)
         self.nta_zeitv = (value is not None) and (value > 0)
         self._update_nachteilsausgleich()
         return value
 
     @validates("nta_zeitv_wenigtext")
-    def validate_nta_zeitv_wenigtext(self, key: str, value: int | None) -> int | None:
+    def validate_nta_zeitv_wenigtext(
+        self, key: str, value: str | int | None
+    ) -> int | None:
+        if isinstance(value, str):
+            value = int(value)
         self.nta_zeitv = (value is not None) and (value > 0)
         self._update_nachteilsausgleich()
         return value
