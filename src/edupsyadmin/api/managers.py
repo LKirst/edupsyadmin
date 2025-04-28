@@ -17,13 +17,19 @@ from edupsyadmin.core.logger import logger
 
 BOOLEAN_COLS = [
     "notenschutz",
+    "nos_rs",
+    "nos_rs_ausn",
+    "nos_les",
     "nachteilsausgleich",
+    "nta_zeitv",
     "nta_font",
-    "nta_aufgabentypen",
-    "nta_strukturierungshilfen",
-    "nta_arbeitsmittel",
-    "nta_ersatz_gewichtung",
+    "nta_aufg",
+    "nta_struktur",
+    "nta_arbeitsm",
+    "nta_ersgew",
     "nta_vorlesen",
+    "nta_other",
+    "nta_nos_end",
 ]
 
 
@@ -208,6 +214,7 @@ def set_client(
     )
     pairs_list = [pair.split("=") for pair in key_value_pairs]
     for key, value in pairs_list:
+        # TODO: use `validate` methods in clients.py
         if key in BOOLEAN_COLS:
             # TODO: Add try-except
             value = bool(int(value))
