@@ -107,6 +107,13 @@ class Client(Base):
         ),
         doc="Diagnose im Zusammenhang mit LRSt, iLst oder iRst",
     )
+    lrst_last_test: Mapped[Optional[str]] = mapped_column(
+        String,
+        doc=(
+            "Datum (YYYY-MM-DD) der letzten Testung im Zusammenhang "
+            "einer Überprüfung von LRSt"
+        ),
+    )
     datetime_created: Mapped[datetime] = mapped_column(
         DateTime, doc="Zeitstempel, wann der Klienten-Datensatz erstellt wurde"
     )
@@ -272,6 +279,7 @@ class Client(Base):
         nta_notes: str | None = None,
         nta_nos_end_grade: int | None = None,
         lrst_diagnosis: str | None = None,
+        lrst_last_test: str | None = None,
         keyword_taetigkeitsbericht: str | None = "",
         n_sessions: int = 1,
     ) -> None:
@@ -314,7 +322,9 @@ class Client(Base):
             )
 
         self.keyword_taetigkeitsbericht = check_keyword(keyword_taetigkeitsbericht)
+
         self.lrst_diagnosis = lrst_diagnosis
+        self.lrst_last_test = lrst_last_test
 
         # Notenschutz
         self.nos_rs = nos_rs
