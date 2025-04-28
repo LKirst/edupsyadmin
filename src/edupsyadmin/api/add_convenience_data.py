@@ -77,6 +77,7 @@ def add_convenience_data(data: dict) -> dict:
         - **school_addr_s_wname**: Adresse der Schule,
         - **school_addr_m_wname**: Adresse der Schule mit Zeilenumbrüchen,
         - **lrst_diagnosis_long**: Ausgeschriebene LRSt-Diagnose,
+        - **lrst_last_test_de**: Datum des letzten Tests, im Format DD.MM.YYYY,
         - **date_today_de**: Heutiges Datum, im Format DD.MM.YYYY,
         - **birthday_de**: Geburtsdatum des Schülers im Format DD.MM.YYYY,
         - **document_shredding_date_de**: Datum für Aktenvernichtung im Format
@@ -133,13 +134,13 @@ def add_convenience_data(data: dict) -> dict:
     # for forms, I use the format dd.mm.YYYY; internally, I use YYYY-mm-dd
     today = date.today()
     data["date_today_de"] = today.strftime("%d.%m.%Y")
-    try:
-        data["birthday_de"] = parse(data["birthday"], dayfirst=False).strftime(
-            "%d.%m.%Y"
-        )
-    except ValueError:
-        logger.error("The birthday could not be parsed: {e}")
-        data["birthday_de"] = ""
+    for isodate in ["birthday", "lrst_last_test"]:
+        germandate = isodate + "_de"
+        try:
+            data[germandate] = parse(data[isodate], dayfirst=False).strftime("%d.%m.%Y")
+        except ValueError:
+            logger.error("The date '{isodate}' could not be parsed: {e}")
+            data[germandate] = ""
     data["school_year"] = get_this_academic_year_string()
     data["document_shredding_date_de"] = data["document_shredding_date"].strftime(
         "%d.%m.%Y"
