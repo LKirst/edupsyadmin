@@ -3,7 +3,11 @@ from importlib.resources import files
 
 from dateutil.parser import parse
 
-from edupsyadmin.api.academic_year import get_this_academic_year_string
+from edupsyadmin.api.academic_year import (
+    get_academic_year_string,
+    get_estimated_end_of_academic_year,
+    get_this_academic_year_string,
+)
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 
@@ -41,18 +45,11 @@ def get_addr_multiline(street: str, city: str, name: str | None = None) -> str:
 
 def add_convenience_data(data: dict) -> dict:
     """
-    Füge Daten hinzu, die sich aus den gegebenen Daten ableiten.
+    Füge Daten hinzu, die sich aus einem Eintrag in einer `Client`-Datenbank,
+    der Konfigurationsdatei und einer Datei zu den Schulfächern (optional)
+    ableiten.
 
-    :param data: ein Dictionary, das die folgenden Schlüssel beinhaltet:
-        "last_name",
-        "first_name",
-        "street",
-        "city".
-        "birthday",
-        "lrst_diagnosis",
-        "document_shredding_date".
-
-        Außerdem werden folgende Einträge aus der Konfigurationsdatei entnommen:
+    Der Konfigurationsdatei werden folgende Werte entnommen:
         "school_name",
         "school_street",
         "school_city",
@@ -61,23 +58,31 @@ def add_convenience_data(data: dict) -> dict:
         "schoolpy_street",
         "schoolpy_city",
 
-        Wenn eine Datei zu den Fächern angelegt ist, wird dieser entnommen:
+    Wenn eine Datei zu den Fächern angelegt ist, wird dieser entnommen:
         "school_subjects"
+
+    :param data: ein Dictionary, mit den Werten eines Eintrags in einer
+        `Client` Datenbank
 
     :return: das ursprüngliche dict mit den Feldern aus der Konfigurationsdatei
     und folgenden neuen Feldern:
 
-        - "name": Vor- und Nachname,
-        - "addr_s_nname": Adresse in einer Zeile ohne Name,
-        - "addr_m_wname": Adresse mit Zeilenumbrüchen mit Name,
-        - "schoolpsy_addr_s_wname": Adresse des Nutzers in einer Ziele mit Name,
-        - "schoolpsy_addr_m_wname" Adresse des Nutzers mit Zeilenumbrüchen mit Name,
-        - "school_addr_s_wname": Adresse der Schule,
-        - "school_addr_m_wname": Adresse der Schule mit Zeilenumbrüchen,
-        - "lrst_diagnosis_long": Ausgeschriebene LRSt-Diagnose,
-        - "date_today_de": Heutiges Datum, im Format DD.MM.YYYY,
-        - "birthday_de": Geburtsdatum des Schülers im Format DD.MM.YYYY,
-        - "document_shredding_date_de": Datum für Aktenvernichtung im Format DD.MM.YYYY
+        - **name**: Vor- und Nachname,
+        - **addr_s_nname**: Adresse in einer Zeile ohne Name,
+        - **addr_m_wname**: Adresse mit Zeilenumbrüchen mit Name,
+        - **schoolpsy_addr_s_wname**: Adresse des Nutzers in einer Ziele mit
+          Name,
+        - **schoolpsy_addr_m_wname** Adresse des Nutzers mit Zeilenumbrüchen
+          mit Name,
+        - **school_addr_s_wname**: Adresse der Schule,
+        - **school_addr_m_wname**: Adresse der Schule mit Zeilenumbrüchen,
+        - **lrst_diagnosis_long**: Ausgeschriebene LRSt-Diagnose,
+        - **date_today_de**: Heutiges Datum, im Format DD.MM.YYYY,
+        - **birthday_de**: Geburtsdatum des Schülers im Format DD.MM.YYYY,
+        - **document_shredding_date_de**: Datum für Aktenvernichtung im Format
+          DD.MM.YYYY,
+        - **nta_nos_end_schoolyear**: Schuljahr bis zu dem NTA und Notenschutz
+          begrenzt sind
     """
     # client address
     data["name"] = data["first_name"] + " " + data["last_name"]
@@ -139,5 +144,11 @@ def add_convenience_data(data: dict) -> dict:
     data["document_shredding_date_de"] = data["document_shredding_date"].strftime(
         "%d.%m.%Y"
     )
+    if data["nta_nos_end"]:
+        data["nta_nos_end_schoolyear"] = get_academic_year_string(
+            get_estimated_end_of_academic_year(
+                grade_current=data["class_int"], grade_target=data["nta_nos_end_grade"]
+            )
+        )
 
     return data

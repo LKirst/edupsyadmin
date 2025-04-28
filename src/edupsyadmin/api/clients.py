@@ -78,6 +78,7 @@ class Client(Base):
             "(Kurzname wie in der Konfiguration festgelegt)"
         ),
     )
+    # TODO: store all dates in date format?
     entry_date: Mapped[Optional[str]] = mapped_column(
         String, doc="Eintrittsdatum des Klienten in das System"
     )
@@ -210,6 +211,22 @@ class Client(Base):
         doc="Details zu anderen Formen des NTAs für den Klienten",
     )
     nta_notes: Mapped[Optional[str]] = mapped_column(String, doc="Notizen zu NTA")
+    nta_nos_end: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc=(
+            "Gibt an, ob der Nachteilsasugleich und Notenschutzmaßnahmen "
+            "zeitlich begrenzt sind (Default: False, auch bei "
+            "keinem Nachteilsausgleich oder Notenschutz)"
+        ),
+    )
+    nta_nos_end_grade: Mapped[Optional[int]] = mapped_column(
+        String,
+        doc=(
+            "Jahrgangsstufe bis deren Ende Nachteilsausgleich- und "
+            "Notenschutzmaßnahmen zeitlich begrenzt sind"
+        ),
+    )
 
     n_sessions: Mapped[float] = mapped_column(
         Float,
@@ -253,6 +270,7 @@ class Client(Base):
         nta_vorlesen: bool = False,
         nta_other_details: str | None = None,
         nta_notes: str | None = None,
+        nta_nos_end_grade: int | None = None,
         lrst_diagnosis: str | None = None,
         keyword_taetigkeitsbericht: str | None = "",
         n_sessions: int = 1,
@@ -331,6 +349,9 @@ class Client(Base):
         else:
             self.nta_other = False
         self.nta_notes = nta_notes
+        self.nta_nos_end_grade = nta_nos_end_grade
+        self.nta_nos_end = self.nta_nos_end_grade is not None
+
         if nachteilsausgleich is None:
             self.nachteilsausgleich = self._update_nachteilsausgleich()
         else:
@@ -421,6 +442,11 @@ class Client(Base):
     def validate_nta_other_details(self, key: str, value: str) -> str:
         self.nta_other = (value is not None) and value != ""
         self._update_nachteilsausgleich()
+        return value
+
+    @validates("nta_nos_end_grade")
+    def validate_nta_nos_end_grade(self, key: str, value: int | None) -> int:
+        self.nta_nos_end = value is not None
         return value
 
     def __repr__(self):
