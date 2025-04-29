@@ -145,7 +145,7 @@ alle Werte zu den Daten, die in deiner Dokumentation erscheinen sollen.
 
     schoolpsy_name: "Schreibe hier deinen Namen aus"
     schoolpsy_street: "Deine Straße und Hausnummer"
-    schoolpsy_town: "Postleitzahl und Stadt"
+    schoolpsy_city: "Postleitzahl und Stadt"
 
 3. Ändere unter ``school`` den Kurznamen deiner Schule zu etwas einprägsamerem
    als ``FirstSchool``. Verwende keine Leerzeichen oder Sonderzeichen. In
@@ -167,7 +167,7 @@ alle Werte zu den Daten, die in deiner Dokumentation erscheinen sollen.
     school_head_w_school: "Titel deiner Schulleitung"
     school_name: "Name deiner Schule ausgeschrieben"
     school_street: "Straße und Hausnummer deiner Schule"
-    school_town: "Postleitzahl und Stadt"
+    school_city: "Postleitzahl und Stadt"
     end: 11
 
 5. Wiederhole Schritt 3 und 4 für jede Schule, an der du tätig bist.

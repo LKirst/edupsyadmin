@@ -65,7 +65,7 @@ def add_convenience_data(data: dict) -> dict:
         `Client` Datenbank
 
     :return: das ursprüngliche dict mit den Feldern aus der Konfigurationsdatei
-    und folgenden neuen Feldern:
+        und folgenden neuen Feldern:
 
         - **name**: Vor- und Nachname,
         - **addr_s_nname**: Adresse in einer Zeile ohne Name,
