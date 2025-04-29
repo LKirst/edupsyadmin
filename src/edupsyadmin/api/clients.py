@@ -363,7 +363,7 @@ class Client(Base):
         self.nta_nos_end = self.nta_nos_end_grade is not None
 
         if nachteilsausgleich is None:
-            self.nachteilsausgleich = self._update_nachteilsausgleich()
+            self._update_nachteilsausgleich()
         else:
             # TODO: remove nachteilsausgleich as an argument in init
             self.nachteilsausgleich = nachteilsausgleich
@@ -388,7 +388,9 @@ class Client(Base):
 
     @validates("nos_rs_ausn_faecher")
     def validate_nos_rs_ausn_faecher(self, key: str, value: str | None) -> str | None:
-        self.nos_rs_ausn = (value is not None) and (value > 0)
+        # set nos_rs_ausn to True if the value of nos_rs_ausn_faecher is
+        # neither None nor an empty string
+        self.nos_rs_ausn = (value is not None) and bool(value.strip())
         return value
 
     @validates("nos_rs")
