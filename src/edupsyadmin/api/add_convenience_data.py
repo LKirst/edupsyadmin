@@ -139,8 +139,12 @@ def add_convenience_data(data: dict) -> dict:
         try:
             data[germandate] = parse(data[isodate], dayfirst=False).strftime("%d.%m.%Y")
         except ValueError:
-            logger.error("The date '{isodate}' could not be parsed: {e}")
+            logger.error(
+                "The string '{data[isodate]}' could not be parsed as a date: {e}"
+            )
             data[germandate] = ""
+        except TypeError:
+            logger.debug("The value of '{isodate}' is not a string: {e}")
     data["school_year"] = get_this_academic_year_string()
     data["document_shredding_date_de"] = data["document_shredding_date"].strftime(
         "%d.%m.%Y"
