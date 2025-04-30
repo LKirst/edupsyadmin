@@ -175,9 +175,7 @@ def _args(argv: Optional[List[str]]):
     return args
 
 
-def _info(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _info(subparsers: _SubParsersAction, common: ArgumentParser) -> None:
     """CLI adaptor for the info command.
 
     :param subparsers: subcommand parsers
@@ -203,9 +201,7 @@ def _info(
     parser.set_defaults(command=command_info)
 
 
-def _new_client(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _new_client(subparsers: _SubParsersAction, common: ArgumentParser) -> None:
     """CLI adaptor for the api.clients.new_client command.
 
     :param subparsers: subcommand parsers
@@ -266,9 +262,7 @@ def _new_client(
     )
 
 
-def _set_client(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _set_client(subparsers: _SubParsersAction, common: ArgumentParser) -> None:
     """CLI adaptor for the api.clients.set_client command.
 
     :param subparsers: subcommand parsers
@@ -299,9 +293,7 @@ def _set_client(
     )
 
 
-def _delete_client(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _delete_client(subparsers: _SubParsersAction, common: ArgumentParser) -> None:
     """CLI adaptor for the api.managers.delete_client command.
 
     :param subparsers: subcommand parsers
@@ -322,9 +314,7 @@ def _delete_client(
     parser.add_argument("client_id", type=int, help="id of the client to delete")
 
 
-def _get_clients(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _get_clients(subparsers: _SubParsersAction, common: ArgumentParser) -> None:
     """CLI adaptor for the api.clients.get_na_ns command.
 
     :param subparsers: subcommand parsers
@@ -358,7 +348,7 @@ def _get_clients(
 
 
 def _create_documentation(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
+    subparsers: _SubParsersAction, common: ArgumentParser
 ) -> None:
     """CLI adaptor for the api.clients.create_documentation command.
 
@@ -399,9 +389,7 @@ def _create_documentation(
     parser.add_argument("form_paths", nargs="*", help="form file paths")
 
 
-def _mk_report(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _mk_report(subparsers: _SubParsersAction, common: ArgumentParser) -> None:
     """CLI adaptor for the api.lgvt.mk_report command.
 
     :param subparsers: subcommand parsers
@@ -440,9 +428,7 @@ def _mk_report(
     )
 
 
-def _flatten_pdfs(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _flatten_pdfs(subparsers: _SubParsersAction, common: ArgumentParser) -> None:
     def command_flatten_pdfs(form_paths, library):
         flatten_pdfs = lazy_import("edupsyadmin.api.flatten_pdf").flatten_pdfs
         flatten_pdfs(form_paths, library)
@@ -461,9 +447,7 @@ def _flatten_pdfs(
     parser.add_argument("form_paths", nargs="+")
 
 
-def _taetigkeitsbericht(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _taetigkeitsbericht(subparsers: _SubParsersAction, common: ArgumentParser) -> None:
     """CLI adaptor for the api.taetigkeitsbericht_from_db.taetigkeitsbericht command.
 
     :param subparsers: subcommand parsers
