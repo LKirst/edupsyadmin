@@ -19,6 +19,7 @@ input_data = {
     "nta_nos_end_grade": 8,
     "document_shredding_date": date(2025, 12, 24),
     "lrst_diagnosis": "lrst",
+    "lrst_last_test": "2025-05-11",
 }
 
 

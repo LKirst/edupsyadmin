@@ -124,6 +124,7 @@ def mock_webuntis(tmp_path: Path) -> Path:
             "nta_nos_end_grade": 11,
             "nachteilsausgleich": True,
             "lrst_diagnosis": "iLst",
+            "lrst_last_test": "2025-05-11",
         },
         {
             "client_id": 2,
@@ -143,6 +144,7 @@ def mock_webuntis(tmp_path: Path) -> Path:
             "nta_nos_end_grade": None,
             "nachteilsausgleich": False,
             "lrst_diagnosis": None,
+            "lrst_last_test": None,
         },
     ],
     scope="session",
