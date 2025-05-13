@@ -17,14 +17,14 @@ def input_int_or_none(prompt: str) -> int | None:
         return None
 
 
-def safe_iq_to_t(iq_value):
+def safe_iq_to_t(iq_value: int | None) -> float | None:
     """Avoid errors with None values"""
     if iq_value is None:
         return None
     return round(iq_to_t(iq_value), 2)
 
 
-def create_report(path):
+def create_report(path: str | os.PathLike[str]) -> None:
     client_id = int(input("Client ID: "))
     birthday = datetime.strptime(
         input("Geburtsdatum (YYYY-mm-dd): "), "%Y-%m-%d"

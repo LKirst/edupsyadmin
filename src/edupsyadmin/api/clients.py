@@ -465,11 +465,11 @@ class Client(Base):
         return value
 
     @validates("nta_nos_end_grade")
-    def validate_nta_nos_end_grade(self, key: str, value: int | None) -> int:
+    def validate_nta_nos_end_grade(self, key: str, value: int | None) -> int | None:
         self.nta_nos_end = value is not None
         return value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         representation = (
             f"<Client(id='{self.client_id}', "
             f"sc='{self.school}', "

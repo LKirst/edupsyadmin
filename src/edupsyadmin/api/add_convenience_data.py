@@ -1,5 +1,6 @@
 from datetime import date
 from importlib.resources import files
+from typing import Any
 
 from dateutil.parser import parse
 
@@ -43,7 +44,7 @@ def get_addr_multiline(street: str, city: str, name: str | None = None) -> str:
         return name + "\n" + street + "\n" + city
 
 
-def add_convenience_data(data: dict) -> dict:
+def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
     """
     Füge Daten hinzu, die sich aus einem Eintrag in einer `Client`-Datenbank,
     der Konfigurationsdatei und einer Datei zu den Schulfächern (optional)

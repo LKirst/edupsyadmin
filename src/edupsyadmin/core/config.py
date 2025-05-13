@@ -8,18 +8,19 @@ this object to store application-wide configuration values.
 from os import PathLike
 from re import compile
 from string import Template
+from typing import Any
 
-from yaml import Node, SafeLoader, safe_load
+from yaml import SafeLoader, ScalarNode, safe_load
 
 from .logger import logger
 
 __all__ = "config", "YamlConfig"
 
 
-class _AttrDict(dict):
+class _AttrDict(dict[str, Any]):
     """A dict-like object with attribute access."""
 
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str) -> Any:
         """Access dict values by key.
 
         :param key: key to retrieve
@@ -43,14 +44,13 @@ class _AttrDict(dict):
         """
         return self[key]
 
-    def __setattr__(self, key: str, value: object):
+    def __setattr__(self, key: str, value: object) -> None:
         """Set dict values as attributes.
 
         :param key: key to set
         :param value: new value for key
         """
         self[key] = value
-        return
 
 
 class YamlConfig(_AttrDict):
@@ -61,8 +61,11 @@ class YamlConfig(_AttrDict):
     """
 
     def __init__(
-        self, path: list[str | PathLike] | str | PathLike = None, root=None, params=None
-    ):
+        self,
+        path: list[str | PathLike[str]] | str | PathLike[str] | None = None,
+        root: str | None = None,
+        params: dict[str, Any] | None = None,
+    ) -> None:
         """Initialize this object.
 
         :param path: config file path to load
@@ -72,10 +75,12 @@ class YamlConfig(_AttrDict):
         super(YamlConfig, self).__init__()
         if path:
             self.load(path, root, params)
-        return
 
     def load(
-        self, path: list[str | PathLike] | str | PathLike, root=None, params=None
+        self,
+        path: list[str | PathLike[str]] | str | PathLike[str],
+        root: str | None = None,
+        params: dict[str, Any] | None = None,
     ) -> None:
         """Load data from YAML configuration files.
 
@@ -84,15 +89,18 @@ class YamlConfig(_AttrDict):
         overwrite the existing value. If a root is specified the config data
         will be loaded under that attribute.
 
-        :param path: config file path to load
+        :param path: config file path(s) to load
         :param root: place config values at this root
         :param params: mapping of parameter substitutions
         """
+        if isinstance(path, (str, PathLike)):
+            path = [path]
+
         tag = _ParameterTag(params)
         tag.add(SafeLoader)
-        for path in [path] if isinstance(path, str) else path:
-            with open(path, "r", encoding="UTF-8") as stream:
-                logger.info(f"reading config data from '{path}'")
+        for p in path:
+            with open(p, "r", encoding="UTF-8") as stream:
+                logger.info(f"reading config data from '{p}'")
                 data = safe_load(stream)
             try:
                 if root:
@@ -100,8 +108,7 @@ class YamlConfig(_AttrDict):
                 else:
                     self.update(data)
             except TypeError:  # data is None
-                logger.warning(f"config file {path} is empty")
-        return
+                logger.warning(f"config file {p} is empty")
 
 
 class _ParameterTag(object):
@@ -113,7 +120,7 @@ class _ParameterTag(object):
 
     NAME = "param"
 
-    def __init__(self, params=None):
+    def __init__(self, params: dict[str, Any] | None = None) -> None:
         """Initialize this object.
 
         :param params: key-value replacement mapping
@@ -121,9 +128,8 @@ class _ParameterTag(object):
         self._params = {}
         if params:
             self._params.update(params)
-        return
 
-    def __call__(self, loader: SafeLoader, node: Node) -> str:
+    def __call__(self, loader: SafeLoader, node: ScalarNode) -> str:
         """Implement the tag constructor interface.
 
         :param loader: YAML loader
@@ -141,12 +147,11 @@ class _ParameterTag(object):
 
         :param loader: loader class
         """
-        loader.add_implicit_resolver(self.NAME, compile(r"(?=.*$)"), None)
+        loader.add_implicit_resolver(self.NAME, compile(r"(?=.*$)"), None)  # type: ignore [no-untyped-call]
         loader.add_constructor(self.NAME, self)
-        return
 
 
-def convert_config_to_dict(conf) -> dict:
+def convert_config_to_dict(conf: dict[str, Any] | _AttrDict) -> dict[str, Any]:
     if isinstance(conf, dict):
         conf = dict(conf)
     for key, value in conf.items():

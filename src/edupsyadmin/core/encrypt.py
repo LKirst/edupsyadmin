@@ -14,7 +14,7 @@ class Encryption:
     fernet = None
 
     def set_fernet(
-        self, username: str, user_data_dir: str | os.PathLike, uid: str
+        self, username: str, user_data_dir: str | os.PathLike[str], uid: str
     ) -> None:
         """use a password to derive a key
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
@@ -51,7 +51,7 @@ class Encryption:
         data = self.fernet.decrypt(token).decode()
         return data
 
-    def _load_or_create_salt(self, salt_path: str | os.PathLike) -> bytes:
+    def _load_or_create_salt(self, salt_path: str | os.PathLike[str]) -> bytes:
         if Path(salt_path).is_file():
             logger.info(f"using existing salt from `{salt_path}`")
             with open(salt_path, "rb") as binary_file:

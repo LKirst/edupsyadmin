@@ -2,13 +2,14 @@ import os
 import shutil
 from itertools import product
 from pathlib import Path
+from typing import Any
 
 from liquid import Template, exceptions
 
 from edupsyadmin.core.logger import logger
 
 
-def modify_bool_and_none_for_pdf_form(data: dict) -> dict:
+def modify_bool_and_none_for_pdf_form(data: dict[str, Any]) -> dict[str, Any]:
     """
     Replace every boolean True with 'Yes' and False with 'Off', which are the
     values checkboxes accept in most PDF forms. Replace None with empty
@@ -30,7 +31,7 @@ def modify_bool_and_none_for_pdf_form(data: dict) -> dict:
     return updated_data
 
 
-def write_form_pdf(fn: Path, out_fn: Path, data: dict) -> None:
+def write_form_pdf(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
     """
     Fill a pdf form with data using pypdf.
 
@@ -63,7 +64,7 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict) -> None:
                         writer.update_page_form_field_values(
                             writer.pages[i], {key: data_wo_bool[key]}
                         )
-                except:
+                except KeyError:
                     logger.debug(f"Couldn't fill in {key} on p. {i+1} of {fn.name}")
     if out_fn.exists():
         raise FileExistsError
@@ -71,7 +72,7 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict) -> None:
         writer.write(output_stream)
 
 
-def write_form_pdf2(fn: Path, out_fn: Path, data: dict) -> None:
+def write_form_pdf2(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
     """
     Fill a pdf form with data using fillpdf.
 
@@ -98,7 +99,7 @@ def write_form_pdf2(fn: Path, out_fn: Path, data: dict) -> None:
         shutil.copyfile(fn, out_fn)
 
 
-def write_form_md(fn: Path, out_fn: Path, data: dict) -> None:
+def write_form_md(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
     """
     Render a liquid template with data passed to the function.
 
@@ -111,12 +112,12 @@ def write_form_md(fn: Path, out_fn: Path, data: dict) -> None:
         txt = text_file.read()
         try:
             template = Template(txt)
-        except exceptions.Error as e:
+        except exceptions.LiquidError as e:
             logger.error(txt)
             raise e
         try:
             msg = template.render(**data)
-        except exceptions.Error as e:
+        except exceptions.LiquidError as e:
             logger.error(e)
             msg = ""
     with open(out_fn, "w", encoding="utf8") as out_file:
@@ -124,7 +125,7 @@ def write_form_md(fn: Path, out_fn: Path, data: dict) -> None:
 
 
 def fill_form(
-    client_data: dict,
+    client_data: dict[str, Any],
     form_paths: list[str],
     out_dir: str = ".",
     use_fillpdf: bool = True,

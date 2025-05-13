@@ -7,6 +7,7 @@ until the logger is started.
 
 from logging import Formatter, NullHandler, StreamHandler
 from logging import Logger as _Logger
+from typing import TextIO
 
 __all__ = "logger", "Logger"
 
@@ -16,7 +17,7 @@ class Logger(_Logger):
 
     LOGFMT = "%(asctime)s;%(levelname)s;%(name)s;%(message)s"
 
-    def __init__(self, name=None):
+    def __init__(self, name: str | None = None) -> None:
         """Initialize this logger.
 
         Loggers with the same name refer to the same underlying object.
@@ -31,9 +32,8 @@ class Logger(_Logger):
         # NullHandler should always be left in place.
         super(Logger, self).__init__(name or __name__.split(".")[0])
         self.addHandler(NullHandler())  # default to no output
-        return
 
-    def start(self, level="WARN", stream=None):
+    def start(self, level: str = "WARN", stream: TextIO | None = None) -> None:
         """Start logging to a stream.
 
         Until the logger is started, no messages will be emitted. This applies
@@ -63,14 +63,12 @@ class Logger(_Logger):
         handler.setFormatter(Formatter(self.LOGFMT))
         handler.setLevel(self.level)
         self.addHandler(handler)
-        return
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop logging with this logger."""
         for handler in self.handlers[1:]:
             # Remove everything but the NullHandler.
             self.removeHandler(handler)
-        return
 
 
 logger = Logger()

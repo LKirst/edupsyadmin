@@ -42,7 +42,8 @@ def get_estimated_end_of_academic_year(
     :param grade_current: The current grade of the student, defaults to 0
     :param grade_target: The target grade of the student, defaults to 0
     :param last_month: The month the academic year ends, defaults to 7 (July)
-    :param last_day: The day in the last month when the academic year ends, defaults to 31.
+    :param last_day: The day in the last month when the academic year ends,
+        defaults to 31.
     :return: The estimated end of the academic year.
     """
     if date_current is None:
@@ -103,7 +104,7 @@ def get_date_destroy_records(date_graduation: date) -> date:
     return date_graduation + relativedelta(years=3)
 
 
-def main():
+def main() -> None:
     """
     Parse arguments from the commandline and return an academic year or a
     date for the destruction of student records.
@@ -134,7 +135,10 @@ def main():
     parser.add_argument(
         "--destroy_files",
         action="store_true",
-        help="If true, 3 years will be added to grade_target for record destruction date.",
+        help=(
+            "If true, 3 years will be added to grade_target for "
+            "record destruction date."
+        ),
     )
     args = parser.parse_args()
 

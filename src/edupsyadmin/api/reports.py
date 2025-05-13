@@ -15,30 +15,32 @@ class Report(FPDF):
         self.HEIGHT = 297
         self.header_text = heading
 
-    def header(self):
+    def header(self) -> None:
         self.set_font("Arial", "B", 11)
         self.cell(w=0, h=10, txt=self.header_text, border=0, ln=0, align="C")
         self.ln(20)
 
-    def footer(self):
+    def footer(self) -> None:
         # page numbers
         self.set_y(-15)
         self.set_font("Arial", "I", 8)
         self.set_text_color(128)
         self.cell(0, 10, "Page " + str(self.page_no()), border=0, ln=0, align="C")
 
-    def page_body(self):
+    def page_body(self) -> None:
         for line in self.text:
             self.cell(w=15, h=9, border=0, txt=line)
             self.ln(h="")
         self.image(self.plot, 15, self.WIDTH / 2 + 50, self.WIDTH - 50)
 
-    def print_page(self):
+    def print_page(self) -> None:
         self.add_page()
         self.page_body()
 
 
-def normal_distribution_plot(v_lines, plot_filename="plot.png"):
+def normal_distribution_plot(
+    v_lines: list[int | float], plot_filename="plot.png"
+) -> None:
     mu = 0
     variance = 1
     sigma = math.sqrt(variance)

@@ -16,7 +16,7 @@ def percentile_to_z(percentile: int) -> float:
     :param percentile: a percentile
     :return: the Z-score which corresponds to the percentile
     """
-    z = norm.ppf(percentile / 100)
+    z: float = norm.ppf(percentile / 100)
     return z
 
 
