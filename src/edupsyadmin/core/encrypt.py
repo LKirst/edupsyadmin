@@ -46,9 +46,8 @@ class Encryption:
     def decrypt(self, token: str) -> str:
         if self.fernet is None:
             raise RuntimeError("call set_fernet() before calling decrypt()")
-        if isinstance(token, str):
-            token = token.encode()
-        data = self.fernet.decrypt(token).decode(encoding="utf-8")
+        token_bytes = token.encode(encoding="utf-8")
+        data = self.fernet.decrypt(token_bytes).decode(encoding="utf-8")
         return data
 
     def _load_or_create_salt(self, salt_path: str | os.PathLike[str]) -> bytes:
