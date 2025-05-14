@@ -24,7 +24,7 @@ class EncryptionTest:
         encr.set_fernet(USER_NAME, mock_salt_path, UID)
         token = encr.encrypt(secret_message)
 
-        assert isinstance(token, bytes)
+        assert isinstance(token, str)
         assert secret_message != token
         mock_keyring.assert_called_with(UID, USER_NAME)
 
