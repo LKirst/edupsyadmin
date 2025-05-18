@@ -16,4 +16,6 @@ and backwards compatibility is not guaranteed for minor versions.
 
 """
 
+__all__ = ["__version__"]
+
 __version__ = "4.0.0a0"

@@ -11,7 +11,7 @@ from typing import List, Optional
 
 from platformdirs import user_config_dir, user_data_path
 
-from edupsyadmin import __version__
+from edupsyadmin.__version__ import __version__
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 
