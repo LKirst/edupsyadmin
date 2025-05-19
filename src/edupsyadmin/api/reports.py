@@ -17,8 +17,8 @@ class Report(FPDF):
 
     def header(self) -> None:
         self.set_font("Arial", "B", 11)
-        self.cell(w=0, h=10, txt=self.header_text, border=0, ln=0, align="C")
-        self.ln(20)
+        self.cell(w=0, h=10, text=self.header_text, border=0, ln=0, align="C")
+        self.ln(20)  # line break
 
     def footer(self) -> None:
         # page numbers
@@ -29,8 +29,8 @@ class Report(FPDF):
 
     def page_body(self) -> None:
         for line in self.text:
-            self.cell(w=15, h=9, border=0, txt=line)
-            self.ln(h="")
+            self.cell(w=15, h=9, border=0, text=line)
+            self.ln()  # line break
         self.image(self.plot, 15, self.WIDTH / 2 + 50, self.WIDTH - 50)
 
     def print_page(self) -> None:

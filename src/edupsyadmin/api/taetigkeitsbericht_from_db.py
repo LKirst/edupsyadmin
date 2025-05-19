@@ -9,8 +9,6 @@ from .managers import get_data_raw
 
 try:
     import dataframe_image as dfi
-
-    # TODO: use the fpdf2 fork
     from fpdf import FPDF
 
     pdflibs_imported = True
@@ -31,8 +29,8 @@ if pdflibs_imported:
 
         def header(self) -> None:
             self.set_font("Arial", "B", 11)
-            self.cell(w=0, h=10, txt=self.header_text, border=0, ln=0, align="C")
-            self.ln(20)
+            self.cell(w=0, h=10, text=self.header_text, border=0, ln=0, align="C")
+            self.ln(20)  # line break
 
         def footer(self) -> None:
             # page numbers
@@ -237,22 +235,22 @@ def create_taetigkeitsbericht_report(
         if summary_categories is not None:
             report.add_page()
             for nm, val in summary_categories.items():
-                report.cell(w=15, h=9, border=0, txt=f"{nm}:")
-                report.ln(6)
+                report.cell(w=15, h=9, border=0, text=f"{nm}:")
+                report.ln(6)  # line break
                 for text in [
                     "einmaliger Kurzkontakt",
                     "1-3 Sitzungen",
                     "mehr als 3 Sitzungen",
                 ]:
-                    report.cell(w=50, h=9, border=0, txt=text)
+                    report.cell(w=50, h=9, border=0, text=text)
                 report.ln(6)  # linebreak
                 for colnm in [
                     "count_einm_kurzkont",
                     "count_1to3_sessions",
                     "count_mt3_sessions",
                 ]:
-                    report.cell(w=50, h=9, border=0, txt=f"{val[colnm]:.0f}")
-                report.ln(18)  # linebreak
+                    report.cell(w=50, h=9, border=0, text=f"{val[colnm]:.0f}")
+                report.ln(18)  # line break
         if summary_n_sessions is not None:
             report.add_page()
             report.image(n_sessions_img, x=15, y=report.HEIGHT * 1 / 4, w=180)
@@ -315,6 +313,7 @@ def taetigkeitsbericht(
     zstd_spsy_year_actual = summarystats_n_sessions.loc["all", "zeitstunden"]
 
     # Summary statistics for Wochenstunden
+    # TODO: summary_statistics_wstd expects list[str] with school names and numbers
     summarystats_wstd = summary_statistics_wstd(
         wstd_psy, wstd_total, zstd_spsy_year_actual, *nstudents
     )

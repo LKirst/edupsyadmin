@@ -35,8 +35,8 @@ flattenpdf = [
 ]
 reportsandtaetigkeitsber = [
     "matplotlib>=3.9.2",
-    "fpdf>=1.7.2",
     "dataframe-image>=0.2.6",
+    "fpdf2>=2.8.3",
 ]
 bwbackend = [
     "bitwarden-keyring>=0.3.1",
