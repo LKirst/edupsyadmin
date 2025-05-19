@@ -1,4 +1,5 @@
 import math
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,9 +8,9 @@ from fpdf import FPDF
 
 
 class Report(FPDF):
-    def __init__(self, heading, text, plot):
+    def __init__(self, heading: str, reporttext: str, plot: str | os.PathLike[str]):
         super().__init__()
-        self.text = text
+        self.reporttext = reporttext
         self.plot = plot
         self.WIDTH = 210
         self.HEIGHT = 297
@@ -28,7 +29,7 @@ class Report(FPDF):
         self.cell(0, 10, "Page " + str(self.page_no()), border=0, ln=0, align="C")
 
     def page_body(self) -> None:
-        for line in self.text:
+        for line in self.reporttext:
             self.cell(w=15, h=9, border=0, text=line)
             self.ln()  # line break
         self.image(self.plot, 15, self.WIDTH / 2 + 50, self.WIDTH - 50)
@@ -39,7 +40,7 @@ class Report(FPDF):
 
 
 def normal_distribution_plot(
-    v_lines: list[int | float], plot_filename="plot.png"
+    v_lines: list[int | float], plot_filename: str | os.PathLike[str] = "plot.png"
 ) -> None:
     mu = 0
     variance = 1
