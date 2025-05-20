@@ -272,7 +272,7 @@ def taetigkeitsbericht(
     database_url: str,
     config_path: str | os.PathLike[str],
     wstd_psy: int,
-    nstudents: list[int],
+    nstudents: list[str],
     out_basename: str = "Taetigkeitsbericht_Out",
     min_per_ses: int = 45,
     wstd_total: int = 23,
@@ -313,7 +313,6 @@ def taetigkeitsbericht(
     zstd_spsy_year_actual = summarystats_n_sessions.loc["all", "zeitstunden"]
 
     # Summary statistics for Wochenstunden
-    # TODO: summary_statistics_wstd expects list[str] with school names and numbers
     summarystats_wstd = summary_statistics_wstd(
         wstd_psy, wstd_total, zstd_spsy_year_actual, *nstudents
     )
