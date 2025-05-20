@@ -103,7 +103,7 @@ class Client(Base):
     lrst_diagnosis: Mapped[Optional[str]] = mapped_column(
         String,
         CheckConstraint(
-            ("lrst_diagnosis IN ('lrst', 'iLst', 'iRst') OR " "lrst_diagnosis IS NULL")
+            ("lrst_diagnosis IN ('lrst', 'iLst', 'iRst') OR lrst_diagnosis IS NULL")
         ),
         doc="Diagnose im Zusammenhang mit LRSt, iLst oder iRst",
     )

@@ -15,7 +15,7 @@ def get_academic_year_string(end_of_year: date) -> str:
     :param end_of_year: the date of the end of the school year
     :return: a string in the format '%Y/%y' for a given end-of-year date
     """
-    return f"{int(end_of_year.year)-1}/{end_of_year.strftime('%y')}"
+    return f"{int(end_of_year.year) - 1}/{end_of_year.strftime('%y')}"
 
 
 def get_this_academic_year_string() -> str:

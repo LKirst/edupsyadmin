@@ -65,7 +65,7 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
                             writer.pages[i], {key: data_wo_bool[key]}
                         )
                 except KeyError:
-                    logger.debug(f"Couldn't fill in {key} on p. {i+1} of {fn.name}")
+                    logger.debug(f"Couldn't fill in {key} on p. {i + 1} of {fn.name}")
     if out_fn.exists():
         raise FileExistsError
     with open(out_fn, "wb") as output_stream:
@@ -91,10 +91,7 @@ def write_form_pdf2(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
         fillpdfs.write_fillable_pdf(fn, out_fn, data_wo_bool)
     else:
         logger.info(
-            (
-                f"The pdf {fn} has no form fields. "
-                "Copying the file without any changes"
-            )
+            (f"The pdf {fn} has no form fields. Copying the file without any changes")
         )
         shutil.copyfile(fn, out_fn)
 
@@ -146,7 +143,7 @@ def fill_form(
         logger.info(f"Using the template {fp}")
         if not fp.is_file():
             raise FileNotFoundError(
-                (f"The template file does not exist: {fp}; " f"cwd is: {os.getcwd()}")
+                (f"The template file does not exist: {fp}; cwd is: {os.getcwd()}")
             )
         out_fp = Path(out_dir, f"{client_data['client_id']}_{fp.name}")
         logger.info(f"Writing to {out_fp.resolve()}")

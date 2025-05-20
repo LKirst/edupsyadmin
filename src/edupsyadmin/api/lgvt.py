@@ -66,7 +66,7 @@ def get_indeces(
             incorrect_answ += 1
         elif answ == -1:
             break
-        text += [f"\n- Item {i+1}:\t{answ}\t{item}"]
+        text += [f"\n- Item {i + 1}:\t{answ}\t{item}"]
 
     words_until_last_item = csv.Wortzahl.iloc[i - 1]
     words_after_last_item = int(input("Words read after the last item: "))

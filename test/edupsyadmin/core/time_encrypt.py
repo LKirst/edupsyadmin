@@ -35,12 +35,12 @@ if __name__ == "__main__":
     number_calls = 10
 
     time_setup = timeit.timeit("setup()", globals=globals(), number=number_calls)
-    print(f"setup: {time_setup/number_calls}")
+    print(f"setup: {time_setup / number_calls}")
 
     time_encrypt = timeit.timeit(
         "encrypt(encr)", setup="encr=setup()", globals=globals(), number=number_calls
     )
-    print(f"decrypt: {time_encrypt/number_calls}")
+    print(f"decrypt: {time_encrypt / number_calls}")
 
     time_decrypt = timeit.timeit(
         "decrypt(encr,token)",
@@ -48,6 +48,6 @@ if __name__ == "__main__":
         globals=globals(),
         number=number_calls,
     )
-    print(f"decrypt: {time_decrypt/number_calls}")
+    print(f"decrypt: {time_decrypt / number_calls}")
 
     os.remove(cfg_path)

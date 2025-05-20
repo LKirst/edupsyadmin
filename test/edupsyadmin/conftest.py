@@ -62,10 +62,7 @@ def mock_config(
     conf_path = [str(tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml")]
     shutil.copy(template_path, conf_path[0])
     testing_logger.debug(
-        (
-            f"mock_config fixture (test: {request.node.name}) - "
-            f"conf_path: {conf_path}"
-        )
+        (f"mock_config fixture (test: {request.node.name}) - conf_path: {conf_path}")
     )
     config.load(conf_path)
 
