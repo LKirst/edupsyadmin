@@ -1,4 +1,5 @@
 import math
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,38 +8,40 @@ from fpdf import FPDF
 
 
 class Report(FPDF):
-    def __init__(self, heading, text, plot):
+    def __init__(self, heading: str, reporttext: str, plot: str | os.PathLike[str]):
         super().__init__()
-        self.text = text
+        self.reporttext = reporttext
         self.plot = plot
         self.WIDTH = 210
         self.HEIGHT = 297
         self.header_text = heading
 
-    def header(self):
+    def header(self) -> None:
         self.set_font("Arial", "B", 11)
-        self.cell(w=0, h=10, txt=self.header_text, border=0, ln=0, align="C")
-        self.ln(20)
+        self.cell(w=0, h=10, text=self.header_text, border=0, ln=0, align="C")
+        self.ln(20)  # line break
 
-    def footer(self):
+    def footer(self) -> None:
         # page numbers
         self.set_y(-15)
         self.set_font("Arial", "I", 8)
         self.set_text_color(128)
         self.cell(0, 10, "Page " + str(self.page_no()), border=0, ln=0, align="C")
 
-    def page_body(self):
-        for line in self.text:
-            self.cell(w=15, h=9, border=0, txt=line)
-            self.ln(h="")
+    def page_body(self) -> None:
+        for line in self.reporttext:
+            self.cell(w=15, h=9, border=0, text=line)
+            self.ln()  # line break
         self.image(self.plot, 15, self.WIDTH / 2 + 50, self.WIDTH - 50)
 
-    def print_page(self):
+    def print_page(self) -> None:
         self.add_page()
         self.page_body()
 
 
-def normal_distribution_plot(v_lines, plot_filename="plot.png"):
+def normal_distribution_plot(
+    v_lines: list[int | float], plot_filename: str | os.PathLike[str] = "plot.png"
+) -> None:
     mu = 0
     variance = 1
     sigma = math.sqrt(variance)

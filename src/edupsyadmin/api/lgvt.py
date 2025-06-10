@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import math
-from datetime import datetime
+import os
+from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -9,7 +10,7 @@ from .convert_measures import percentile_to_t
 from .managers import ClientsManager
 
 
-def askyn(prompt):
+def askyn(prompt: str) -> int:
     yes = {"yes", "ye", "y"}
     no = {"no", "n"}
     quit = {"quit", "q"}
@@ -25,7 +26,7 @@ def askyn(prompt):
         raise IOError("Only y, n or q are allowed.")
 
 
-def get_lv_korrektur(lv_rw: float):
+def get_lv_korrektur(lv_rw: float) -> tuple[float, int]:
     lv_korr_faktor = float(input("Korrekturfaktor LV:"))
     lv_rw_korr = lv_rw * lv_korr_faktor
     lv_rw_korr_floor = math.floor(lv_rw_korr)
@@ -39,7 +40,13 @@ def get_lv_korrektur(lv_rw: float):
     return lv_rw_korr, lv_pr_korr
 
 
-def get_indeces(fn: str, name: str, schoolyear: int, d_test: str, version: str):
+def get_indeces(
+    fn: str | os.PathLike[str],
+    name: str,
+    schoolyear: int,
+    d_test: str | date,
+    version: str,
+) -> list[str]:
     csv = pd.read_csv(fn)
     correct_answ = 0
     incorrect_answ = 0
@@ -59,7 +66,7 @@ def get_indeces(fn: str, name: str, schoolyear: int, d_test: str, version: str):
             incorrect_answ += 1
         elif answ == -1:
             break
-        text += [f"\n- Item {i+1}:\t{answ}\t{item}"]
+        text += [f"\n- Item {i + 1}:\t{answ}\t{item}"]
 
     words_until_last_item = csv.Wortzahl.iloc[i - 1]
     words_after_last_item = int(input("Words read after the last item: "))
@@ -97,13 +104,14 @@ def get_indeces(fn: str, name: str, schoolyear: int, d_test: str, version: str):
         f"\n- PR={lgs_pr_korr} ;\tT-Wert={lgs_t:.2f}",
         "\n## LGN",
         f"\n- Rohwert LGN: {lg_rw}%",
-        f"\n- PR={lg_pr} ;\tT-Wert={lg_t:.2f}",  # TODO
+        f"\n- PR={lg_pr} ;\tT-Wert={lg_t:.2f}",
     ]
 
     return text
 
 
-def get_fn_csv(version):
+def get_fn_csv(version: str) -> Path:
+    # TODO: allow the user to set the paths and document this feature
     if version == "Rosenkohl":
         fn_csv = Path(
             "~/bin/school/psych_lgvt_wortzahl_und_richtige/Rosenkohl_WortzahlRichtigeAntwort.csv"
@@ -131,8 +139,8 @@ def mk_report(
     test_date: str,
     test_type: str = "lgvt",
     version: str = "Rosenkohl",
-    directory=".",
-):
+    directory: str = ".",
+) -> None:
     out_path = Path(directory).joinpath(f"{client_id}_Auswertung_LGVT.md")
     fn_csv = get_fn_csv(version)
     t_day = datetime.strptime(test_date, "%Y-%m-%d").date()

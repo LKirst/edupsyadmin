@@ -1,29 +1,20 @@
-"""Implementation of the command line interface."""
-
+import argparse
+import importlib
 import importlib.resources
 import os
 import shutil
-from argparse import ArgumentParser
-from inspect import getfullargspec
+import sys
+import types
+from argparse import ArgumentParser, _SubParsersAction
+from inspect import signature
+from typing import List, Optional
 
 from platformdirs import user_config_dir, user_data_path
 
-from . import __version__, tui
-from .api.flatten_pdf import DEFAULT_LIBRARY, flatten_pdfs
-
-# TODO: change the api so that mkreport works for CFT as well as LGVT
-from .api.lgvt import mk_report
-from .api.managers import (
-    create_documentation,
-    delete_client,
-    get_clients,
-    new_client,
-    set_client,
-)
-from .api.taetigkeitsbericht_from_db import taetigkeitsbericht
-from .core.config import config
-from .core.logger import logger
-from .info import info
+from edupsyadmin import tui
+from edupsyadmin.__version__ import __version__
+from edupsyadmin.core.config import config
+from edupsyadmin.core.logger import logger
 
 __all__ = ("main",)
 
@@ -42,7 +33,29 @@ DEFAULT_SALT_PATH = os.path.join(
 )
 
 
-def main(argv=None) -> int:
+# Lazy import utility function
+def lazy_import(name: str) -> types.ModuleType:
+    """
+    Lazy import utility function. This function is from the Python
+    documentation
+    (https://docs.python.org/3/library/importlib.html#implementing-lazy-imports).
+
+    :param name: The name of the module to be lazily imported.
+    :return: The lazily imported module.
+    """
+    spec = importlib.util.find_spec(name)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot find module '{name}'")
+
+    loader = importlib.util.LazyLoader(spec.loader)
+    spec.loader = loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    loader.exec_module(module)
+    return module
+
+
+def main(argv: Optional[List[str]] = None) -> int:
     """Execute the application CLI.
 
     :param argv: argument list to parse (sys.argv by default)
@@ -61,7 +74,7 @@ def main(argv=None) -> int:
             importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
         )
         shutil.copy(template_path, args.config_path[0])
-        logger.warning(
+        logger.info(
             (
                 "Could not find the specified config file. "
                 f"Created a sample config at {args.config_path[0]}. "
@@ -74,7 +87,7 @@ def main(argv=None) -> int:
         config.core.logging = args.warn
 
     # restart logging based on config
-    # logger.stop()  # clear handlers to prevent duplicate records
+    logger.stop()  # clear handlers to prevent duplicate records
     logger.start(config.core.logging)
 
     if not args.app_username:
@@ -95,13 +108,16 @@ def main(argv=None) -> int:
     # handle commandline args
     command = args.command
     logger.debug(f"commandline arguments: {vars(args)}")
-    args = vars(args)
-    spec = getfullargspec(command)
-    if not spec.varkw:
-        # No kwargs, remove unexpected arguments.
-        args = {key: args[key] for key in args if key in spec.args}
+    argsdict = vars(args)
+
+    # Filter arguments based on the function signature
+    func_sig = signature(command)
+    filtered_args = {
+        key: argsdict[key] for key in func_sig.parameters if key in argsdict
+    }
+
     try:
-        command(**args)
+        command(**filtered_args)
     except RuntimeError as err:
         logger.critical(err)
         return 1
@@ -109,7 +125,7 @@ def main(argv=None) -> int:
     return 0
 
 
-def _args(argv):
+def _args(argv: Optional[List[str]]) -> argparse.Namespace:
     """Parse command line arguments.
 
     :param argv: argument list to parse
@@ -118,7 +134,6 @@ def _args(argv):
     # append allows multiple instances of the same object
     # args.config_path will therefore be a list!
     parser.add_argument("-c", "--config_path", action="append", help="config file path")
-    parser.add_argument("-s", "--salt_path", help="salt file path")
     parser.add_argument(
         "-v",
         "--version",
@@ -142,6 +157,7 @@ def _args(argv):
     )
     common.add_argument("--app_uid", default=APP_UID)
     common.add_argument("--database_url", default=DEFAULT_DB_URL)
+    common.add_argument("--salt_path", default=DEFAULT_SALT_PATH)
     _info(subparsers, common)
     _new_client(subparsers, common)
     _set_client(subparsers, common)
@@ -166,30 +182,72 @@ def _args(argv):
     return args
 
 
-def _info(subparsers, common):
+def _info(
+    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+) -> None:
     """CLI adaptor for the info command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
+
+    def command_info(
+        app_uid: str | os.PathLike[str],
+        app_username: str,
+        database_url: str,
+        config_path: str | os.PathLike[str],
+        salt_path: str | os.PathLike[str],
+    ) -> None:
+        info = lazy_import("edupsyadmin.info").info
+        info(app_uid, app_username, database_url, config_path, salt_path)
+
     parser = subparsers.add_parser(
         "info",
         parents=[common],
+        description="Show app version and what paths the app uses",
+        help="Get useful information for debugging",
     )
-    parser.set_defaults(command=info, help="Get useful information for debugging")
+    parser.set_defaults(command=command_info)
 
 
-def _new_client(subparsers, common):
+def _new_client(
+    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+) -> None:
     """CLI adaptor for the api.clients.new_client command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("new_client", parents=[common])
-    parser.set_defaults(
-        command=new_client,
+
+    def command_new_client(
+        app_username: str,
+        app_uid: str,
+        database_url: str,
+        salt_path: str | os.PathLike[str],
+        csv: str | os.PathLike[str] | None,
+        school: str | None,
+        name: str | None,
+        keepfile: bool | None,
+    ) -> None:
+        new_client = lazy_import("edupsyadmin.api.managers").new_client
+        new_client(
+            app_username=app_username,
+            app_uid=app_uid,
+            database_url=database_url,
+            salt_path=salt_path,
+            csv=csv,
+            school=school,
+            name=name,
+            keepfile=keepfile,
+        )
+
+    parser = subparsers.add_parser(
+        "new_client",
+        parents=[common],
         help="Add a new client",
+        description="Add a new client",
     )
+    parser.set_defaults(command=command_new_client)
     parser.add_argument(
         "--csv",
         help=(
@@ -222,52 +280,107 @@ def _new_client(subparsers, common):
     )
 
 
-def _set_client(subparsers, common):
+def _set_client(
+    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+) -> None:
     """CLI adaptor for the api.clients.set_client command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("set_client", parents=[common])
-    parser.set_defaults(
-        command=_handle_set_client,
-        help="Show or change a value for a client",
+
+    def command_set_client(
+        app_username: str,
+        app_uid: str,
+        database_url: str,
+        salt_path: str | os.PathLike[str],
+        client_id: int,
+        key_value_pairs: list[str] | None,
+    ) -> None:
+        if not key_value_pairs:
+            key_value_dict = tui.edit_client()
+            # TODO: It should not be necessary to convert to string
+            key_value_pairs = [
+                f"{key}={value}" for key, value in key_value_dict.items()
+            ]
+        set_client = lazy_import("edupsyadmin.api.managers").set_client
+        set_client(
+            app_username, app_uid, database_url, salt_path, client_id, key_value_pairs
+        )
+
+    parser = subparsers.add_parser(
+        "set_client",
+        parents=[common],
+        help="Change values for a client",
+        description="Change values for a client",
     )
+    parser.set_defaults(command=command_set_client)
     parser.add_argument("client_id", type=int)
     parser.add_argument(
         "key_value_pairs",
         type=str,
-        nargs="+",
+        nargs="*",
         help="key-value pairs in the format key=value",
     )
 
 
-def _delete_client(subparsers, common):
+def _delete_client(
+    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+) -> None:
     """CLI adaptor for the api.managers.delete_client command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
+
+    def command_delete_client(
+        app_username: str,
+        app_uid: str,
+        database_url: str,
+        salt_path: str | os.PathLike[str],
+        client_id: int,
+    ) -> None:
+        delete_client = lazy_import("edupsyadmin.api.managers").delete_client
+        delete_client(app_username, app_uid, database_url, salt_path, client_id)
+
     # TODO: Write test
-    parser = subparsers.add_parser("delete_client", parents=[common])
-    parser.set_defaults(
-        command=delete_client,
-        help="Delete a client in the database",
+    parser = subparsers.add_parser(
+        "delete_client", parents=[common], help="Delete a client in the database"
     )
+    parser.set_defaults(command=command_delete_client)
     parser.add_argument("client_id", type=int, help="id of the client to delete")
 
 
-def _get_clients(subparsers, common):
+def _get_clients(
+    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+) -> None:
     """CLI adaptor for the api.clients.get_na_ns command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("get_clients", parents=[common])
-    parser.set_defaults(
-        command=get_clients,
+
+    def command_get_clients(
+        app_username: str,
+        app_uid: str,
+        database_url: str,
+        salt_path: str | os.PathLike[str],
+        nta_nos: bool,
+        client_id: int,
+        out: str | os.PathLike[str],
+    ) -> None:
+        get_clients = lazy_import("edupsyadmin.api.managers").get_clients
+        get_clients(
+            app_username, app_uid, database_url, salt_path, nta_nos, client_id, out
+        )
+
+    parser = subparsers.add_parser(
+        "get_clients",
+        parents=[common],
         help="Show clients overview or single client",
+        description="Show clients overview or single client",
     )
+    parser.set_defaults(command=command_get_clients)
     parser.add_argument(
         "--nta_nos",
         action="store_true",
@@ -279,17 +392,44 @@ def _get_clients(subparsers, common):
     )
 
 
-def _create_documentation(subparsers, common):
+def _create_documentation(
+    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+) -> None:
     """CLI adaptor for the api.clients.create_documentation command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("create_documentation", parents=[common])
-    parser.set_defaults(
-        command=create_documentation,
+
+    def command_create_documentation(
+        app_username: str,
+        app_uid: str,
+        database_url: str,
+        salt_path: str | os.PathLike[str],
+        client_id: int,
+        form_set: str,
+        form_paths: list[str],
+    ) -> None:
+        create_documentation = lazy_import(
+            "edupsyadmin.api.managers"
+        ).create_documentation
+        create_documentation(
+            app_username,
+            app_uid,
+            database_url,
+            salt_path,
+            client_id,
+            form_set,
+            form_paths,
+        )
+
+    parser = subparsers.add_parser(
+        "create_documentation",
+        parents=[common],
         help="Fill a pdf form or a text file with a liquid template",
+        description="Fill a pdf form or a text file with a liquid template",
     )
+    parser.set_defaults(command=command_create_documentation)
     parser.add_argument("client_id", type=int)
     parser.add_argument(
         "--form_set",
@@ -300,17 +440,39 @@ def _create_documentation(subparsers, common):
     parser.add_argument("form_paths", nargs="*", help="form file paths")
 
 
-def _mk_report(subparsers, common):
+def _mk_report(
+    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+) -> None:
     """CLI adaptor for the api.lgvt.mk_report command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
+
+    def command_mk_report(
+        app_username: str,
+        app_uid: str,
+        database_url: str,
+        salt_path: str | os.PathLike[str],
+        client_id: int,
+        test_date: str,
+        test_type: str,
+        version: str | None = None,
+    ) -> None:
+        mk_report = lazy_import("edupsyadmin.api.lgvt").mk_report
+        mk_report(
+            app_username,
+            app_uid,
+            database_url,
+            salt_path,
+            client_id,
+            test_date,
+            test_type,
+            version=None,
+        )
+
     parser = subparsers.add_parser("mk_report", parents=[common])
-    parser.set_defaults(
-        command=mk_report,
-        help="Create a test report (experimental)",
-    )
+    parser.set_defaults(command=command_mk_report)
     parser.add_argument("client_id", type=int)
     parser.add_argument("test_date", type=str, help="Testdatum (YYYY-mm-dd)")
     parser.add_argument("test_type", type=str, choices=["LGVT", "CFT", "RSTARR"])
@@ -319,29 +481,72 @@ def _mk_report(subparsers, common):
     )
 
 
-def _flatten_pdfs(subparsers, common):
-    parser = subparsers.add_parser("flatten_pdfs", parents=[common])
-    parser.set_defaults(
-        command=flatten_pdfs,
-        help="Flatten pdf forms and join pdfs for printing (experimental)",
+def _flatten_pdfs(
+    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+) -> None:
+    def command_flatten_pdfs(
+        form_paths: list[str | os.PathLike[str]], library: str
+    ) -> None:
+        flatten_pdfs = lazy_import("edupsyadmin.api.flatten_pdf").flatten_pdfs
+        flatten_pdfs(form_paths, library)
+
+    DEFAULT_LIBRARY = lazy_import("edupsyadmin.api.flatten_pdf").DEFAULT_LIBRARY
+    parser = subparsers.add_parser(
+        "flatten_pdfs",
+        parents=[common],
+        help="Flatten pdf forms (experimental)",
+        description="Flatten pdf forms (experimental)",
     )
+    parser.set_defaults(command=command_flatten_pdfs)
     parser.add_argument(
         "--library", type=str, default=DEFAULT_LIBRARY, choices=["pdf2image", "fillpdf"]
     )
     parser.add_argument("form_paths", nargs="+")
 
 
-def _taetigkeitsbericht(subparsers, common):
+def _taetigkeitsbericht(
+    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+) -> None:
     """CLI adaptor for the api.taetigkeitsbericht_from_db.taetigkeitsbericht command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("taetigkeitsbericht", parents=[common])
-    parser.set_defaults(
-        command=taetigkeitsbericht,
+
+    def command_taetigkeitsbericht(
+        app_username: str,
+        app_uid: str,
+        database_url: str,
+        salt_path: str | os.PathLike[str],
+        wstd_psy: float,
+        nstudents: int,
+        out_basename: str | os.PathLike[str],
+        min_per_ses: int,
+        wstd_total: float,
+        name: str,
+    ) -> None:
+        taetigkeitsbericht = lazy_import(
+            "edupsyadmin.api.taetigkeitsbericht_from_db"
+        ).taetigkeitsbericht
+        taetigkeitsbericht(
+            app_username,
+            app_uid,
+            database_url,
+            salt_path,
+            wstd_psy,
+            nstudents,
+            out_basename,
+            min_per_ses,
+            wstd_total,
+            name,
+        )
+
+    parser = subparsers.add_parser(
+        "taetigkeitsbericht",
+        parents=[common],
         help="Create a PDF output for the Taetigkeitsbericht (experimental)",
     )
+    parser.set_defaults(command=command_taetigkeitsbericht)
     parser.add_argument(
         "wstd_psy", type=int, help="Anrechnungsstunden in Wochenstunden"
     )
@@ -376,29 +581,6 @@ def _taetigkeitsbericht(subparsers, common):
         type=str,
         default="Schulpsychologie",
         help="name for the header of the pdf report",
-    )
-
-
-def _handle_set_client(
-    app_username: str,
-    app_uid: str,
-    database_url: str,
-    salt_path: str | os.PathLike,
-    client_id: int,
-    key_value_pairs: list[str] | None = None,
-) -> None:
-    if not key_value_pairs:
-        key_value_dict = tui.edit_client()
-        # TODO: It should not be necessary to convert to string and then back to dict
-        key_value_pairs = [f"{key}={value}" for key, value in key_value_dict.items()]
-
-    set_client(
-        app_username=app_username,
-        app_uid=app_uid,
-        database_url=database_url,
-        salt_path=salt_path,
-        client_id=client_id,
-        key_value_pairs=key_value_pairs,
     )
 
 

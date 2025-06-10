@@ -16,12 +16,22 @@ Einstieg
 Installation
 ------------
 
+.. note:: Die :kbd:`Win` Taste ist die Taste mit dem Windows Symbol |WinKey|.
+
+.. |WinKey| unicode:: U+229E
+
 Als erstes öffne ein Terminal. Auf Windows, drücke dafür die Tasten
 :kbd:`Win-X`. Dann wähle "Windows Powershell" oder "(Windows) Terminal". Es
 sind keine Administratorrechte nötig.
 
 Zur Installation verwenden wir winget. Kontrolliere zunächst, ob winget
 installiert ist:
+
+.. note::
+
+    Das `$` Zeichen in den folgenden Anleitungen steht dafür, dass in der
+    Kommandozeile ein Befehl eingegeben werden muss. Es ist nicht Teil des
+    Befehls und muss nicht mit eingegeben werden.
 
 .. code-block:: console
 
@@ -94,15 +104,33 @@ Konfigurationsdatei zu finden, führe aus:
 
    $ edupsyadmin info
 
-Im Ausgabeergebnis siehst du deinen ``config_path``. Öffne die Datei mit einem
-Editor, der keine Formatierungen hinzufügt (zum Beispiel Notepad unter
-Windows). Ändere alle Werte zu den Daten, die in deiner Dokumentation
-erscheinen sollen.
+Der Output dieses Befehls wird ähnlich aussehen wie hier:
+
+.. code-block:: console
+   :emphasize-lines: 5
+
+   $ edupsyadmin info
+   edupsyadmin version: 3.3.0
+   app_username: sample.username
+   database_url: sqlite:///C:\Users\DeinNutzerName\AppData\Local\edupsyadmin\edupsyadmin\3.3.0\edupsyadmin.db
+   config_path: ['C:\\Users\\DeinNutzerName\\AppData\\Local\\edupsyadmin\\edupsyadmin\\3.3.0\\config.yml']
+   keyring backend: keyring.backends.chainer.ChainerBackend (priority: 10)
+   salt_path: C:\Users\DeinNutzerName\AppData\Local\edupsyadmin\edupsyadmin\3.3.0\salt.txt
+
+Im Ausgabeergebnis siehst du deinen ``config_path``.  In dem Beispiel oben ist
+die relevante Zeile markiert. Der Pfad im Beispiel wäre
+``C:\\Users\\DeinNutzerName\\AppData\\Local\\edupsyadmin\\edupsyadmin\\3.3.0\\config.yml``
+(ohne Klammern und Anführungszeichen).  Öffne die Datei mit einem Editor, der
+keine Formatierungen hinzufügt (zum Beispiel Notepad unter Windows). Ändere
+alle Werte zu den Daten, die in deiner Dokumentation erscheinen sollen.
 
 .. caution::
 
-    In dem Yaml-Dateiformat der Konfigurationsdatei haben Leerzeichen Bedeutung.
-    Verändere also bitte keine Einrückung (die Anzahl Leerzeichen vor einem Wert).
+    In dem `Yaml-Dateiformat
+    <https://de.wikipedia.org/wiki/YAML>`_ der
+    Konfigurationsdatei haben Leerzeichen Bedeutung.  Verändere
+    also bitte keine Einrückung (die Anzahl Leerzeichen vor
+    einem Wert).
 
 1. Ersetze zuerst ``sample.username`` durch deinen Benutzernamen (keine Leerzeichen
    und keine Sonderzeichen) in der Zeile mit ``app_username``:
@@ -117,14 +145,16 @@ erscheinen sollen.
 
     schoolpsy_name: "Schreibe hier deinen Namen aus"
     schoolpsy_street: "Deine Straße und Hausnummer"
-    schoolpsy_town: "Postleitzahl und Stadt"
+    schoolpsy_city: "Postleitzahl und Stadt"
 
 3. Ändere unter ``school`` den Kurznamen deiner Schule zu etwas einprägsamerem
-   als ``FirstSchool``. Verwende keine Leerzeichen oder Sonderzeichen:
+   als ``FirstSchool``. Verwende keine Leerzeichen oder Sonderzeichen. In
+   diesem Tutorial verwenden wir den Schulnamen ``TutorialSchule`` (kann
+   nachträglich geändert werden).
 
 .. code-block::
 
-    MeinEinpraegsamerSchultitel`
+    TutorialSchule
 
 4. Füge die Daten für deine Schule hinzu. Die Variable ``end`` wird verwendet, um
    das Datum für die Vernichtung der Unterlagen (3 Jahre nach dem
@@ -137,20 +167,39 @@ erscheinen sollen.
     school_head_w_school: "Titel deiner Schulleitung"
     school_name: "Name deiner Schule ausgeschrieben"
     school_street: "Straße und Hausnummer deiner Schule"
-    school_town: "Postleitzahl und Stadt"
+    school_city: "Postleitzahl und Stadt"
     end: 11
 
 5. Wiederhole Schritt 3 und 4 für jede Schule, an der du tätig bist.
 
-6. Ändere die Pfade unter filesets, um auf die (Sets von) Dateien zu
-   verweisen, die du verwenden möchtest.
+6. Ändere die Pfade unter ``form_set``, um auf die (Sets von) PDF-Formularen zu
+   verweisen, die du verwenden möchtest. Bitte lade für unser Beispiel folgende
+   zwei Beispiel-PDFs herunter und speichere Sie:
+
+    Erste Datei: `sample_form_mantelbogen.pdf
+    <https://github.com/LKirst/edupsyadmin/blob/main/test/edupsyadmin/data/sample_form_mantelbogen.pdf>`_.
+
+    Zweite Datei `sample_form_stellungnahme.pdf
+    <https://github.com/LKirst/edupsyadmin/blob/main/test/edupsyadmin/data/sample_form_stellungnahme.pdf>`_.
+
+    Im Explorer, klicke mit der rechten Maustaste auf eine Datei und wähle "Als
+    Pfad kopieren". Kopiere den Pfad in ein form_set (in die einfachen
+    Anführungszeichen). Unser form_set nennen wir für diese Tutorial
+    ``tutorialset``.
 
 .. code-block::
 
-    fileset:
-        name_meines_filesets:
-            - "pfad/zu/meiner/ersten_datei.pdf"
-            - "pfad/zu/meiner/zweiten_datei.pdf"
+    form_set:
+        tutorialset:
+            - 'pfad/zu/meiner/ersten_datei/sample_form_mantelbogen.pdf'
+            - 'pfad/zu/meiner/zweiten_datei/sample_form_stellungnahme.pdf'
+
+.. caution::
+
+    Verwende für die Pfade in deinen form_sets einfache `'`, nicht doppelte
+    Anführungszeichen `"`.
+
+7. Speichere die Änderungen.
 
 Anmeldedaten speichern
 ----------------------

@@ -1,9 +1,17 @@
+import os
+
 from keyring import get_keyring
 
-from . import __version__
+from .__version__ import __version__
 
 
-def info(app_uid, app_username, database_url, config_path, salt_path):
+def info(
+    app_uid: str | os.PathLike[str],
+    app_username: str,
+    database_url: str,
+    config_path: str | os.PathLike[str],
+    salt_path: os.PathLike[str],
+) -> None:
     print(f"edupsyadmin version: {__version__}")
     print(f"app_username: {app_username}")
     print(f"database_url: {database_url}")

@@ -5,7 +5,7 @@ python -m edupsyadmin  ...
 """
 
 
-def main():
+def main() -> None:
     """Execute the application."""
     raise NotImplementedError
 

@@ -1,6 +1,8 @@
 import logging  # just for interaction with the sqlalchemy logger
 import os
+import pathlib
 from datetime import datetime
+from typing import Any
 
 import pandas as pd
 from sqlalchemy import create_engine, select
@@ -13,6 +15,23 @@ from edupsyadmin.api.taetigkeitsbericht_check_key import check_keyword
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import Encryption
 from edupsyadmin.core.logger import logger
+
+BOOLEAN_COLS = [
+    "notenschutz",
+    "nos_rs",
+    "nos_rs_ausn",
+    "nos_les",
+    "nachteilsausgleich",
+    "nta_zeitv",
+    "nta_font",
+    "nta_aufg",
+    "nta_struktur",
+    "nta_arbeitsm",
+    "nta_ersgew",
+    "nta_vorlesen",
+    "nta_other",
+    "nta_nos_end",
+]
 
 
 class Base(DeclarativeBase):
@@ -34,7 +53,7 @@ class ClientsManager:
         database_url: str,
         app_uid: str,
         app_username: str,
-        salt_path: str | os.PathLike,
+        salt_path: str | os.PathLike[str],
     ):
         # set up logging for sqlalchemy
         logging.getLogger("sqlalchemy.engine").setLevel(config.core.logging)
@@ -52,7 +71,7 @@ class ClientsManager:
         Base.metadata.create_all(self.engine, tables=[Client.__table__])
         logger.info(f"created connection to database at {database_url}")
 
-    def add_client(self, **client_data) -> int:
+    def add_client(self, **client_data: Any) -> int:
         logger.debug("trying to add client")
         with self.Session() as session:
             new_client = Client(encr, **client_data)
@@ -62,7 +81,8 @@ class ClientsManager:
             client_id = new_client.client_id
             return client_id
 
-    def get_decrypted_client(self, client_id: int) -> dict:
+    def get_decrypted_client(self, client_id: int) -> dict[str, Any]:
+        # TODO: move encryption logic to clients.py?
         logger.debug(f"trying to access client (client_id = {client_id})")
         with self.Session() as session:
             client = session.query(Client).filter_by(client_id=client_id).first()
@@ -88,7 +108,7 @@ class ClientsManager:
             client_dict.update(decr_vars)
             return client_dict
 
-    def get_clients_overview(self, nta_nos=True) -> pd.DataFrame:
+    def get_clients_overview(self, nta_nos: bool = True) -> pd.DataFrame:
         logger.debug("trying to query client data")
         stmt = select(Client)
         with self.Session() as session:
@@ -106,15 +126,13 @@ class ClientsManager:
                     "class_name": entry.class_name,
                     "notenschutz": entry.notenschutz,
                     "nachteilsausgleich": entry.nachteilsausgleich,
-                    "nta_sprachen": entry.nta_sprachen,
-                    "nta_mathephys": entry.nta_mathephys,
-                    "n_sessions": entry.n_sessions,
                     "lrst_diagnosis": entry.lrst_diagnosis,
+                    "n_sessions": entry.n_sessions,
                     "keyword_taetigkeitsbericht": entry.keyword_taetigkeitsbericht,
                 }
                 for entry in results
             ]
-            df = pd.DataFrame.from_dict(results_list_of_dict)
+            df = pd.DataFrame(results_list_of_dict)
             return df.sort_values(["school", "last_name"])
 
     def get_data_raw(self) -> pd.DataFrame:
@@ -127,7 +145,7 @@ class ClientsManager:
             df = pd.read_sql_query(query, session.bind)
         return df
 
-    def edit_client(self, client_id: int, new_data: dict):
+    def edit_client(self, client_id: int, new_data: dict[str, Any]) -> None:
         # TODO: Warn if key does not exist
         # TODO: If key does not exist, check if key + _encr exists and use it
         logger.debug(f"editing client (id = {client_id})")
@@ -145,7 +163,7 @@ class ClientsManager:
             else:
                 logger.error("client could not be found!")
 
-    def delete_client(self, client_id: int):
+    def delete_client(self, client_id: int) -> None:
         logger.debug("deleting client")
         with self.Session() as session:
             client = session.query(Client).filter_by(client_id=client_id).first()
@@ -158,12 +176,12 @@ def new_client(
     app_username: str,
     app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike,
-    csv: str | os.PathLike | None = None,
+    salt_path: str | os.PathLike[str],
+    csv: str | os.PathLike[str] | None = None,
     school: str | None = None,
     name: str | None = None,
     keepfile: bool = False,
-):
+) -> None:
     clients_manager = ClientsManager(
         database_url=database_url,
         app_uid=app_uid,
@@ -171,6 +189,8 @@ def new_client(
         salt_path=salt_path,
     )
     if csv:
+        if name is None:
+            raise ValueError("Pass a name to read a client from a csv.")
         enter_client_untiscsv(clients_manager, csv, school, name)
         if not keepfile:
             os.remove(csv)
@@ -182,7 +202,7 @@ def set_client(
     app_username: str,
     app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike,
+    salt_path: str | os.PathLike[str],
     client_id: int,
     key_value_pairs: list[str],
 ) -> None:
@@ -195,21 +215,25 @@ def set_client(
         app_username=app_username,
         salt_path=salt_path,
     )
-    pairs_list = [pair.split("=") for pair in key_value_pairs]
+    pairs_list = [pair.split("=", 1) for pair in key_value_pairs]
+    new_data: dict[str, str | bool | None] = {}
     for key, value in pairs_list:
-        if key in ["notenschutz", "nachteilsausgleich"]:
-            value = bool(int(value))
-        if key == "keyword_taetigkeitsbericht":
-            value = check_keyword(value)
-        new_data = {key: value}
-        clients_manager.edit_client(client_id, new_data)
+        # TODO: use `validate` methods in clients.py
+        if key in BOOLEAN_COLS:
+            # TODO: Add try-except
+            new_data[key] = bool(int(value))
+        elif key == "keyword_taetigkeitsbericht":
+            new_data[key] = check_keyword(value)
+        else:
+            new_data[key] = value
+    clients_manager.edit_client(client_id, new_data)
 
 
 def get_clients(
     app_username: str,
     app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike,
+    salt_path: str | os.PathLike[str],
     nta_nos: bool = False,
     client_id: int | None = None,
     out: str | None = None,
@@ -221,11 +245,18 @@ def get_clients(
         salt_path=salt_path,
     )
     if client_id:
-        df = pd.DataFrame.from_dict(clients_manager.get_decrypted_client(client_id))
+        original_df = pd.DataFrame([clients_manager.get_decrypted_client(client_id)]).T
+        df = original_df[
+            ~(
+                original_df.index.str.endswith("_encr")
+                | (original_df.index == "_sa_instance_state")
+            )
+        ]
     else:
-        df = clients_manager.get_clients_overview(nta_nos=nta_nos)
+        original_df = clients_manager.get_clients_overview(nta_nos=nta_nos)
+        df = original_df.set_index("client_id")
     if out:
-        df.to_csv(out, index=False)
+        df.to_csv(out)
     else:
         with pd.option_context(
             "display.max_columns",
@@ -237,11 +268,14 @@ def get_clients(
             "display.expand_frame_repr",
             False,
         ):
-            print(df.set_index("client_id"))
+            print(df)
 
 
 def get_data_raw(
-    app_username: str, app_uid: str, database_url: str, salt_path: str | os.PathLike
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike[str],
 ) -> pd.DataFrame:
     clients_manager = ClientsManager(
         database_url=database_url,
@@ -255,7 +289,7 @@ def get_data_raw(
 
 def enter_client_untiscsv(
     clients_manager: ClientsManager,
-    csv: str | os.PathLike,
+    csv: str | os.PathLike[str],
     school: str | None,
     name: str,
 ) -> int:
@@ -308,11 +342,8 @@ def enter_client_untiscsv(
 
 
 def enter_client_cli(clients_manager: ClientsManager) -> int:
-    client_id = input("client_id (press ENTER if you don't know): ")
-    if client_id:
-        client_id = int(client_id)
-    else:
-        client_id = None
+    client_id_input = input("client_id (press ENTER if you don't know): ")
+    client_id = int(client_id_input) if client_id_input else None
 
     while True:
         school = input("School: ")
@@ -341,7 +372,7 @@ def create_documentation(
     app_username: str,
     app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike,
+    salt_path: str | os.PathLike[str],
     client_id: int,
     form_set: str | None = None,
     form_paths: list[str] = [],
@@ -356,20 +387,23 @@ def create_documentation(
         form_paths.extend(config.form_set[form_set])
     elif not form_paths:
         raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
-    form_paths_normalized = [
-        os.path.normpath(os.path.expanduser(p)) for p in form_paths
-    ]
+    form_paths_normalized = [_normalize_path(p) for p in form_paths]
     logger.debug(f"Trying to fill the files: {form_paths_normalized}")
     client_dict = clients_manager.get_decrypted_client(client_id)
     client_dict_with_convenience_data = add_convenience_data(client_dict)
     fill_form(client_dict_with_convenience_data, form_paths_normalized)
 
 
+def _normalize_path(path_str: str) -> str:
+    path = pathlib.Path(os.path.expanduser(path_str))
+    return str(path.resolve())
+
+
 def delete_client(
     app_username: str,
     app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike,
+    salt_path: str | os.PathLike[str],
     client_id: int,
 ) -> None:
     clients_manager = ClientsManager(

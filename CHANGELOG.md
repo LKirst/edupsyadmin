@@ -1,3 +1,71 @@
+## 4.0.0a0 (2025-04-08)
+
+### BREAKING CHANGE
+
+- add new variable to db model (nos_rs)
+- several nta client attributes were renamed which will break any forms you used with edupsyadmin
+
+### Feat
+
+- **clients.py**: add nos_rs to db model
+- add some nta attributes to clients, rename some, add setters and getters
+
+### Fix
+
+- **cli.py**: make lazy imports truly lazy
+- **clients.py**: replace getters and setters with @validates functions
+- **clients.py**: add correct column name to mapped_column calls with private attributes
+
+### Refactor
+
+- **cli.py**: use lazy import to speed up execution
+- **config.py**: remove the option to use environment variables for config
+
+## 3.3.1 (2025-03-20)
+
+### Refactor
+
+- change logging level from warning to lower level where possible
+
+## 3.3.0 (2025-03-19)
+
+### Feat
+
+- **managers.py**: show all nta columns for get_clients
+
+### Fix
+
+- handle backslashes in windows paths for form_set
+- **managers.py**: fix get_clients when used with a single client_id
+- **cli.py**: remove duplicate logging
+
+### Refactor
+
+- **uv.lock**: update dependencies
+- **add_convenience_data.py**: remove ns_zeugnisbemerkung
+
+## 3.2.1 (2025-03-17)
+
+### Fix
+
+- **fill_form.py**: replace None with an empty string for fill_form
+- **add_convenience_data.py**: allow None values for lrst_diagnosis
+- **add_convenience_data.py**: correct spelling of Lese-Rechtschreib-Störung
+
+## 3.2.0 (2025-03-17)
+
+### Feat
+
+- **add_convenience_data.py**: add lrst_diagnosis_long for forms
+- add a delete_client subcommand to the cli
+
+### Fix
+
+- **shellscripts**: update lrst shellscripts
+- **managers.py**: handle 0 and 1 instead of True/False for set_client
+- **add_convenience_data.py**: remove automatic setting of nta_font
+- **cli.py**: fix call of the delete_client subcommand
+
 ## 3.1.2 (2025-03-10)
 
 ### Fix

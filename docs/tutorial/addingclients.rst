@@ -13,11 +13,12 @@ Füge einen Klienten interaktiv hinzu:
 Füge einen weiteren Klienten aus einem Webuntis-CSV-Export zur Datenbank hinzu.
 Verwende dafür die Beispieldatei `samplewebuntisfile.csv
 <https://raw.githubusercontent.com/LKirst/edupsyadmin/refs/heads/main/docs/_static/samplewebuntisfile.csv>`_.
-Die Datei kannst du speichern, indem du :kbd:`Strg-S` klickst.
+Die Datei kannst du speichern, indem du :kbd:`Strg-S` klickst. Wir ordnen den
+Schüler unserer, in der Konfiguration angelegten ``TutorialSchule`` zu.
 
 .. code-block:: console
 
-    $ edupsyadmin new_client --csv ./pfad/zu/samblewebuntisfile.csv --name "MustermMax1"
+    $ edupsyadmin new_client --csv "./pfad/zu/samblewebuntisfile.csv" --name "MustermMax1" --school TutorialSchule
 
 Einträge bearbeiten
 -------------------
@@ -29,8 +30,9 @@ steht ``1`` für "wahr/ja" und ``0`` für "falsch/nein".
 .. code-block:: console
 
     $ edupsyadmin set_client 2 \
-      "nachteilsausgleich=1" \
-      "notenschutz=0" \
+      "nta_font=1" \
+      "nta_zeitverl_vieltext=20" \
+      "nos_rs=0" \
       "lrst_diagnosis=iLst"
 
 Einträge anzeigen
@@ -44,6 +46,15 @@ Zeige eine Übersicht aller Klienten in der Datenbank an:
 
 Hier sollten nun die zwei hinzugefügten Klienten angezeigt werden. In der
 ersten Spalte ist die ``client_id`` gelistet.
+
+Zeige alle Daten für einen einzelnen Klienten an:
+
+.. code-block:: console
+
+    $ edupsyadmin get_clients --client_id 2
+
+Hier sollten nun alle Daten für ``client_id=2`` gelistet sein, auch die
+oben geänderten Felder wie ``nta_font``.
 
 Einträge löschen
 ----------------

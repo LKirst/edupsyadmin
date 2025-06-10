@@ -37,7 +37,20 @@ def change_wd(tmp_path):
     os.chdir(original_directory)
 
 
-@pytest.fixture(params=("--help", "info"))
+@pytest.fixture(
+    params=(
+        "--help",
+        "info",
+        "info --help",
+        "new_client --help",
+        "set_client --help",
+        "create_documentation --help",
+        "get_clients --help",
+        "flatten_pdfs --help",
+        "taetigkeitsbericht --help",
+        "delete_client --help",
+    )
+)
 def command(request):
     """Return the command to run."""
     return request.param
@@ -77,6 +90,8 @@ def test_config_template(mock_keyring, tmp_path_factory):
     database_url = f"sqlite:///{database_path}"
     config_path = str(tmp_dir / "mock_conf.yml")
     args = [
+        "-w",
+        "DEBUG",
         "-c",
         config_path,
         "info",
@@ -95,6 +110,8 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
     args = [
+        "-w",
+        "DEBUG",
         "-c",
         str(mock_config[0]),
         "new_client",
@@ -115,11 +132,13 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
     )
 
 
-def test_get_clients(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
+def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
     # add a client
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
     args = [
+        "-w",
+        "DEBUG",
         "-c",
         str(mock_config[0]),
         "new_client",
@@ -138,6 +157,8 @@ def test_get_clients(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path)
 
     # test get_clients
     args = [
+        "-w",
+        "DEBUG",
         "-c",
         str(mock_config[0]),
         "get_clients",
@@ -148,11 +169,137 @@ def test_get_clients(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path)
     ]
     assert 0 == main(args)
     mock_keyring.assert_called_with(
-        "example.com", "user_read_from_file-test_get_clients"
+        "example.com", "user_read_from_file-test_get_clients_all"
     )
     stdout, stderr = capsys.readouterr()
     assert "Mustermann" in stdout
     assert "Erika" in stdout
+
+
+def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
+    # add two clients
+    database_path = tmp_path / "test.sqlite"
+    database_url = f"sqlite:///{database_path}"
+    args = [
+        "-w",
+        "DEBUG",
+        "-c",
+        str(mock_config[0]),
+        "new_client",
+        "--app_uid",
+        "example.com",
+        "--database_url",
+        database_url,
+        "--csv",
+        str(mock_webuntis),
+        "--name",
+        "MustermErika1",
+        "--school",
+        "FirstSchool",
+        "--keepfile",
+    ]
+    assert 0 == main(args)
+    args = [
+        "-w",
+        "DEBUG",
+        "-c",
+        str(mock_config[0]),
+        "new_client",
+        "--app_uid",
+        "example.com",
+        "--database_url",
+        database_url,
+        "--csv",
+        str(mock_webuntis),
+        "--name",
+        "MustermMax1",
+        "--school",
+        "FirstSchool",
+    ]
+    assert 0 == main(args)
+
+    # test get_clients for client 1
+    args = [
+        "-w",
+        "DEBUG",
+        "-c",
+        str(mock_config[0]),
+        "get_clients",
+        "--app_uid",
+        "example.com",
+        "--database_url",
+        database_url,
+        "--client_id",
+        "1",
+    ]
+    assert 0 == main(args)
+    mock_keyring.assert_called_with(
+        "example.com", "user_read_from_file-test_get_clients_single"
+    )
+    stdout, stderr = capsys.readouterr()
+    assert "Mustermann" in stdout
+    assert "Erika" in stdout
+    assert "Max" not in stdout
+
+
+def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
+    # add client
+    database_path = tmp_path / "test.sqlite"
+    database_url = f"sqlite:///{database_path}"
+    args = [
+        "-w",
+        "DEBUG",
+        "-c",
+        str(mock_config[0]),
+        "new_client",
+        "--app_uid",
+        "example.com",
+        "--database_url",
+        database_url,
+        "--csv",
+        str(mock_webuntis),
+        "--name",
+        "MustermErika1",
+        "--school",
+        "FirstSchool",
+    ]
+    assert 0 == main(args)
+
+    # test set_clients for client 1
+    args = [
+        "-w",
+        "DEBUG",
+        "-c",
+        str(mock_config[0]),
+        "set_client",
+        "--app_uid",
+        "example.com",
+        "--database_url",
+        database_url,
+        "1",
+        "street_encr='Veränderte Straße 5'",
+        "class_name=42ab",
+    ]
+    assert 0 == main(args)
+
+    # call get_clients for client_id=1
+    args = [
+        "-w",
+        "DEBUG",
+        "-c",
+        str(mock_config[0]),
+        "get_clients",
+        "--app_uid",
+        "example.com",
+        "--database_url",
+        database_url,
+        "--client_id",
+        "1",
+    ]
+    assert 0 == main(args)
+    stdout, stderr = capsys.readouterr()
+    assert "Veränderte Straße 5" in stdout
+    assert "42ab" in stdout
 
 
 def test_create_documentation(
@@ -165,6 +312,8 @@ def test_create_documentation(
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
     args = [
+        "-w",
+        "DEBUG",
         "-c",
         str(mock_config[0]),
         "new_client",
@@ -184,6 +333,8 @@ def test_create_documentation(
     # create documentation
     client_id = 1
     args = [
+        "-w",
+        "DEBUG",
         "-c",
         str(mock_config[0]),
         "create_documentation",

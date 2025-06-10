@@ -14,7 +14,7 @@ class Encryption:
     fernet = None
 
     def set_fernet(
-        self, username: str, user_data_dir: str | os.PathLike, uid: str
+        self, username: str, user_data_dir: str | os.PathLike[str], uid: str
     ) -> None:
         """use a password to derive a key
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
@@ -37,21 +37,21 @@ class Encryption:
         secret_key = base64.urlsafe_b64encode(kdf.derive(password))
         self.fernet = Fernet(secret_key)
 
-    def encrypt(self, data: str) -> bytes:
+    def encrypt(self, data: str) -> str:
         if self.fernet is None:
             raise RuntimeError("call set_fernet() before calling encrypt()")
-        token = self.fernet.encrypt(data.encode())
-        return token
+        token = self.fernet.encrypt(data.encode(encoding="utf-8"))
+        return token.decode(encoding="utf-8")
 
-    def decrypt(self, token: bytes | str) -> str:
+    def decrypt(self, token: str) -> str:
         if self.fernet is None:
             raise RuntimeError("call set_fernet() before calling decrypt()")
-        if isinstance(token, str):
-            token = token.encode()
-        data = self.fernet.decrypt(token).decode()
+        token_bytes = token.encode(encoding="utf-8")
+        data = self.fernet.decrypt(token_bytes).decode(encoding="utf-8")
         return data
 
-    def _load_or_create_salt(self, salt_path: str | os.PathLike) -> bytes:
+    def _load_or_create_salt(self, salt_path: str | os.PathLike[str]) -> bytes:
+        # TODO: store the salt in the db, not in a separate file
         if Path(salt_path).is_file():
             logger.info(f"using existing salt from `{salt_path}`")
             with open(salt_path, "rb") as binary_file:

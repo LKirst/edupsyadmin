@@ -20,25 +20,54 @@ unterstützen.
 
 .. tip::
 
-    Unter dem oben genannten Link zu "Issues" kannst du berichten, wenn du Probleme
-    mit edupsyadmin hast oder Wünsche zu Änderungen an der App.
+    Unter dem oben genannten Link zu "Issues" kannst du berichten, wenn du
+    Probleme mit edupsyadmin hast oder Wünsche zu Änderungen an der App. Bitte
+    gebe bei Fragen zu Problemen immer die Version von edupsyadmin an, die du
+    verwendest.
 
-Den einfachsten Einstieg in edupsyadmin bietet das folgende Tutorial:
+Warum edupsyadmin?
+------------------
 
-.. note::
+edupsyadmin beschleunigt sowohl die Dokumentation einzelner Beratungsfälle
+als auch die Erstellung des Tätigkeitsberichts.
 
-   Dieses Tutorial ist in Arbeit. Es werden bald mehr Informationen hinzugefügt.
+Schulpsychologen müssen dieselben Daten immer wieder für unterschiedliche
+Formulare abschreiben. Zum Beispiel müssen teils dieselben Daten aufgeführt
+werden auf
+
+- dem Mantelbogen der schulpsychologischen Dokumentation
+
+- der schulpsychologischen Stellungnahme
+
+- dem Anschreiben zur Stellungnahme
+
+- dem Vordruck der Gewährung der Schulleitung
+
+Mit edupsyadmin lassen sich die Daten aus Webuntis importieren oder
+einmalig händisch eingeben. Auf dieser Grundlage lassen sich dann
+`PDF-Formulare
+<https://de.wikipedia.org/wiki/Portable_Document_Format#Formularprozesse>`_
+mit einem Befehl ausfüllen. Da das Abschreiben ausbleibt, werden so auch
+Fehlerquellen minimiert.
+
+edupsyadmin schätzt aus den gespeicherten Daten das Datum, an dem die Akten
+vernichtet werden können (3 Jahre nach Ende des Besuchs der Schule), sodass
+dieses Datum auf dem Mantelbogen vermerkt werden kann.
+
+Zu jedem mit edupsyadmin gespeicherten Fall kann ein
+Tätigkeitsbericht-Schlüsselbegriff und die Anzahl der auf den Fall verwendeten
+Stunden gespeichert werden. Dann kann edupsyadmin die Daten berechnen, die der
+Tätigkeitsbericht verlangt.
 
 .. toctree::
    :maxdepth: 2
    :caption: Tutorial
 
    tutorial/installation
+   tutorial/helpfunction
    tutorial/addingclients
    tutorial/creatingdocumentation
    tutorial/update
-
-Dokumentation der Datenbank
 
 .. toctree::
    :maxdepth: 2

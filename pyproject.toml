@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "edupsyadmin"
-version = "3.1.2"
+version = "4.0.0a0"
 authors=[
     {name = "Lukas Liebermann"}
 ]
 description = "edupsyadmin provides tools to help school psychologists with their documentation"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 homepage = "https://github.com/LKirst/edupsyadmin.git"
 license = { text = "MIT" }
 dependencies = [
@@ -20,7 +20,6 @@ dependencies = [
     "pandas>=2.2.3",
     "platformdirs>=4.3.6",
     "pypdf>=5.1.0",
-    "python-dotenv>=1.0.1",
     "python-liquid>=1.12.1",
     "pyyaml>=6.0.2",
     "scipy>=1.14.1",
@@ -37,8 +36,8 @@ flattenpdf = [
 ]
 reportsandtaetigkeitsber = [
     "matplotlib>=3.9.2",
-    "fpdf>=1.7.2",
     "dataframe-image>=0.2.6",
+    "fpdf2>=2.8.3",
 ]
 bwbackend = [
     "bitwarden-keyring>=0.3.1",
@@ -63,6 +62,7 @@ dev = [
     "types-greenlet>=3.1.0.20241221",
     "sphinx-rtd-theme>=3.0.2",
     "alembic>=1.14.1",
+    "snakeviz>=2.2.2",
 ]
 
 [tool.commitizen]

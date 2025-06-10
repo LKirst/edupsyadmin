@@ -9,8 +9,6 @@ from .managers import get_data_raw
 
 try:
     import dataframe_image as dfi
-
-    # TODO: use the fpdf2 fork
     from fpdf import FPDF
 
     pdflibs_imported = True
@@ -23,18 +21,18 @@ pd.set_option("display.precision", 1)
 if pdflibs_imported:
 
     class Report(FPDF):
-        def __init__(self, name):
+        def __init__(self, name: str):
             super().__init__()
             self.WIDTH = 210
             self.HEIGHT = 297
             self.header_text = f"Tätigkeitsbericht {date.today()} ({name})"
 
-        def header(self):
+        def header(self) -> None:
             self.set_font("Arial", "B", 11)
-            self.cell(w=0, h=10, txt=self.header_text, border=0, ln=0, align="C")
-            self.ln(20)
+            self.cell(w=0, h=10, text=self.header_text, border=0, ln=0, align="C")
+            self.ln(20)  # line break
 
-        def footer(self):
+        def footer(self) -> None:
             # page numbers
             self.set_y(-15)
             self.set_font("Arial", "I", 8)
@@ -84,7 +82,9 @@ def add_categories_to_df(
     return df, summary_categories
 
 
-def summary_statistics_n_sessions(df: pd.DataFrame, min_per_ses=45) -> pd.DataFrame:
+def summary_statistics_n_sessions(
+    df: pd.DataFrame, min_per_ses: int = 45
+) -> pd.DataFrame:
     n_sessions = df.groupby("school")["n_sessions"].describe()
     n_sessions.loc[:, "sum"] = df.groupby("school")["n_sessions"].agg("sum")
     total = df["n_sessions"].describe()
@@ -185,13 +185,17 @@ def summary_statistics_wstd(
     summarystats_wstd = wstd_in_zstd(wstd_spsy, wstd_total)
 
     pattern = re.compile(r"([^\d]+)(\d+)")
-    nstudents = {
-        pattern.match(school).groups()[0]: int(pattern.match(school).groups()[1])
-        for school in schools
-    }
+    nstudents = {}
+    for school in schools:
+        match = pattern.match(school)
+        if not match or len(match.groups()) != 2:
+            raise ValueError(f"Invalid format for the school string: {school}")
+        school_name, student_count = match.groups()
+        nstudents[school_name] = int(student_count)
+        summarystats_wstd.loc["nstudents_" + school_name, "value"] = nstudents[
+            school_name
+        ]
 
-    for schoolnm, schoolnstudents in nstudents.items():
-        summarystats_wstd.loc["nstudents_" + schoolnm, "value"] = schoolnstudents
     summarystats_wstd.loc["nstudents_all", "value"] = sum(nstudents.values())
     summarystats_wstd.loc["ratio_nstudens_wstd_spsy", "value"] = (
         sum(nstudents.values()) / wstd_spsy
@@ -212,7 +216,7 @@ def summary_statistics_wstd(
 def create_taetigkeitsbericht_report(
     basename_out: str,
     name: str,
-    summary_wstd: pd.Series,
+    summary_wstd: "pd.Series[float]",
     summary_categories: pd.DataFrame | None = None,
     summary_n_sessions: pd.DataFrame | None = None,
 ) -> None:
@@ -231,22 +235,22 @@ def create_taetigkeitsbericht_report(
         if summary_categories is not None:
             report.add_page()
             for nm, val in summary_categories.items():
-                report.cell(w=15, h=9, border=0, txt=f"{nm}:")
-                report.ln(6)
+                report.cell(w=15, h=9, border=0, text=f"{nm}:")
+                report.ln(6)  # line break
                 for text in [
                     "einmaliger Kurzkontakt",
                     "1-3 Sitzungen",
                     "mehr als 3 Sitzungen",
                 ]:
-                    report.cell(w=50, h=9, border=0, txt=text)
+                    report.cell(w=50, h=9, border=0, text=text)
                 report.ln(6)  # linebreak
                 for colnm in [
                     "count_einm_kurzkont",
                     "count_1to3_sessions",
                     "count_mt3_sessions",
                 ]:
-                    report.cell(w=50, h=9, border=0, txt=f"{val[colnm]:.0f}")
-                report.ln(18)  # linebreak
+                    report.cell(w=50, h=9, border=0, text=f"{val[colnm]:.0f}")
+                report.ln(18)  # line break
         if summary_n_sessions is not None:
             report.add_page()
             report.image(n_sessions_img, x=15, y=report.HEIGHT * 1 / 4, w=180)
@@ -263,12 +267,12 @@ def create_taetigkeitsbericht_report(
 
 
 def taetigkeitsbericht(
-    app_username,
-    app_uid,
-    database_url,
-    config_path,
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    config_path: str | os.PathLike[str],
     wstd_psy: int,
-    nstudents: list,
+    nstudents: list[str],
     out_basename: str = "Taetigkeitsbericht_Out",
     min_per_ses: int = 45,
     wstd_total: int = 23,

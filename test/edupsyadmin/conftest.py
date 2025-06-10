@@ -62,10 +62,7 @@ def mock_config(
     conf_path = [str(tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml")]
     shutil.copy(template_path, conf_path[0])
     testing_logger.debug(
-        (
-            f"mock_config fixture (test: {request.node.name}) - "
-            f"conf_path: {conf_path}"
-        )
+        (f"mock_config fixture (test: {request.node.name}) - conf_path: {conf_path}")
     )
     config.load(conf_path)
 
@@ -120,9 +117,11 @@ def mock_webuntis(tmp_path: Path) -> Path:
             "telephone1": "555-1234",
             "email": "john.doe@example.com",
             "notenschutz": False,
+            "nta_zeitv_vieltext": 10,
+            "nta_nos_end_grade": 11,
             "nachteilsausgleich": True,
             "lrst_diagnosis": "iLst",
-            "nta_sprachen": 10,
+            "lrst_last_test": "2025-05-11",
         },
         {
             "client_id": 2,
@@ -137,10 +136,12 @@ def mock_webuntis(tmp_path: Path) -> Path:
             "city": "München",
             "telephone1": "+555-1234",
             "email": "example@example.com",
-            "notenschutz": True,
-            "nachteilsausgleich": True,
-            "lrst_diagnosis": "lrst",
-            "nta_sprachen": None,
+            "notenschutz": False,
+            "nta_zeitv_vieltext": None,
+            "nta_nos_end_grade": None,
+            "nachteilsausgleich": False,
+            "lrst_diagnosis": None,
+            "lrst_last_test": None,
         },
     ],
     scope="session",
@@ -166,19 +167,20 @@ def clients_manager(tmp_path, mock_salt_path, mock_config, mock_keyring):
 
 @pytest.fixture
 def pdf_forms(tmp_path: Path) -> list[Path]:
-    files = [
+    sample_files = [
         Path("test/edupsyadmin/data/sample_form_mantelbogen.pdf").resolve(),
         Path("test/edupsyadmin/data/sample_form_anschreiben.pdf").resolve(),
+        Path("test/edupsyadmin/data/sample_form_stellungnahme.pdf").resolve(),
     ]
     testing_logger.debug(f"cwd: {os.getcwd()}")
     pdf_form_paths = []
-    for i in range(3):
-        filename = "sample_form_reportlab.pdf"
-        if i == 0:
-            pdf_form_path = tmp_path / filename
-            create_pdf_form(str(pdf_form_path))
-            pdf_form_paths.append(pdf_form_path)
-        else:
-            pdf_form_paths.append(files[i - 1])
+
+    reportlab_form_filename = "sample_form_reportlab.pdf"
+    reportlab_form_path = tmp_path / reportlab_form_filename
+    create_pdf_form(str(reportlab_form_path))
+    pdf_form_paths.append(reportlab_form_path)
+
+    pdf_form_paths.extend(sample_files)
     testing_logger.debug(f"PDF forms fixture created at {pdf_form_paths}")
+
     return pdf_form_paths
