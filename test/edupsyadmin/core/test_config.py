@@ -21,26 +21,26 @@ var: ${var1}$var3  # override `var` in conf1
 """
 
 
+@pytest.fixture
+def files(tmp_path):
+    """Create configuration files for testing."""
+    # Create conf1.yml and conf2.yml in the temporary path
+    conf1_path = tmp_path / "conf1.yml"
+    conf2_path = tmp_path / "conf2.yml"
+    conf1_path.write_text(conf1_content.strip())
+    conf2_path.write_text(conf2_content.strip())
+
+    return conf1_path, conf2_path
+
+
+@pytest.fixture
+def params():
+    """Define configuration parameters."""
+    return {"var1": "VAR1", "var2": "VAR2", "var3": "VAR3"}
+
+
 class YamlConfigTest(object):
     """Test suite for the YamlConfig class."""
-
-    @classmethod
-    @pytest.fixture
-    def files(cls, tmp_path):
-        """Create configuration files for testing."""
-        # Create conf1.yml and conf2.yml in the temporary path
-        conf1_path = tmp_path / "conf1.yml"
-        conf2_path = tmp_path / "conf2.yml"
-        conf1_path.write_text(conf1_content.strip())
-        conf2_path.write_text(conf2_content.strip())
-
-        return conf1_path, conf2_path
-
-    @classmethod
-    @pytest.fixture
-    def params(cls):
-        """Define configuration parameters."""
-        return {"var1": "VAR1", "var2": "VAR2", "var3": "VAR3"}
 
     def test_item(self):
         """Test item access."""
