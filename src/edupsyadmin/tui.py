@@ -6,6 +6,7 @@ from textual.widgets import Button, Checkbox, Input, Label
 from edupsyadmin.api.managers import ClientsManager
 
 
+# TODO: Write a test
 class StudentEntryApp(App):
     def __init__(self, client_id: int, data: dict = {}):
         super().__init__()
@@ -16,6 +17,7 @@ class StudentEntryApp(App):
 
     def compose(self):
         # Define fields and their types
+        # TODO: Update the field names (and the booleand fields below)
         fields = {
             "school": str,
             "gender": str,
