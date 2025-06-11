@@ -9,7 +9,7 @@ from liquid import Template, exceptions
 from edupsyadmin.core.logger import logger
 
 
-def modify_bool_and_none_for_pdf_form(data: dict[str, Any]) -> dict[str, Any]:
+def _modify_bool_and_none_for_pdf_form(data: dict[str, Any]) -> dict[str, Any]:
     """
     Replace every boolean True with 'Yes' and False with 'Off', which are the
     values checkboxes accept in most PDF forms. Replace None with empty
@@ -42,7 +42,7 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
     """
     from pypdf import PdfReader, PdfWriter
 
-    data_wo_bool = modify_bool_and_none_for_pdf_form(data)
+    data_wo_bool = _modify_bool_and_none_for_pdf_form(data)
 
     reader = PdfReader(open(fn, "rb"), strict=False)
     writer = PdfWriter()
@@ -82,7 +82,7 @@ def write_form_pdf2(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
     """
     from fillpdf import fillpdfs
 
-    data_wo_bool = modify_bool_and_none_for_pdf_form(data)
+    data_wo_bool = _modify_bool_and_none_for_pdf_form(data)
 
     fields = fillpdfs.get_form_fields(fn)
     logger.debug(f"\nForm fields:\n{fields}")
@@ -123,8 +123,8 @@ def write_form_md(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
 
 def fill_form(
     client_data: dict[str, Any],
-    form_paths: list[str],
-    out_dir: str = ".",
+    form_paths: list[str | os.PathLike[str]],
+    out_dir: str | os.PathLike[str] = ".",
     use_fillpdf: bool = True,
 ) -> None:
     """
