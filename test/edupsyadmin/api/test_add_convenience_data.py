@@ -1,39 +1,79 @@
 from datetime import date
 from unittest.mock import patch
 
+import pytest
+
 from edupsyadmin.api.add_convenience_data import add_convenience_data
 
 # Sample input data
-input_data = {
-    "first_name": "John",
-    "last_name": "Doe",
-    "street": "456 Example Rd",
-    "city": "Example City",
-    "class_int": 5,
-    "school": "FirstSchool",
-    "nachteilsausgleich": True,
-    "notenschutz": True,
-    "birthday": "2000-01-01",
-    "nta_zeitv_vieltext": 25,
-    "nta_nos_end": True,
-    "nta_nos_end_grade": 8,
-    "document_shredding_date": date(2025, 12, 24),
-    "lrst_diagnosis": "lrst",
-    "lrst_last_test": "2025-05-11",
-}
 
 
 @patch(
     "edupsyadmin.api.add_convenience_data.get_subjects"
 )  # Mock the get_subjects function
-def test_add_convenience_data(mock_get_subjects, mock_config):
+@pytest.mark.parametrize(
+    "input_data",
+    [
+        {
+            "first_name": "John",
+            "last_name": "Doe",
+            "street": "456 Example Rd",
+            "city": "Example City",
+            "class_int": 5,
+            "school": "FirstSchool",
+            "nachteilsausgleich": True,
+            "notenschutz": True,
+            "birthday": "2000-01-01",
+            "nta_zeitv_vieltext": 25,
+            "nta_nos_end": True,
+            "nta_nos_end_grade": 8,
+            "document_shredding_date": date(2025, 12, 24),
+            "lrst_diagnosis": "lrst",
+            "lrst_last_test": "2025-05-11",
+        },
+        {
+            "first_name": "John",
+            "last_name": "Doe",
+            "street": "456 Example Rd",
+            "city": "Example City",
+            "class_int": 5,
+            "school": "FirstSchool",
+            "nachteilsausgleich": True,
+            "notenschutz": True,
+            "birthday": "2000-01-01",
+            "nta_zeitv_vieltext": 25,
+            "nta_nos_end": False,
+            "nta_nos_end_grade": None,
+            "document_shredding_date": date(2025, 12, 24),
+            "lrst_diagnosis": "iLst",
+            "lrst_last_test": "2025-05-11",
+        },
+        {
+            "first_name": "John",
+            "last_name": "Doe",
+            "street": "456 Example Rd",
+            "city": "Example City",
+            "class_int": 5,
+            "school": "FirstSchool",
+            "nachteilsausgleich": True,
+            "notenschutz": True,
+            "birthday": "2000-01-01",
+            "nta_zeitv_vieltext": 25,
+            "nta_nos_end": False,
+            "nta_nos_end_grade": None,
+            "document_shredding_date": date(2025, 12, 24),
+            "lrst_diagnosis": "iRst",
+            "lrst_last_test": "2025-05-11",
+        },
+    ],
+)
+def test_add_convenience_data(mock_get_subjects, mock_config, input_data):
     # Mock the return value of get_subjects
     mock_get_subjects.return_value = "Math, Science, History"
 
     # Call the function with input data
     result = add_convenience_data(input_data)
 
-    # Assertions
     assert result["name"] == "John Doe"
     assert result["addr_s_nname"] == "456 Example Rd, Example City"
     assert result["addr_m_wname"] == "John Doe\n456 Example Rd\nExample City"
@@ -45,14 +85,24 @@ def test_add_convenience_data(mock_get_subjects, mock_config):
     )
     assert result["school_head_w_school"] == "Außenstellenleitung der Berufsfachschule"
     assert result["school_subjects"] == "Math, Science, History"
-    assert result["lrst_diagnosis_long"] == "Lese-Rechtschreib-Störung"
+
+    diagnosis = result["lrst_diagnosis"]
+    if diagnosis == "lrst":
+        assert result["lrst_diagnosis_long"] == "Lese-Rechtschreib-Störung"
+    elif diagnosis == "iLst":
+        assert result["lrst_diagnosis_long"] == "isolierte Lesestörung"
+    elif diagnosis == "iRst":
+        assert result["lrst_diagnosis_long"] == "isolierte Rechtschreibstörung"
+
     assert (
         result["schoolpsy_addr_m_wname"]
         == "Firstname Lastname\nBeispielstr. 1\n87700 Beispielstadt"
     )
+
     # Check dates
     assert result["date_today_de"] is not None  # Check if date is added
     assert result["birthday_de"] == "01.01.2000"
     assert result["document_shredding_date_de"] == "24.12.2025"
+
     # Verify that the school subjects were fetched
     mock_get_subjects.assert_called_once_with("FirstSchool")
