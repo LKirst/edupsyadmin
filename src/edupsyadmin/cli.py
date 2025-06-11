@@ -1,6 +1,6 @@
 import argparse
-import importlib
 import importlib.resources
+import importlib.util
 import os
 import shutil
 import sys
