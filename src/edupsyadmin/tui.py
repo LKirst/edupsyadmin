@@ -97,7 +97,7 @@ class StudentEntryApp(App):
         return self.data
 
 
-def edit_client(
+def get_modified_values(
     app_username: str,
     app_uid: str,
     database_url: str,
@@ -106,7 +106,7 @@ def edit_client(
 ) -> dict:
     # retrieve current values
     manager = ClientsManager(
-        database_url,
+        database_url=database_url,
         app_uid=app_uid,
         app_username=app_username,
         salt_path=salt_path,

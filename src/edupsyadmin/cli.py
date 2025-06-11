@@ -298,7 +298,13 @@ def _set_client(
         key_value_pairs: list[str] | None,
     ) -> None:
         if not key_value_pairs:
-            key_value_dict = tui.edit_client()
+            key_value_dict = tui.get_modified_values(
+                database_url=database_url,
+                app_uid=app_uid,
+                app_username=app_username,
+                salt_path=salt_path,
+                client_id=client_id,
+            )
             # TODO: It should not be necessary to convert to string
             key_value_pairs = [
                 f"{key}={value}" for key, value in key_value_dict.items()
