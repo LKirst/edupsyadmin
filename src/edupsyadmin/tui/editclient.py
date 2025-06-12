@@ -34,12 +34,13 @@ def get_python_type(sqlalchemy_type: Type) -> Type:
         raise ValueError(f"could not match {sqlalchemy_type} to a builtin type")
 
 
-class NumericInput(Input):
+# TODO: Add a widget for floats and for datetime
+class IntegerInput(Input):
     """A custom input widget that accepts integers."""
 
     def on_key(self, event: Key) -> None:
         """Handle key press events to filter out non-numeric input."""
-        if event.character.isdigit() or event.key in {
+        if (event.character and event.character.isdigit()) or event.key in {
             "backspace",
             "delete",
             "left",
@@ -76,7 +77,7 @@ class StudentEntryApp(App):
             # Create input fields
             if field_type is int:
                 default_value = str(self.data[field]) if field in self.data else ""
-                input_widget = NumericInput(value=default_value, placeholder=field)
+                input_widget = IntegerInput(value=default_value, placeholder=field)
                 self.inputs[field] = input_widget
                 yield input_widget
             elif field_type is not bool:
@@ -95,21 +96,19 @@ class StudentEntryApp(App):
         yield self.submit_button
 
     def on_button_pressed(self):
-        # Collect data
-        self.data = {field: self.inputs[field].value for field in self.inputs}
+        self.data = {}
+
+        # Collect data from input fields
+        for field, input_widget in self.inputs.items():
+            self.data[field] = (
+                int(input_widget.value) if input_widget.value.isdigit() else None
+            )
+        else:
+            self.data[field] = input_widget.value
+        # Collect data from checkboxes
         self.data.update(
             {field: self.checkboxes[field].value for field in self.checkboxes}
         )
-
-        # Convert string inputs to their respective types
-        for field, field_type in {
-            "nta_sprachen": int,
-            "nta_mathephys": int,
-            "nta_notes": int,
-            "n_sessions": int,
-        }.items():
-            if self.data[field]:
-                self.data[field] = field_type(self.data[field])
 
         self.exit()  # Exit the app after submission
 
