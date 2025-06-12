@@ -72,10 +72,12 @@ class Encryption:
                 f"and username: '{username}' using keyring"
             )
         )
+        backend = keyring.get_keyring()
+        logger.info(f"using keyring backend: '{backend.__class__.__name__}'")
         cred = keyring.get_credential(uid, username)
         if not cred or not cred.password:
             raise ValueError(
-                f"Password not found for uid: '{uid}', username: '{username}'"
+                f"password not found for uid: '{uid}', username: '{username}', "
             )
 
         return cred.password.encode()
