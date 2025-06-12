@@ -298,7 +298,7 @@ def _set_client(
         key_value_pairs: list[str] | None,
     ) -> None:
         if not key_value_pairs:
-            key_value_dict = tui.get_modified_values(
+            key_value_dict = tui.editclient.get_modified_values(
                 database_url=database_url,
                 app_uid=app_uid,
                 app_username=app_username,
