@@ -4,6 +4,7 @@ from typing import Type
 
 from sqlalchemy import Boolean, Date, DateTime, Float, Integer, String
 from textual.app import App
+from textual.events import Key
 from textual.widgets import Button, Checkbox, Input, Label
 
 from edupsyadmin.api.clients import Client
@@ -33,6 +34,24 @@ def get_python_type(sqlalchemy_type: Type) -> Type:
         raise ValueError(f"could not match {sqlalchemy_type} to a builtin type")
 
 
+class NumericInput(Input):
+    """A custom input widget that accepts integers."""
+
+    def on_key(self, event: Key) -> None:
+        """Handle key press events to filter out non-numeric input."""
+        if event.character.isdigit() or event.key in {
+            "backspace",
+            "delete",
+            "left",
+            "right",
+            "home",
+            "end",
+        }:
+            return  # Allow the key press
+        else:
+            event.prevent_default()  # Prevent invalid input
+
+
 # TODO: Write a test
 class StudentEntryApp(App):
     def __init__(self, client_id: int, data: dict = {}):
@@ -55,7 +74,12 @@ class StudentEntryApp(App):
 
         for field, field_type in fields.items():
             # Create input fields
-            if field_type is not bool:
+            if field_type is int:
+                default_value = str(self.data[field]) if field in self.data else ""
+                input_widget = NumericInput(value=default_value, placeholder=field)
+                self.inputs[field] = input_widget
+                yield input_widget
+            elif field_type is not bool:
                 default_value = str(self.data[field]) if field in self.data else ""
                 input_widget = Input(value=default_value, placeholder=field)
                 self.inputs[field] = input_widget
