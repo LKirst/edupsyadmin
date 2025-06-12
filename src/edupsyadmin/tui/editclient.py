@@ -1,9 +1,36 @@
+import datetime
 import os
+from typing import Type
 
+from sqlalchemy import Boolean, Date, DateTime, Float, Integer, String
 from textual.app import App
 from textual.widgets import Button, Checkbox, Input, Label
 
+from edupsyadmin.api.clients import Client
 from edupsyadmin.api.managers import ClientsManager
+
+
+def get_python_type(sqlalchemy_type: Type) -> Type:
+    """
+    Maps SQLAlchemy types to Python standard types.
+
+    :param sqlalchemy_type: The SQLAlchemy type to be mapped.
+    :return: A string representing the Python standard type.
+    """
+    if isinstance(sqlalchemy_type, Integer):
+        return int
+    elif isinstance(sqlalchemy_type, String):
+        return str
+    elif isinstance(sqlalchemy_type, Float):
+        return float
+    elif isinstance(sqlalchemy_type, Date):
+        return datetime.date
+    elif isinstance(sqlalchemy_type, DateTime):
+        return datetime.datetime
+    elif isinstance(sqlalchemy_type, Boolean):
+        return bool
+    else:
+        raise ValueError(f"could not match {sqlalchemy_type} to a builtin type")
 
 
 # TODO: Write a test
@@ -16,59 +43,28 @@ class StudentEntryApp(App):
         self.checkboxes = {}
 
     def compose(self):
-        # Define fields and their types
-        # TODO: Update the field names (and the booleand fields below)
-        fields = {
-            "school": str,
-            "gender": str,
-            "entry_date": str,
-            "class_name": str,
-            "first_name": str,
-            "last_name": str,
-            "birthday": str,
-            "street": str,
-            "city": str,
-            "parent": str,
-            "telephone1": str,
-            "telephone2": str,
-            "email": str,
-            "notes": str,
-            "keyword_taetigkeitsbericht": str,
-            "lrst_diagnosis": str,
-            "nta_sprachen": int,
-            "nta_mathephys": int,
-            "nta_other_details": str,
-            "nta_notes": int,
-            "n_sessions": int,
-        }
+        # Read fields from the clients table
 
-        boolean_fields = [
-            "notenschutz",
-            "nachteilsausgleich",
-            "nta_font",
-            "nta_aufgabentypen",
-            "nta_strukturierungshilfen",
-            "nta_arbeitsmittel",
-            "nta_ersatz_gewichtung",
-            "nta_vorlesen",
-        ]
+        fields = {}
+        for column in Client.__table__.columns:
+            python_type = get_python_type(column.type)
+            fields[column.name] = python_type
 
         # Create heading with client_id
         yield Label(f"Data for client_id: {self.client_id}")
 
-        # Create input fields
         for field, field_type in fields.items():
-            default_value = str(self.data[field]) if field in self.data else ""
-            input_widget = Input(value=default_value, placeholder=field)
-            self.inputs[field] = input_widget
-            yield input_widget
-
-        # Create checkboxes
-        for field in boolean_fields:
-            default_value = self.data[field] if field in self.data else False
-            checkbox_widget = Checkbox(label=field, value=default_value)
-            self.checkboxes[field] = checkbox_widget
-            yield checkbox_widget
+            # Create input fields
+            if field_type is not bool:
+                default_value = str(self.data[field]) if field in self.data else ""
+                input_widget = Input(value=default_value, placeholder=field)
+                self.inputs[field] = input_widget
+                yield input_widget
+            else:
+                default_value = self.data[field] if field in self.data else False
+                checkbox_widget = Checkbox(label=field, value=default_value)
+                self.checkboxes[field] = checkbox_widget
+                yield checkbox_widget
 
         # Submit button
         self.submit_button = Button(label="Submit")
