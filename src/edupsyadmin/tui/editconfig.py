@@ -3,9 +3,10 @@ from pathlib import Path
 
 import yaml
 from textual.app import App, ComposeResult
-from textual.containers import VerticalScroll
+from textual.containers import Grid, VerticalScroll
 from textual.events import Click
 from textual.reactive import reactive
+from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Static
 
 
@@ -21,9 +22,31 @@ def save_config(config_dict: dict, file_path: Path) -> None:
         yaml.safe_dump(config_dict, f, default_flow_style=False)
 
 
+class AddSchoolScreen(Screen):
+    """Screen for adding a new school."""
+
+    def compose(self) -> ComposeResult:
+        yield Grid(
+            Static("Enter new school key:"),
+            Input(placeholder="School Key", id="school_key_input"),
+            Button("Add School", id="add_school"),
+            Button("Cancel", id="cancel"),
+            id="add_school_dialog",
+        )
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "add_school":
+            school_key_input = self.query_one("#school_key_input", Input)
+            self.app.add_new_school(school_key_input.value)
+            self.app.pop_screen()
+        elif event.button.id == "cancel":
+            self.app.pop_screen()
+
+
 class ConfigEditorApp(App):
     """A Textual app to edit YAML configuration files."""
 
+    CSS_PATH = "config_editor.tcss"
     school_count: reactive[int] = reactive(0)
     form_set_count: reactive[int] = reactive(0)
 
@@ -63,7 +86,7 @@ class ConfigEditorApp(App):
         # Create inputs for each school
         self.load_schools()
 
-        # Add buttons for adding a school
+        # Add button for adding a school
         add_school_button = Button(label="Schule hinzufügen", id="addschool")
         self.content.mount(add_school_button)
 
@@ -107,6 +130,8 @@ class ConfigEditorApp(App):
     async def on_button_pressed(self, event: Click) -> None:
         if event.button.id == "save":
             await self.save_config()
+        elif event.button.id == "addschool":
+            self.push_screen(AddSchoolScreen())
 
     async def on_input_changed(self, event: Input.Changed) -> None:
         """Called when an input is changed."""
@@ -122,6 +147,19 @@ class ConfigEditorApp(App):
                 sub_dict[int(sub_keys[-1])] = input_widget.value
             else:
                 sub_dict[sub_keys[-1]] = input_widget.value
+
+    def add_new_school(self, school_key: str) -> None:
+        """Add a new school to the configuration."""
+        if school_key and school_key not in self.config_dict["school"]:
+            # Add a new school with default settings
+            self.config_dict["school"][school_key] = {
+                "end": "",
+                "school_city": "",
+                "school_name": "",
+                "school_street": "",
+            }
+            self.add_school_inputs(school_key, self.config_dict["school"][school_key])
+            self.school_count += 1
 
     async def save_config(self) -> None:
         """Save the updated configuration to the file."""
