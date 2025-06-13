@@ -116,7 +116,7 @@ Add a client to the database from a Webuntis csv export:
 Change values for the database entry with `client_id=42`:
 
 ```
-edupsyadmin set_client 2 \
+$ edupsyadmin set_client 2 \
   "nta_font=1" \
   "nta_zeitverl_vieltext=20" \
   "nos_rs=0" \
