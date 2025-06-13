@@ -159,6 +159,7 @@ def _args(argv: Optional[List[str]]) -> argparse.Namespace:
     common.add_argument("--database_url", default=DEFAULT_DB_URL)
     common.add_argument("--salt_path", default=DEFAULT_SALT_PATH)
     _info(subparsers, common)
+    _edit_config(subparsers, common)
     _new_client(subparsers, common)
     _set_client(subparsers, common)
     _create_documentation(subparsers, common)
@@ -208,6 +209,33 @@ def _info(
         help="Get useful information for debugging",
     )
     parser.set_defaults(command=command_info)
+
+
+def _edit_config(
+    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+) -> None:
+    """CLI adaptor for the editconfig command.
+
+    :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
+    """
+
+    def command_edit_config(
+        config_path: str | os.PathLike[str],
+    ) -> None:
+        ConfigEditorApp = lazy_import("edupsyadmin.tui.editconfig").ConfigEditorApp
+        if isinstance(config_path, str):
+            ConfigEditorApp(config_path).run()
+        else:
+            ConfigEditorApp(config_path[0]).run()
+
+    parser = subparsers.add_parser(
+        "edit_config",
+        parents=[common],
+        description="Edit app configuration",
+        help="Edit app configuration",
+    )
+    parser.set_defaults(command=command_edit_config)
 
 
 def _new_client(
