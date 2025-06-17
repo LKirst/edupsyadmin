@@ -8,6 +8,20 @@ from textual.events import Click
 from textual.reactive import reactive
 from textual.widgets import Button, Footer, Header, Input, Static
 
+TOOLTIPS = {
+    "logging": "Logging-Niveau für die Anwendung (DEBUG, INFO, WARN oder ERROR)",
+    "app_uid": "Identifikator für die Anwendung (muss nicht geändert werden)",
+    "app_username": "Benutzername für die Anwendung",
+    "schoolpsy_name": "Vollständiger Name der Schulpsychologin / des Schulpsychologen",
+    "schoolpsy_street": "Straße und Hausnummer der Stammschule",
+    "schoolpsy_city": "Stadt der Stammschule",
+    "school_head_w_school": "Titel der Schulleitung an der Schule",
+    "school_name": "Vollständiger Name der Schule",
+    "school_street": "Straße und Hausnummer der Schule",
+    "school_city": "Stadt und Postleitzahl der Schule",
+    "end": "Jahrgangsstufe, nach der Schüler typischerweise die Schule abschließen",
+}
+
 
 def load_config(file_path: Path) -> dict:
     """Load the YAML configuration file."""
@@ -53,6 +67,7 @@ class ConfigEditorApp(App):
         self.content.mount(Static("App-Einstellungen"))
         for key, value in self.config_dict["core"].items():
             input_widget = Input(value=str(value), placeholder=key)
+            input_widget.tooltip = TOOLTIPS.get(key, "")
             self.inputs[f"core.{key}"] = input_widget
             self.content.mount(input_widget)
 
@@ -60,6 +75,7 @@ class ConfigEditorApp(App):
         self.content.mount(Static("Schulpsychologie-Einstellungen"))
         for key, value in self.config_dict["schoolpsy"].items():
             input_widget = Input(value=str(value), placeholder=key)
+            input_widget.tooltip = TOOLTIPS.get(key, "")
             self.inputs[f"schoolpsy.{key}"] = input_widget
             self.content.mount(input_widget)
 
@@ -88,11 +104,13 @@ class ConfigEditorApp(App):
         self.content.mount(Static(f"Einstellungen für Schule {index}"))
 
         school_key_input = Input(value=school_key, placeholder="Schullabel")
+        school_key_input.tooltip = "Schullabel (ohne Lehrzeichen)"
         self.school_key_inputs[school_key] = school_key_input
         self.content.mount(school_key_input)
 
         for key, value in school_info.items():
             input_widget = Input(value=str(value), placeholder=key)
+            input_widget.tooltip = TOOLTIPS.get(key, "")
             self.inputs[f"school.{school_key}.{key}"] = input_widget
             self.content.mount(input_widget)
 
