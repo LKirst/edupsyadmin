@@ -135,6 +135,7 @@ class ConfigEditorApp(App):
     async def on_button_pressed(self, event: Click) -> None:
         if event.button.id == "save":
             await self.save_config()
+            self.exit(event.button.id)
         elif event.button.id == "addschool":
             self.add_new_school()
         elif event.button.id.startswith("addfileto"):
