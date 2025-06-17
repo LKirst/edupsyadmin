@@ -3,10 +3,9 @@ from pathlib import Path
 
 import yaml
 from textual.app import App, ComposeResult
-from textual.containers import Grid, VerticalScroll
+from textual.containers import VerticalScroll
 from textual.events import Click
 from textual.reactive import reactive
-from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Static
 
 
@@ -22,27 +21,6 @@ def save_config(config_dict: dict, file_path: Path) -> None:
         yaml.safe_dump(config_dict, f, default_flow_style=False)
 
 
-class AddSchoolScreen(Screen):
-    """Screen for adding a new school."""
-
-    def compose(self) -> ComposeResult:
-        yield Grid(
-            Static("Enter new school key:"),
-            Input(placeholder="School Key", id="school_key_input"),
-            Button("Add School", id="add_school"),
-            Button("Cancel", id="cancel"),
-            id="add_school_dialog",
-        )
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "add_school":
-            school_key_input = self.query_one("#school_key_input", Input)
-            self.app.add_new_school(school_key_input.value)
-            self.app.pop_screen()
-        elif event.button.id == "cancel":
-            self.app.pop_screen()
-
-
 class ConfigEditorApp(App):
     """A Textual app to edit YAML configuration files."""
 
@@ -55,6 +33,7 @@ class ConfigEditorApp(App):
         self.config_path = config_path
         self.config_dict = load_config(config_path)
         self.inputs = {}
+        self.school_key_inputs = {}
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -64,6 +43,7 @@ class ConfigEditorApp(App):
 
     async def on_mount(self) -> None:
         """Called when the app is mounted."""
+        self.title = "Konfiguration für edupsyadmin"  # title for the header
         self.generate_content()
 
     def generate_content(self):
@@ -99,11 +79,18 @@ class ConfigEditorApp(App):
 
     def load_schools(self):
         self.school_count = len(self.config_dict["school"])
+        i = 0
         for school_key, school_info in self.config_dict["school"].items():
-            self.add_school_inputs(school_key, school_info)
+            i += 1
+            self.add_school_inputs(school_key, school_info, i)
 
-    def add_school_inputs(self, school_key: str, school_info: dict):
-        self.content.mount(Static(f"Einstellungen für {school_key}"))
+    def add_school_inputs(self, school_key: str, school_info: dict, index: int):
+        self.content.mount(Static(f"Einstellungen für Schule {index}"))
+
+        school_key_input = Input(value=school_key, placeholder="Schullabel")
+        self.school_key_inputs[school_key] = school_key_input
+        self.content.mount(school_key_input)
+
         for key, value in school_info.items():
             input_widget = Input(value=str(value), placeholder=key)
             self.inputs[f"school.{school_key}.{key}"] = input_widget
@@ -131,7 +118,7 @@ class ConfigEditorApp(App):
         if event.button.id == "save":
             await self.save_config()
         elif event.button.id == "addschool":
-            self.push_screen(AddSchoolScreen())
+            self.add_new_school()
 
     async def on_input_changed(self, event: Input.Changed) -> None:
         """Called when an input is changed."""
@@ -148,18 +135,45 @@ class ConfigEditorApp(App):
             else:
                 sub_dict[sub_keys[-1]] = input_widget.value
 
-    def add_new_school(self, school_key: str) -> None:
+        # Handle school key changes
+        changes = []
+        for old_key, input_widget in self.school_key_inputs.items():
+            new_key = input_widget.value
+            if new_key != old_key and new_key not in self.config_dict["school"]:
+                changes.append((old_key, new_key))
+
+        for old_key, new_key in changes:
+            self.config_dict["school"][new_key] = self.config_dict["school"].pop(
+                old_key
+            )
+            # Update the inputs dictionary to reflect the new key
+            for key in list(self.inputs.keys()):
+                if key.startswith(f"school.{old_key}."):
+                    new_input_key = key.replace(
+                        f"school.{old_key}.", f"school.{new_key}."
+                    )
+                    self.inputs[new_input_key] = self.inputs.pop(key)
+            self.school_key_inputs[new_key] = self.school_key_inputs.pop(old_key)
+
+    def add_new_school(self) -> None:
         """Add a new school to the configuration."""
-        if school_key and school_key not in self.config_dict["school"]:
-            # Add a new school with default settings
-            self.config_dict["school"][school_key] = {
-                "end": "",
-                "school_city": "",
-                "school_name": "",
-                "school_street": "",
-            }
-            self.add_school_inputs(school_key, self.config_dict["school"][school_key])
+        new_school_key = f"Schule{self.school_count + 1}"
+        while new_school_key in self.config_dict["school"]:
             self.school_count += 1
+            new_school_key = f"NewSchool{self.school_count + 1}"
+
+        self.config_dict["school"][new_school_key] = {
+            "end": "",
+            "school_city": "",
+            "school_name": "",
+            "school_street": "",
+        }
+        self.add_school_inputs(
+            new_school_key,
+            self.config_dict["school"][new_school_key],
+            self.school_count + 1,
+        )
+        self.school_count += 1
 
     async def save_config(self) -> None:
         """Save the updated configuration to the file."""
