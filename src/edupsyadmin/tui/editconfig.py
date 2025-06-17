@@ -119,6 +119,9 @@ class ConfigEditorApp(App):
             await self.save_config()
         elif event.button.id == "addschool":
             self.add_new_school()
+        elif event.button.id.startswith("addfileto"):
+            form_set_key = event.button.id.replace("addfileto", "")
+            self.add_form_path(form_set_key)
 
     async def on_input_changed(self, event: Input.Changed) -> None:
         """Called when an input is changed."""
@@ -174,6 +177,36 @@ class ConfigEditorApp(App):
             self.school_count + 1,
         )
         self.school_count += 1
+
+    def add_form_path(self, form_set_key: str) -> None:
+        """Add a new path to the specified form set."""
+        # Retrieve the current list of paths for the form set
+        current_paths = self.config_dict["form_set"].get(form_set_key, [])
+
+        # Create a new input field for the additional path
+        new_path_index = len(current_paths)
+        new_path_input = Input(value="", placeholder=f"Path {new_path_index + 1}")
+
+        # Update the configuration dictionary to include the new path
+        self.config_dict["form_set"][form_set_key].append("")
+
+        # Add the new input to the form set inputs
+        self.inputs[f"form_set.{form_set_key}.{new_path_index}"] = new_path_input
+
+        # Find the last path input widget for the specified form set
+        last_path_input = None
+        for i in range(new_path_index):
+            input_key = f"form_set.{form_set_key}.{i}"
+            if input_key in self.inputs:
+                last_path_input = self.inputs[input_key]
+
+        # Mount the new input widget in the correct position
+        if last_path_input is not None:
+            self.content.mount(new_path_input, after=last_path_input)
+        else:
+            # If no paths exist, add it right after the form set key input
+            form_set_key_input = self.inputs[f"form_set_key.{form_set_key}"]
+            self.content.mount(new_path_input, after=form_set_key_input)
 
     async def save_config(self) -> None:
         """Save the updated configuration to the file."""
