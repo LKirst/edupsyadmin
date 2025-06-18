@@ -36,7 +36,7 @@ def save_config(config_dict: dict, file_path: Path) -> None:
 
 
 class ConfigEditorApp(App):
-    """A Textual app to edit YAML configuration files."""
+    """A Textual app to edit edupsyadmin YAML configuration files."""
 
     CSS_PATH = "config_editor.tcss"
     school_count: reactive[int] = reactive(0)
@@ -48,6 +48,7 @@ class ConfigEditorApp(App):
         self.config_dict = load_config(config_path)
         self.inputs = {}
         self.school_key_inputs = {}
+        self.last_school_widget = None  # Track the last school widget
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -95,24 +96,33 @@ class ConfigEditorApp(App):
 
     def load_schools(self):
         self.school_count = len(self.config_dict["school"])
-        i = 0
-        for school_key, school_info in self.config_dict["school"].items():
-            i += 1
+        for i, (school_key, school_info) in enumerate(
+            self.config_dict["school"].items(), start=1
+        ):
             self.add_school_inputs(school_key, school_info, i)
 
     def add_school_inputs(self, school_key: str, school_info: dict, index: int):
-        self.content.mount(Static(f"Einstellungen für Schule {index}"))
+        this_school_inputs = [Static(f"Einstellungen für Schule {index}")]
 
         school_key_input = Input(value=school_key, placeholder="Schullabel")
         school_key_input.tooltip = "Schullabel (ohne Lehrzeichen)"
         self.school_key_inputs[school_key] = school_key_input
-        self.content.mount(school_key_input)
+        this_school_inputs.append(school_key_input)
 
         for key, value in school_info.items():
             input_widget = Input(value=str(value), placeholder=key)
             input_widget.tooltip = TOOLTIPS.get(key, "")
             self.inputs[f"school.{school_key}.{key}"] = input_widget
-            self.content.mount(input_widget)
+            this_school_inputs.append(input_widget)
+
+        # Mount the new school inputs after the last school widget
+        if self.last_school_widget:
+            self.content.mount_all(this_school_inputs, after=self.last_school_widget)
+        else:
+            self.content.mount_all(this_school_inputs)
+
+        # Update the last school widget reference
+        self.last_school_widget = this_school_inputs[-1]
 
     def load_form_sets(self):
         self.form_set_count = len(self.config_dict["form_set"])
