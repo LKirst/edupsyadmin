@@ -1,6 +1,7 @@
 import importlib.resources
 from pathlib import Path
 
+import keyring
 import yaml
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
@@ -21,6 +22,10 @@ TOOLTIPS = {
     "school_city": "Stadt und Postleitzahl der Schule",
     "end": "Jahrgangsstufe, nach der Schüler typischerweise die Schule abschließen",
 }
+
+
+def store_credentials(app_uid: str, username: str, password:str) -> None:
+    keyring.set_password(app_uid, username,password)
 
 
 def load_config(file_path: Path) -> dict:
@@ -71,6 +76,10 @@ class ConfigEditorApp(App):
             input_widget.tooltip = TOOLTIPS.get(key, "")
             self.inputs[f"core.{key}"] = input_widget
             self.content.mount(input_widget)
+
+        # TODO: call the store_credentials function when the input changes
+        password_widget=Input(placeholder="Passwort",password=True)
+        self.content.mount(password_widget)
 
         # Create inputs for schoolpsy settings
         self.content.mount(Static("Schulpsychologie-Einstellungen"))
