@@ -97,49 +97,20 @@ Wenn eine Hilfe-Nachricht erscheint, ist die Installation gelungen.
 Konfiguration
 -------------
 
-Zuerst musst du die Konfigurationsdatei mit deinen Daten aktualisieren. Um die
-Konfigurationsdatei zu finden, führe aus:
+Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür folgenden Befehl aus:
 
 .. code-block:: console
 
-   $ edupsyadmin info
+   $ edupsyadmin config
 
-Der Output dieses Befehls wird ähnlich aussehen wie hier:
-
-.. code-block:: console
-   :emphasize-lines: 5
-
-   $ edupsyadmin info
-   edupsyadmin version: 3.3.0
-   app_username: sample.username
-   database_url: sqlite:///C:\Users\DeinNutzerName\AppData\Local\edupsyadmin\edupsyadmin\3.3.0\edupsyadmin.db
-   config_path: ['C:\\Users\\DeinNutzerName\\AppData\\Local\\edupsyadmin\\edupsyadmin\\3.3.0\\config.yml']
-   keyring backend: keyring.backends.chainer.ChainerBackend (priority: 10)
-   salt_path: C:\Users\DeinNutzerName\AppData\Local\edupsyadmin\edupsyadmin\3.3.0\salt.txt
-
-Im Ausgabeergebnis siehst du deinen ``config_path``.  In dem Beispiel oben ist
-die relevante Zeile markiert. Der Pfad im Beispiel wäre
-``C:\\Users\\DeinNutzerName\\AppData\\Local\\edupsyadmin\\edupsyadmin\\3.3.0\\config.yml``
-(ohne Klammern und Anführungszeichen).  Öffne die Datei mit einem Editor, der
-keine Formatierungen hinzufügt (zum Beispiel Notepad unter Windows). Ändere
-alle Werte zu den Daten, die in deiner Dokumentation erscheinen sollen.
-
-.. caution::
-
-    In dem `Yaml-Dateiformat
-    <https://de.wikipedia.org/wiki/YAML>`_ der
-    Konfigurationsdatei haben Leerzeichen Bedeutung.  Verändere
-    also bitte keine Einrückung (die Anzahl Leerzeichen vor
-    einem Wert).
-
-1. Ersetze zuerst ``sample.username`` durch deinen Benutzernamen (keine Leerzeichen
+1. Ersetze ``sample.username`` durch deinen Benutzernamen (keine Leerzeichen
    und keine Sonderzeichen) in der Zeile mit ``app_username``:
 
 .. code-block::
 
     app_username: DEIN.NAME
 
-2. Ändere dann deine Daten unter ``schoolpsy``
+2. Ändere dann deine Daten in den Schulpsychologie-Einstellungen:
 
 .. code-block::
 
@@ -149,8 +120,7 @@ alle Werte zu den Daten, die in deiner Dokumentation erscheinen sollen.
 
 3. Ändere unter ``school`` den Kurznamen deiner Schule zu etwas einprägsamerem
    als ``FirstSchool``. Verwende keine Leerzeichen oder Sonderzeichen. In
-   diesem Tutorial verwenden wir den Schulnamen ``TutorialSchule`` (kann
-   nachträglich geändert werden).
+   diesem Tutorial verwenden wir den Schulnamen ``TutorialSchule``.
 
 .. code-block::
 
@@ -170,7 +140,7 @@ alle Werte zu den Daten, die in deiner Dokumentation erscheinen sollen.
     school_city: "Postleitzahl und Stadt"
     end: 11
 
-5. Wiederhole Schritt 3 und 4 für jede Schule, an der du tätig bist.
+5. Über den Button ``Schule hinzufügen`` können weitere Schulen hinzugefügt werden. Wiederhole Schritt 3 und 4 für jede Schule, an der du tätig bist.
 
 6. Ändere die Pfade unter ``form_set``, um auf die (Sets von) PDF-Formularen zu
    verweisen, die du verwenden möchtest. Bitte lade für unser Beispiel folgende
@@ -183,8 +153,7 @@ alle Werte zu den Daten, die in deiner Dokumentation erscheinen sollen.
     <https://github.com/LKirst/edupsyadmin/blob/main/test/edupsyadmin/data/sample_form_stellungnahme.pdf>`_.
 
     Im Explorer, klicke mit der rechten Maustaste auf eine Datei und wähle "Als
-    Pfad kopieren". Kopiere den Pfad in ein form_set (in die einfachen
-    Anführungszeichen). Unser form_set nennen wir für diese Tutorial
+    Pfad kopieren". Kopiere den Pfad in ein form_set. Unser form_set nennen wir für diese Tutorial
     ``tutorialset``.
 
 .. code-block::
@@ -193,11 +162,6 @@ alle Werte zu den Daten, die in deiner Dokumentation erscheinen sollen.
         tutorialset:
             - 'pfad/zu/meiner/ersten_datei/sample_form_mantelbogen.pdf'
             - 'pfad/zu/meiner/zweiten_datei/sample_form_stellungnahme.pdf'
-
-.. caution::
-
-    Verwende für die Pfade in deinen form_sets einfache `'`, nicht doppelte
-    Anführungszeichen `"`.
 
 7. Speichere die Änderungen.
 
