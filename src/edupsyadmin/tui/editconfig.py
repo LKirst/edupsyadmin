@@ -25,14 +25,14 @@ TOOLTIPS = {
 
 def load_config(file_path: Path) -> dict:
     """Load the YAML configuration file."""
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
 def save_config(config_dict: dict, file_path: Path) -> None:
     """Save the configuration dictionary back to the YAML file."""
-    with open(file_path, "w") as f:
-        yaml.safe_dump(config_dict, f, default_flow_style=False)
+    with open(file_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(config_dict, f, default_flow_style=False, allow_unicode=True)
 
 
 class ConfigEditorApp(App):
