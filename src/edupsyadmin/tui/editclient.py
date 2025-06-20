@@ -38,7 +38,7 @@ class DateInput(Input):
     """A custom input widget that accepts dates as YYYY-MM-DD."""
 
     def on_key(self, event: Key) -> None:
-        """Handle key press events to filter out non-numeric input and enforce date format."""
+        """Handle key press events to enforce date format."""
         # Allow navigation and control keys
         if event.key in {"backspace", "delete", "left", "right", "home", "end"}:
             return
@@ -85,17 +85,22 @@ class StudentEntryApp(App):
             # Create input fields
             if field_type is int:
                 default_value = str(self.data[field]) if field in self.data else ""
-                input_widget = Input(value=default_value, placeholder=field, type="integer")
+                input_widget = Input(
+                    value=default_value, placeholder=field, type="integer"
+                )
                 self.inputs[field] = input_widget
                 yield input_widget
-            elif field_tpe is float:
+            elif field_type is float:
                 default_value = str(self.data[field]) if field in self.data else ""
-                input_widget = Input(value=default_value, placeholder=field, type="number")
+                input_widget = Input(
+                    value=default_value, placeholder=field, type="number"
+                )
                 self.inputs[field] = input_widget
                 yield input_widget
             elif field_type is Date:
+                # TODO: the clients model does not yet use Date
                 default_value = str(self.data[field]) if field in self.data else ""
-                input_widget = DatetInput(value=default_value, placeholder=field)
+                input_widget = DateInput(value=default_value, placeholder=field)
                 self.inputs[field] = input_widget
                 yield input_widget
             elif field_type is not bool:
