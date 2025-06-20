@@ -34,21 +34,29 @@ def get_python_type(sqlalchemy_type: Type) -> Type:
         raise ValueError(f"could not match {sqlalchemy_type} to a builtin type")
 
 
-# TODO: Add a widget for floats and for datetime
-class IntegerInput(Input):
-    """A custom input widget that accepts integers."""
+class DateInput(Input):
+    """A custom input widget that accepts dates as YYYY-MM-DD."""
 
     def on_key(self, event: Key) -> None:
-        """Handle key press events to filter out non-numeric input."""
-        if (event.character and event.character.isdigit()) or event.key in {
-            "backspace",
-            "delete",
-            "left",
-            "right",
-            "home",
-            "end",
-        }:
-            return  # Allow the key press
+        """Handle key press events to filter out non-numeric input and enforce date format."""
+        # Allow navigation and control keys
+        if event.key in {"backspace", "delete", "left", "right", "home", "end"}:
+            return
+
+        # Allow digits and dashes at the correct positions
+        if event.character and (event.character.isdigit() or event.character == "-"):
+            current_text = self.value
+
+            # Check the current length and position of the input
+            if len(current_text) < 10:  # YYYY-MM-DD has 10 characters
+                if event.character == "-":
+                    # Allow dashes only at the 5th and 8th positions
+                    if len(current_text) in {4, 7}:
+                        return
+                else:
+                    return  # Allow digits
+            else:
+                event.prevent_default()  # Prevent input if length exceeds 10
         else:
             event.prevent_default()  # Prevent invalid input
 
@@ -77,7 +85,17 @@ class StudentEntryApp(App):
             # Create input fields
             if field_type is int:
                 default_value = str(self.data[field]) if field in self.data else ""
-                input_widget = IntegerInput(value=default_value, placeholder=field)
+                input_widget = Input(value=default_value, placeholder=field, type="integer")
+                self.inputs[field] = input_widget
+                yield input_widget
+            elif field_tpe is float:
+                default_value = str(self.data[field]) if field in self.data else ""
+                input_widget = Input(value=default_value, placeholder=field, type="number")
+                self.inputs[field] = input_widget
+                yield input_widget
+            elif field_type is Date:
+                default_value = str(self.data[field]) if field in self.data else ""
+                input_widget = DatetInput(value=default_value, placeholder=field)
                 self.inputs[field] = input_widget
                 yield input_widget
             elif field_type is not bool:
