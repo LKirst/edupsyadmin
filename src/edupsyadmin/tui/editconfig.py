@@ -24,8 +24,8 @@ TOOLTIPS = {
 }
 
 
-def store_credentials(app_uid: str, username: str, password:str) -> None:
-    keyring.set_password(app_uid, username,password)
+def store_credentials(app_uid: str, username: str, password: str) -> None:
+    keyring.set_password(app_uid, username, password)
 
 
 def load_config(file_path: Path) -> dict:
@@ -53,6 +53,7 @@ class ConfigEditorApp(App):
         self.config_dict = load_config(config_path)
         self.inputs = {}
         self.school_key_inputs = {}
+        self.password_input = None  # password input widget
         self.last_school_widget = None  # Track the last school widget
 
     def compose(self) -> ComposeResult:
@@ -77,9 +78,9 @@ class ConfigEditorApp(App):
             self.inputs[f"core.{key}"] = input_widget
             self.content.mount(input_widget)
 
-        # TODO: call the store_credentials function when the input changes
-        password_widget=Input(placeholder="Passwort",password=True)
-        self.content.mount(password_widget)
+        # Create password input widget
+        self.password_input = Input(placeholder="Passwort", password=True)
+        self.content.mount(self.password_input)
 
         # Create inputs for schoolpsy settings
         self.content.mount(Static("Schulpsychologie-Einstellungen"))
@@ -249,6 +250,10 @@ class ConfigEditorApp(App):
     async def save_config(self) -> None:
         """Save the updated configuration to the file."""
         save_config(self.config_dict, self.config_path)
+        if self.passord_input.value:
+            app_uid = self.config_dict["core"].get("app_uid", "")
+            username = self.config_dict["core"].get("app_username", "")
+            store_credentials(app_uid, username, self.password_input.value)
 
 
 if __name__ == "__main__":
