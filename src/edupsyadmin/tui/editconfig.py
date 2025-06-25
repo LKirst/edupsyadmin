@@ -24,10 +24,6 @@ TOOLTIPS = {
 }
 
 
-def store_credentials(app_uid: str, username: str, password: str) -> None:
-    keyring.set_password(app_uid, username, password)
-
-
 def load_config(file_path: Path) -> dict:
     """Load the YAML configuration file."""
     with open(file_path, "r", encoding="utf-8") as f:
@@ -54,7 +50,7 @@ class ConfigEditorApp(App):
         self.inputs = {}
         self.school_key_inputs = {}
         self.password_input = None  # password input widget
-        self.last_school_widget = None  # Track the last school widget
+        self.last_school_widget = None  # last school widget
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -79,6 +75,18 @@ class ConfigEditorApp(App):
             self.content.mount(input_widget)
 
         # Create password input widget
+        self.content.mount(
+            Static(
+                (
+                    "Wenn schon ein Passwort festgelegt wurde, bitte das "
+                    "folgende Feld nicht bearbeiten. "
+                    "Ändere das Passwort nur, wenn du eine neue Datenbank "
+                    "anlegst. "
+                    "Wähle ein sicheres Passwort (siehe Tipps für sichere "
+                    "Passwörter auf der Website des BSI."
+                )
+            )
+        )
         self.password_input = Input(placeholder="Passwort", password=True)
         self.content.mount(self.password_input)
 
@@ -250,10 +258,21 @@ class ConfigEditorApp(App):
     async def save_config(self) -> None:
         """Save the updated configuration to the file."""
         save_config(self.config_dict, self.config_path)
-        if self.passord_input.value:
-            app_uid = self.config_dict["core"].get("app_uid", "")
-            username = self.config_dict["core"].get("app_username", "")
-            store_credentials(app_uid, username, self.password_input.value)
+        app_uid = self.config_dict["core"].get("app_uid", None)
+        username = self.config_dict["core"].get("app_username", None)
+        if (
+            app_uid
+            and username
+            and self.password_input.value
+            and not keyring.get_password(app_uid, username)
+        ):
+            keyring.set_password(app_uid, username, self.password_input.value)
+        elif app_uid and username:
+            raise ValueError(
+                f"A password for UID {app_uid} and username {username} already exists."
+            )
+        else:
+            raise ValueError("app_uid and username must not be None.")
 
 
 if __name__ == "__main__":
