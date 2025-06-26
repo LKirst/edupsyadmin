@@ -1,7 +1,7 @@
 import logging  # just for interaction with the sqlalchemy logger
 import os
 import pathlib
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 import pandas as pd
@@ -11,7 +11,6 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from edupsyadmin.api.add_convenience_data import add_convenience_data
 from edupsyadmin.api.clients import Client
 from edupsyadmin.api.fill_form import fill_form
-from edupsyadmin.api.taetigkeitsbericht_check_key import check_keyword
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import Encryption
 from edupsyadmin.core.logger import logger
@@ -216,16 +215,7 @@ def set_client(
         salt_path=salt_path,
     )
     pairs_list = [pair.split("=", 1) for pair in key_value_pairs]
-    new_data: dict[str, str | bool | None] = {}
-    for key, value in pairs_list:
-        # TODO: use `validate` methods in clients.py
-        if key in BOOLEAN_COLS:
-            # TODO: Add try-except
-            new_data[key] = bool(int(value))
-        elif key == "keyword_taetigkeitsbericht":
-            new_data[key] = check_keyword(value)
-        else:
-            new_data[key] = value
+    new_data: dict[str, str | bool | None] = dict(pairs_list)
     clients_manager.edit_client(client_id, new_data)
 
 
@@ -320,13 +310,13 @@ def enter_client_untiscsv(
         gender=client_series["gender"].item(),
         entry_date=datetime.strptime(
             client_series["entryDate"].item(), "%d.%m.%Y"
-        ).strftime("%Y-%m-%d"),
+        ).date(),
         class_name=client_series["klasse.name"].item(),
         first_name=client_series["foreName"].item(),
         last_name=client_series["longName"].item(),
         birthday=datetime.strptime(
             client_series["birthDate"].item(), "%d.%m.%Y"
-        ).strftime("%Y-%m-%d"),
+        ).date(),
         street=client_series["address.street"].item(),
         city=str(client_series["address.postCode"].item())
         + " "
@@ -354,11 +344,11 @@ def enter_client_cli(clients_manager: ClientsManager) -> int:
     client_id_n = clients_manager.add_client(
         school=school,
         gender=input("Gender (f/m): "),
-        entry_date=input("Entry date (YYYY-MM-DD): "),
+        entry_date=date.fromisoformat(input("Entry date (YYYY-MM-DD): ")),
         class_name=input("Class name: "),
         first_name=input("First Name: "),
         last_name=input("Last Name: "),
-        birthday=input("Birthday (YYYY-MM-DD): "),
+        birthday=date.fromisoformat(input("Birthday (YYYY-MM-DD): ")),
         street=input("Street and house number: "),
         city=input("City (postcode + name): "),
         telephone1=input("Telephone: "),

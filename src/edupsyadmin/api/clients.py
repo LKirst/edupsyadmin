@@ -4,6 +4,7 @@ from typing import Optional
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     Float,
     Integer,
@@ -78,8 +79,7 @@ class Client(Base):
             "(Kurzname wie in der Konfiguration festgelegt)"
         ),
     )
-    # TODO: store all dates in date format?
-    entry_date: Mapped[Optional[str]] = mapped_column(
+    entry_date: Mapped[Optional[date]] = mapped_column(
         String, doc="Eintrittsdatum des Klienten in das System"
     )
     class_name: Mapped[Optional[str]] = mapped_column(
@@ -88,11 +88,11 @@ class Client(Base):
     class_int: Mapped[Optional[int]] = mapped_column(
         Integer, doc="Numerische Darstellung der Klasse des Klienten"
     )
-    estimated_date_of_graduation: Mapped[Optional[date]] = mapped_column(
-        DateTime, doc="Voraussichtliches Abschlussdatum des Klienten"
+    estimated_graduation_date: Mapped[Optional[date]] = mapped_column(
+        Date, doc="Voraussichtliches Abschlussdatum des Klienten"
     )
     document_shredding_date: Mapped[Optional[date]] = mapped_column(
-        DateTime,
+        Date,
         doc="Datum für die Dokumentenvernichtung im Zusammenhang mit dem Klienten",
     )
     keyword_taetigkeitsbericht: Mapped[Optional[str]] = mapped_column(
@@ -107,11 +107,26 @@ class Client(Base):
         ),
         doc="Diagnose im Zusammenhang mit LRSt, iLst oder iRst",
     )
-    lrst_last_test: Mapped[Optional[str]] = mapped_column(
-        String,
+    lrst_last_test_date: Mapped[Optional[date]] = mapped_column(
+        Date,
         doc=(
             "Datum (YYYY-MM-DD) der letzten Testung im Zusammenhang "
             "einer Überprüfung von LRSt"
+        ),
+    )
+    lrst_last_test_by: Mapped[Optional[str]] = mapped_column(
+        String,
+        CheckConstraint(
+            (
+                "lrst_last_test_by IN "
+                "('schoolpsy', 'psychia', 'psychoth', 'spz') "
+                "OR lrst_diagnosis IS NULL"
+            )
+        ),
+        doc=(
+            "Fachperson, von der die letzte Überprüfung von LRSt "
+            "durchgeführt wurde; kann nur einer der folgenden Werte sein: "
+            "schulpsy, psychia, psychoth, spz"
         ),
     )
     datetime_created: Mapped[datetime] = mapped_column(
@@ -147,12 +162,25 @@ class Client(Base):
         default=False,
         doc="Gibt an, ob der Klient Notenschutz für das Lesen hat",
     )
+    nos_other: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        doc="Gibt an, ob der Klient andere Formen des Notenschutzes hat",
+    )
+    nos_other_details: Mapped[Optional[str]] = mapped_column(
+        String,
+        doc="Details zu anderen Formen des Notenschutzes für den Klienten",
+    )
 
     # Nachteilsausgleich
     nachteilsausgleich: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
-        doc="Gibt an, ob der Klient Nachteilsausgleich (NTA) hat",
+        doc=(
+            "Gibt an, ob der Klient Nachteilsausgleich (NTA) hat. "
+            "Diese Variable sollte nicht direkt bearbeitet werden, "
+            "denn sie wird gesetzt, wenn z.B. nta_zeitv_vieltext geändert wird."
+        ),
     )
     nta_zeitv: Mapped[bool] = mapped_column(
         Boolean,
@@ -249,12 +277,12 @@ class Client(Base):
         encr: Encryption,
         school: str,
         gender: str,
-        entry_date: str,
+        entry_date: date,
         class_name: str,
         first_name: str,
         last_name: str,
+        birthday: date,
         client_id: int | None = None,
-        birthday: str = "",
         street: str = "",
         city: str = "",
         parent: str = "",
@@ -262,11 +290,10 @@ class Client(Base):
         telephone2: str = "",
         email: str = "",
         notes: str = "",
-        notenschutz: bool | None = None,
         nos_rs: bool = False,
         nos_rs_ausn_faecher: str | None = None,
         nos_les: bool = False,
-        nachteilsausgleich: bool | None = None,
+        nos_other_details: str | None = None,
         nta_zeitv_vieltext: int | None = None,
         nta_zeitv_wenigtext: int | None = None,
         nta_font: bool = False,
@@ -279,7 +306,8 @@ class Client(Base):
         nta_notes: str | None = None,
         nta_nos_end_grade: int | None = None,
         lrst_diagnosis: str | None = None,
-        lrst_last_test: str | None = None,
+        lrst_last_test_date: date | None = None,
+        lrst_last_test_by: str | None = None,
         keyword_taetigkeitsbericht: str | None = "",
         n_sessions: int = 1,
     ) -> None:
@@ -288,7 +316,7 @@ class Client(Base):
 
         self.first_name_encr = encr.encrypt(first_name)
         self.last_name_encr = encr.encrypt(last_name)
-        self.birthday_encr = encr.encrypt(birthday)
+        self.birthday_encr = encr.encrypt(str(birthday))
         self.street_encr = encr.encrypt(street)
         self.city_encr = encr.encrypt(city)
         self.parent_encr = encr.encrypt(parent)
@@ -324,7 +352,8 @@ class Client(Base):
         self.keyword_taetigkeitsbericht = check_keyword(keyword_taetigkeitsbericht)
 
         self.lrst_diagnosis = lrst_diagnosis
-        self.lrst_last_test = lrst_last_test
+        self.lrst_last_test_date = lrst_last_test_date
+        self.lrst_last_test_by = lrst_last_test_by
 
         # Notenschutz
         self.nos_rs = nos_rs
@@ -334,11 +363,10 @@ class Client(Base):
         else:
             self.nos_rs_ausn = False
         self.nos_les = nos_les
-        if notenschutz is None:
-            self.notenschutz = self.nos_rs or self.nos_les
-        else:
-            # TODO: remove notenschutz as an argument in init
-            self.notenschutz = notenschutz
+        self.nos_other_details = nos_other_details
+        if self.nos_other_details:
+            self.nos_other = True
+        self.notenschutz = self.nos_rs or self.nos_les or self.nos_other
 
         # Nachteilsausgleich
         self.nta_zeitv_vieltext = nta_zeitv_vieltext
@@ -362,29 +390,37 @@ class Client(Base):
         self.nta_nos_end_grade = nta_nos_end_grade
         self.nta_nos_end = self.nta_nos_end_grade is not None
 
-        if nachteilsausgleich is None:
-            self._update_nachteilsausgleich()
-        else:
-            # TODO: remove nachteilsausgleich as an argument in init
-            self.nachteilsausgleich = nachteilsausgleich
+        self._update_nachteilsausgleich()
 
         self.n_sessions = n_sessions
 
         self.datetime_created = datetime.now()
         self.datetime_lastmodified = self.datetime_created
 
-    def _update_nachteilsausgleich(self) -> None:
-        self.nachteilsausgleich = any(
-            (
-                self.nta_zeitv,
-                self.nta_font,
-                self.nta_aufg,
-                self.nta_arbeitsm,
-                self.nta_ersgew,
-                self.nta_vorlesen,
-                self.nta_other,
-            )
-        )
+    def _update_nachteilsausgleich(
+        self, key: str | None = None, value: bool = False
+    ) -> None:
+        """
+        If this method is used inside a validate method, you can pass key and value
+        to account for the change that will take place after the value has been
+        validated.
+        """
+        nta_dict = {
+            "nta_zeitv": self.nta_zeitv,
+            "nta_font": self.nta_font,
+            "nta_aufg": self.nta_aufg,
+            "nta_arbeitsm": self.nta_arbeitsm,
+            "nta_ersgew": self.nta_ersgew,
+            "nta_vorlesen": self.nta_vorlesen,
+            "nta_other": self.nta_other,
+        }
+        if key:
+            nta_dict[key] = value
+        self.nachteilsausgleich = any(nta_dict.values())
+
+    @validates("keyword_taetigkeitsbericht")
+    def validate_keyword_taetigkeitsbericht(self, key: str, value: str) -> str | None:
+        return check_keyword(value)
 
     @validates("nos_rs_ausn_faecher")
     def validate_nos_rs_ausn_faecher(self, key: str, value: str | None) -> str | None:
@@ -394,13 +430,29 @@ class Client(Base):
         return value
 
     @validates("nos_rs")
-    def validate_nos_rs(self, key: str, value: bool) -> bool:
-        self.nachteilsausgleich = self.nos_rs or self.nos_les
-        return value
+    def validate_nos_rs(self, key: str, value: bool | str | int) -> bool:
+        boolvalue = str_to_bool(value)
+        self.notenschutz = value or self.nos_les or self.nos_other
+        return boolvalue
 
     @validates("nos_les")
-    def validate_nos_les(self, key: str, value: bool) -> bool:
-        self.nachteilsausgleich = self.nos_rs or self.nos_les
+    def validate_nos_les(self, key: str, value: bool | str | int) -> bool:
+        boolvalue = str_to_bool(value)
+
+        self.notenschutz = self.nos_rs or value or self.nos_other
+        return boolvalue
+
+    @validates("nos_other")
+    def validate_nos_other(self, key: str, value: bool | str | int) -> bool:
+        boolvalue = str_to_bool(value)
+
+        self.notenschutz = self.nos_rs or self.nos_les or value
+        return boolvalue
+
+    @validates("nos_other_details")
+    def validate_nos_other_details(self, key: str, value: str) -> str:
+        self.nos_other = (value is not None) and value != ""
+        self.notenschutz = self.nos_rs or self.nos_les or self.nos_other
         return value
 
     @validates("nta_zeitv_vieltext")
@@ -423,40 +475,47 @@ class Client(Base):
         self._update_nachteilsausgleich()
         return value
 
-    @validates("nta_zeitv")
-    def validate_nta_zeitv(self, key: str, value: bool) -> bool:
-        self._update_nachteilsausgleich()
-        return value
-
     @validates("nta_font")
-    def validate_nta_font(self, key: str, value: bool) -> bool:
-        self._update_nachteilsausgleich()
-        return value
+    def validate_nta_font(self, key: str, value: bool | str | int) -> bool:
+        boolvalue = str_to_bool(value)
+
+        self._update_nachteilsausgleich(key, value)
+        return boolvalue
 
     @validates("nta_aufg")
-    def validate_nta_aufg(self, key: str, value: bool) -> bool:
-        self._update_nachteilsausgleich()
-        return value
+    def validate_nta_aufg(self, key: str, value: bool | str | int) -> bool:
+        boolvalue = str_to_bool(value)
+
+        self._update_nachteilsausgleich(key, value)
+        return boolvalue
 
     @validates("nta_arbeitsm")
-    def validate_nta_arbeitsm(self, key: str, value: bool) -> bool:
-        self._update_nachteilsausgleich()
-        return value
+    def validate_nta_arbeitsm(self, key: str, value: bool | str | int) -> bool:
+        boolvalue = str_to_bool(value)
+
+        self._update_nachteilsausgleich(key, value)
+        return boolvalue
 
     @validates("nta_ersgew")
-    def validate_nta_ersgew(self, key: str, value: bool) -> bool:
-        self._update_nachteilsausgleich()
-        return value
+    def validate_nta_ersgew(self, key: str, value: bool | str | int) -> bool:
+        boolvalue = str_to_bool(value)
+
+        self._update_nachteilsausgleich(key, value)
+        return boolvalue
 
     @validates("nta_vorlesen")
-    def validate_nta_vorlesen(self, key: str, value: bool) -> bool:
-        self._update_nachteilsausgleich()
-        return value
+    def validate_nta_vorlesen(self, key: str, value: bool | str | int) -> bool:
+        boolvalue = str_to_bool(value)
+
+        self._update_nachteilsausgleich(key, value)
+        return boolvalue
 
     @validates("nta_other")
-    def validate_nta_other(self, key: str, value: bool) -> bool:
-        self._update_nachteilsausgleich()
-        return value
+    def validate_nta_other(self, key: str, value: bool | str | int) -> bool:
+        boolvalue = str_to_bool(value)
+
+        self._update_nachteilsausgleich(key, value)
+        return boolvalue
 
     @validates("nta_other_details")
     def validate_nta_other_details(self, key: str, value: str) -> str:
@@ -477,3 +536,17 @@ class Client(Base):
             f")>"
         )
         return representation
+
+
+def str_to_bool(value):
+    """
+    Convert a string of an int or an int to a boolean
+    """
+    if not isinstance(value, bool):
+        try:
+            boolvalue = bool(int(value))
+        except ValueError:
+            raise ValueError(f"The value {value} cannot be converted to a boolean.")
+    else:
+        boolvalue = value
+    return boolvalue
