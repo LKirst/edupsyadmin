@@ -53,6 +53,8 @@ class DateInput(Input):
                     # Allow dashes only at the 5th and 8th positions
                     if len(current_text) in {4, 7}:
                         return
+                    else:
+                        event.prevent_default()
                 else:
                     return  # Allow digits
             else:
@@ -97,8 +99,7 @@ class StudentEntryApp(App):
                 )
                 self.inputs[field] = input_widget
                 yield input_widget
-            elif field_type is Date:
-                # TODO: the clients model does not yet use Date
+            elif field_type is datetime.date:
                 default_value = str(self.data[field]) if field in self.data else ""
                 input_widget = DateInput(value=default_value, placeholder=field)
                 self.inputs[field] = input_widget
