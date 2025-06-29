@@ -13,7 +13,7 @@ from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 
 
-def get_subjects(school: str) -> str:
+def _get_subjects(school: str) -> str:
     """Get a list of subjects for the given school.
 
     :param school: The name of the school.
@@ -30,7 +30,7 @@ def get_subjects(school: str) -> str:
         return ""
 
 
-def get_addr_multiline(street: str, city: str, name: str | None = None) -> str:
+def _get_addr_mulitline(street: str, city: str, name: str | None = None) -> str:
     """Get a multiline address for the given street and city.
 
     :param street: The street name.
@@ -42,6 +42,22 @@ def get_addr_multiline(street: str, city: str, name: str | None = None) -> str:
         return street + "\n" + city
     else:
         return name + "\n" + street + "\n" + city
+
+
+def _date_to_german_string(isodate: date | str) -> str:
+    if isinstance(isodate, date):
+        return isodate.strftime("%d.%m.%Y")
+    elif (isodate is None) or (isodate == ""):
+        return ""
+    else:
+        try:
+            return parse(isodate, dayfirst=False).strftime("%d.%m.%Y")
+        except ValueError:
+            logger.error(f"'{isodate}' could not be parsed as a date")
+            raise
+        except TypeError:
+            logger.error(f"'{isodate}' is neither None, datetime.date, nor str")
+            raise
 
 
 def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
@@ -79,7 +95,7 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
         - **school_addr_m_wname**: Adresse der Schule mit Zeilenumbrüchen,
         - **lrst_diagnosis_long**: Ausgeschriebene LRSt-Diagnose,
         - **lrst_last_test_de**: Datum des letzten Tests, im Format DD.MM.YYYY,
-        - **date_today_de**: Heutiges Datum, im Format DD.MM.YYYY,
+        - **today_date_de**: Heutiges Datum, im Format DD.MM.YYYY,
         - **birthday_de**: Geburtsdatum des Schülers im Format DD.MM.YYYY,
         - **document_shredding_date_de**: Datum für Aktenvernichtung im Format
           DD.MM.YYYY,
@@ -89,10 +105,10 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
     # client address
     data["name"] = data["first_name"] + " " + data["last_name"]
     try:
-        data["addr_s_nname"] = get_addr_multiline(data["street"], data["city"]).replace(
-            "\n", ", "
-        )
-        data["addr_m_wname"] = get_addr_multiline(
+        data["addr_s_nname"] = _get_addr_mulitline(
+            data["street"], data["city"]
+        ).replace("\n", ", ")
+        data["addr_m_wname"] = _get_addr_mulitline(
             data["street"], data["city"], data["name"]
         )
     except TypeError:
@@ -101,7 +117,7 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
     # school psychologist address
     for i in ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]:
         data[i] = config.schoolpsy[i]
-    data["schoolpsy_addr_m_wname"] = get_addr_multiline(
+    data["schoolpsy_addr_m_wname"] = _get_addr_mulitline(
         data["schoolpsy_street"], data["schoolpsy_city"], data["schoolpsy_name"]
     )
     data["schoolpsy_addr_s_wname"] = data["schoolpsy_addr_m_wname"].replace("\n", ", ")
@@ -110,7 +126,7 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
     schoolconfig = config.school[data["school"]]
     for i in ["school_name", "school_street", "school_city", "school_head_w_school"]:
         data[i] = schoolconfig[i]
-    data["school_addr_m_wname"] = get_addr_multiline(
+    data["school_addr_m_wname"] = _get_addr_mulitline(
         data["school_street"], data["school_city"], data["school_name"]
     )
     data["school_addr_s_wname"] = data["school_addr_m_wname"].replace("\n", ", ")
@@ -129,27 +145,17 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
         )
 
     # subjects
-    data["school_subjects"] = get_subjects(data["school"])
+    data["school_subjects"] = _get_subjects(data["school"])
 
-    # dates
-    # for forms, I use the format dd.mm.YYYY; internally, I use YYYY-mm-dd
-    today = date.today()
-    data["date_today_de"] = today.strftime("%d.%m.%Y")
-    for isodate in ["birthday", "lrst_last_test"]:
-        germandate = isodate + "_de"
-        try:
-            data[germandate] = parse(data[isodate], dayfirst=False).strftime("%d.%m.%Y")
-        except ValueError:
-            logger.error(
-                "The string '{data[isodate]}' could not be parsed as a date: {e}"
-            )
-            data[germandate] = ""
-        except TypeError:
-            logger.debug("The value of '{isodate}' is not a string: {e}")
+    # dates: for forms, I use the format dd.mm.YYYY; internally,
+    # I use date objects or strings in the format "YYYY-mm-dd"
+    data["today_date"] = date.today()
+    dates = ["birthday", "today_date", "lrst_last_test_date", "document_shredding_date"]
+    for idate in dates:
+        gdate = idate + "_de"
+        data[gdate] = _date_to_german_string(data[idate])
+
     data["school_year"] = get_this_academic_year_string()
-    data["document_shredding_date_de"] = data["document_shredding_date"].strftime(
-        "%d.%m.%Y"
-    )
     if data["nta_nos_end"]:
         data["nta_nos_end_schoolyear"] = get_academic_year_string(
             get_estimated_end_of_academic_year(
