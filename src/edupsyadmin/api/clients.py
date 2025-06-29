@@ -119,14 +119,14 @@ class Client(Base):
         CheckConstraint(
             (
                 "lrst_last_test_by IN "
-                "('schoolpsy', 'psychia', 'psychoth', 'spz') "
+                "('schpsy', 'psychia', 'psychoth', 'spz') "
                 "OR lrst_diagnosis IS NULL"
             )
         ),
         doc=(
             "Fachperson, von der die letzte Überprüfung von LRSt "
             "durchgeführt wurde; kann nur einer der folgenden Werte sein: "
-            "schulpsy, psychia, psychoth, spz"
+            "schpsy, psychia, psychoth, spz"
         ),
     )
     datetime_created: Mapped[datetime] = mapped_column(
