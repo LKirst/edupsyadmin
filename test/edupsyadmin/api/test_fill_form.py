@@ -1,4 +1,3 @@
-import datetime
 from pathlib import Path
 
 import pypdf
@@ -8,14 +7,10 @@ from edupsyadmin.api.fill_form import fill_form
 
 
 def test_fill_form(
-    mock_config, pdf_forms: list, tmp_path: Path, sample_client_dict: dict
+    mock_config, pdf_forms: list, tmp_path: Path, client_dict_internal: dict
 ) -> None:
     """Test the fill_form function."""
-    clientd = sample_client_dict.copy()
-    clientd["document_shredding_date"] = datetime.date(year=2024, month=12, day=24)
-    clientd["class_int"] = 11
-    clientd["nta_nos_end"] = clientd["nta_nos_end_grade"] is not None
-    clientd = add_convenience_data(clientd)
+    clientd = add_convenience_data(client_dict_internal)
     fill_form(clientd, pdf_forms, out_dir=tmp_path, use_fillpdf=True)
 
     for i, form in enumerate(pdf_forms):

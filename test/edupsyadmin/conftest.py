@@ -1,6 +1,7 @@
 import importlib.resources
 import os
 import shutil
+from datetime import date
 from pathlib import Path
 from typing import Generator
 from unittest.mock import Mock
@@ -116,12 +117,12 @@ def mock_webuntis(tmp_path: Path) -> Path:
             "city": "New York",
             "telephone1": "555-1234",
             "email": "john.doe@example.com",
-            "notenschutz": False,
+            "nos_rs": False,
             "nta_zeitv_vieltext": 10,
             "nta_nos_end_grade": 11,
-            "nachteilsausgleich": True,
             "lrst_diagnosis": "iLst",
-            "lrst_last_test": "2025-05-11",
+            "lrst_last_test_date": date.fromisoformat("2025-05-11"),
+            "lrst_last_test_by": "schpsy",
         },
         {
             "client_id": 2,
@@ -136,17 +137,85 @@ def mock_webuntis(tmp_path: Path) -> Path:
             "city": "München",
             "telephone1": "+555-1234",
             "email": "example@example.com",
-            "notenschutz": False,
+            "nos_les": False,
             "nta_zeitv_vieltext": None,
             "nta_nos_end_grade": None,
-            "nachteilsausgleich": False,
             "lrst_diagnosis": None,
-            "lrst_last_test": None,
+            "lrst_last_test_date": None,
+            "lrst_last_test_by": None,
         },
     ],
     scope="session",
 )
-def sample_client_dict(request) -> dict[str, any]:
+def client_dict_set_by_user(request) -> dict[str, any]:
+    """
+    The data the user sets [works with clients.__init__()].
+    """
+    return request.param
+
+
+@pytest.fixture(
+    params=[
+        {
+            "client_id": None,
+            "school": "FirstSchool",
+            "gender": "m",
+            "entry_date": "2021-06-30",
+            "class_name": "11TKKG",
+            "class_int": 11,
+            "first_name": "John",
+            "last_name": "Doe",
+            "birthday": "1990-01-01",
+            "street": "123 Main St",
+            "city": "New York",
+            "telephone1": "555-1234",
+            "email": "john.doe@example.com",
+            "nos_rs": True,
+            "nos_les": False,
+            "notenschutz": True,
+            "nta_zeitv_vieltext": 10,
+            "nachteilsausgleich": True,
+            "nta_nos_end": True,
+            "nta_nos_end_grade": 11,
+            "lrst_diagnosis": "iLst",
+            "lrst_last_test_date": date(2025, 5, 11),
+            "lrst_last_test_by": "schpsy",
+            "document_shredding_date": date(2025, 12, 24),
+        },
+        {
+            "client_id": 2,
+            "school": "SecondSchool",
+            "gender": "f",
+            "entry_date": "2021-06-30",
+            "class_name": "Ki12",
+            "class_int": 12,
+            "first_name": "Äöüß",
+            "last_name": "Müller",
+            "birthday": "1990-01-01",
+            "street": "Umlautstraße 5ä",
+            "city": "München",
+            "telephone1": "+555-1234",
+            "email": "example@example.com",
+            "nos_rs": False,
+            "nos_les": False,
+            "notenschutz": False,
+            "nta_zeitv_vieltext": None,
+            "nachteilsausgleich": False,
+            "nta_nos_end": False,
+            "nta_nos_end_grade": None,
+            "lrst_diagnosis": None,
+            "lrst_last_test_date": None,
+            "lrst_last_test_by": None,
+            "document_shredding_date": date(2025, 12, 24),
+        },
+    ],
+    scope="session",
+)
+def client_dict_internal(request) -> dict[str, any]:
+    """
+    The attributes of a clients object. Includes data that the clients object
+    sets internally.
+    """
     return request.param
 
 

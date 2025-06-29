@@ -17,7 +17,7 @@ EXPECTED_KEYS = {
     "nos_rs_ausn_faecher",
     "nta_vorlesen",
     "telephone2_encr",
-    "estimated_date_of_graduation",
+    "estimated_graduation_date",
     "nta_zeitv_vieltext",
     "nta_other",
     "nta_notes",
@@ -62,16 +62,16 @@ EXPECTED_KEYS = {
 
 
 class ManagersTest:
-    def test_add_client(self, mock_keyring, clients_manager, sample_client_dict):
-        client_id = clients_manager.add_client(**sample_client_dict)
+    def test_add_client(self, mock_keyring, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
         client = clients_manager.get_decrypted_client(client_id=client_id)
         assert EXPECTED_KEYS.issubset(client.keys())
-        assert client["first_name"] == sample_client_dict["first_name"]
-        assert client["last_name"] == sample_client_dict["last_name"]
+        assert client["first_name"] == client_dict_set_by_user["first_name"]
+        assert client["last_name"] == client_dict_set_by_user["last_name"]
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
-    def test_edit_client(self, mock_keyring, clients_manager, sample_client_dict):
-        client_id = clients_manager.add_client(**sample_client_dict)
+    def test_edit_client(self, mock_keyring, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
         client = clients_manager.get_decrypted_client(client_id=client_id)
         updated_data = {
             "first_name_encr": "Jane",
@@ -99,8 +99,8 @@ class ManagersTest:
 
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
-    def test_delete_client(self, clients_manager, sample_client_dict):
-        client_id = clients_manager.add_client(**sample_client_dict)
+    def test_delete_client(self, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
         clients_manager.delete_client(client_id)
         try:
             clients_manager.get_decrypted_client(client_id)
@@ -111,25 +111,25 @@ class ManagersTest:
             assert e.client_id == client_id
 
     def test_enter_client_cli(
-        self, mock_keyring, clients_manager, monkeypatch, sample_client_dict
+        self, mock_keyring, clients_manager, monkeypatch, client_dict_set_by_user
     ):
         # simulate the commandline input
-        inputs = iter(sample_client_dict)
+        inputs = iter(client_dict_set_by_user)
 
         def mock_input(prompt):
-            return sample_client_dict[next(inputs)]
+            return client_dict_set_by_user[next(inputs)]
 
         monkeypatch.setattr("builtins.input", mock_input)
 
         client_id = enter_client_cli(clients_manager)
         client = clients_manager.get_decrypted_client(client_id=client_id)
         assert EXPECTED_KEYS.issubset(client.keys())
-        assert client["first_name"] == sample_client_dict["first_name"]
-        assert client["last_name"] == sample_client_dict["last_name"]
+        assert client["first_name"] == client_dict_set_by_user["first_name"]
+        assert client["last_name"] == client_dict_set_by_user["last_name"]
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
     def test_enter_client_untiscsv(
-        self, mock_keyring, clients_manager, mock_webuntis, sample_client_dict
+        self, mock_keyring, clients_manager, mock_webuntis, client_dict_set_by_user
     ):
         client_id = enter_client_untiscsv(
             clients_manager, mock_webuntis, school=None, name="MustermMax1"
