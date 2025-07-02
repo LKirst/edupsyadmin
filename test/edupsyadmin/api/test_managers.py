@@ -70,6 +70,20 @@ class ManagersTest:
         assert client["last_name"] == client_dict_set_by_user["last_name"]
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
+    def test_add_client_set_id(self, mock_keyring, clients_manager):
+        client_dict_with_id = {
+            "client_id": 99,
+            "school": "FirstSchool",
+            "gender": "f",
+            "entry_date": "2021-06-30",
+            "class_name": "7TKKG",
+            "first_name": "Lieschen",
+            "last_name": "Müller",
+            "birthday": "1990-01-01",
+        }
+        client_id = clients_manager.add_client(**client_dict_with_id)
+        assert client_id == 99
+
     def test_edit_client(self, mock_keyring, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
         client = clients_manager.get_decrypted_client(client_id=client_id)
