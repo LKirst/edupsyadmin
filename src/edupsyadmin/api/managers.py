@@ -80,7 +80,7 @@ class ClientsManager:
         # TODO: move encryption logic to clients.py?
         logger.debug(f"trying to access client (client_id = {client_id})")
         with self.Session() as session:
-            client = session.query(Client).filter_by(client_id=client_id).first()
+            client = session.get(Client, client_id)
             if client is None:
                 raise ClientNotFound(client_id)
             client_dict = client.__dict__
@@ -145,7 +145,7 @@ class ClientsManager:
         # TODO: If key does not exist, check if key + _encr exists and use it
         logger.debug(f"editing client (id = {client_id})")
         with self.Session() as session:
-            client = session.query(Client).filter_by(client_id=client_id).first()
+            client = session.get(Client, client_id)
             if client:
                 for key, value in new_data.items():
                     logger.debug(f"changing value for key: {key}")
@@ -161,7 +161,7 @@ class ClientsManager:
     def delete_client(self, client_id: int) -> None:
         logger.debug("deleting client")
         with self.Session() as session:
-            client = session.query(Client).filter_by(client_id=client_id).first()
+            client = session.get(Client, client_id)
             if client:
                 session.delete(client)
                 session.commit()
