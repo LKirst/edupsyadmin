@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 
 from edupsyadmin.api.managers import (
@@ -75,7 +77,7 @@ class ManagersTest:
             "client_id": 99,
             "school": "FirstSchool",
             "gender": "f",
-            "entry_date": "2021-06-30",
+            "entry_date": date(2021, 6, 30),
             "class_name": "7TKKG",
             "first_name": "Lieschen",
             "last_name": "Müller",
@@ -125,21 +127,21 @@ class ManagersTest:
             assert e.client_id == client_id
 
     def test_enter_client_cli(
-        self, mock_keyring, clients_manager, monkeypatch, client_dict_set_by_user
+        self, mock_keyring, clients_manager, monkeypatch, client_dict_all_str
     ):
         # simulate the commandline input
-        inputs = iter(client_dict_set_by_user)
+        inputs = iter(client_dict_all_str)
 
         def mock_input(prompt):
-            return client_dict_set_by_user[next(inputs)]
+            return client_dict_all_str[next(inputs)]
 
         monkeypatch.setattr("builtins.input", mock_input)
 
         client_id = enter_client_cli(clients_manager)
         client = clients_manager.get_decrypted_client(client_id=client_id)
         assert EXPECTED_KEYS.issubset(client.keys())
-        assert client["first_name"] == client_dict_set_by_user["first_name"]
-        assert client["last_name"] == client_dict_set_by_user["last_name"]
+        assert client["first_name"] == client_dict_all_str["first_name"]
+        assert client["last_name"] == client_dict_all_str["last_name"]
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
     def test_enter_client_untiscsv(

@@ -80,7 +80,7 @@ class Client(Base):
         ),
     )
     entry_date: Mapped[Optional[date]] = mapped_column(
-        String, doc="Eintrittsdatum des Klienten in das System"
+        Date, doc="Eintrittsdatum des Klienten in das System"
     )
     class_name: Mapped[Optional[str]] = mapped_column(
         String, doc="Klassenname des Klienten (einschließlich Buchstaben)"

@@ -102,13 +102,38 @@ def mock_webuntis(tmp_path: Path) -> Path:
     return webuntis_path
 
 
+@pytest.fixture
+def client_dict_all_str() -> dict[str, str]:
+    client_dict = {
+        "client_id": "",
+        "school": "FirstSchool",
+        "gender": "m",
+        "entry_date": "2021-06-30",
+        "class_name": "11TKKG",
+        "first_name": "John",
+        "last_name": "Doe",
+        "birthday": "1990-01-01",
+        "street": "123 Main St",
+        "city": "New York",
+        "telephone1": "555-1234",
+        "email": "john.doe@example.com",
+        "nos_rs": "0",
+        "nta_zeitv_vieltext": "10",
+        "nta_nos_end_grade": "11",
+        "lrst_diagnosis": "iLst",
+        "lrst_last_test_date": "2025-05-11",
+        "lrst_last_test_by": "schpsy",
+    }
+    return client_dict
+
+
 @pytest.fixture(
     params=[
         {
             "client_id": None,
             "school": "FirstSchool",
             "gender": "m",
-            "entry_date": "2021-06-30",
+            "entry_date": date(2021, 6, 30),
             "class_name": "11TKKG",
             "first_name": "John",
             "last_name": "Doe",
@@ -121,14 +146,14 @@ def mock_webuntis(tmp_path: Path) -> Path:
             "nta_zeitv_vieltext": 10,
             "nta_nos_end_grade": 11,
             "lrst_diagnosis": "iLst",
-            "lrst_last_test_date": date.fromisoformat("2025-05-11"),
+            "lrst_last_test_date": date(2025, 5, 11),
             "lrst_last_test_by": "schpsy",
         },
         {
             "client_id": 2,
             "school": "SecondSchool",
             "gender": "f",
-            "entry_date": "2021-06-30",
+            "entry_date": date(2021, 6, 30),
             "class_name": "Ki12",
             "first_name": "Äöüß",
             "last_name": "Müller",
@@ -160,7 +185,7 @@ def client_dict_set_by_user(request) -> dict[str, any]:
             "client_id": None,
             "school": "FirstSchool",
             "gender": "m",
-            "entry_date": "2021-06-30",
+            "entry_date": date(2021, 6, 30),
             "class_name": "11TKKG",
             "class_int": 11,
             "first_name": "John",
@@ -186,7 +211,7 @@ def client_dict_set_by_user(request) -> dict[str, any]:
             "client_id": 2,
             "school": "SecondSchool",
             "gender": "f",
-            "entry_date": "2021-06-30",
+            "entry_date": date(2021, 6, 30),
             "class_name": "Ki12",
             "class_int": 12,
             "first_name": "Äöüß",
