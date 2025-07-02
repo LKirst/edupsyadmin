@@ -12,7 +12,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, validates
 
-from edupsyadmin.api.taetigkeitsbericht_check_key import check_keyword
 from edupsyadmin.core.academic_year import (
     get_date_destroy_records,
     get_estimated_end_of_academic_year,
@@ -21,6 +20,7 @@ from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import Encryption
 from edupsyadmin.core.int_from_str import extract_number
 from edupsyadmin.core.logger import logger
+from edupsyadmin.core.taetigkeitsbericht_check_key import check_keyword
 
 from . import Base
 

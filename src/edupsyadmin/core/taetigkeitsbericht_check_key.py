@@ -2,8 +2,6 @@ from importlib.resources import files
 
 import pandas as pd
 
-from ..core.logger import logger
-
 
 def get_taet_categories() -> set[str]:
     """
@@ -28,9 +26,7 @@ def check_keyword(keyword: str | None) -> str | None:
     :return: The valid keyword or None if the keyword is empty.
     """
     possible_keywords = get_taet_categories()
-    if keyword:
-        while keyword not in possible_keywords:
-            keyword = input(f'keyword ("{keyword}" is not an option): ')
+    if (not keyword) or (keyword in possible_keywords):
+        return keyword
     else:
-        logger.debug("taetigkeitsbericht keyword is empty")
-    return keyword
+        raise ValueError
