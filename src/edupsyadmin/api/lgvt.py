@@ -6,7 +6,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from .convert_measures import percentile_to_t
+from edupsyadmin.core.convert_measures import percentile_to_t
+
 from .managers import ClientsManager
 
 

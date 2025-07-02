@@ -7,7 +7,7 @@ from textual.app import App
 from textual.events import Key
 from textual.widgets import Button, Checkbox, Input, Label
 
-from edupsyadmin.api.clients import Client
+from edupsyadmin.api.db.clients import Client
 from edupsyadmin.api.managers import ClientsManager
 
 

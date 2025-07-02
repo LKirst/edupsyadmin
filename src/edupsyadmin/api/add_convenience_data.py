@@ -4,7 +4,7 @@ from typing import Any
 
 from dateutil.parser import parse
 
-from edupsyadmin.api.academic_year import (
+from edupsyadmin.core.academic_year import (
     get_academic_year_string,
     get_estimated_end_of_academic_year,
     get_this_academic_year_string,

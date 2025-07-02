@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-import argparse
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
@@ -102,55 +100,3 @@ def get_date_destroy_records(date_graduation: date) -> date:
     """
 
     return date_graduation + relativedelta(years=3)
-
-
-def main() -> None:
-    """
-    Parse arguments from the commandline and return an academic year or a
-    date for the destruction of student records.
-    """
-    parser = argparse.ArgumentParser(
-        description="Calculate academic year end dates and record destruction dates."
-    )
-    parser.add_argument(
-        "grade_current", type=int, help="The current grade of the student."
-    )
-    parser.add_argument(
-        "grade_target", type=int, help="The target grade of the student."
-    )
-    parser.add_argument(
-        "--last_month",
-        "-lm",
-        default=DEFAULT_LAST_MONTH,
-        type=int,
-        help="The month the academic year ends.",
-    )
-    parser.add_argument(
-        "--last_day",
-        "-ld",
-        default=DEFAULT_LAST_DAY,
-        type=int,
-        help="The day in the last month when the academic year ends.",
-    )
-    parser.add_argument(
-        "--destroy_files",
-        action="store_true",
-        help=(
-            "If true, 3 years will be added to grade_target for "
-            "record destruction date."
-        ),
-    )
-    args = parser.parse_args()
-
-    date_target = get_estimated_end_of_this_academic_year(
-        args.grade_current, args.grade_target, args.last_month
-    )
-    if args.destroy_files:
-        print("Adding three years to the date of graduation for record destruction.")
-        date_target = get_date_destroy_records(date_target)
-    academic_year = get_academic_year_string(date_target)
-    print(f"Estimated end of the academic year {academic_year}: {date_target}")
-
-
-if __name__ == "__main__":
-    main()

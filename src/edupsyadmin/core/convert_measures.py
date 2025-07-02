@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-import argparse
-
 from scipy.stats import norm
 
 IQ_MEAN = 100
@@ -92,23 +89,3 @@ def iq_to_t(iq: float) -> float:
     """
     t = ((iq - 100) / 15) * 10 + 50
     return t
-
-
-if __name__ == "__main__":
-    formats = ["t", "z", "iq", "percentile"]
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("f", type=str, help="from", choices=formats)
-    parser.add_argument("t", type=str, help="to", choices=formats)
-    parser.add_argument("value", type=float)
-    parser.add_argument("--round", type=int, default=2)
-    args = parser.parse_args()
-
-    if (args.f == "iq") and (args.t == "t"):
-        print(round(iq_to_t(args.value), args.round))
-    elif (args.f == "iq") and (args.t == "z"):
-        print(round(iq_to_z(args.value), args.round))
-    elif (args.f == "percentile") and (args.t == "t"):
-        print(round(percentile_to_t(args.value), args.round))
-    else:
-        print("The conversion you requested is not yet implemented")

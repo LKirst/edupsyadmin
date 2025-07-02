@@ -3,9 +3,10 @@ import argparse
 import os
 from datetime import datetime
 
-from convert_measures import iq_to_t, iq_to_z
-from datediff import mydatediff
 from reports import Report, normal_distribution_plot
+
+from edupsyadmin.core.convert_measures import iq_to_t, iq_to_z
+from edupsyadmin.core.datediff import mydatediff
 
 
 def input_int_or_none(prompt: str) -> int | None:

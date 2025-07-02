@@ -6,14 +6,15 @@ from typing import Any
 
 import pandas as pd
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from edupsyadmin.api.add_convenience_data import add_convenience_data
-from edupsyadmin.api.clients import Client
 from edupsyadmin.api.fill_form import fill_form
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import Encryption
 from edupsyadmin.core.logger import logger
+from edupsyadmin.db import Base
+from edupsyadmin.db.clients import Client
 
 BOOLEAN_COLS = [
     "notenschutz",
@@ -31,11 +32,6 @@ BOOLEAN_COLS = [
     "nta_other",
     "nta_nos_end",
 ]
-
-
-class Base(DeclarativeBase):
-    pass
-
 
 encr = Encryption()
 

@@ -1,8 +1,5 @@
 """Application commands common to all interfaces."""
 
-from . import clients, managers
+from . import managers
 
-__all__ = (
-    "clients",
-    "managers",
-)
+__all__ = ("managers",)
