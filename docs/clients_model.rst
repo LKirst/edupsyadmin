@@ -6,7 +6,7 @@ Unten beschriebene Variablen der Datenbank, die auf "_encr" enden
 "_encr" in Formularen verwendet werden. Für ``edupsyadmin set_client`` muss
 der Variablenname mit dem "_encr"-Suffix verwendet werden.
 
-.. autoclass:: edupsyadmin.api.clients.Client
+.. autoclass:: edupsyadmin.db.clients.Client
    :members:
 
 Auf Grundlage der Daten der Datenbank werden mit der Funktion

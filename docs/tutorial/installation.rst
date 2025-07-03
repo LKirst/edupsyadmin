@@ -94,8 +94,69 @@ Nun sollte edupsyadmin immer verfügbar sein, was du testen kannst mit:
 
 Wenn eine Hilfe-Nachricht erscheint, ist die Installation gelungen.
 
-Konfiguration
--------------
+Hintergrund zu den Verschlüsselungsdaten
+----------------------------------------
+
+In der Datenbank von edupsyadmin auf deinem Rechner sind bestimmte
+personenbezogene Daten verschlüsselt und werden bei der Ausführung eines
+Befehls von edupsyadmin vorrübergehend entschlüsselt (alle Variablen, deren
+Name auf "_encr" endet, s. Dokumentation der Datenbank).
+
+Standard Backends
+~~~~~~~~~~~~~~~~~
+
+edupsyadmin verwendet ``keyring``, um die Verschlüsselungsdaten zu speichern.
+``keyring`` hat mehrere Backends. Unter Windows ist der Standard Windows
+Credential Manager (Deutsch: Anmeldeinformationsverwaltung), auf macOS Keychain
+(Deutsch: Schlüsselbund).
+
+Wenn du den Windows Credential Manager verwendest, sollte dein Rechner mit
+einem guten Passwort geschützt und nur für dich zugänglich sein, denn
+jeder, der die Login Daten für deinen Rechner kennt, hat damit Zugriff auf
+deine Anmeldeinformationsverwaltung und auf die dort gespeicherten
+Verschlüsselungsdaten für edupsyadmin. Jenachdem wie du edupsyadmin
+nutzt, ist das Bitwarden Backend eine sicherere Alternative (s.u.).
+
+Standardmäßig gilt dasselbe für den macOS Keychain, wobei hier ein vom
+Login separates Password für Keychain gesetzt werden kann, was die Sicherheit
+erhöht.
+
+Bitwarden Backend
+~~~~~~~~~~~~~~~~~
+
+Eine für alle Betriebssysteme mögliche Alternative ist die Bitwarden CLI. Sie
+erfordert vor jeder Nutzung von edupsyadmin, dass der Zugang zum Password für
+die Sitzung entschlüsselt werden, was die Sicherheit erhöht. Dafür musst du:
+
+- ein Bitwarden-Konto anlegen: `<https://bitwarden.com>`_
+- die Bitwarden CLI installieren: `<https://bitwarden.com/help/cli/>`_
+- edupsyadmin mit dem optionalen Paket bitwarden-keyring installieren:
+
+.. code-block ::
+
+  uv tool install --with bitwarden-keyring edupsyadmin
+
+- dich einmalig in der Shell (z.B. Powershell über das Windows Terminal) einloggen:
+
+.. code-block ::
+
+  bw login
+
+- vor jeder Sitzung Bitwarden mit dem für Bitwarden gesetzten
+  Passwort entschlüsseln
+
+.. code-block ::
+
+  bw unlock
+
+- den von ``bw unlock`` generierten Sitzungsschlüssel in die Shell  (``export
+  BW_SESSION=...`` für Bash oder ``$env:BW_SESSION=...`` für Powershell)
+
+- nach der Sitzung den Zugang wieder verschlüsseln mit ``bw lock``
+
+
+Konfiguration und Verschlüsselungsdaten festlegen
+-------------------------------------------------
 
 Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür folgenden Befehl aus:
 
@@ -110,7 +171,14 @@ Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür 
 
     app_username: DEIN.NAME
 
-2. Ändere dann deine Daten in den Schulpsychologie-Einstellungen:
+2. Lege einmalig ein sicheres Passwortsicheres Passwort  fest. Das Passwort solltest du für eine bestehende
+   Datenbank nicht ändern, sonst können die Daten nicht mehr entschlüsselt werden.
+
+.. code-block::
+
+    Passwort: ein_sicheres_passwort
+
+3. Ändere dann deine Daten in den Schulpsychologie-Einstellungen:
 
 .. code-block::
 
@@ -118,7 +186,7 @@ Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür 
     schoolpsy_street: "Deine Straße und Hausnummer"
     schoolpsy_city: "Postleitzahl und Stadt"
 
-3. Ändere unter ``school`` den Kurznamen deiner Schule zu etwas einprägsamerem
+4. Ändere unter ``school`` den Kurznamen deiner Schule zu etwas einprägsamerem
    als ``FirstSchool``. Verwende keine Leerzeichen oder Sonderzeichen. In
    diesem Tutorial verwenden wir den Schulnamen ``TutorialSchule``.
 
@@ -126,7 +194,7 @@ Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür 
 
     TutorialSchule
 
-4. Füge die Daten für deine Schule hinzu. Die Variable ``end`` wird verwendet, um
+5. Füge die Daten für deine Schule hinzu. Die Variable ``end`` wird verwendet, um
    das Datum für die Vernichtung der Unterlagen (3 Jahre nach dem
    voraussichtlichen Abschlussdatum) zu schätzen. Es benennt die
    Jahrgangsstufe, nach der die Schüler:innen typischerweise die Schule
@@ -140,9 +208,9 @@ Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür 
     school_city: "Postleitzahl und Stadt"
     end: 11
 
-5. Über den Button ``Schule hinzufügen`` können weitere Schulen hinzugefügt werden. Wiederhole Schritt 3 und 4 für jede Schule, an der du tätig bist.
+6. Über den Button ``Schule hinzufügen`` können weitere Schulen hinzugefügt werden. Wiederhole Schritt 3 und 4 für jede Schule, an der du tätig bist.
 
-6. Ändere die Pfade unter ``form_set``, um auf die (Sets von) PDF-Formularen zu
+7. Ändere die Pfade unter ``form_set``, um auf die (Sets von) PDF-Formularen zu
    verweisen, die du verwenden möchtest. Bitte lade für unser Beispiel folgende
    zwei Beispiel-PDFs herunter und speichere Sie:
 
@@ -163,27 +231,4 @@ Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür 
             - 'pfad/zu/meiner/ersten_datei/sample_form_mantelbogen.pdf'
             - 'pfad/zu/meiner/zweiten_datei/sample_form_stellungnahme.pdf'
 
-7. Speichere die Änderungen.
-
-Anmeldedaten speichern
-----------------------
-
-edupsyadmin verwendet ``keyring`` für die Verschlüsselungsanmeldedaten.
-``keyring`` hat mehrere Backends. Unter Windows ist der Standard der Windows
-Credential Manager (Deutsch: Anmeldeinformationsverwaltung).
-
-1. Drücke dafür die Tasten :kbd:`Win-S`. Dann suche nach
-   "Anmeldeinformationsverwaltung" und öffne sie.
-
-2. Wähle ``Windows-Anmeldeinformationen``.
-
-3. Wähle ``Windows-Anmeldeinformationen hinzufügen``.
-
-4. Verwende den Benutzernamen aus deiner config.yaml Datei und lege ein
-   Passwort fest. Die Internet- oder Netzwerkadresse kannst du wie unten übernehmen.
-
-    Internet- oder Netzwerkadresse: ``liebermann-schulpsychologie.github.io``
-
-    Benutzername: ``der_nutzer_name_aus_der_konfigurationsdatei``
-
-    Kennwort: ``ein_sicheres_passwort``
+8. Speichere die Änderungen.
