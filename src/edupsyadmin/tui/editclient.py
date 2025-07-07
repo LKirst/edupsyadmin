@@ -3,12 +3,23 @@ import os
 from typing import Type
 
 from sqlalchemy import Boolean, Date, DateTime, Float, Integer, String
+from textual import log
 from textual.app import App
 from textual.events import Key
 from textual.widgets import Button, Checkbox, Input, Label
 
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.db.clients import Client
+
+REQUIRED_FIELDS = [
+    "school",
+    "gender_encr",
+    "entry_date",
+    "class_name",
+    "first_name_encr",
+    "last_name_encr",
+    "birthday_encr",
+]
 
 
 def get_python_type(sqlalchemy_type: Type) -> Type:
@@ -88,19 +99,21 @@ class StudentEntryApp(App):
                 default = str(self.data[name]) if name in self.data else ""
 
             # create widget
+            placeholder = name + "*" if (name in REQUIRED_FIELDS) else name
             if field_type is bool:
                 widget = Checkbox(label=name, value=default)
             elif field_type is int:
-                widget = Input(value=default, placeholder=name, type="integer")
+                widget = Input(value=default, placeholder=placeholder, type="integer")
             elif field_type is float:
-                widget = Input(value=default, placeholder=name, type="number")
-            elif field_type is datetime.date:
-                widget = DateInput(value=default, placeholder=name)
+                widget = Input(value=default, placeholder=placeholder, type="number")
+            elif (field_type is datetime.date) or (name == "birthday_encr"):
+                widget = DateInput(value=default, placeholder=placeholder)
             else:
-                widget = Input(value=default, placeholder=name)
+                widget = Input(value=default, placeholder=placeholder)
 
             # add tooltip
             widget.tooltip = column.doc
+            widget.id = f"{name}"
 
             # add widget to collection of checkboxes or input widgets
             if field_type is bool:
@@ -115,21 +128,25 @@ class StudentEntryApp(App):
         yield self.submit_button
 
     def on_button_pressed(self):
-        self.data = {}
+        """method that is called when the submit button is pressed"""
 
         # Collect data from input fields
         for field, input_widget in self.inputs.items():
-            self.data[field] = (
-                int(input_widget.value) if input_widget.value.isdigit() else None
-            )
-        else:
             self.data[field] = input_widget.value
         # Collect data from checkboxes
         self.data.update(
             {field: self.checkboxes[field].value for field in self.checkboxes}
         )
 
-        self.exit()  # Exit the app after submission
+        log.info(f"Submitted: {self.data}")
+        if all(self.data[field] != "" for field in REQUIRED_FIELDS):
+            self.exit()  # Exit the app after submission
+        else:
+            # show what fields are required and still empty
+            for field in REQUIRED_FIELDS:
+                if self.data[field] == "":
+                    input_widget = self.query_one(f"#{field}", Input)
+                    input_widget.add_class("-invalid")
 
     def get_data(self):
         return self.data
@@ -181,5 +198,18 @@ if __name__ == "__main__":
     # just for testing
     app = StudentEntryApp(42)
     app.run()
-    new_data = app.get_data()
-    print(f"The data collected is: {new_data}")
+
+    data = app.get_data()
+    print(f"The data collected is: {data}")
+
+    empty_client_dict = {}
+    for column in Client.__table__.columns:
+        field_type = get_python_type(column.type)
+        name = column.name
+
+        if field_type is bool:
+            empty_client_dict[name] = False
+        else:
+            empty_client_dict[name] = ""
+    changed_data = _find_changed_values(empty_client_dict, data)
+    print(f"The modified fields are: {changed_data}")

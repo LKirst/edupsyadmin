@@ -39,7 +39,7 @@ def save_config(config_dict: dict, file_path: Path) -> None:
 class ConfigEditorApp(App):
     """A Textual app to edit edupsyadmin YAML configuration files."""
 
-    CSS_PATH = "config_editor.tcss"
+    CSS_PATH = "editconfig.tcss"
     school_count: reactive[int] = reactive(0)
     form_set_count: reactive[int] = reactive(0)
 
