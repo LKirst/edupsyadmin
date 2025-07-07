@@ -7,8 +7,8 @@ from textual.app import App
 from textual.events import Key
 from textual.widgets import Button, Checkbox, Input, Label
 
-from edupsyadmin.api.db.clients import Client
 from edupsyadmin.api.managers import ClientsManager
+from edupsyadmin.db.clients import Client
 
 
 def get_python_type(sqlalchemy_type: Type) -> Type:
@@ -73,47 +73,42 @@ class StudentEntryApp(App):
         self.checkboxes = {}
 
     def compose(self):
-        # Read fields from the clients table
-
-        fields = {}
-        for column in Client.__table__.columns:
-            python_type = get_python_type(column.type)
-            fields[column.name] = python_type
-
         # Create heading with client_id
         yield Label(f"Data for client_id: {self.client_id}")
 
-        for field, field_type in fields.items():
-            # Create input fields
-            if field_type is int:
-                default_value = str(self.data[field]) if field in self.data else ""
-                input_widget = Input(
-                    value=default_value, placeholder=field, type="integer"
-                )
-                self.inputs[field] = input_widget
-                yield input_widget
-            elif field_type is float:
-                default_value = str(self.data[field]) if field in self.data else ""
-                input_widget = Input(
-                    value=default_value, placeholder=field, type="number"
-                )
-                self.inputs[field] = input_widget
-                yield input_widget
-            elif field_type is datetime.date:
-                default_value = str(self.data[field]) if field in self.data else ""
-                input_widget = DateInput(value=default_value, placeholder=field)
-                self.inputs[field] = input_widget
-                yield input_widget
-            elif field_type is not bool:
-                default_value = str(self.data[field]) if field in self.data else ""
-                input_widget = Input(value=default_value, placeholder=field)
-                self.inputs[field] = input_widget
-                yield input_widget
+        # Read fields from the clients table
+        for column in Client.__table__.columns:
+            field_type = get_python_type(column.type)
+            name = column.name
+
+            # default value
+            if field_type is bool:
+                default = self.data[name] if name in self.data else False
             else:
-                default_value = self.data[field] if field in self.data else False
-                checkbox_widget = Checkbox(label=field, value=default_value)
-                self.checkboxes[field] = checkbox_widget
-                yield checkbox_widget
+                default = str(self.data[name]) if name in self.data else ""
+
+            # create widget
+            if field_type is bool:
+                widget = Checkbox(label=name, value=default)
+            elif field_type is int:
+                widget = Input(value=default, placeholder=name, type="integer")
+            elif field_type is float:
+                widget = Input(value=default, placeholder=name, type="number")
+            elif field_type is datetime.date:
+                widget = DateInput(value=default, placeholder=name)
+            else:
+                widget = Input(value=default, placeholder=name)
+
+            # add tooltip
+            widget.tooltip = column.doc
+
+            # add widget to collection of checkboxes or input widgets
+            if field_type is bool:
+                self.checkboxes[name] = widget
+            else:
+                self.inputs[name] = widget
+
+            yield widget
 
         # Submit button
         self.submit_button = Button(label="Submit")
