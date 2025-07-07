@@ -21,6 +21,20 @@ REQUIRED_FIELDS = [
     "birthday_encr",
 ]
 
+# fields which depend on other fields and should not be set by the user
+HIDDEN_FIELDS = [
+    "estimated_graduation_date",
+    "document_shredding_date",
+    "dateteime_created",
+    "datetime_last_modified",
+    "notenschutz",
+    "nos_other",
+    "nachteilsausgleich",
+    "nta_zeitv",
+    "nta_other",
+    "nta_nos_end",
+]
+
 
 def get_python_type(sqlalchemy_type: Type) -> Type:
     """
@@ -91,6 +105,8 @@ class StudentEntryApp(App):
         for column in Client.__table__.columns:
             field_type = get_python_type(column.type)
             name = column.name
+            if name in HIDDEN_FIELDS:
+                continue
 
             # default value
             if field_type is bool:
