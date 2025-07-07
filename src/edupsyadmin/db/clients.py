@@ -91,7 +91,11 @@ class Client(Base):
         ),
     )
     class_int: Mapped[Optional[int]] = mapped_column(
-        Integer, doc="Numerische Darstellung der Klasse des Klienten"
+        Integer,
+        doc=(
+            "Numerische Darstellung der Klasse des Klienten. "
+            "Diese Variable wird abgeleitet aus class_name."
+        ),
     )
     estimated_graduation_date: Mapped[Optional[date]] = mapped_column(
         Date, doc="Voraussichtliches Abschlussdatum des Klienten"

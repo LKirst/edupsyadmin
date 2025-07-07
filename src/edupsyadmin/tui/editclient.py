@@ -23,6 +23,7 @@ REQUIRED_FIELDS = [
 
 # fields which depend on other fields and should not be set by the user
 HIDDEN_FIELDS = [
+    "class_int",
     "estimated_graduation_date",
     "document_shredding_date",
     "dateteime_created",
