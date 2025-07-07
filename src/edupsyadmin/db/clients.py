@@ -83,7 +83,12 @@ class Client(Base):
         Date, doc="Eintrittsdatum des Klienten in das System"
     )
     class_name: Mapped[Optional[str]] = mapped_column(
-        String, doc="Klassenname des Klienten (einschließlich Buchstaben)"
+        String,
+        doc=(
+            "Klassenname des Klienten (einschließlich Buchstaben). "
+            "Muss eine Zahl für die Jahrgangsstufe enthalten, wenn ein "
+            "document_shredding_date berechnet werden soll."
+        ),
     )
     class_int: Mapped[Optional[int]] = mapped_column(
         Integer, doc="Numerische Darstellung der Klasse des Klienten"
@@ -138,7 +143,13 @@ class Client(Base):
 
     # Notenschutz
     notenschutz: Mapped[bool] = mapped_column(
-        Boolean, default=False, doc="Gibt an, ob der Klient Notenschutz hat"
+        Boolean,
+        default=False,
+        doc=(
+            "Gibt an, ob der Klient Notenschutz hat. "
+            "Diese Variable wird abgeleitet aus "
+            "nos_rs, nos_les und nos_other_details."
+        ),
     )
     nos_rs: Mapped[bool] = mapped_column(
         Boolean,
@@ -165,7 +176,10 @@ class Client(Base):
     nos_other: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
-        doc="Gibt an, ob der Klient andere Formen des Notenschutzes hat",
+        doc=(
+            "Gibt an, ob der Klient andere Formen des Notenschutzes hat."
+            "Diese Variable wird abgeleitet aus nos_other_details."
+        ),
     )
     nos_other_details: Mapped[Optional[str]] = mapped_column(
         String,
@@ -178,14 +192,19 @@ class Client(Base):
         default=False,
         doc=(
             "Gibt an, ob der Klient Nachteilsausgleich (NTA) hat. "
-            "Diese Variable sollte nicht direkt bearbeitet werden, "
-            "denn sie wird gesetzt, wenn z.B. nta_zeitv_vieltext geändert wird."
+            "Diese Variable wird abgeleitet aus den Variablen zur spezifischen "
+            "Form des Nachteilsausgleichs z.B. nta_zeitv_vieltext "
+            "oder nta_other_details."
         ),
     )
     nta_zeitv: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
-        doc="Gibt an, ob der Klient eine Zeitverlängerung als NTA hat",
+        doc=(
+            "Gibt an, ob der Klient eine Zeitverlängerung als NTA hat. "
+            "Diese Variable wird abgeleitet aus nta_zeitv_vieltext und"
+            "nta_zeitv_wenigtext."
+        ),
     )
     nta_zeitv_vieltext: Mapped[Optional[int]] = mapped_column(
         Integer,
@@ -239,7 +258,10 @@ class Client(Base):
     nta_other: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
-        doc="Gibt an, ob der Klient andere Formen des NTAs hat",
+        doc=(
+            "Gibt an, ob der Klient andere Formen des NTAs hat. "
+            "Diese Variable wird abgeleitet aus nta_other_details."
+        ),
     )
     nta_other_details: Mapped[Optional[str]] = mapped_column(
         String,
@@ -252,7 +274,8 @@ class Client(Base):
         doc=(
             "Gibt an, ob der Nachteilsasugleich und Notenschutzmaßnahmen "
             "zeitlich begrenzt sind (Default: False, auch bei "
-            "keinem Nachteilsausgleich oder Notenschutz)"
+            "keinem Nachteilsausgleich oder Notenschutz). "
+            "Diese Variable wird abgeleitet aus nta_nos_end_grade."
         ),
     )
     nta_nos_end_grade: Mapped[Optional[int]] = mapped_column(
