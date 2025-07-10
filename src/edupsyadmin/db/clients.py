@@ -444,6 +444,21 @@ class Client(Base):
             nta_dict[key] = value
         self.nachteilsausgleich = any(nta_dict.values())
 
+    def _update_notenschutz(self, key: str | None = None, value: bool = False) -> None:
+        """
+        If this method is used inside a validate method, you can pass key and value
+        to account for the change that will take place after the value has been
+        validated.
+        """
+        nos_dict = {
+            "nos_les": self.nos_les,
+            "nos_rs": self.nos_rs,
+            "nos_other": self.nos_other,
+        }
+        if key:
+            nos_dict[key] = value
+        self.notenschutz = any(nos_dict.values())
+
     @validates("keyword_taetigkeitsbericht")
     def validate_keyword_taetigkeitsbericht(self, key: str, value: str) -> str | None:
         return check_keyword(value)
@@ -455,34 +470,20 @@ class Client(Base):
         self.nos_rs_ausn = (value is not None) and bool(value.strip())
         return value
 
-    @validates("nos_rs")
-    def validate_nos_rs(self, key: str, value: bool | str | int) -> bool:
+    @validates("nos_rs", "nos_les")
+    def validate_nos_bool(self, key: str, value: bool | str | int) -> bool:
         boolvalue = str_to_bool(value)
-        self.notenschutz = value or self.nos_les or self.nos_other
-        return boolvalue
-
-    @validates("nos_les")
-    def validate_nos_les(self, key: str, value: bool | str | int) -> bool:
-        boolvalue = str_to_bool(value)
-
-        self.notenschutz = self.nos_rs or value or self.nos_other
-        return boolvalue
-
-    @validates("nos_other")
-    def validate_nos_other(self, key: str, value: bool | str | int) -> bool:
-        boolvalue = str_to_bool(value)
-
-        self.notenschutz = self.nos_rs or self.nos_les or value
+        self._update_notenschutz(key, boolvalue)
         return boolvalue
 
     @validates("nos_other_details")
     def validate_nos_other_details(self, key: str, value: str) -> str:
         self.nos_other = (value is not None) and value != ""
-        self.notenschutz = self.nos_rs or self.nos_les or self.nos_other
+        self._update_notenschutz()
         return value
 
-    @validates("nta_zeitv_vieltext")
-    def validate_nta_zeitv_vieltext(
+    @validates("nta_zeitv_vieltext", "nta_zeitv_wenigtext")
+    def validate_nta_zeitv_percentage(
         self, key: str, value: str | int | None
     ) -> int | None:
         if isinstance(value, str):
@@ -491,55 +492,9 @@ class Client(Base):
         self._update_nachteilsausgleich()
         return value
 
-    @validates("nta_zeitv_wenigtext")
-    def validate_nta_zeitv_wenigtext(
-        self, key: str, value: str | int | None
-    ) -> int | None:
-        if isinstance(value, str):
-            value = int(value)
-        self.nta_zeitv = (value is not None) and (value > 0)
-        self._update_nachteilsausgleich()
-        return value
-
-    @validates("nta_font")
-    def validate_nta_font(self, key: str, value: bool | str | int) -> bool:
+    @validates("nta_font", "nta_auf", "nta_arbeitsm", "nta_ersgew", "nta_vorlesen")
+    def validate_nta_bool(self, key: str, value: bool | str | int) -> bool:
         boolvalue = str_to_bool(value)
-
-        self._update_nachteilsausgleich(key, value)
-        return boolvalue
-
-    @validates("nta_aufg")
-    def validate_nta_aufg(self, key: str, value: bool | str | int) -> bool:
-        boolvalue = str_to_bool(value)
-
-        self._update_nachteilsausgleich(key, value)
-        return boolvalue
-
-    @validates("nta_arbeitsm")
-    def validate_nta_arbeitsm(self, key: str, value: bool | str | int) -> bool:
-        boolvalue = str_to_bool(value)
-
-        self._update_nachteilsausgleich(key, value)
-        return boolvalue
-
-    @validates("nta_ersgew")
-    def validate_nta_ersgew(self, key: str, value: bool | str | int) -> bool:
-        boolvalue = str_to_bool(value)
-
-        self._update_nachteilsausgleich(key, value)
-        return boolvalue
-
-    @validates("nta_vorlesen")
-    def validate_nta_vorlesen(self, key: str, value: bool | str | int) -> bool:
-        boolvalue = str_to_bool(value)
-
-        self._update_nachteilsausgleich(key, value)
-        return boolvalue
-
-    @validates("nta_other")
-    def validate_nta_other(self, key: str, value: bool | str | int) -> bool:
-        boolvalue = str_to_bool(value)
-
         self._update_nachteilsausgleich(key, value)
         return boolvalue
 
