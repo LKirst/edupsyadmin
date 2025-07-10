@@ -375,8 +375,6 @@ class Client(Base):
                 self.estimated_graduation_date
             )
 
-        self.keyword_taetigkeitsbericht = check_keyword(keyword_taetigkeitsbericht)
-
         self.lrst_diagnosis = lrst_diagnosis
         self.lrst_last_test_date = lrst_last_test_date
         self.lrst_last_test_by = lrst_last_test_by
@@ -384,23 +382,12 @@ class Client(Base):
         # Notenschutz
         self.nos_rs = nos_rs
         self.nos_rs_ausn_faecher = nos_rs_ausn_faecher
-        if nos_rs_ausn_faecher:
-            self.nos_rs_ausn = True
-        else:
-            self.nos_rs_ausn = False
         self.nos_les = nos_les
         self.nos_other_details = nos_other_details
-        if self.nos_other_details:
-            self.nos_other = True
-        self.notenschutz = self.nos_rs or self.nos_les or self.nos_other
 
         # Nachteilsausgleich
         self.nta_zeitv_vieltext = nta_zeitv_vieltext
         self.nta_zeitv_wenigtext = nta_zeitv_wenigtext
-        if self.nta_zeitv_vieltext or self.nta_zeitv_wenigtext:
-            self.nta_zeitv = True
-        else:
-            self.nta_zeitv = False
         self.nta_font = nta_font
         self.nta_aufg = nta_aufg
         self.nta_struktur = nta_struktur
@@ -408,15 +395,8 @@ class Client(Base):
         self.nta_ersgew = nta_ersgew
         self.nta_vorlesen = nta_vorlesen
         self.nta_other_details = nta_other_details
-        if self.nta_other_details:
-            self.nta_other = True
-        else:
-            self.nta_other = False
         self.nta_notes = nta_notes
         self.nta_nos_end_grade = nta_nos_end_grade
-        self.nta_nos_end = self.nta_nos_end_grade is not None
-
-        self._update_nachteilsausgleich()
 
         self.n_sessions = n_sessions
 
