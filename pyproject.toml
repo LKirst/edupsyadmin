@@ -75,3 +75,17 @@ update_changelog_on_bump = true
 version_files = [
     "src/edupsyadmin/__version__.py"
 ]
+
+[tool.ruff.lint]
+select = [
+  # Core correctness / style
+  "F", "E", "W", "I", "N",
+
+  "UP",  # pyupgrade – rewrite to modern Python syntax (f-strings, walrus, etc.)
+  "C4",  # flake8-comprehensions – point out sub-optimal list/dict/set comps
+  "SIM", # flake8-simplify – suggest clearer, shorter boolean / loop logic
+  "RET", # flake8-return – keep return statements consistent and meaningful
+  "ARG", # flake8-unused-arguments – flag unused, shadowed or *args/**kwargs
+  "TID", # flake8-tidy-imports – ban unused or overly-relative imports
+  "RUF", # Ruff-native extras – small bug-catchers & style nits not in other sets "UP",
+]
