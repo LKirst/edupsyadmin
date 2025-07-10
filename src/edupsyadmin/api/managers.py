@@ -16,23 +16,6 @@ from edupsyadmin.core.logger import logger
 from edupsyadmin.db import Base
 from edupsyadmin.db.clients import Client
 
-BOOLEAN_COLS = [
-    "notenschutz",
-    "nos_rs",
-    "nos_rs_ausn",
-    "nos_les",
-    "nachteilsausgleich",
-    "nta_zeitv",
-    "nta_font",
-    "nta_aufg",
-    "nta_struktur",
-    "nta_arbeitsm",
-    "nta_ersgew",
-    "nta_vorlesen",
-    "nta_other",
-    "nta_nos_end",
-]
-
 encr = Encryption()
 
 
