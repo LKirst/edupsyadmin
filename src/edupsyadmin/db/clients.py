@@ -1,5 +1,4 @@
 from datetime import date, datetime
-from typing import Optional
 
 from sqlalchemy import (
     Boolean,
@@ -40,7 +39,7 @@ class Client(Base):
         String, doc="Verschlüsselter Nachname des Klienten"
     )
     gender_encr: Mapped[str] = mapped_column(
-        String, doc="Verschlüsseltes Geschlecht des Klienten"
+        String, doc="Verschlüsseltes Geschlecht des Klienten (m/f/x)"
     )
     birthday_encr: Mapped[str] = mapped_column(
         String, doc="Verschlüsseltes Geburtsdatum des Klienten (JJJJ-MM-TT)"
@@ -79,10 +78,10 @@ class Client(Base):
             "(Kurzname wie in der Konfiguration festgelegt)"
         ),
     )
-    entry_date: Mapped[Optional[date]] = mapped_column(
+    entry_date: Mapped[date | None] = mapped_column(
         Date, doc="Eintrittsdatum des Klienten in das System"
     )
-    class_name: Mapped[Optional[str]] = mapped_column(
+    class_name: Mapped[str | None] = mapped_column(
         String,
         doc=(
             "Klassenname des Klienten (einschließlich Buchstaben). "
@@ -90,47 +89,45 @@ class Client(Base):
             "document_shredding_date berechnet werden soll."
         ),
     )
-    class_int: Mapped[Optional[int]] = mapped_column(
+    class_int: Mapped[int | None] = mapped_column(
         Integer,
         doc=(
             "Numerische Darstellung der Klasse des Klienten. "
             "Diese Variable wird abgeleitet aus class_name."
         ),
     )
-    estimated_graduation_date: Mapped[Optional[date]] = mapped_column(
+    estimated_graduation_date: Mapped[date | None] = mapped_column(
         Date, doc="Voraussichtliches Abschlussdatum des Klienten"
     )
-    document_shredding_date: Mapped[Optional[date]] = mapped_column(
+    document_shredding_date: Mapped[date | None] = mapped_column(
         Date,
         doc="Datum für die Dokumentenvernichtung im Zusammenhang mit dem Klienten",
     )
-    keyword_taetigkeitsbericht: Mapped[Optional[str]] = mapped_column(
+    keyword_taetigkeitsbericht: Mapped[str | None] = mapped_column(
         String, doc="Schlüsselwort für die Kategorie des Klienten im Tätigkeitsbericht"
     )
     # I need lrst_diagnosis as a variable separate from keyword_taetigkeitsbericht,
     # because LRSt can be present even if it is not the most important topic
-    lrst_diagnosis: Mapped[Optional[str]] = mapped_column(
+    lrst_diagnosis: Mapped[str | None] = mapped_column(
         String,
         CheckConstraint(
-            ("lrst_diagnosis IN ('lrst', 'iLst', 'iRst') OR lrst_diagnosis IS NULL")
+            "lrst_diagnosis IN ('lrst', 'iLst', 'iRst') OR lrst_diagnosis IS NULL"
         ),
         doc="Diagnose im Zusammenhang mit LRSt, iLst oder iRst",
     )
-    lrst_last_test_date: Mapped[Optional[date]] = mapped_column(
+    lrst_last_test_date: Mapped[date | None] = mapped_column(
         Date,
         doc=(
             "Datum (YYYY-MM-DD) der letzten Testung im Zusammenhang "
             "einer Überprüfung von LRSt"
         ),
     )
-    lrst_last_test_by: Mapped[Optional[str]] = mapped_column(
+    lrst_last_test_by: Mapped[str | None] = mapped_column(
         String,
         CheckConstraint(
-            (
-                "lrst_last_test_by IN "
-                "('schpsy', 'psychia', 'psychoth', 'spz') "
-                "OR lrst_diagnosis IS NULL"
-            )
+            "lrst_last_test_by IN "
+            "('schpsy', 'psychia', 'psychoth', 'spz') "
+            "OR lrst_diagnosis IS NULL"
         ),
         doc=(
             "Fachperson, von der die letzte Überprüfung von LRSt "
@@ -168,7 +165,7 @@ class Client(Base):
             "ausgenommen sind"
         ),
     )
-    nos_rs_ausn_faecher: Mapped[Optional[str]] = mapped_column(
+    nos_rs_ausn_faecher: Mapped[str | None] = mapped_column(
         String,
         doc="Fächer, die vom Notenschutz (Rechtschreibung) ausgenommen sind",
     )
@@ -185,7 +182,7 @@ class Client(Base):
             "Diese Variable wird abgeleitet aus nos_other_details."
         ),
     )
-    nos_other_details: Mapped[Optional[str]] = mapped_column(
+    nos_other_details: Mapped[str | None] = mapped_column(
         String,
         doc="Details zu anderen Formen des Notenschutzes für den Klienten",
     )
@@ -210,7 +207,7 @@ class Client(Base):
             "nta_zeitv_wenigtext."
         ),
     )
-    nta_zeitv_vieltext: Mapped[Optional[int]] = mapped_column(
+    nta_zeitv_vieltext: Mapped[int | None] = mapped_column(
         Integer,
         doc=(
             "Zeitverlängerung in Fächern mit längeren Lesetexten bzw. "
@@ -218,7 +215,7 @@ class Client(Base):
             "angesetzten Zeit"
         ),
     )
-    nta_zeitv_wenigtext: Mapped[Optional[int]] = mapped_column(
+    nta_zeitv_wenigtext: Mapped[int | None] = mapped_column(
         Integer,
         doc=(
             "Zeitverlängerung in Fächern mit kürzeren Lesetexten bzw. "
@@ -267,11 +264,11 @@ class Client(Base):
             "Diese Variable wird abgeleitet aus nta_other_details."
         ),
     )
-    nta_other_details: Mapped[Optional[str]] = mapped_column(
+    nta_other_details: Mapped[str | None] = mapped_column(
         String,
         doc="Details zu anderen Formen des NTAs für den Klienten",
     )
-    nta_notes: Mapped[Optional[str]] = mapped_column(String, doc="Notizen zu NTA")
+    nta_notes: Mapped[str | None] = mapped_column(String, doc="Notizen zu NTA")
     nta_nos_end: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
@@ -282,7 +279,7 @@ class Client(Base):
             "Diese Variable wird abgeleitet aus nta_nos_end_grade."
         ),
     )
-    nta_nos_end_grade: Mapped[Optional[int]] = mapped_column(
+    nta_nos_end_grade: Mapped[int | None] = mapped_column(
         String,
         doc=(
             "Jahrgangsstufe bis deren Ende Nachteilsausgleich- und "
@@ -354,6 +351,8 @@ class Client(Base):
 
         if gender == "w":  # convert German 'w' to 'f'
             gender = "f"
+        elif gender == "d":  # convert German 'd' to 'x'
+            gender = "x"
         self.gender_encr = encr.encrypt(gender)
 
         self.school = school
@@ -556,13 +555,12 @@ class Client(Base):
         return value
 
     def __repr__(self) -> str:
-        representation = (
+        return (
             f"<Client(id='{self.client_id}', "
             f"sc='{self.school}', "
             f"cl='{self.class_name}'"
             f")>"
         )
-        return representation
 
 
 def str_to_bool(value):
