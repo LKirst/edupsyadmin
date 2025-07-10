@@ -19,7 +19,7 @@ from edupsyadmin.db.clients import Client
 encr = Encryption()
 
 
-class ClientNotFound(Exception):
+class ClientNotFoundError(Exception):
     def __init__(self, client_id: int):
         self.client_id = client_id
         super().__init__(f"Client with ID {client_id} not found.")
@@ -56,8 +56,7 @@ class ClientsManager:
             session.add(new_client)
             session.commit()
             logger.info(f"added client: {new_client}")
-            client_id = new_client.client_id
-            return client_id
+            return new_client.client_id
 
     def get_decrypted_client(self, client_id: int) -> dict[str, Any]:
         # TODO: move encryption logic to clients.py?
@@ -65,10 +64,10 @@ class ClientsManager:
         with self.Session() as session:
             client = session.get(Client, client_id)
             if client is None:
-                raise ClientNotFound(client_id)
+                raise ClientNotFoundError(client_id)
             client_dict = client.__dict__
             decr_vars = {}
-            for attributekey in client_dict.keys():
+            for attributekey in client_dict:
                 if attributekey.endswith("_encr"):
                     attributekey_decr = attributekey.removesuffix("_encr")
                     try:
@@ -77,10 +76,8 @@ class ClientsManager:
                         )
                     except:
                         logger.critical(
-                            (
-                                f"attribute: {attributekey}; "
-                                f"value: {client_dict[attributekey]}"
-                            )
+                            f"attribute: {attributekey}; "
+                            f"value: {client_dict[attributekey]}"
                         )
                         raise
             client_dict.update(decr_vars)
@@ -120,8 +117,7 @@ class ClientsManager:
         logger.debug("trying to query the entire database")
         with self.Session() as session:
             query = session.query(Client).statement
-            df = pd.read_sql_query(query, session.bind)
-        return df
+            return pd.read_sql_query(query, session.bind)
 
     def edit_client(self, client_id: int, new_data: dict[str, Any]) -> None:
         # TODO: Warn if key does not exist
@@ -252,8 +248,7 @@ def get_data_raw(
         app_username=app_username,
         salt_path=salt_path,
     )
-    df = clients_manager.get_data_raw()
-    return df
+    return clients_manager.get_data_raw()
 
 
 def enter_client_untiscsv(
@@ -282,9 +277,9 @@ def enter_client_untiscsv(
 
     # check if school was passed and if not use the first from the config
     if school is None:
-        school = list(config.school.keys())[0]
+        school = next(iter(config.school.keys()))
 
-    client_id_n = clients_manager.add_client(
+    return clients_manager.add_client(
         school=school,
         gender=client_series["gender"].item(),
         entry_date=datetime.strptime(
@@ -307,7 +302,6 @@ def enter_client_untiscsv(
         email=client_series["address.email"].item(),
         client_id=client_id,
     )
-    return client_id_n
 
 
 def enter_client_cli(clients_manager: ClientsManager) -> int:
@@ -316,11 +310,11 @@ def enter_client_cli(clients_manager: ClientsManager) -> int:
 
     while True:
         school = input("School: ")
-        if school in config.school.keys():
+        if school in config.school:
             break
         print(f"School must be one of the following strings: {config.schools.keys()}")
 
-    client_id_n = clients_manager.add_client(
+    return clients_manager.add_client(
         school=school,
         gender=input("Gender (f/m): "),
         entry_date=date.fromisoformat(input("Entry date (YYYY-MM-DD): ")),
@@ -334,7 +328,6 @@ def enter_client_cli(clients_manager: ClientsManager) -> int:
         email=input("Email: "),
         client_id=client_id,
     )
-    return client_id_n
 
 
 def create_documentation(

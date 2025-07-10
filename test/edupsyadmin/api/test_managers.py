@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from edupsyadmin.api.managers import (
-    ClientNotFound,
+    ClientNotFoundError,
     enter_client_cli,
     enter_client_untiscsv,
 )
@@ -122,8 +122,8 @@ class ManagersTest:
             clients_manager.get_decrypted_client(client_id)
             assert (
                 False
-            ), "Expected ClientNotFound exception when retrieving a deleted client"
-        except ClientNotFound as e:
+            ), "Expected ClientNotFoundError exception when retrieving a deleted client"
+        except ClientNotFoundError as e:
             assert e.client_id == client_id
 
     def test_enter_client_cli(
@@ -132,7 +132,7 @@ class ManagersTest:
         # simulate the commandline input
         inputs = iter(client_dict_all_str)
 
-        def mock_input(prompt):
+        def mock_input(prompt):  # noqa : ARG001
             return client_dict_all_str[next(inputs)]
 
         monkeypatch.setattr("builtins.input", mock_input)
