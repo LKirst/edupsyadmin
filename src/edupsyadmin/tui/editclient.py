@@ -1,6 +1,5 @@
 import datetime
 import os
-from typing import Type
 
 from sqlalchemy import Boolean, Date, DateTime, Float, Integer, String
 from textual import log
@@ -29,6 +28,7 @@ HIDDEN_FIELDS = [
     "datetime_created",
     "datetime_lastmodified",
     "notenschutz",
+    "nos_rs_ausn",
     "nos_other",
     "nachteilsausgleich",
     "nta_zeitv",
@@ -37,7 +37,7 @@ HIDDEN_FIELDS = [
 ]
 
 
-def get_python_type(sqlalchemy_type: Type) -> Type:
+def get_python_type(sqlalchemy_type: type) -> type:
     """
     Maps SQLAlchemy types to Python standard types.
 
@@ -46,18 +46,17 @@ def get_python_type(sqlalchemy_type: Type) -> Type:
     """
     if isinstance(sqlalchemy_type, Integer):
         return int
-    elif isinstance(sqlalchemy_type, String):
+    if isinstance(sqlalchemy_type, String):
         return str
-    elif isinstance(sqlalchemy_type, Float):
+    if isinstance(sqlalchemy_type, Float):
         return float
-    elif isinstance(sqlalchemy_type, Date):
+    if isinstance(sqlalchemy_type, Date):
         return datetime.date
-    elif isinstance(sqlalchemy_type, DateTime):
+    if isinstance(sqlalchemy_type, DateTime):
         return datetime.datetime
-    elif isinstance(sqlalchemy_type, Boolean):
+    if isinstance(sqlalchemy_type, Boolean):
         return bool
-    else:
-        raise ValueError(f"could not match {sqlalchemy_type} to a builtin type")
+    raise ValueError(f"could not match {sqlalchemy_type} to a builtin type")
 
 
 class DateInput(Input):
@@ -79,8 +78,7 @@ class DateInput(Input):
                     # Allow dashes only at the 5th and 8th positions
                     if len(current_text) in {4, 7}:
                         return
-                    else:
-                        event.prevent_default()
+                    event.prevent_default()
                 else:
                     return  # Allow digits
             else:
@@ -96,6 +94,7 @@ class StudentEntryApp(App):
         self.client_id = client_id
         self.data = data
         self.inputs = {}
+        self.dates = {}
         self.checkboxes = {}
 
     def compose(self):
@@ -103,6 +102,7 @@ class StudentEntryApp(App):
         yield Label(f"Data for client_id: {self.client_id}")
 
         # Read fields from the clients table
+        log.debug(f"columns in Client.__table__.columns: {Client.__table__.columns}")
         for column in Client.__table__.columns:
             field_type = get_python_type(column.type)
             name = column.name
@@ -111,7 +111,7 @@ class StudentEntryApp(App):
 
             # default value
             if field_type is bool:
-                default = self.data[name] if name in self.data else False
+                default = self.data.get(name, False)
             else:
                 default = str(self.data[name]) if name in self.data else ""
 
@@ -119,24 +119,25 @@ class StudentEntryApp(App):
             placeholder = name + "*" if (name in REQUIRED_FIELDS) else name
             if field_type is bool:
                 widget = Checkbox(label=name, value=default)
+                self.checkboxes[name] = widget
             elif field_type is int:
                 widget = Input(value=default, placeholder=placeholder, type="integer")
+                widget.valid_empty = True
+                self.inputs[name] = widget
             elif field_type is float:
                 widget = Input(value=default, placeholder=placeholder, type="number")
+                widget.valid_empty = True
+                self.inputs[name] = widget
             elif (field_type is datetime.date) or (name == "birthday_encr"):
                 widget = DateInput(value=default, placeholder=placeholder)
+                self.dates[name] = widget
             else:
                 widget = Input(value=default, placeholder=placeholder)
+                self.inputs[name] = widget
 
             # add tooltip
             widget.tooltip = column.doc
             widget.id = f"{name}"
-
-            # add widget to collection of checkboxes or input widgets
-            if field_type is bool:
-                self.checkboxes[name] = widget
-            else:
-                self.inputs[name] = widget
 
             yield widget
 
@@ -147,8 +148,9 @@ class StudentEntryApp(App):
     def on_button_pressed(self):
         """method that is called when the submit button is pressed"""
 
-        # Collect data from input fields
-        for field, input_widget in self.inputs.items():
+        # Collect data from input and date fields
+        inputs_and_dates = {**self.inputs, **self.dates}
+        for field, input_widget in inputs_and_dates.items():
             self.data[field] = input_widget.value
         # Collect data from checkboxes
         self.data.update(
@@ -156,14 +158,26 @@ class StudentEntryApp(App):
         )
 
         log.info(f"Submitted: {self.data}")
-        if all(self.data[field] != "" for field in REQUIRED_FIELDS):
-            self.exit()  # Exit the app after submission
-        else:
+        required_field_empty = any(self.data[field] == "" for field in REQUIRED_FIELDS)
+        dates_valid = all(
+            (len(widget.value) == 10) or (len(widget.value) == 0)
+            for field, widget in self.dates.items()
+        )
+        if required_field_empty or (not dates_valid):
             # show what fields are required and still empty
             for field in REQUIRED_FIELDS:
                 if self.data[field] == "":
                     input_widget = self.query_one(f"#{field}", Input)
                     input_widget.add_class("-invalid")
+            # show what dates are not in the correct format
+            for field, widget in self.dates.items():
+                log.debug(
+                    f"widget {widget.id} has a value length of {len(widget.value)}"
+                )
+                if not ((len(widget.value) == 10) or (len(widget.value) == 0)):
+                    widget.add_class("-invalid")
+        else:
+            self.exit()  # Exit the app after submission
 
     def get_data(self):
         return self.data
@@ -191,8 +205,7 @@ def get_modified_values(
 
     # return changed values
     new_data = app.get_data()
-    modified_values = _find_changed_values(current_data, new_data)
-    return modified_values
+    return _find_changed_values(current_data, new_data)
 
 
 def _find_changed_values(original: dict, updates: dict) -> dict:
