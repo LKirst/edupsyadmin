@@ -1,3 +1,9 @@
+## 5.0.0a1 (2025-07-13)
+
+### Fix
+
+- **tui.editclient**: set default None for client_id
+
 ## 5.0.0a0 (2025-07-13)
 
 ### BREAKING CHANGE
