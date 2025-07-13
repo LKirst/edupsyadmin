@@ -10,7 +10,6 @@ from inspect import signature
 
 from platformdirs import user_config_dir, user_data_path
 
-from edupsyadmin import tui
 from edupsyadmin.__version__ import __version__
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
@@ -322,14 +321,6 @@ def _set_client(
     ) -> None:
         if key_value_pairs:
             key_value_dict = dict(pair.split("=", 1) for pair in key_value_pairs)
-        else:
-            key_value_dict = tui.editclient.get_modified_values(
-                database_url=database_url,
-                app_uid=app_uid,
-                app_username=app_username,
-                salt_path=salt_path,
-                client_id=client_id,
-            )
         set_client = lazy_import("edupsyadmin.api.managers").set_client
         set_client(
             app_username, app_uid, database_url, salt_path, client_id, key_value_dict

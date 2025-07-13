@@ -1,24 +1,7 @@
 import pytest
 
-from edupsyadmin.db.clients import Client
-from edupsyadmin.tui.editclient import (
-    StudentEntryApp,
-    _find_changed_values,
-    get_python_type,
-)
-
-
-def get_empty_client_dict() -> dict[str, any]:
-    empty_client_dict = {}
-    for column in Client.__table__.columns:
-        field_type = get_python_type(column.type)
-        name = column.name
-
-        if field_type is bool:
-            empty_client_dict[name] = False
-        else:
-            empty_client_dict[name] = ""
-    return empty_client_dict
+from edupsyadmin.api.managers import _find_changed_values, _get_empty_client_dict
+from edupsyadmin.tui.editclient import StudentEntryApp
 
 
 @pytest.mark.asyncio
@@ -53,7 +36,7 @@ async def test_type_date() -> None:
 
 @pytest.mark.asyncio
 async def test_get_data() -> None:
-    empty_client_dict = get_empty_client_dict()
+    empty_client_dict = _get_empty_client_dict()
     client_dict_minimal = {
         "first_name_encr": "Lieschen",
         "last_name_encr": "Müller",

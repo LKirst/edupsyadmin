@@ -1,14 +1,11 @@
 import datetime
-import os
 
-from sqlalchemy import VARCHAR, Boolean, Date, DateTime, Float, Integer, String
-from sqlalchemy.types import TypeDecorator
 from textual import log
 from textual.app import App
 from textual.events import Key
 from textual.widgets import Button, Checkbox, Input, Label
 
-from edupsyadmin.api.managers import ClientsManager
+from edupsyadmin.core.python_type import get_python_type
 from edupsyadmin.db.clients import Client
 
 REQUIRED_FIELDS = [
@@ -35,32 +32,6 @@ HIDDEN_FIELDS = [
     "nta_other",
     "nta_nos_end",
 ]
-
-
-def get_python_type(sqlalchemy_type: type) -> type:
-    """
-    Maps SQLAlchemy types to Python standard types.
-
-    :param sqlalchemy_type: The SQLAlchemy type to be mapped.
-    :return: A string representing the Python standard type.
-    """
-
-    if isinstance(sqlalchemy_type, TypeDecorator):
-        sqlalchemy_type = sqlalchemy_type.impl
-
-    if isinstance(sqlalchemy_type, Integer):
-        return int
-    if isinstance(sqlalchemy_type, String | VARCHAR):
-        return str
-    if isinstance(sqlalchemy_type, Float):
-        return float
-    if isinstance(sqlalchemy_type, Date):
-        return datetime.date
-    if isinstance(sqlalchemy_type, DateTime):
-        return datetime.datetime
-    if isinstance(sqlalchemy_type, Boolean):
-        return bool
-    raise ValueError(f"could not match {sqlalchemy_type} to a builtin type")
 
 
 class DateInput(Input):
@@ -92,7 +63,7 @@ class DateInput(Input):
 
 
 class StudentEntryApp(App):
-    def __init__(self, client_id: int, data: dict = {}):
+    def __init__(self, client_id: int | None, data: dict = {}):
         super().__init__()
         self.client_id = client_id
         self.data = data
@@ -102,7 +73,10 @@ class StudentEntryApp(App):
 
     def compose(self):
         # Create heading with client_id
-        yield Label(f"Data for client_id: {self.client_id}")
+        if self.client_id:
+            yield Label(f"Daten für client_id: {self.client_id}")
+        else:
+            yield Label("Daten für einen neuen Klienten")
 
         # Read fields from the clients table
         log.debug(f"columns in Client.__table__.columns: {Client.__table__.columns}")
@@ -184,44 +158,3 @@ class StudentEntryApp(App):
 
     def get_data(self):
         return self.data
-
-
-def get_modified_values(
-    app_username: str,
-    app_uid: str,
-    database_url: str,
-    salt_path: str | os.PathLike,
-    client_id: int,
-) -> dict:
-    # retrieve current values
-    manager = ClientsManager(
-        database_url=database_url,
-        app_uid=app_uid,
-        app_username=app_username,
-        salt_path=salt_path,
-    )
-    current_data = manager.get_decrypted_client(client_id=client_id)
-
-    # display a form with current values filled in
-    app = StudentEntryApp(client_id, data=current_data)
-    app.run()
-
-    # return changed values
-    new_data = app.get_data()
-    return _find_changed_values(current_data, new_data)
-
-
-def _find_changed_values(original: dict, updates: dict) -> dict:
-    changed_values = {}
-
-    for key, new_value in updates.items():
-        if key not in original:
-            raise KeyError(
-                f"Key '{key}' found in updates but not in original dictionary."
-            )
-
-        # Check if the value has changed
-        if original[key] != new_value:
-            changed_values[key] = new_value
-
-    return changed_values

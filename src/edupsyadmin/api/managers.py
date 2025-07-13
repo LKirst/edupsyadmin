@@ -1,7 +1,7 @@
 import logging  # just for interaction with the sqlalchemy logger
 import os
 import pathlib
-from datetime import date, datetime
+from datetime import datetime
 from typing import Any
 
 import pandas as pd
@@ -13,8 +13,10 @@ from edupsyadmin.api.fill_form import fill_form
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import logger
+from edupsyadmin.core.python_type import get_python_type
 from edupsyadmin.db import Base
 from edupsyadmin.db.clients import Client
+from edupsyadmin.tui.editclient import StudentEntryApp
 
 
 class ClientNotFoundError(Exception):
@@ -166,6 +168,16 @@ def set_client(
         app_username=app_username,
         salt_path=salt_path,
     )
+
+    if key_value_pairs is None:
+        key_value_pairs = _get_modified_values(
+            database_url=database_url,
+            app_uid=app_uid,
+            app_username=app_username,
+            salt_path=salt_path,
+            client_id=client_id,
+        )
+
     clients_manager.edit_client(client_id, key_value_pairs)
 
 
@@ -275,29 +287,64 @@ def enter_client_untiscsv(
 
 
 def enter_client_cli(clients_manager: ClientsManager) -> int:
-    client_id_input = input("client_id (press ENTER if you don't know): ")
-    client_id = int(client_id_input) if client_id_input else None
+    _get_empty_client_dict()
 
-    while True:
-        school = input("School: ")
-        if school in config.school:
-            break
-        print(f"School must be one of the following strings: {config.schools.keys()}")
+    app = StudentEntryApp()
+    app.run()
 
-    return clients_manager.add_client(
-        school=school,
-        gender_encr=input("Gender (f/m): "),
-        entry_date=date.fromisoformat(input("Entry date (YYYY-MM-DD): ")),
-        class_name=input("Class name: "),
-        first_name_encr=input("First Name: "),
-        last_name_encr=input("Last Name: "),
-        birthday_encr=date.fromisoformat(input("Birthday (YYYY-MM-DD): ")),
-        street_encr=input("Street and house number: "),
-        city_encr=input("City (postcode + name): "),
-        telephone1_encr=input("Telephone: "),
-        email_encr=input("Email: "),
-        client_id=client_id,
+    data = app.get_data()
+
+    return clients_manager.add_client(**data)
+
+
+def _get_empty_client_dict() -> dict[str, any]:
+    empty_client_dict = {}
+    for column in Client.__table__.columns:
+        field_type = get_python_type(column.type)
+        name = column.name
+
+        if field_type is bool:
+            empty_client_dict[name] = False
+        else:
+            empty_client_dict[name] = ""
+    return empty_client_dict
+
+
+def _get_modified_values(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike,
+    client_id: int,
+) -> dict:
+    # retrieve current values
+    manager = ClientsManager(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        salt_path=salt_path,
     )
+    current_data = manager.get_decrypted_client(client_id=client_id)
+
+    # display a form with current values filled in
+    app = StudentEntryApp(client_id, data=current_data)
+    app.run()
+
+    # return changed values
+    new_data = app.get_data()
+    return _find_changed_values(current_data, new_data)
+
+
+def _find_changed_values(original: dict, updates: dict) -> dict:
+    changed_values = {}
+    for key, new_value in updates.items():
+        if key not in original:
+            raise KeyError(
+                f"Key '{key}' found in updates but not in original dictionary."
+            )
+        if original[key] != new_value:
+            changed_values[key] = new_value
+    return changed_values
 
 
 def create_documentation(

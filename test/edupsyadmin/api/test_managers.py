@@ -4,7 +4,6 @@ import pytest
 
 from edupsyadmin.api.managers import (
     ClientNotFoundError,
-    enter_client_cli,
     enter_client_untiscsv,
 )
 
@@ -114,24 +113,6 @@ class ManagersTest:
             ), "Expected ClientNotFoundError exception when retrieving a deleted client"
         except ClientNotFoundError as e:
             assert e.client_id == client_id
-
-    def test_enter_client_cli(
-        self, mock_keyring, clients_manager, monkeypatch, client_dict_all_str
-    ):
-        # simulate the commandline input
-        inputs = iter(client_dict_all_str)
-
-        def mock_input(prompt):
-            return client_dict_all_str[next(inputs)]
-
-        monkeypatch.setattr("builtins.input", mock_input)
-
-        client_id = enter_client_cli(clients_manager)
-        client = clients_manager.get_decrypted_client(client_id=client_id)
-        assert EXPECTED_KEYS.issubset(client.keys())
-        assert client["first_name_encr"] == client_dict_all_str["first_name_encr"]
-        assert client["last_name_encr"] == client_dict_all_str["last_name_encr"]
-        mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
     def test_enter_client_untiscsv(
         self, mock_keyring, clients_manager, mock_webuntis, client_dict_set_by_user
