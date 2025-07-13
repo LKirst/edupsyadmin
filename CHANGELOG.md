@@ -1,3 +1,62 @@
+## 5.0.0a0 (2025-07-13)
+
+### BREAKING CHANGE
+
+- adds lrst_last_test_by and nos_other cols and renames the lrst_last_test col
+
+### Feat
+
+- use tui.editclient for both new clients and editing clients
+- move encryption calls to custom TypeDecorator
+- **clients**: for gender, convert 'd' to 'x' and document the options f/m/x
+- **tui.editclient**: check date input
+- **tui.editclient**: hide class_int which is derived from class_name
+- **tui.editclient**: hide fields that should not be set by the user
+- **tui**: make some fields required and highlight them if no value is set
+- **tui.editclient**: add tooltips
+- handle all dates the same and add lrst_last_test_by and nos_other cols
+- **tui.editconfig**: prevent overwriting an existing password
+- **tui.editconfig**: call keyring.set_password when saving config
+- **tui.editclient**: add float and date input widgets
+- **tui.editconfig**: add password widget
+- **tui.editconfig**: insert new schools after the last school
+- **tui.editconfig**: close app when save button is pressed
+- **tui.editconfig**: add tooltips
+- **tui.editconfig**: allow adding paths to a form set
+- **tui.editconfig**: allow end users to edit the school_key of an existing school entry
+- **cli**: add the edit_config subcommand
+- **tui.editconfig**: allow adding a new school to the config
+- **tui.editconfig**: create tui to edit the config
+- **tui.editclient**: suppress irrelevant keys for integer fields
+
+### Fix
+
+- **tui.editclient**: fix variable spelling
+- **clients**: make the type of entry_date datetime.date
+- **taetigkeitsbericht_check_key**: check_key demanded cli input when the key was not in the list of allowed keys
+- **tui.editclient**: use DateInput and prevent dashes in the wrong position
+- **add_convenience_data**: update add_convenience_data to reflect changes in data types to date
+- **clients.py**: fix the constraint for lrst_last_test_by
+- **clients.py**: fix the name of estimated_graduation_date in the constructor
+- **tui.editclient**: fix spelling mistakes
+- **tui.editconfig**: set encoding to utf-8
+- **tui.editclient**: convert int input to int and handle non-character key presses
+- pass missing arguments to the tui function
+
+### Refactor
+
+- refactor according to ruff rules
+- **clients**: remove redundant code in __init__()
+- **managers**: refactor for readability
+- **managers**: remove redundant list of boolean db columns
+- **clients**: remove redundant code in validates methods
+- **managers**: use session.get instead of session.query for better readability
+- move code without user I/O to core
+- **tui.editclient**: read field names from the Client model
+- **tui**: move tui code into its own submodule
+- **cli.py**: fix import of importlib
+- **fill_form.py**: improve type hint and add underscore for private method
+
 ## 4.0.0 (2025-06-10)
 
 ### BREAKING CHANGE
