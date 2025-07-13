@@ -63,7 +63,7 @@ class DateInput(Input):
 
 
 class StudentEntryApp(App):
-    def __init__(self, client_id: int | None, data: dict = {}):
+    def __init__(self, client_id: int | None = None, data: dict = {}):
         super().__init__()
         self.client_id = client_id
         self.data = data
