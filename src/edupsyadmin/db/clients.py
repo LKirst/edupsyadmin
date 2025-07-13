@@ -10,20 +10,37 @@ from sqlalchemy import (
     String,
 )
 from sqlalchemy.orm import Mapped, mapped_column, validates
+from sqlalchemy.types import TypeDecorator
 
 from edupsyadmin.core.academic_year import (
     get_date_destroy_records,
     get_estimated_end_of_academic_year,
 )
 from edupsyadmin.core.config import config
-from edupsyadmin.core.encrypt import Encryption
+from edupsyadmin.core.encrypt import Encryption, encr
 from edupsyadmin.core.int_from_str import extract_number
 from edupsyadmin.core.logger import logger
 from edupsyadmin.core.taetigkeitsbericht_check_key import check_keyword
 
 from . import Base
 
-encr = Encryption()
+
+class EncryptedString(TypeDecorator):
+    """Stores base-64 ciphertext in a TEXT/VARCHAR column;
+    Presents plain str values to the application."""
+
+    impl = String
+    cache_ok = True  # SQLAlchemy 2.0 requirement
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        return encr.encrypt(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        return encr.decrypt(value)
 
 
 class Client(Base):
@@ -33,38 +50,38 @@ class Client(Base):
     # These variables cannot be optional (i.e. cannot be None) because if
     # they were, the encryption functions would raise an exception.
     first_name_encr: Mapped[str] = mapped_column(
-        String, doc="Verschlüsselter Vorname des Klienten"
+        EncryptedString, doc="Verschlüsselter Vorname des Klienten"
     )
     last_name_encr: Mapped[str] = mapped_column(
-        String, doc="Verschlüsselter Nachname des Klienten"
+        EncryptedString, doc="Verschlüsselter Nachname des Klienten"
     )
     gender_encr: Mapped[str] = mapped_column(
-        String, doc="Verschlüsseltes Geschlecht des Klienten (m/f/x)"
+        EncryptedString, doc="Verschlüsseltes Geschlecht des Klienten (m/f/x)"
     )
     birthday_encr: Mapped[str] = mapped_column(
-        String, doc="Verschlüsseltes Geburtsdatum des Klienten (JJJJ-MM-TT)"
+        EncryptedString, doc="Verschlüsseltes Geburtsdatum des Klienten (JJJJ-MM-TT)"
     )
     street_encr: Mapped[str] = mapped_column(
-        String, doc="Verschlüsselte Straßenadresse und Hausnummer des Klienten"
+        EncryptedString, doc="Verschlüsselte Straßenadresse und Hausnummer des Klienten"
     )
     city_encr: Mapped[str] = mapped_column(
-        String, doc="Verschlüsselter Postleitzahl und Stadt des Klienten"
+        EncryptedString, doc="Verschlüsselter Postleitzahl und Stadt des Klienten"
     )
     parent_encr: Mapped[str] = mapped_column(
-        String,
+        EncryptedString,
         doc="Verschlüsselter Name des Elternteils/Erziehungsberechtigten des Klienten",
     )
     telephone1_encr: Mapped[str] = mapped_column(
-        String, doc="Verschlüsselte primäre Telefonnummer des Klienten"
+        EncryptedString, doc="Verschlüsselte primäre Telefonnummer des Klienten"
     )
     telephone2_encr: Mapped[str] = mapped_column(
-        String, doc="Verschlüsselte sekundäre Telefonnummer des Klienten"
+        EncryptedString, doc="Verschlüsselte sekundäre Telefonnummer des Klienten"
     )
     email_encr: Mapped[str] = mapped_column(
-        String, doc="Verschlüsselte E-Mail-Adresse des Klienten"
+        EncryptedString, doc="Verschlüsselte E-Mail-Adresse des Klienten"
     )
     notes_encr: Mapped[str] = mapped_column(
-        String, doc="Verschlüsselte Notizen zum Klienten"
+        EncryptedString, doc="Verschlüsselte Notizen zum Klienten"
     )
 
     # Unencrypted variables
@@ -86,22 +103,31 @@ class Client(Base):
         doc=(
             "Klassenname des Klienten (einschließlich Buchstaben). "
             "Muss eine Zahl für die Jahrgangsstufe enthalten, wenn ein "
-            "document_shredding_date berechnet werden soll."
+            ":attr:`document_shredding_date` berechnet werden soll."
         ),
     )
     class_int: Mapped[int | None] = mapped_column(
         Integer,
         doc=(
             "Numerische Darstellung der Klasse des Klienten. "
-            "Diese Variable wird abgeleitet aus class_name."
+            "Diese Variable wird abgeleitet aus :attr:`class_name`."
         ),
     )
     estimated_graduation_date: Mapped[date | None] = mapped_column(
-        Date, doc="Voraussichtliches Abschlussdatum des Klienten"
+        Date,
+        doc=(
+            "Voraussichtliches Abschlussdatum des Klienten. "
+            "Diese Variable wird abgeleitet aus der Variable `end` aus "
+            "der Konfigurationsdatei und der Variable `class_name`."
+        ),
     )
     document_shredding_date: Mapped[date | None] = mapped_column(
         Date,
-        doc="Datum für die Dokumentenvernichtung im Zusammenhang mit dem Klienten",
+        doc=(
+            "Datum für die Dokumentenvernichtung im Zusammenhang mit dem Klienten."
+            "Diese Variable wird abgeleitet aus der Variable "
+            ":attr:`estimated_graduation_date`."
+        ),
     )
     keyword_taetigkeitsbericht: Mapped[str | None] = mapped_column(
         String, doc="Schlüsselwort für die Kategorie des Klienten im Tätigkeitsbericht"
@@ -149,7 +175,7 @@ class Client(Base):
         doc=(
             "Gibt an, ob der Klient Notenschutz hat. "
             "Diese Variable wird abgeleitet aus "
-            "nos_rs, nos_les und nos_other_details."
+            ":attr:`nos_rs`, :attr:`nos_les` und :attr:`nos_other_details`."
         ),
     )
     nos_rs: Mapped[bool] = mapped_column(
@@ -179,7 +205,7 @@ class Client(Base):
         default=False,
         doc=(
             "Gibt an, ob der Klient andere Formen des Notenschutzes hat."
-            "Diese Variable wird abgeleitet aus nos_other_details."
+            "Diese Variable wird abgeleitet aus :attr:`nos_other_details`."
         ),
     )
     nos_other_details: Mapped[str | None] = mapped_column(
@@ -194,8 +220,8 @@ class Client(Base):
         doc=(
             "Gibt an, ob der Klient Nachteilsausgleich (NTA) hat. "
             "Diese Variable wird abgeleitet aus den Variablen zur spezifischen "
-            "Form des Nachteilsausgleichs z.B. nta_zeitv_vieltext "
-            "oder nta_other_details."
+            "Form des Nachteilsausgleichs z.B. :attr:`nta_zeitv_vieltext` "
+            "oder :attr:`nta_other_details`."
         ),
     )
     nta_zeitv: Mapped[bool] = mapped_column(
@@ -203,8 +229,8 @@ class Client(Base):
         default=False,
         doc=(
             "Gibt an, ob der Klient eine Zeitverlängerung als NTA hat. "
-            "Diese Variable wird abgeleitet aus nta_zeitv_vieltext und"
-            "nta_zeitv_wenigtext."
+            "Diese Variable wird abgeleitet aus :attr:`nta_zeitv_vieltext` und"
+            ":attr:`nta_zeitv_wenigtext`."
         ),
     )
     nta_zeitv_vieltext: Mapped[int | None] = mapped_column(
@@ -261,7 +287,7 @@ class Client(Base):
         default=False,
         doc=(
             "Gibt an, ob der Klient andere Formen des NTAs hat. "
-            "Diese Variable wird abgeleitet aus nta_other_details."
+            "Diese Variable wird abgeleitet aus :attr:`nta_other_details`."
         ),
     )
     nta_other_details: Mapped[str | None] = mapped_column(
@@ -276,7 +302,7 @@ class Client(Base):
             "Gibt an, ob der Nachteilsasugleich und Notenschutzmaßnahmen "
             "zeitlich begrenzt sind (Default: False, auch bei "
             "keinem Nachteilsausgleich oder Notenschutz). "
-            "Diese Variable wird abgeleitet aus nta_nos_end_grade."
+            "Diese Variable wird abgeleitet aus :attr:`nta_nos_end_grade`."
         ),
     )
     nta_nos_end_grade: Mapped[int | None] = mapped_column(
@@ -300,60 +326,62 @@ class Client(Base):
         self,
         encr: Encryption,
         school: str,
-        gender: str,
-        entry_date: date,
+        gender_encr: str,
         class_name: str,
-        first_name: str,
-        last_name: str,
-        birthday: date,
-        client_id: int | None = None,
-        street: str = "",
-        city: str = "",
-        parent: str = "",
-        telephone1: str = "",
-        telephone2: str = "",
-        email: str = "",
-        notes: str = "",
-        nos_rs: bool = False,
+        first_name_encr: str,
+        last_name_encr: str,
+        birthday_encr: date | str,
+        client_id: int | str | None = None,
+        street_encr: str = "",
+        city_encr: str = "",
+        parent_encr: str = "",
+        telephone1_encr: str = "",
+        telephone2_encr: str = "",
+        email_encr: str = "",
+        notes_encr: str = "",
+        entry_date: date | str | None = None,
+        nos_rs: bool | str = False,
         nos_rs_ausn_faecher: str | None = None,
-        nos_les: bool = False,
+        nos_les: bool | str = False,
         nos_other_details: str | None = None,
-        nta_zeitv_vieltext: int | None = None,
-        nta_zeitv_wenigtext: int | None = None,
-        nta_font: bool = False,
-        nta_aufg: bool = False,
-        nta_struktur: bool = False,
-        nta_arbeitsm: bool = False,
-        nta_ersgew: bool = False,
-        nta_vorlesen: bool = False,
+        nta_zeitv_vieltext: int | str | None = None,
+        nta_zeitv_wenigtext: int | str | None = None,
+        nta_font: bool | str = False,
+        nta_aufg: bool | str = False,
+        nta_struktur: bool | str = False,
+        nta_arbeitsm: bool | str = False,
+        nta_ersgew: bool | str = False,
+        nta_vorlesen: bool | str = False,
         nta_other_details: str | None = None,
         nta_notes: str | None = None,
-        nta_nos_end_grade: int | None = None,
+        nta_nos_end_grade: int | str | None = None,
         lrst_diagnosis: str | None = None,
-        lrst_last_test_date: date | None = None,
+        lrst_last_test_date: date | str | None = None,
         lrst_last_test_by: str | None = None,
         keyword_taetigkeitsbericht: str | None = "",
-        n_sessions: int = 1,
+        n_sessions: int | str = 1,
     ) -> None:
-        if client_id:
+        if client_id and isinstance(client_id, str):
+            self.client_id = int(client_id)
+        elif client_id:
             self.client_id = client_id
 
-        self.first_name_encr = encr.encrypt(first_name)
-        self.last_name_encr = encr.encrypt(last_name)
-        self.birthday_encr = encr.encrypt(str(birthday))
-        self.street_encr = encr.encrypt(street)
-        self.city_encr = encr.encrypt(city)
-        self.parent_encr = encr.encrypt(parent)
-        self.telephone1_encr = encr.encrypt(telephone1)
-        self.telephone2_encr = encr.encrypt(telephone2)
-        self.email_encr = encr.encrypt(email)
-        self.notes_encr = encr.encrypt(notes)
+        self.first_name_encr = first_name_encr
+        self.last_name_encr = last_name_encr
+        self.birthday_encr = birthday_encr
+        self.street_encr = street_encr
+        self.city_encr = city_encr
+        self.parent_encr = parent_encr
+        self.telephone1_encr = telephone1_encr
+        self.telephone2_encr = telephone2_encr
+        self.email_encr = email_encr
+        self.notes_encr = notes_encr
 
-        if gender == "w":  # convert German 'w' to 'f'
-            gender = "f"
-        elif gender == "d":  # convert German 'd' to 'x'
-            gender = "x"
-        self.gender_encr = encr.encrypt(gender)
+        if gender_encr == "w":  # convert German 'w' to 'f'
+            gender_encr = "f"
+        elif gender_encr == "d":  # convert German 'd' to 'x'
+            gender_encr = "x"
+        self.gender_encr = gender_encr
 
         self.school = school
         self.entry_date = entry_date
@@ -487,6 +515,21 @@ class Client(Base):
     @validates("nta_nos_end_grade")
     def validate_nta_nos_end_grade(self, key: str, value: int | None) -> int | None:
         self.nta_nos_end = value is not None
+        return value
+
+    @validates("birthday_encr")
+    def validate_birthday(self, key: str, value: str | date) -> str:
+        if isinstance(value, date):
+            return value.isoformat()
+        parsed = datetime.strptime(value, "%Y-%m-%d").date()
+        return parsed.isoformat()
+
+    @validates("entry_date", "lrst_last_test_date")
+    def validate_unencrypted_dates(
+        self, key: str, value: str | date | None
+    ) -> date | None:
+        if isinstance(value, str):
+            return date.fromisostring(value)
         return value
 
     def __repr__(self) -> str:

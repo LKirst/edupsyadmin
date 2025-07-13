@@ -13,7 +13,6 @@ from edupsyadmin.db.clients import Client
 REQUIRED_FIELDS = [
     "school",
     "gender_encr",
-    "entry_date",
     "class_name",
     "first_name_encr",
     "last_name_encr",

@@ -11,12 +11,10 @@ from sqlalchemy.orm import sessionmaker
 from edupsyadmin.api.add_convenience_data import add_convenience_data
 from edupsyadmin.api.fill_form import fill_form
 from edupsyadmin.core.config import config
-from edupsyadmin.core.encrypt import Encryption
+from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db import Base
 from edupsyadmin.db.clients import Client
-
-encr = Encryption()
 
 
 class ClientNotFoundError(Exception):
@@ -59,29 +57,12 @@ class ClientsManager:
             return new_client.client_id
 
     def get_decrypted_client(self, client_id: int) -> dict[str, Any]:
-        # TODO: move encryption logic to clients.py?
         logger.debug(f"trying to access client (client_id = {client_id})")
         with self.Session() as session:
             client = session.get(Client, client_id)
             if client is None:
                 raise ClientNotFoundError(client_id)
-            client_dict = client.__dict__
-            decr_vars = {}
-            for attributekey in client_dict:
-                if attributekey.endswith("_encr"):
-                    attributekey_decr = attributekey.removesuffix("_encr")
-                    try:
-                        decr_vars[attributekey_decr] = encr.decrypt(
-                            client_dict[attributekey]
-                        )
-                    except:
-                        logger.critical(
-                            f"attribute: {attributekey}; "
-                            f"value: {client_dict[attributekey]}"
-                        )
-                        raise
-            client_dict.update(decr_vars)
-            return client_dict
+            return client.__dict__
 
     def get_clients_overview(self, nta_nos: bool = True) -> pd.DataFrame:
         logger.debug("trying to query client data")
@@ -96,8 +77,8 @@ class ClientsManager:
                 {
                     "client_id": entry.client_id,
                     "school": entry.school,
-                    "last_name": encr.decrypt(entry.last_name_encr),
-                    "first_name": encr.decrypt(entry.first_name_encr),
+                    "last_name_encr": entry.last_name_encr,
+                    "first_name_encr": entry.first_name_encr,
                     "class_name": entry.class_name,
                     "notenschutz": entry.notenschutz,
                     "nachteilsausgleich": entry.nachteilsausgleich,
@@ -108,11 +89,11 @@ class ClientsManager:
                 for entry in results
             ]
             df = pd.DataFrame(results_list_of_dict)
-            return df.sort_values(["school", "last_name"])
+            return df.sort_values(["school", "last_name_encr"])
 
     def get_data_raw(self) -> pd.DataFrame:
         """
-        Get the data without decrypting encrypted data.
+        Get the entire database.
         """
         logger.debug("trying to query the entire database")
         with self.Session() as session:
@@ -121,17 +102,13 @@ class ClientsManager:
 
     def edit_client(self, client_id: int, new_data: dict[str, Any]) -> None:
         # TODO: Warn if key does not exist
-        # TODO: If key does not exist, check if key + _encr exists and use it
         logger.debug(f"editing client (id = {client_id})")
         with self.Session() as session:
             client = session.get(Client, client_id)
             if client:
                 for key, value in new_data.items():
                     logger.debug(f"changing value for key: {key}")
-                    if key.endswith("_encr"):
-                        setattr(client, key, encr.encrypt(value))
-                    else:
-                        setattr(client, key, value)
+                    setattr(client, key, value)
                 client.datetime_lastmodified = datetime.now()
                 session.commit()
             else:
@@ -178,7 +155,7 @@ def set_client(
     database_url: str,
     salt_path: str | os.PathLike[str],
     client_id: int,
-    key_value_pairs: list[str],
+    key_value_pairs: dict[str, str | bool | None],
 ) -> None:
     """
     Set the value for a key given a client_id
@@ -189,9 +166,7 @@ def set_client(
         app_username=app_username,
         salt_path=salt_path,
     )
-    pairs_list = [pair.split("=", 1) for pair in key_value_pairs]
-    new_data: dict[str, str | bool | None] = dict(pairs_list)
-    clients_manager.edit_client(client_id, new_data)
+    clients_manager.edit_client(client_id, key_value_pairs)
 
 
 def get_clients(
@@ -211,12 +186,7 @@ def get_clients(
     )
     if client_id:
         original_df = pd.DataFrame([clients_manager.get_decrypted_client(client_id)]).T
-        df = original_df[
-            ~(
-                original_df.index.str.endswith("_encr")
-                | (original_df.index == "_sa_instance_state")
-            )
-        ]
+        df = original_df[~(original_df.index == "_sa_instance_state")]
     else:
         original_df = clients_manager.get_clients_overview(nta_nos=nta_nos)
         df = original_df.set_index("client_id")
@@ -281,25 +251,25 @@ def enter_client_untiscsv(
 
     return clients_manager.add_client(
         school=school,
-        gender=client_series["gender"].item(),
+        gender_encr=client_series["gender"].item(),
         entry_date=datetime.strptime(
             client_series["entryDate"].item(), "%d.%m.%Y"
         ).date(),
         class_name=client_series["klasse.name"].item(),
-        first_name=client_series["foreName"].item(),
-        last_name=client_series["longName"].item(),
-        birthday=datetime.strptime(
+        first_name_encr=client_series["foreName"].item(),
+        last_name_encr=client_series["longName"].item(),
+        birthday_encr=datetime.strptime(
             client_series["birthDate"].item(), "%d.%m.%Y"
         ).date(),
-        street=client_series["address.street"].item(),
-        city=str(client_series["address.postCode"].item())
+        street_encr=client_series["address.street"].item(),
+        city_encr=str(client_series["address.postCode"].item())
         + " "
         + client_series["address.city"].item(),
-        telephone1=str(
+        telephone1_encr=str(
             client_series["address.mobile"].item()
             or client_series["address.phone"].item()
         ),
-        email=client_series["address.email"].item(),
+        email_encr=client_series["address.email"].item(),
         client_id=client_id,
     )
 
@@ -316,16 +286,16 @@ def enter_client_cli(clients_manager: ClientsManager) -> int:
 
     return clients_manager.add_client(
         school=school,
-        gender=input("Gender (f/m): "),
+        gender_encr=input("Gender (f/m): "),
         entry_date=date.fromisoformat(input("Entry date (YYYY-MM-DD): ")),
         class_name=input("Class name: "),
-        first_name=input("First Name: "),
-        last_name=input("Last Name: "),
-        birthday=date.fromisoformat(input("Birthday (YYYY-MM-DD): ")),
-        street=input("Street and house number: "),
-        city=input("City (postcode + name): "),
-        telephone1=input("Telephone: "),
-        email=input("Email: "),
+        first_name_encr=input("First Name: "),
+        last_name_encr=input("Last Name: "),
+        birthday_encr=date.fromisoformat(input("Birthday (YYYY-MM-DD): ")),
+        street_encr=input("Street and house number: "),
+        city_encr=input("City (postcode + name): "),
+        telephone1_encr=input("Telephone: "),
+        email_encr=input("Email: "),
         client_id=client_id,
     )
 

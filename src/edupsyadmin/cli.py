@@ -7,7 +7,6 @@ import sys
 import types
 from argparse import ArgumentParser, _SubParsersAction
 from inspect import signature
-from typing import List, Optional
 
 from platformdirs import user_config_dir, user_data_path
 
@@ -55,7 +54,7 @@ def lazy_import(name: str) -> types.ModuleType:
     return module
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """Execute the application CLI.
 
     :param argv: argument list to parse (sys.argv by default)
@@ -75,11 +74,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         )
         shutil.copy(template_path, args.config_path[0])
         logger.info(
-            (
-                "Could not find the specified config file. "
-                f"Created a sample config at {args.config_path[0]}. "
-                "Fill it with your values."
-            )
+            "Could not find the specified config file. "
+            f"Created a sample config at {args.config_path[0]}. "
+            "Fill it with your values."
         )
     config.load(args.config_path)
     config.core.config = args.config_path
@@ -96,10 +93,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             args.app_username = config.core.app_username
         except KeyError as exc:
             logger.error(
-                (
-                    "Either pass app_username from the "
-                    "commandline or set app_username in the config.yml"
-                )
+                "Either pass app_username from the "
+                "commandline or set app_username in the config.yml"
             )
             raise exc
     else:
@@ -125,7 +120,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     return 0
 
 
-def _args(argv: Optional[List[str]]) -> argparse.Namespace:
+def _args(argv: list[str] | None) -> argparse.Namespace:
     """Parse command line arguments.
 
     :param argv: argument list to parse
@@ -223,11 +218,11 @@ def _edit_config(
     def command_edit_config(
         config_path: str | os.PathLike[str],
     ) -> None:
-        ConfigEditorApp = lazy_import("edupsyadmin.tui.editconfig").ConfigEditorApp
+        config_editor_app = lazy_import("edupsyadmin.tui.editconfig").ConfigEditorApp
         if isinstance(config_path, str):
-            ConfigEditorApp(config_path).run()
+            config_editor_app(config_path).run()
         else:
-            ConfigEditorApp(config_path[0]).run()
+            config_editor_app(config_path[0]).run()
 
     parser = subparsers.add_parser(
         "edit_config",
@@ -325,7 +320,9 @@ def _set_client(
         client_id: int,
         key_value_pairs: list[str] | None,
     ) -> None:
-        if not key_value_pairs:
+        if key_value_pairs:
+            key_value_dict = dict(pair.split("=", 1) for pair in key_value_pairs)
+        else:
             key_value_dict = tui.editclient.get_modified_values(
                 database_url=database_url,
                 app_uid=app_uid,
@@ -333,13 +330,9 @@ def _set_client(
                 salt_path=salt_path,
                 client_id=client_id,
             )
-            # TODO: It should not be necessary to convert to string
-            key_value_pairs = [
-                f"{key}={value}" for key, value in key_value_dict.items()
-            ]
         set_client = lazy_import("edupsyadmin.api.managers").set_client
         set_client(
-            app_username, app_uid, database_url, salt_path, client_id, key_value_pairs
+            app_username, app_uid, database_url, salt_path, client_id, key_value_dict
         )
 
     parser = subparsers.add_parser(
@@ -354,7 +347,11 @@ def _set_client(
         "key_value_pairs",
         type=str,
         nargs="*",
-        help="key-value pairs in the format key=value",
+        help=(
+            "key-value pairs in the format key=value; "
+            "if no key-value pairs are passed, the TUI will be used to collect "
+            "values."
+        ),
     )
 
 
@@ -502,7 +499,7 @@ def _mk_report(
             client_id,
             test_date,
             test_type,
-            version=None,
+            version=version,
         )
 
     parser = subparsers.add_parser("mk_report", parents=[common])
@@ -524,7 +521,7 @@ def _flatten_pdfs(
         flatten_pdfs = lazy_import("edupsyadmin.api.flatten_pdf").flatten_pdfs
         flatten_pdfs(form_paths, library)
 
-    DEFAULT_LIBRARY = lazy_import("edupsyadmin.api.flatten_pdf").DEFAULT_LIBRARY
+    default_library = lazy_import("edupsyadmin.api.flatten_pdf").DEFAULT_LIBRARY
     parser = subparsers.add_parser(
         "flatten_pdfs",
         parents=[common],
@@ -533,7 +530,7 @@ def _flatten_pdfs(
     )
     parser.set_defaults(command=command_flatten_pdfs)
     parser.add_argument(
-        "--library", type=str, default=DEFAULT_LIBRARY, choices=["pdf2image", "fillpdf"]
+        "--library", type=str, default=default_library, choices=["pdf2image", "fillpdf"]
     )
     parser.add_argument("form_paths", nargs="+")
 

@@ -49,17 +49,6 @@ EXPECTED_KEYS = {
     "entry_date",
     "datetime_lastmodified",
     "nta_arbeitsm",
-    "parent",
-    "telephone1",
-    "telephone2",
-    "email",
-    "first_name",
-    "notes",
-    "last_name",
-    "street",
-    "gender",
-    "birthday",
-    "city",
 }
 
 
@@ -68,20 +57,20 @@ class ManagersTest:
         client_id = clients_manager.add_client(**client_dict_set_by_user)
         client = clients_manager.get_decrypted_client(client_id=client_id)
         assert EXPECTED_KEYS.issubset(client.keys())
-        assert client["first_name"] == client_dict_set_by_user["first_name"]
-        assert client["last_name"] == client_dict_set_by_user["last_name"]
+        assert client["first_name_encr"] == client_dict_set_by_user["first_name_encr"]
+        assert client["last_name_encr"] == client_dict_set_by_user["last_name_encr"]
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
     def test_add_client_set_id(self, mock_keyring, clients_manager):
         client_dict_with_id = {
             "client_id": 99,
             "school": "FirstSchool",
-            "gender": "f",
+            "gender_encr": "f",
             "entry_date": date(2021, 6, 30),
             "class_name": "7TKKG",
-            "first_name": "Lieschen",
-            "last_name": "Müller",
-            "birthday": "1990-01-01",
+            "first_name_encr": "Lieschen",
+            "last_name_encr": "Müller",
+            "birthday_encr": "1990-01-01",
         }
         client_id = clients_manager.add_client(**client_dict_with_id)
         assert client_id == 99
@@ -101,8 +90,8 @@ class ManagersTest:
         print(f"Keys of the updated client: {updated_client.keys()}")
 
         assert EXPECTED_KEYS.issubset(updated_client.keys())
-        assert updated_client["first_name"] == "Jane"
-        assert updated_client["last_name"] == "Smith"
+        assert updated_client["first_name_encr"] == "Jane"
+        assert updated_client["last_name_encr"] == "Smith"
 
         assert updated_client["nta_zeitv_vieltext"] == 25
         assert updated_client["nta_font"] is True
@@ -132,7 +121,7 @@ class ManagersTest:
         # simulate the commandline input
         inputs = iter(client_dict_all_str)
 
-        def mock_input(prompt):  # noqa : ARG001
+        def mock_input(prompt):
             return client_dict_all_str[next(inputs)]
 
         monkeypatch.setattr("builtins.input", mock_input)
@@ -140,8 +129,8 @@ class ManagersTest:
         client_id = enter_client_cli(clients_manager)
         client = clients_manager.get_decrypted_client(client_id=client_id)
         assert EXPECTED_KEYS.issubset(client.keys())
-        assert client["first_name"] == client_dict_all_str["first_name"]
-        assert client["last_name"] == client_dict_all_str["last_name"]
+        assert client["first_name_encr"] == client_dict_all_str["first_name_encr"]
+        assert client["last_name_encr"] == client_dict_all_str["last_name_encr"]
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
     def test_enter_client_untiscsv(
@@ -152,8 +141,8 @@ class ManagersTest:
         )
         client = clients_manager.get_decrypted_client(client_id=client_id)
         assert EXPECTED_KEYS.issubset(client.keys())
-        assert client["first_name"] == "Max"
-        assert client["last_name"] == "Mustermann"
+        assert client["first_name_encr"] == "Max"
+        assert client["last_name_encr"] == "Mustermann"
         assert client["school"] == "FirstSchool"
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
