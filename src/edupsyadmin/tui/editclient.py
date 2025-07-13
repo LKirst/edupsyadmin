@@ -1,7 +1,8 @@
 import datetime
 import os
 
-from sqlalchemy import Boolean, Date, DateTime, Float, Integer, String
+from sqlalchemy import VARCHAR, Boolean, Date, DateTime, Float, Integer, String
+from sqlalchemy.types import TypeDecorator
 from textual import log
 from textual.app import App
 from textual.events import Key
@@ -43,9 +44,13 @@ def get_python_type(sqlalchemy_type: type) -> type:
     :param sqlalchemy_type: The SQLAlchemy type to be mapped.
     :return: A string representing the Python standard type.
     """
+
+    if isinstance(sqlalchemy_type, TypeDecorator):
+        sqlalchemy_type = sqlalchemy_type.impl
+
     if isinstance(sqlalchemy_type, Integer):
         return int
-    if isinstance(sqlalchemy_type, String):
+    if isinstance(sqlalchemy_type, String | VARCHAR):
         return str
     if isinstance(sqlalchemy_type, Float):
         return float
@@ -86,7 +91,6 @@ class DateInput(Input):
             event.prevent_default()  # Prevent invalid input
 
 
-# TODO: Write a test
 class StudentEntryApp(App):
     def __init__(self, client_id: int, data: dict = {}):
         super().__init__()
@@ -141,7 +145,7 @@ class StudentEntryApp(App):
             yield widget
 
         # Submit button
-        self.submit_button = Button(label="Submit")
+        self.submit_button = Button(label="Submit", id="Submit")
         yield self.submit_button
 
     def on_button_pressed(self):
@@ -221,24 +225,3 @@ def _find_changed_values(original: dict, updates: dict) -> dict:
             changed_values[key] = new_value
 
     return changed_values
-
-
-if __name__ == "__main__":
-    # just for testing
-    app = StudentEntryApp(42)
-    app.run()
-
-    data = app.get_data()
-    print(f"The data collected is: {data}")
-
-    empty_client_dict = {}
-    for column in Client.__table__.columns:
-        field_type = get_python_type(column.type)
-        name = column.name
-
-        if field_type is bool:
-            empty_client_dict[name] = False
-        else:
-            empty_client_dict[name] = ""
-    changed_data = _find_changed_values(empty_client_dict, data)
-    print(f"The modified fields are: {changed_data}")
