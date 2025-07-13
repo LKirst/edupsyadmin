@@ -44,28 +44,32 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
 
     data_wo_bool = _modify_bool_and_none_for_pdf_form(data)
 
-    reader = PdfReader(open(fn, "rb"), strict=False)
     writer = PdfWriter()
 
-    for page in reader.pages:
-        writer.add_page(page)
+    with open(fn, "rb") as pdf_file:
+        reader = PdfReader(pdf_file, strict=False)
 
-    fields = reader.get_fields()
-    if not fields:
-        logger.debug(f"The file {fn} is not a form.")
-    else:
-        logger.debug("\nForm fields:\n{fields.keys()}")
-        logger.debug(f"\nData keys:\n{data_wo_bool.keys()}")
-        comb_key_fields = product(range(len(reader.pages)), fields.keys())
-        for i, key in comb_key_fields:
-            if key in data_wo_bool.keys():
-                try:
-                    if data_wo_bool[key]:
-                        writer.update_page_form_field_values(
-                            writer.pages[i], {key: data_wo_bool[key]}
+        for page in reader.pages:
+            writer.add_page(page)
+
+        fields = reader.get_fields()
+        if not fields:
+            logger.debug(f"The file {fn} is not a form.")
+        else:
+            logger.debug("\nForm fields:\n{fields.keys()}")
+            logger.debug(f"\nData keys:\n{data_wo_bool.keys()}")
+            comb_key_fields = product(range(len(reader.pages)), fields.keys())
+            for i, key in comb_key_fields:
+                if key in data_wo_bool:
+                    try:
+                        if data_wo_bool[key]:
+                            writer.update_page_form_field_values(
+                                writer.pages[i], {key: data_wo_bool[key]}
+                            )
+                    except KeyError:
+                        logger.debug(
+                            f"Couldn't fill in {key} on " f"p. {i + 1} of {fn.name}"
                         )
-                except KeyError:
-                    logger.debug(f"Couldn't fill in {key} on p. {i + 1} of {fn.name}")
     if out_fn.exists():
         raise FileExistsError
     with open(out_fn, "wb") as output_stream:
@@ -91,7 +95,7 @@ def write_form_pdf2(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
         fillpdfs.write_fillable_pdf(fn, out_fn, data_wo_bool)
     else:
         logger.info(
-            (f"The pdf {fn} has no form fields. Copying the file without any changes")
+            f"The pdf {fn} has no form fields. Copying the file without any changes"
         )
         shutil.copyfile(fn, out_fn)
 
@@ -105,7 +109,7 @@ def write_form_md(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
     :param data: the data to fill the liquid template with
     :raises [TODO:name]: [TODO:description]
     """
-    with open(fn, "r", encoding="utf8") as text_file:
+    with open(fn, encoding="utf8") as text_file:
         txt = text_file.read()
         try:
             template = Template(txt)
@@ -143,7 +147,7 @@ def fill_form(
         logger.info(f"Using the template {fp}")
         if not fp.is_file():
             raise FileNotFoundError(
-                (f"The template file does not exist: {fp}; cwd is: {os.getcwd()}")
+                f"The template file does not exist: {fp}; cwd is: {os.getcwd()}"
             )
         out_fp = Path(out_dir, f"{client_data['client_id']}_{fp.name}")
         logger.info(f"Writing to {out_fp.resolve()}")

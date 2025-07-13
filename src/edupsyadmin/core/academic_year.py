@@ -50,10 +50,7 @@ def get_estimated_end_of_academic_year(
     remaining_years = grade_target - grade_current
     date_target = date_current + relativedelta(years=remaining_years)
     year_adjustment = 1 if date_target.month > last_month else 0
-    end_of_year = date(
-        year=date_target.year + year_adjustment, month=last_month, day=last_day
-    )
-    return end_of_year
+    return date(year=date_target.year + year_adjustment, month=last_month, day=last_day)
 
 
 def get_estimated_end_of_this_academic_year(
@@ -68,10 +65,9 @@ def get_estimated_end_of_this_academic_year(
     :return: The estimated end of this academic year.
     """
     date_current = date.today()
-    date_target = get_estimated_end_of_academic_year(
+    return get_estimated_end_of_academic_year(
         date_current, grade_current, grade_target, last_month
     )
-    return date_target
 
 
 def get_date_destroy_records(date_graduation: date) -> date:
@@ -89,8 +85,8 @@ def get_date_destroy_records(date_graduation: date) -> date:
         Bekanntmachung vom 17. März 2023 (BayMBl. Nr. 148) geändert worden ist
 
         Ziffer III. 4.4:
-        "Aufzeichnungen [von Schüler:innenberatung] sind – soweit möglich im
-        Beratungsraum – bis zum Ablauf von drei Jahren nach dem Ende des
+        "Aufzeichnungen [von Schüler:innenberatung] sind — soweit möglich im
+        Beratungsraum — bis zum Ablauf von drei Jahren nach dem Ende des
         Schulbesuchs der betreffenden Schülerin bzw. des betreffenden Schülers
         unter Verschluss zu halten und anschließend zu vernichten. (Die im
         Rahmen der Beratung von Schule und Lehrkräften erstellten

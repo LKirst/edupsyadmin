@@ -19,12 +19,11 @@ def askyn(prompt: str) -> int:
     answ = input(prompt).lower()
     if answ in yes:
         return 1
-    elif answ in no:
+    if answ in no:
         return 0
-    elif answ in quit:
+    if answ in quit:
         return -1
-    else:
-        raise IOError("Only y, n or q are allowed.")
+    raise OSError("Only y, n or q are allowed.")
 
 
 def get_lv_korrektur(lv_rw: float) -> tuple[float, int]:
@@ -127,7 +126,7 @@ def get_fn_csv(version: str) -> Path:
             "~/bin/school/psych_lgvt_wortzahl_und_richtige/Laufbursche_WortzahlRichtigeAntwort.csv"
         )
     else:
-        raise IOError
+        raise OSError
     return fn_csv
 
 
@@ -138,7 +137,7 @@ def mk_report(
     salt_path: str,
     client_id: int,
     test_date: str,
-    test_type: str = "lgvt",
+    test_type: str = "lgvt",  # noqa : ARG001
     version: str = "Rosenkohl",
     directory: str = ".",
 ) -> None:

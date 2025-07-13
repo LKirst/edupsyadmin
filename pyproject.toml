@@ -92,4 +92,5 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 "src/edupsyadmin/db/clients.py" = ["ARG002"]
+"src/edupsyadmin/tui/*" = ["ARG"]
 "test/*" = ["ARG"]

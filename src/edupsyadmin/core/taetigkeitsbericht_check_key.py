@@ -28,5 +28,4 @@ def check_keyword(keyword: str | None) -> str | None:
     possible_keywords = get_taet_categories()
     if (not keyword) or (keyword in possible_keywords):
         return keyword
-    else:
-        raise ValueError
+    raise ValueError

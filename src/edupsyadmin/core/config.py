@@ -14,7 +14,7 @@ from yaml import SafeLoader, ScalarNode, safe_load
 
 from .logger import logger
 
-__all__ = "config", "YamlConfig"
+__all__ = "YamlConfig", "config"
 
 
 class _AttrDict(dict[str, Any]):
@@ -25,7 +25,7 @@ class _AttrDict(dict[str, Any]):
 
         :param key: key to retrieve
         """
-        value = super(_AttrDict, self).__getitem__(key)
+        value = super().__getitem__(key)
         if isinstance(value, dict):
             # For mixed recursive assignment (e.g. `a["b"].c = value` to work
             # as expected, all dict-like values must themselves be _AttrDicts.
@@ -72,7 +72,7 @@ class YamlConfig(_AttrDict):
         :param root: place config values at this root
         :param params: macro substitutions
         """
-        super(YamlConfig, self).__init__()
+        super().__init__()
         if path:
             self.load(path, root, params)
 
@@ -93,13 +93,13 @@ class YamlConfig(_AttrDict):
         :param root: place config values at this root
         :param params: mapping of parameter substitutions
         """
-        if isinstance(path, (str, PathLike)):
+        if isinstance(path, str | PathLike):
             path = [path]
 
         tag = _ParameterTag(params)
         tag.add(SafeLoader)
         for p in path:
-            with open(p, "r", encoding="UTF-8") as stream:
+            with open(p, encoding="UTF-8") as stream:
                 logger.info(f"reading config data from '{p}'")
                 data = safe_load(stream)
             try:
@@ -111,7 +111,7 @@ class YamlConfig(_AttrDict):
                 logger.warning(f"config file {p} is empty")
 
 
-class _ParameterTag(object):
+class _ParameterTag:
     """YAML tag for performing parameter substitution on a scalar node.
 
     Enable this tag by calling add_constructor() for the SafeLoader class.

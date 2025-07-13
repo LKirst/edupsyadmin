@@ -6,7 +6,7 @@ from .__version__ import __version__
 
 
 def info(
-    app_uid: str | os.PathLike[str],
+    app_uid: str | os.PathLike[str],  # noqa : ARG001
     app_username: str,
     database_url: str,
     config_path: str | os.PathLike[str],
