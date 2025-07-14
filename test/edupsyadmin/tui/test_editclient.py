@@ -6,7 +6,7 @@ from edupsyadmin.tui.editclient import StudentEntryApp
 
 @pytest.mark.asyncio
 async def test_type_text() -> None:
-    app = StudentEntryApp(42)
+    app = StudentEntryApp(42, data={})
 
     async with app.run_test() as pilot:
         wid = "#first_name_encr"
@@ -21,7 +21,7 @@ async def test_type_text() -> None:
 
 @pytest.mark.asyncio
 async def test_type_date() -> None:
-    app = StudentEntryApp(42)
+    app = StudentEntryApp(42, data={})
 
     async with app.run_test() as pilot:
         wid = "#entry_date"
@@ -46,7 +46,7 @@ async def test_get_data() -> None:
         "birthday_encr": "1990-01-01",
     }
 
-    app = StudentEntryApp(42)
+    app = StudentEntryApp(42, data={})
 
     async with app.run_test() as pilot:
         for key, value in client_dict_minimal.items():
