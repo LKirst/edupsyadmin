@@ -321,6 +321,8 @@ def _set_client(
     ) -> None:
         if key_value_pairs:
             key_value_dict = dict(pair.split("=", 1) for pair in key_value_pairs)
+        else:
+            key_value_dict = None
         set_client = lazy_import("edupsyadmin.api.managers").set_client
         set_client(
             app_username, app_uid, database_url, salt_path, client_id, key_value_dict
@@ -338,6 +340,7 @@ def _set_client(
         "key_value_pairs",
         type=str,
         nargs="*",
+        default=None,
         help=(
             "key-value pairs in the format key=value; "
             "if no key-value pairs are passed, the TUI will be used to collect "
