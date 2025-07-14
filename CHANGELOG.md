@@ -1,3 +1,14 @@
+## 5.0.0b0 (2025-07-14)
+
+### Fix
+
+- **editclient**: handle checkboxes and bool values correctly
+- **clients**: handle string end grade from config by converting it to int
+- check what values were changed in the tui within the tui.editclient module
+- **managers**: fix enter_client_cli to use only modified values
+- **clients**: fix validates method for zeitverlängerung int from string
+- **clients**: fix incorrect method name fromisoformat
+
 ## 5.0.0a1 (2025-07-13)
 
 ### Fix
