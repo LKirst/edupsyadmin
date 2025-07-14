@@ -25,8 +25,7 @@ def percentile_to_t(percentile: int) -> float:
     :return: the t-value that corresponds to the percentile
     """
     z = percentile_to_z(percentile)
-    t = z_to_normaldist(z, T_MEAN, T_SD)
-    return t
+    return z_to_normaldist(z, T_MEAN, T_SD)
 
 
 def z_to_normaldist(z: float, mean: float, sd: float) -> float:
@@ -40,8 +39,7 @@ def z_to_normaldist(z: float, mean: float, sd: float) -> float:
     :return: the value in the target normal distribution that corresponds to
     the Z-score
     """
-    converted_val = mean + z * sd
-    return converted_val
+    return mean + z * sd
 
 
 def normaldist_to_z(value: float, mean: float, sd: float) -> float:
@@ -54,8 +52,7 @@ def normaldist_to_z(value: float, mean: float, sd: float) -> float:
     :return: the Z-score that corresponds to the value from the normal
     distribution
     """
-    z = (value - mean) / sd
-    return z
+    return (value - mean) / sd
 
 
 def iq_to_z(iq: float) -> float:
@@ -65,8 +62,7 @@ def iq_to_z(iq: float) -> float:
     :param iq: IQ-score
     :return: Z-score
     """
-    z = normaldist_to_z(iq, IQ_MEAN, IQ_SD)
-    return z
+    return normaldist_to_z(iq, IQ_MEAN, IQ_SD)
 
 
 def t_to_z(t: float) -> float:
@@ -76,8 +72,7 @@ def t_to_z(t: float) -> float:
     :param t: t-value
     :return: Z-score
     """
-    z = normaldist_to_z(t, T_MEAN, T_SD)
-    return z
+    return normaldist_to_z(t, T_MEAN, T_SD)
 
 
 def iq_to_t(iq: float) -> float:
@@ -87,5 +82,4 @@ def iq_to_t(iq: float) -> float:
     :param iq: IQ-score
     :return: Z-score
     """
-    t = ((iq - 100) / 15) * 10 + 50
-    return t
+    return ((iq - 100) / 15) * 10 + 50

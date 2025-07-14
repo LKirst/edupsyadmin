@@ -12,7 +12,7 @@ def mydatediff(d1: date, d2: date) -> str:
     :return: A string representing the difference in years, months, and days.
     """
     difference = relativedelta.relativedelta(d2, d1)
-    difference_string = "{} Jahre, {} Monate und {} Tage".format(
-        difference.years, difference.months, difference.days
+    return (
+        f"{difference.years} Jahre, {difference.months} Monate "
+        f"und {difference.days} Tage"
     )
-    return difference_string

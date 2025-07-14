@@ -1,10 +1,9 @@
 Dokumentation der Datenbank
 ===========================
 
-Unten beschriebene Variablen der Datenbank, die auf "_encr" enden
-("_encr" für *encrypted*, verschlüsselt), können ohne die Endung
-"_encr" in Formularen verwendet werden. Für ``edupsyadmin set_client`` muss
-der Variablenname mit dem "_encr"-Suffix verwendet werden.
+Unten beschriebene Variablen der Datenbank, die auf "_encr" enden sind in der
+Datenbank verschlüsselt und werden bei jedem Abruf für die Verarbeitung
+entschlüsselt ("_encr" für *encrypted*, verschlüsselt).
 
 .. autoclass:: edupsyadmin.db.clients.Client
    :members:

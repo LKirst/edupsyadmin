@@ -22,8 +22,8 @@ def test_fill_form(
                 reader = pypdf.PdfReader(f)
                 form_data = reader.get_form_text_fields()
                 assert (
-                    form_data["first_name"] == clientd["first_name"]
-                ), f"first_name was not filled correctly for client {clientd}"
+                    form_data["first_name_encr"] == clientd["first_name_encr"]
+                ), f"first_name_encr was not filled correctly for client {clientd}"
 
                 checkbox_data = reader.get_fields()
                 expected_nos = "/Yes" if clientd["notenschutz"] else "/Off"

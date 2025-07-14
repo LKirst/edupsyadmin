@@ -6,10 +6,7 @@ from edupsyadmin.api.add_convenience_data import add_convenience_data
 
 def _is_valid_german_date(date_str: str | None) -> bool:
     if date_str is None or date_str == "":
-        if date_str == "":
-            return True
-        else:
-            return False
+        return date_str == ""
     try:
         datetime.strptime(date_str, "%d.%m.%Y")
         return True
@@ -29,18 +26,22 @@ def test_add_convenience_data(mock_get_subjects, mock_config, client_dict_intern
     # client data
     assert (
         result["name"]
-        == client_dict_internal["first_name"] + " " + client_dict_internal["last_name"]
+        == client_dict_internal["first_name_encr"]
+        + " "
+        + client_dict_internal["last_name_encr"]
     )
     assert (
         result["addr_s_nname"]
-        == client_dict_internal["street"] + ", " + client_dict_internal["city"]
+        == client_dict_internal["street_encr"]
+        + ", "
+        + client_dict_internal["city_encr"]
     )
     assert result["addr_m_wname"] == (
         result["name"]
         + "\n"
-        + client_dict_internal["street"]
+        + client_dict_internal["street_encr"]
         + "\n"
-        + client_dict_internal["city"]
+        + client_dict_internal["city_encr"]
     )
 
     # school data
@@ -79,7 +80,12 @@ def test_add_convenience_data(mock_get_subjects, mock_config, client_dict_intern
     )
 
     # Check dates
-    dates = ["birthday", "today_date", "lrst_last_test_date", "document_shredding_date"]
+    dates = [
+        "birthday_encr",
+        "today_date",
+        "lrst_last_test_date",
+        "document_shredding_date",
+    ]
     for d in dates:
         assert _is_valid_german_date(result[d + "_de"])
 

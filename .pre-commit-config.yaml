@@ -9,7 +9,7 @@ repos:
   rev: v0.8.0
   hooks:
     - id: ruff
-      args: [ "--select", "F,E,W,I", "--fix" ]
+      args: [ "--config=pyproject.toml", "--fix" ]
     - id: ruff-format
 - repo: https://github.com/commitizen-tools/commitizen
   rev: v3.31.0

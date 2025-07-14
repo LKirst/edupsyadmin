@@ -26,7 +26,7 @@ TOOLTIPS = {
 
 def load_config(file_path: Path) -> dict:
     """Load the YAML configuration file."""
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -77,14 +77,12 @@ class ConfigEditorApp(App):
         # Create password input widget
         self.content.mount(
             Static(
-                (
-                    "Wenn schon ein Passwort festgelegt wurde, bitte das "
-                    "folgende Feld nicht bearbeiten. "
-                    "Ändere das Passwort nur, wenn du eine neue Datenbank "
-                    "anlegst. "
-                    "Wähle ein sicheres Passwort (siehe Tipps für sichere "
-                    "Passwörter auf der Website des BSI."
-                )
+                "Wenn schon ein Passwort festgelegt wurde, bitte das "
+                "folgende Feld nicht bearbeiten. "
+                "Ändere das Passwort nur, wenn du eine neue Datenbank "
+                "anlegst. "
+                "Wähle ein sicheres Passwort (siehe Tipps für sichere "
+                "Passwörter auf der Website des BSI."
             )
         )
         self.password_input = Input(placeholder="Passwort", password=True)

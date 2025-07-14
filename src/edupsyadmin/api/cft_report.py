@@ -40,14 +40,8 @@ def create_report(path: str | os.PathLike[str]) -> None:
     raw_part1_max = input_int_or_none("Teil 1 max: ")
     raw_part2 = int(input("Teil 2: "))
 
-    if raw_part1_min:
-        raw_total_min = raw_part1_min + raw_part2
-    else:
-        raw_total_min = None
-    if raw_part1_max:
-        raw_total_max = raw_part1_max + raw_part2
-    else:
-        raw_total_max = None
+    raw_total_min = raw_part1_min + raw_part2 if raw_part1_min else None
+    raw_total_max = raw_part1_max + raw_part2 if raw_part1_max else None
 
     print(age_str)
     print("Rohwerte:")

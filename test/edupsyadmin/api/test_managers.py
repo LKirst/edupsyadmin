@@ -3,10 +3,12 @@ from datetime import date
 import pytest
 
 from edupsyadmin.api.managers import (
-    ClientNotFound,
-    enter_client_cli,
+    ClientNotFoundError,
+    _find_changed_values,
+    _get_empty_client_dict,
     enter_client_untiscsv,
 )
+from edupsyadmin.tui.editclient import StudentEntryApp
 
 EXPECTED_KEYS = {
     "parent_encr",
@@ -49,17 +51,6 @@ EXPECTED_KEYS = {
     "entry_date",
     "datetime_lastmodified",
     "nta_arbeitsm",
-    "parent",
-    "telephone1",
-    "telephone2",
-    "email",
-    "first_name",
-    "notes",
-    "last_name",
-    "street",
-    "gender",
-    "birthday",
-    "city",
 }
 
 
@@ -68,20 +59,20 @@ class ManagersTest:
         client_id = clients_manager.add_client(**client_dict_set_by_user)
         client = clients_manager.get_decrypted_client(client_id=client_id)
         assert EXPECTED_KEYS.issubset(client.keys())
-        assert client["first_name"] == client_dict_set_by_user["first_name"]
-        assert client["last_name"] == client_dict_set_by_user["last_name"]
+        assert client["first_name_encr"] == client_dict_set_by_user["first_name_encr"]
+        assert client["last_name_encr"] == client_dict_set_by_user["last_name_encr"]
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
     def test_add_client_set_id(self, mock_keyring, clients_manager):
         client_dict_with_id = {
             "client_id": 99,
             "school": "FirstSchool",
-            "gender": "f",
+            "gender_encr": "f",
             "entry_date": date(2021, 6, 30),
             "class_name": "7TKKG",
-            "first_name": "Lieschen",
-            "last_name": "Müller",
-            "birthday": "1990-01-01",
+            "first_name_encr": "Lieschen",
+            "last_name_encr": "Müller",
+            "birthday_encr": "1990-01-01",
         }
         client_id = clients_manager.add_client(**client_dict_with_id)
         assert client_id == 99
@@ -101,8 +92,8 @@ class ManagersTest:
         print(f"Keys of the updated client: {updated_client.keys()}")
 
         assert EXPECTED_KEYS.issubset(updated_client.keys())
-        assert updated_client["first_name"] == "Jane"
-        assert updated_client["last_name"] == "Smith"
+        assert updated_client["first_name_encr"] == "Jane"
+        assert updated_client["last_name_encr"] == "Smith"
 
         assert updated_client["nta_zeitv_vieltext"] == 25
         assert updated_client["nta_font"] is True
@@ -122,40 +113,47 @@ class ManagersTest:
             clients_manager.get_decrypted_client(client_id)
             assert (
                 False
-            ), "Expected ClientNotFound exception when retrieving a deleted client"
-        except ClientNotFound as e:
+            ), "Expected ClientNotFoundError exception when retrieving a deleted client"
+        except ClientNotFoundError as e:
             assert e.client_id == client_id
 
-    def test_enter_client_cli(
-        self, mock_keyring, clients_manager, monkeypatch, client_dict_all_str
-    ):
-        # simulate the commandline input
-        inputs = iter(client_dict_all_str)
-
-        def mock_input(prompt):
-            return client_dict_all_str[next(inputs)]
-
-        monkeypatch.setattr("builtins.input", mock_input)
-
-        client_id = enter_client_cli(clients_manager)
-        client = clients_manager.get_decrypted_client(client_id=client_id)
-        assert EXPECTED_KEYS.issubset(client.keys())
-        assert client["first_name"] == client_dict_all_str["first_name"]
-        assert client["last_name"] == client_dict_all_str["last_name"]
-        mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
-
-    def test_enter_client_untiscsv(
-        self, mock_keyring, clients_manager, mock_webuntis, client_dict_set_by_user
-    ):
+    def test_enter_client_untiscsv(self, mock_keyring, clients_manager, mock_webuntis):
         client_id = enter_client_untiscsv(
             clients_manager, mock_webuntis, school=None, name="MustermMax1"
         )
         client = clients_manager.get_decrypted_client(client_id=client_id)
         assert EXPECTED_KEYS.issubset(client.keys())
-        assert client["first_name"] == "Max"
-        assert client["last_name"] == "Mustermann"
+        assert client["first_name_encr"] == "Max"
+        assert client["last_name_encr"] == "Mustermann"
         assert client["school"] == "FirstSchool"
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
+
+    @pytest.mark.asyncio
+    async def test_enter_client_tui(
+        self, mock_keyring, clients_manager, client_dict_all_str
+    ):
+        empty_client_dict = _get_empty_client_dict()
+
+        app = StudentEntryApp(data={})
+
+        async with app.run_test() as pilot:
+            for key, value in client_dict_all_str.items():
+                wid = f"#{key}"
+                input_widget = pilot.app.query_exactly_one(wid)
+                app.set_focus(input_widget, scroll_visible=True)
+                await pilot.wait_for_scheduled_animations()
+                await pilot.click(wid)
+                await pilot.press(*value)
+
+            wid = "#Submit"
+            input_widget = pilot.app.query_exactly_one(wid)
+            app.set_focus(input_widget, scroll_visible=True)
+            await pilot.wait_for_scheduled_animations()
+            await pilot.click(wid)
+
+        data = app.get_data()
+        changed_data = _find_changed_values(empty_client_dict, data)
+        clients_manager.add_client(**changed_data)
 
 
 # Make the script executable.

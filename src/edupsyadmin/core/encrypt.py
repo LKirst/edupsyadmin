@@ -47,8 +47,7 @@ class Encryption:
         if self.fernet is None:
             raise RuntimeError("call set_fernet() before calling decrypt()")
         token_bytes = token.encode(encoding="utf-8")
-        data = self.fernet.decrypt(token_bytes).decode(encoding="utf-8")
-        return data
+        return self.fernet.decrypt(token_bytes).decode(encoding="utf-8")
 
     def _load_or_create_salt(self, salt_path: str | os.PathLike[str]) -> bytes:
         # TODO: store the salt in the db, not in a separate file
@@ -64,13 +63,9 @@ class Encryption:
         return salt
 
     def _retrieve_password(self, username: str, uid: str) -> bytes:
-        # TODO: Make sure the password is only retrieved once (for example in cli.py)
-        # Currently this is called both in managers.py and in clients.py
         logger.info(
-            (
-                f"retrieving password for uid: '{uid}' "
-                f"and username: '{username}' using keyring"
-            )
+            f"retrieving password for uid: '{uid}' "
+            f"and username: '{username}' using keyring"
         )
         backend = keyring.get_keyring()
         logger.info(f"using keyring backend: '{backend.__class__.__name__}'")
@@ -81,3 +76,6 @@ class Encryption:
             )
 
         return cred.password.encode()
+
+
+encr = Encryption()

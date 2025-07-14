@@ -4,7 +4,8 @@ from datetime import date
 
 import pandas as pd
 
-from ..core.logger import logger
+from edupsyadmin.core.logger import logger
+
 from .managers import get_data_raw
 
 try:
@@ -49,8 +50,7 @@ def get_subcategories(
     root, subcategory_suffix = os.path.splitext(categorykey)
     if not subcategory_suffix:
         return extrcategories
-    else:
-        return get_subcategories(root, extrcategories)
+    return get_subcategories(root, extrcategories)
 
 
 def add_categories_to_df(
@@ -65,7 +65,7 @@ def add_categories_to_df(
         ]
         categories_all.extend(subcategories)
 
-    categories_all_set = list(sorted(set(categories_all)))
+    categories_all_set = sorted(set(categories_all))
     categories_df = df[categories_all_set]
     summary_categories = categories_df.describe()
     summary_categories.loc["sum", :] = categories_df.agg("sum", axis=0)
@@ -259,10 +259,8 @@ def create_taetigkeitsbericht_report(
         report.output(basename_out + "_report.pdf")
     else:
         logger.warn(
-            (
-                "pdf libraries (dataframe_image and fpdf) are not installed "
-                "to generate a pdf output."
-            )
+            "pdf libraries (dataframe_image and fpdf) are not installed "
+            "to generate a pdf output."
         )
 
 

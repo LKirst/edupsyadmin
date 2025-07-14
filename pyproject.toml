@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "edupsyadmin"
-version = "4.0.0"
+version = "5.0.0a1"
 authors=[
     {name = "Lukas Liebermann"}
 ]
@@ -64,6 +64,7 @@ dev = [
     "alembic>=1.14.1",
     "snakeviz>=2.2.2",
     "textual-dev>=1.7.0",
+    "pytest-asyncio>=1.0.0",
 ]
 
 [tool.commitizen]
@@ -75,3 +76,22 @@ update_changelog_on_bump = true
 version_files = [
     "src/edupsyadmin/__version__.py"
 ]
+
+[tool.ruff.lint]
+select = [
+  # Core correctness / style
+  "F", "E", "W", "I", "N",
+
+  "UP",  # pyupgrade – rewrite to modern Python syntax (f-strings, walrus, etc.)
+  "C4",  # flake8-comprehensions – point out sub-optimal list/dict/set comps
+  "SIM", # flake8-simplify – suggest clearer, shorter boolean / loop logic
+  "RET", # flake8-return – keep return statements consistent and meaningful
+  "ARG", # flake8-unused-arguments – flag unused, shadowed or *args/**kwargs
+  "TID", # flake8-tidy-imports – ban unused or overly-relative imports
+  "RUF", # Ruff-native extras – small bug-catchers & style nits not in other sets "UP",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/edupsyadmin/db/clients.py" = ["ARG002"]
+"src/edupsyadmin/tui/*" = ["ARG"]
+"test/*" = ["ARG"]

@@ -40,24 +40,22 @@ def _get_addr_mulitline(street: str, city: str, name: str | None = None) -> str:
     """
     if name is None:
         return street + "\n" + city
-    else:
-        return name + "\n" + street + "\n" + city
+    return name + "\n" + street + "\n" + city
 
 
 def _date_to_german_string(isodate: date | str) -> str:
     if isinstance(isodate, date):
         return isodate.strftime("%d.%m.%Y")
-    elif (isodate is None) or (isodate == ""):
+    if (isodate is None) or (isodate == ""):
         return ""
-    else:
-        try:
-            return parse(isodate, dayfirst=False).strftime("%d.%m.%Y")
-        except ValueError:
-            logger.error(f"'{isodate}' could not be parsed as a date")
-            raise
-        except TypeError:
-            logger.error(f"'{isodate}' is neither None, datetime.date, nor str")
-            raise
+    try:
+        return parse(isodate, dayfirst=False).strftime("%d.%m.%Y")
+    except ValueError:
+        logger.error(f"'{isodate}' could not be parsed as a date")
+        raise
+    except TypeError:
+        logger.error(f"'{isodate}' is neither None, datetime.date, nor str")
+        raise
 
 
 def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
@@ -96,20 +94,20 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
         - **lrst_diagnosis_long**: Ausgeschriebene LRSt-Diagnose,
         - **lrst_last_test_de**: Datum des letzten Tests, im Format DD.MM.YYYY,
         - **today_date_de**: Heutiges Datum, im Format DD.MM.YYYY,
-        - **birthday_de**: Geburtsdatum des Schülers im Format DD.MM.YYYY,
+        - **birthday_encr_de**: Geburtsdatum des Schülers im Format DD.MM.YYYY,
         - **document_shredding_date_de**: Datum für Aktenvernichtung im Format
           DD.MM.YYYY,
         - **nta_nos_end_schoolyear**: Schuljahr bis zu dem NTA und Notenschutz
           begrenzt sind
     """
     # client address
-    data["name"] = data["first_name"] + " " + data["last_name"]
+    data["name"] = data["first_name_encr"] + " " + data["last_name_encr"]
     try:
         data["addr_s_nname"] = _get_addr_mulitline(
-            data["street"], data["city"]
+            data["street_encr"], data["city_encr"]
         ).replace("\n", ", ")
         data["addr_m_wname"] = _get_addr_mulitline(
-            data["street"], data["city"], data["name"]
+            data["street_encr"], data["city_encr"], data["name"]
         )
     except TypeError:
         logger.debug("Couldn't add home address because of missing data: {e}")
@@ -150,7 +148,12 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
     # dates: for forms, I use the format dd.mm.YYYY; internally,
     # I use date objects or strings in the format "YYYY-mm-dd"
     data["today_date"] = date.today()
-    dates = ["birthday", "today_date", "lrst_last_test_date", "document_shredding_date"]
+    dates = [
+        "birthday_encr",
+        "today_date",
+        "lrst_last_test_date",
+        "document_shredding_date",
+    ]
     for idate in dates:
         gdate = idate + "_de"
         data[gdate] = _date_to_german_string(data[idate])

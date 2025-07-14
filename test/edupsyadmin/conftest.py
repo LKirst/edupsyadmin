@@ -1,9 +1,9 @@
 import importlib.resources
 import os
 import shutil
+from collections.abc import Generator
 from datetime import date
 from pathlib import Path
-from typing import Generator
 from unittest.mock import Mock
 
 import keyring
@@ -23,7 +23,7 @@ testing_logger = Logger("conftest_logger")
 
 
 @pytest.fixture(autouse=True, scope="session")
-def setup_logging() -> Generator[None, None, None]:
+def setup_logging() -> Generator[None]:
     """
     Fixture to set up logging. Remember to use the
     pytest --log-cli-level=DEBUG --capture=tee-sys flags if you want to see
@@ -58,12 +58,12 @@ def mock_keyring(monkeysession):
 @pytest.fixture(scope="function")
 def mock_config(
     tmp_path_factory: pytest.TempPathFactory, pdf_forms, request
-) -> Generator[list[str], None, None]:
+) -> Generator[list[str]]:
     template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
     conf_path = [str(tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml")]
     shutil.copy(template_path, conf_path[0])
     testing_logger.debug(
-        (f"mock_config fixture (test: {request.node.name}) - conf_path: {conf_path}")
+        f"mock_config fixture (test: {request.node.name}) - conf_path: {conf_path}"
     )
     config.load(conf_path)
 
@@ -104,19 +104,19 @@ def mock_webuntis(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def client_dict_all_str() -> dict[str, str]:
-    client_dict = {
+    return {
         "client_id": "",
         "school": "FirstSchool",
-        "gender": "m",
+        "gender_encr": "m",
         "entry_date": "2021-06-30",
         "class_name": "11TKKG",
-        "first_name": "John",
-        "last_name": "Doe",
-        "birthday": "1990-01-01",
-        "street": "123 Main St",
-        "city": "New York",
-        "telephone1": "555-1234",
-        "email": "john.doe@example.com",
+        "first_name_encr": "John",
+        "last_name_encr": "Doe",
+        "birthday_encr": "1990-01-01",
+        "street_encr": "123 Main St",
+        "city_encr": "New York",
+        "telephone1_encr": "555-1234",
+        "email_encr": "john.doe@example.com",
         "nos_rs": "0",
         "nta_zeitv_vieltext": "10",
         "nta_nos_end_grade": "11",
@@ -124,7 +124,6 @@ def client_dict_all_str() -> dict[str, str]:
         "lrst_last_test_date": "2025-05-11",
         "lrst_last_test_by": "schpsy",
     }
-    return client_dict
 
 
 @pytest.fixture(
@@ -132,16 +131,16 @@ def client_dict_all_str() -> dict[str, str]:
         {
             "client_id": None,
             "school": "FirstSchool",
-            "gender": "m",
+            "gender_encr": "m",
             "entry_date": date(2021, 6, 30),
             "class_name": "11TKKG",
-            "first_name": "John",
-            "last_name": "Doe",
-            "birthday": "1990-01-01",
-            "street": "123 Main St",
-            "city": "New York",
-            "telephone1": "555-1234",
-            "email": "john.doe@example.com",
+            "first_name_encr": "John",
+            "last_name_encr": "Doe",
+            "birthday_encr": "1990-01-01",
+            "street_encr": "123 Main St",
+            "city_encr": "New York",
+            "telephone1_encr": "555-1234",
+            "email_encr": "john.doe@example.com",
             "nos_rs": False,
             "nta_zeitv_vieltext": 10,
             "nta_nos_end_grade": 11,
@@ -152,16 +151,16 @@ def client_dict_all_str() -> dict[str, str]:
         {
             "client_id": 2,
             "school": "SecondSchool",
-            "gender": "f",
+            "gender_encr": "f",
             "entry_date": date(2021, 6, 30),
             "class_name": "Ki12",
-            "first_name": "Äöüß",
-            "last_name": "Müller",
-            "birthday": "1990-01-01",
-            "street": "Umlautstraße 5ä",
-            "city": "München",
-            "telephone1": "+555-1234",
-            "email": "example@example.com",
+            "first_name_encr": "Äöüß",
+            "last_name_encr": "Müller",
+            "birthday_encr": "1990-01-01",
+            "street_encr": "Umlautstraße 5ä",
+            "city_encr": "München",
+            "telephone1_encr": "+555-1234",
+            "email_encr": "example@example.com",
             "nos_les": False,
             "nta_zeitv_vieltext": None,
             "nta_nos_end_grade": None,
@@ -184,17 +183,17 @@ def client_dict_set_by_user(request) -> dict[str, any]:
         {
             "client_id": None,
             "school": "FirstSchool",
-            "gender": "m",
+            "gender_encr": "m",
             "entry_date": date(2021, 6, 30),
             "class_name": "11TKKG",
             "class_int": 11,
-            "first_name": "John",
-            "last_name": "Doe",
-            "birthday": "1990-01-01",
-            "street": "123 Main St",
-            "city": "New York",
-            "telephone1": "555-1234",
-            "email": "john.doe@example.com",
+            "first_name_encr": "John",
+            "last_name_encr": "Doe",
+            "birthday_encr": "1990-01-01",
+            "street_encr": "123 Main St",
+            "city_encr": "New York",
+            "telephone1_encr": "555-1234",
+            "email_encr": "john.doe@example.com",
             "nos_rs": True,
             "nos_les": False,
             "notenschutz": True,
@@ -210,17 +209,17 @@ def client_dict_set_by_user(request) -> dict[str, any]:
         {
             "client_id": 2,
             "school": "SecondSchool",
-            "gender": "f",
+            "gender_encr": "f",
             "entry_date": date(2021, 6, 30),
             "class_name": "Ki12",
             "class_int": 12,
-            "first_name": "Äöüß",
-            "last_name": "Müller",
-            "birthday": "1990-01-01",
-            "street": "Umlautstraße 5ä",
-            "city": "München",
-            "telephone1": "+555-1234",
-            "email": "example@example.com",
+            "first_name_encr": "Äöüß",
+            "last_name_encr": "Müller",
+            "birthday_encr": "1990-01-01",
+            "street_encr": "Umlautstraße 5ä",
+            "city_encr": "München",
+            "telephone1_encr": "+555-1234",
+            "email_encr": "example@example.com",
             "nos_rs": False,
             "nos_les": False,
             "notenschutz": False,

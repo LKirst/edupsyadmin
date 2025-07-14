@@ -66,7 +66,9 @@ verfügbar ist. Dafür fügen wir den Pfad dauerhaft zur PATH-Umgebungsvariable
 hinzu.
 
 1. Kopiere den Pfad aus der Warnung. Im Beispiel oben wäre dieser
-   ``C:\Users\DeinNutzername\.local\bin``
+   ``C:\Users\DeinNutzername\.local\bin`` (ohne ``;$env:PATH``). Wenn in dem
+   Pfad noch das Zeichen ````` auftaucht vor den Backslashs ``\``, dann
+   entferne es.
 
 2. Drücke die Tasten :kbd:`Win-S`, um die Suche zu öffnen.
 
@@ -162,7 +164,7 @@ Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür 
 
 .. code-block:: console
 
-   $ edupsyadmin config
+   $ edupsyadmin edit_config
 
 1. Ersetze ``sample.username`` durch deinen Benutzernamen (keine Leerzeichen
    und keine Sonderzeichen) in der Zeile mit ``app_username``:

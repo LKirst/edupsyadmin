@@ -1,7 +1,7 @@
 import logging  # just for interaction with the sqlalchemy logger
 import os
 import pathlib
-from datetime import date, datetime
+from datetime import datetime
 from typing import Any
 
 import pandas as pd
@@ -11,32 +11,15 @@ from sqlalchemy.orm import sessionmaker
 from edupsyadmin.api.add_convenience_data import add_convenience_data
 from edupsyadmin.api.fill_form import fill_form
 from edupsyadmin.core.config import config
-from edupsyadmin.core.encrypt import Encryption
+from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import logger
+from edupsyadmin.core.python_type import get_python_type
 from edupsyadmin.db import Base
 from edupsyadmin.db.clients import Client
-
-BOOLEAN_COLS = [
-    "notenschutz",
-    "nos_rs",
-    "nos_rs_ausn",
-    "nos_les",
-    "nachteilsausgleich",
-    "nta_zeitv",
-    "nta_font",
-    "nta_aufg",
-    "nta_struktur",
-    "nta_arbeitsm",
-    "nta_ersgew",
-    "nta_vorlesen",
-    "nta_other",
-    "nta_nos_end",
-]
-
-encr = Encryption()
+from edupsyadmin.tui.editclient import StudentEntryApp
 
 
-class ClientNotFound(Exception):
+class ClientNotFoundError(Exception):
     def __init__(self, client_id: int):
         self.client_id = client_id
         super().__init__(f"Client with ID {client_id} not found.")
@@ -73,35 +56,15 @@ class ClientsManager:
             session.add(new_client)
             session.commit()
             logger.info(f"added client: {new_client}")
-            client_id = new_client.client_id
-            return client_id
+            return new_client.client_id
 
     def get_decrypted_client(self, client_id: int) -> dict[str, Any]:
-        # TODO: move encryption logic to clients.py?
         logger.debug(f"trying to access client (client_id = {client_id})")
         with self.Session() as session:
             client = session.get(Client, client_id)
             if client is None:
-                raise ClientNotFound(client_id)
-            client_dict = client.__dict__
-            decr_vars = {}
-            for attributekey in client_dict.keys():
-                if attributekey.endswith("_encr"):
-                    attributekey_decr = attributekey.removesuffix("_encr")
-                    try:
-                        decr_vars[attributekey_decr] = encr.decrypt(
-                            client_dict[attributekey]
-                        )
-                    except:
-                        logger.critical(
-                            (
-                                f"attribute: {attributekey}; "
-                                f"value: {client_dict[attributekey]}"
-                            )
-                        )
-                        raise
-            client_dict.update(decr_vars)
-            return client_dict
+                raise ClientNotFoundError(client_id)
+            return client.__dict__
 
     def get_clients_overview(self, nta_nos: bool = True) -> pd.DataFrame:
         logger.debug("trying to query client data")
@@ -116,8 +79,8 @@ class ClientsManager:
                 {
                     "client_id": entry.client_id,
                     "school": entry.school,
-                    "last_name": encr.decrypt(entry.last_name_encr),
-                    "first_name": encr.decrypt(entry.first_name_encr),
+                    "last_name_encr": entry.last_name_encr,
+                    "first_name_encr": entry.first_name_encr,
                     "class_name": entry.class_name,
                     "notenschutz": entry.notenschutz,
                     "nachteilsausgleich": entry.nachteilsausgleich,
@@ -128,31 +91,26 @@ class ClientsManager:
                 for entry in results
             ]
             df = pd.DataFrame(results_list_of_dict)
-            return df.sort_values(["school", "last_name"])
+            return df.sort_values(["school", "last_name_encr"])
 
     def get_data_raw(self) -> pd.DataFrame:
         """
-        Get the data without decrypting encrypted data.
+        Get the entire database.
         """
         logger.debug("trying to query the entire database")
         with self.Session() as session:
             query = session.query(Client).statement
-            df = pd.read_sql_query(query, session.bind)
-        return df
+            return pd.read_sql_query(query, session.bind)
 
     def edit_client(self, client_id: int, new_data: dict[str, Any]) -> None:
         # TODO: Warn if key does not exist
-        # TODO: If key does not exist, check if key + _encr exists and use it
         logger.debug(f"editing client (id = {client_id})")
         with self.Session() as session:
             client = session.get(Client, client_id)
             if client:
                 for key, value in new_data.items():
                     logger.debug(f"changing value for key: {key}")
-                    if key.endswith("_encr"):
-                        setattr(client, key, encr.encrypt(value))
-                    else:
-                        setattr(client, key, value)
+                    setattr(client, key, value)
                 client.datetime_lastmodified = datetime.now()
                 session.commit()
             else:
@@ -199,7 +157,7 @@ def set_client(
     database_url: str,
     salt_path: str | os.PathLike[str],
     client_id: int,
-    key_value_pairs: list[str],
+    key_value_pairs: dict[str, str | bool | None],
 ) -> None:
     """
     Set the value for a key given a client_id
@@ -210,9 +168,17 @@ def set_client(
         app_username=app_username,
         salt_path=salt_path,
     )
-    pairs_list = [pair.split("=", 1) for pair in key_value_pairs]
-    new_data: dict[str, str | bool | None] = dict(pairs_list)
-    clients_manager.edit_client(client_id, new_data)
+
+    if key_value_pairs is None:
+        key_value_pairs = _get_modified_values(
+            database_url=database_url,
+            app_uid=app_uid,
+            app_username=app_username,
+            salt_path=salt_path,
+            client_id=client_id,
+        )
+
+    clients_manager.edit_client(client_id, key_value_pairs)
 
 
 def get_clients(
@@ -232,12 +198,7 @@ def get_clients(
     )
     if client_id:
         original_df = pd.DataFrame([clients_manager.get_decrypted_client(client_id)]).T
-        df = original_df[
-            ~(
-                original_df.index.str.endswith("_encr")
-                | (original_df.index == "_sa_instance_state")
-            )
-        ]
+        df = original_df[~(original_df.index == "_sa_instance_state")]
     else:
         original_df = clients_manager.get_clients_overview(nta_nos=nta_nos)
         df = original_df.set_index("client_id")
@@ -269,8 +230,7 @@ def get_data_raw(
         app_username=app_username,
         salt_path=salt_path,
     )
-    df = clients_manager.get_data_raw()
-    return df
+    return clients_manager.get_data_raw()
 
 
 def enter_client_untiscsv(
@@ -299,59 +259,94 @@ def enter_client_untiscsv(
 
     # check if school was passed and if not use the first from the config
     if school is None:
-        school = list(config.school.keys())[0]
+        school = next(iter(config.school.keys()))
 
-    client_id_n = clients_manager.add_client(
+    return clients_manager.add_client(
         school=school,
-        gender=client_series["gender"].item(),
+        gender_encr=client_series["gender"].item(),
         entry_date=datetime.strptime(
             client_series["entryDate"].item(), "%d.%m.%Y"
         ).date(),
         class_name=client_series["klasse.name"].item(),
-        first_name=client_series["foreName"].item(),
-        last_name=client_series["longName"].item(),
-        birthday=datetime.strptime(
+        first_name_encr=client_series["foreName"].item(),
+        last_name_encr=client_series["longName"].item(),
+        birthday_encr=datetime.strptime(
             client_series["birthDate"].item(), "%d.%m.%Y"
         ).date(),
-        street=client_series["address.street"].item(),
-        city=str(client_series["address.postCode"].item())
+        street_encr=client_series["address.street"].item(),
+        city_encr=str(client_series["address.postCode"].item())
         + " "
         + client_series["address.city"].item(),
-        telephone1=str(
+        telephone1_encr=str(
             client_series["address.mobile"].item()
             or client_series["address.phone"].item()
         ),
-        email=client_series["address.email"].item(),
+        email_encr=client_series["address.email"].item(),
         client_id=client_id,
     )
-    return client_id_n
 
 
+# TODO: rename to enter_client_tui
 def enter_client_cli(clients_manager: ClientsManager) -> int:
-    client_id_input = input("client_id (press ENTER if you don't know): ")
-    client_id = int(client_id_input) if client_id_input else None
+    empty_client_dict = _get_empty_client_dict()
 
-    while True:
-        school = input("School: ")
-        if school in config.school.keys():
-            break
-        print(f"School must be one of the following strings: {config.schools.keys()}")
+    app = StudentEntryApp(data={})
+    app.run()
 
-    client_id_n = clients_manager.add_client(
-        school=school,
-        gender=input("Gender (f/m): "),
-        entry_date=date.fromisoformat(input("Entry date (YYYY-MM-DD): ")),
-        class_name=input("Class name: "),
-        first_name=input("First Name: "),
-        last_name=input("Last Name: "),
-        birthday=date.fromisoformat(input("Birthday (YYYY-MM-DD): ")),
-        street=input("Street and house number: "),
-        city=input("City (postcode + name): "),
-        telephone1=input("Telephone: "),
-        email=input("Email: "),
-        client_id=client_id,
+    data = app.get_data()
+
+    changed_data = _find_changed_values(empty_client_dict, data)
+    return clients_manager.add_client(**changed_data)
+
+
+def _get_empty_client_dict() -> dict[str, any]:
+    empty_client_dict = {}
+    for column in Client.__table__.columns:
+        field_type = get_python_type(column.type)
+        name = column.name
+
+        if field_type is bool:
+            empty_client_dict[name] = False
+        else:
+            empty_client_dict[name] = ""
+    return empty_client_dict
+
+
+def _get_modified_values(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike,
+    client_id: int,
+) -> dict:
+    # retrieve current values
+    manager = ClientsManager(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        salt_path=salt_path,
     )
-    return client_id_n
+    current_data = manager.get_decrypted_client(client_id=client_id)
+
+    # display a form with current values filled in
+    app = StudentEntryApp(client_id, data=current_data)
+    app.run()
+
+    # return changed values
+    new_data = app.get_data()
+    return _find_changed_values(current_data, new_data)
+
+
+def _find_changed_values(original: dict, updates: dict) -> dict:
+    changed_values = {}
+    for key, new_value in updates.items():
+        if key not in original:
+            raise KeyError(
+                f"Key '{key}' found in updates but not in original dictionary."
+            )
+        if original[key] != new_value:
+            changed_values[key] = new_value
+    return changed_values
 
 
 def create_documentation(
