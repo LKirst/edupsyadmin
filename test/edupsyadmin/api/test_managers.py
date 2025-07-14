@@ -162,6 +162,7 @@ class ManagersTest:
         change_values = {
             "first_name_encr": "SomeNewNameßä",
             "lrst_last_test_date": "2026-01-01",
+            "nos_rs": True,
         }
 
         async with app.run_test() as pilot:
@@ -172,6 +173,9 @@ class ManagersTest:
                 app.set_focus(input_widget, scroll_visible=True)
                 await pilot.wait_for_scheduled_animations()
                 await pilot.click(wid)
+                if isinstance(value, bool):
+                    input_widget.value = value
+                    continue
                 await pilot.press(*value)
 
             wid = "#Submit"

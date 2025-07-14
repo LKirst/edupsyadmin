@@ -68,15 +68,16 @@ class StudentEntryApp(App):
 
         data = data or _get_empty_client_dict()
         self._original_data = {}
+
         for key, value in data.items():
             if value is None:
                 self._original_data[key] = ""
             elif isinstance(value, date):
                 self._original_data[key] = value.isoformat()
+            elif isinstance(value, bool | str):  # check this before checking if int!
+                self._original_data[key] = value
             elif isinstance(value, int | float):
                 self._original_data[key] = str(value)
-            else:
-                self._original_data[key] = value
         self._changed_data = {}
 
         self.client_id = client_id
@@ -171,6 +172,7 @@ class StudentEntryApp(App):
                 for key, value in current.items()
                 if value != self._original_data.get(key)
             }
+
             self.exit()  # Exit the app after submission
 
     def get_data(self):

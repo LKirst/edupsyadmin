@@ -34,8 +34,24 @@ async def test_type_date() -> None:
 
 
 @pytest.mark.asyncio
+async def test_set_bool() -> None:
+    app = StudentEntryApp(42, data=None)
+
+    async with app.run_test() as pilot:
+        wid = "#nos_rs"
+        bool_widget = pilot.app.query_exactly_one(wid)
+        app.set_focus(bool_widget, scroll_visible=True)
+        await pilot.wait_for_scheduled_animations()
+        assert bool_widget.value is False
+
+        await pilot.click(wid)
+        bool_widget.value = True
+        assert bool_widget.value is True
+
+
+@pytest.mark.asyncio
 async def test_get_data() -> None:
-    client_dict_minimal = {
+    client_dict = {
         "first_name_encr": "Lieschen",
         "last_name_encr": "Müller",
         "school": "FirstSchool",
@@ -47,7 +63,7 @@ async def test_get_data() -> None:
     app = StudentEntryApp(42, data=None)
 
     async with app.run_test() as pilot:
-        for key, value in client_dict_minimal.items():
+        for key, value in client_dict.items():
             wid = f"#{key}"
             input_widget = pilot.app.query_exactly_one(wid)
             app.set_focus(input_widget, scroll_visible=True)
@@ -62,4 +78,4 @@ async def test_get_data() -> None:
         await pilot.click(wid)
 
     data = app.get_data()
-    assert data == client_dict_minimal
+    assert data == client_dict
