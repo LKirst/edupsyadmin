@@ -4,8 +4,11 @@ import pytest
 
 from edupsyadmin.api.managers import (
     ClientNotFoundError,
+    _find_changed_values,
+    _get_empty_client_dict,
     enter_client_untiscsv,
 )
+from edupsyadmin.tui.editclient import StudentEntryApp
 
 EXPECTED_KEYS = {
     "parent_encr",
@@ -114,9 +117,7 @@ class ManagersTest:
         except ClientNotFoundError as e:
             assert e.client_id == client_id
 
-    def test_enter_client_untiscsv(
-        self, mock_keyring, clients_manager, mock_webuntis, client_dict_set_by_user
-    ):
+    def test_enter_client_untiscsv(self, mock_keyring, clients_manager, mock_webuntis):
         client_id = enter_client_untiscsv(
             clients_manager, mock_webuntis, school=None, name="MustermMax1"
         )
@@ -126,6 +127,33 @@ class ManagersTest:
         assert client["last_name_encr"] == "Mustermann"
         assert client["school"] == "FirstSchool"
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
+
+    @pytest.mark.asyncio
+    async def test_enter_client_tui(
+        self, mock_keyring, clients_manager, client_dict_all_str
+    ):
+        empty_client_dict = _get_empty_client_dict()
+
+        app = StudentEntryApp(data={})
+
+        async with app.run_test() as pilot:
+            for key, value in client_dict_all_str.items():
+                wid = f"#{key}"
+                input_widget = pilot.app.query_exactly_one(wid)
+                app.set_focus(input_widget, scroll_visible=True)
+                await pilot.wait_for_scheduled_animations()
+                await pilot.click(wid)
+                await pilot.press(*value)
+
+            wid = "#Submit"
+            input_widget = pilot.app.query_exactly_one(wid)
+            app.set_focus(input_widget, scroll_visible=True)
+            await pilot.wait_for_scheduled_animations()
+            await pilot.click(wid)
+
+        data = app.get_data()
+        changed_data = _find_changed_values(empty_client_dict, data)
+        clients_manager.add_client(**changed_data)
 
 
 # Make the script executable.
