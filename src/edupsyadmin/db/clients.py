@@ -395,9 +395,10 @@ class Client(Base):
         if self.class_int is None:
             logger.error("could not extract integer from class name")
         else:
+            # convert grade_target to int to handle configs with a string value
             self.estimated_graduation_date = get_estimated_end_of_academic_year(
                 grade_current=self.class_int,
-                grade_target=config.school[self.school]["end"],
+                grade_target=int(config.school[self.school]["end"]),
             )
             self.document_shredding_date = get_date_destroy_records(
                 self.estimated_graduation_date
