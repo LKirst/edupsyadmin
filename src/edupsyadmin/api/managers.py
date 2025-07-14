@@ -286,15 +286,17 @@ def enter_client_untiscsv(
     )
 
 
+# TODO: rename to enter_client_tui
 def enter_client_cli(clients_manager: ClientsManager) -> int:
-    _get_empty_client_dict()
+    empty_client_dict = _get_empty_client_dict()
 
-    app = StudentEntryApp()
+    app = StudentEntryApp(data={})
     app.run()
 
     data = app.get_data()
 
-    return clients_manager.add_client(**data)
+    changed_data = _find_changed_values(empty_client_dict, data)
+    return clients_manager.add_client(**changed_data)
 
 
 def _get_empty_client_dict() -> dict[str, any]:
