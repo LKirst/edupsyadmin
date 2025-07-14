@@ -229,7 +229,7 @@ class Client(Base):
         default=False,
         doc=(
             "Gibt an, ob der Klient eine Zeitverlängerung als NTA hat. "
-            "Diese Variable wird abgeleitet aus :attr:`nta_zeitv_vieltext` und"
+            "Diese Variable wird abgeleitet aus :attr:`nta_zeitv_vieltext` und "
             ":attr:`nta_zeitv_wenigtext`."
         ),
     )
