@@ -529,7 +529,7 @@ class Client(Base):
         self, key: str, value: str | date | None
     ) -> date | None:
         if isinstance(value, str):
-            return date.fromisostring(value)
+            return date.fromisoformat(value)
         return value
 
     def __repr__(self) -> str:
