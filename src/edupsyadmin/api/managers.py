@@ -13,7 +13,6 @@ from edupsyadmin.api.fill_form import fill_form
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import logger
-from edupsyadmin.core.python_type import get_python_type
 from edupsyadmin.db import Base
 from edupsyadmin.db.clients import Client
 from edupsyadmin.tui.editclient import StudentEntryApp
@@ -288,28 +287,12 @@ def enter_client_untiscsv(
 
 # TODO: rename to enter_client_tui
 def enter_client_cli(clients_manager: ClientsManager) -> int:
-    empty_client_dict = _get_empty_client_dict()
-
-    app = StudentEntryApp(data={})
+    app = StudentEntryApp(data=None)
     app.run()
 
     data = app.get_data()
 
-    changed_data = _find_changed_values(empty_client_dict, data)
-    return clients_manager.add_client(**changed_data)
-
-
-def _get_empty_client_dict() -> dict[str, any]:
-    empty_client_dict = {}
-    for column in Client.__table__.columns:
-        field_type = get_python_type(column.type)
-        name = column.name
-
-        if field_type is bool:
-            empty_client_dict[name] = False
-        else:
-            empty_client_dict[name] = ""
-    return empty_client_dict
+    return clients_manager.add_client(**data)
 
 
 def _get_modified_values(
@@ -332,11 +315,10 @@ def _get_modified_values(
     app = StudentEntryApp(client_id, data=current_data)
     app.run()
 
-    # return changed values
-    new_data = app.get_data()
-    return _find_changed_values(current_data, new_data)
+    return app.get_data()
 
 
+# TODO: move to tests (not used here)
 def _find_changed_values(original: dict, updates: dict) -> dict:
     changed_values = {}
     for key, new_value in updates.items():

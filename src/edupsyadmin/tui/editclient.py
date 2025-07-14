@@ -1,4 +1,4 @@
-import datetime
+from datetime import date
 
 from textual import log
 from textual.app import App
@@ -63,10 +63,23 @@ class DateInput(Input):
 
 
 class StudentEntryApp(App):
-    def __init__(self, client_id: int | None = None, data: dict = {}):
+    def __init__(self, client_id: int | None = None, data: dict | None = None):
         super().__init__()
+
+        data = data or _get_empty_client_dict()
+        self._original_data = {}
+        for key, value in data.items():
+            if value is None:
+                self._original_data[key] = ""
+            elif isinstance(value, date):
+                self._original_data[key] = value.isoformat()
+            elif isinstance(value, int | float):
+                self._original_data[key] = str(value)
+            else:
+                self._original_data[key] = value
+        self._changed_data = {}
+
         self.client_id = client_id
-        self.data = data
         self.inputs = {}
         self.dates = {}
         self.checkboxes = {}
@@ -88,9 +101,13 @@ class StudentEntryApp(App):
 
             # default value
             if field_type is bool:
-                default = self.data.get(name, False)
+                default = self._original_data.get(name, False)
             else:
-                default = str(self.data[name]) if name in self.data else ""
+                default = (
+                    str(self._original_data[name])
+                    if name in self._original_data
+                    else ""
+                )
 
             # create widget
             placeholder = name + "*" if (name in REQUIRED_FIELDS) else name
@@ -105,7 +122,7 @@ class StudentEntryApp(App):
                 widget = Input(value=default, placeholder=placeholder, type="number")
                 widget.valid_empty = True
                 self.inputs[name] = widget
-            elif (field_type is datetime.date) or (name == "birthday_encr"):
+            elif (field_type is date) or (name == "birthday_encr"):
                 widget = DateInput(value=default, placeholder=placeholder)
                 self.dates[name] = widget
             else:
@@ -125,36 +142,49 @@ class StudentEntryApp(App):
     def on_button_pressed(self):
         """method that is called when the submit button is pressed"""
 
-        # Collect data from input and date fields
-        inputs_and_dates = {**self.inputs, **self.dates}
-        for field, input_widget in inputs_and_dates.items():
-            self.data[field] = input_widget.value
-        # Collect data from checkboxes
-        self.data.update(
-            {field: self.checkboxes[field].value for field in self.checkboxes}
+        # build snapshot from widgets
+        current: dict[str, object] = {}
+        current.update({n: w.value for n, w in {**self.inputs, **self.dates}.items()})
+        current.update({n: cb.value for n, cb in self.checkboxes.items()})
+
+        required_field_empty = any(current.get(f, "") == "" for f in REQUIRED_FIELDS)
+
+        # validation: every date must be "" or length 10
+        dates_valid = all(
+            len(widget.value) in (0, 10) for widget in self.dates.values()
         )
 
-        log.info(f"Submitted: {self.data}")
-        required_field_empty = any(self.data[field] == "" for field in REQUIRED_FIELDS)
-        dates_valid = all(
-            (len(widget.value) == 10) or (len(widget.value) == 0)
-            for field, widget in self.dates.items()
-        )
-        if required_field_empty or (not dates_valid):
-            # show what fields are required and still empty
-            for field in REQUIRED_FIELDS:
-                if self.data[field] == "":
-                    input_widget = self.query_one(f"#{field}", Input)
-                    input_widget.add_class("-invalid")
-            # show what dates are not in the correct format
-            for field, widget in self.dates.items():
-                log.debug(
-                    f"widget {widget.id} has a value length of {len(widget.value)}"
-                )
-                if not ((len(widget.value) == 10) or (len(widget.value) == 0)):
+        if required_field_empty or not dates_valid:
+            # mark required fields that are still empty
+            for f in REQUIRED_FIELDS:
+                if current.get(f, "") == "":
+                    self.query_one(f"#{f}", Input).add_class("-invalid")
+
+            # mark dates that have a wrong length
+            for widget in self.dates.values():
+                if len(widget.value) not in (0, 10):
                     widget.add_class("-invalid")
         else:
+            # find fields that changed
+            self._changed_data = {
+                key: value
+                for key, value in current.items()
+                if value != self._original_data.get(key)
+            }
             self.exit()  # Exit the app after submission
 
     def get_data(self):
-        return self.data
+        return self._changed_data
+
+
+def _get_empty_client_dict() -> dict[str, any]:
+    empty_client_dict = {}
+    for column in Client.__table__.columns:
+        field_type = get_python_type(column.type)
+        name = column.name
+
+        if field_type is bool:
+            empty_client_dict[name] = False
+        else:
+            empty_client_dict[name] = ""
+    return empty_client_dict

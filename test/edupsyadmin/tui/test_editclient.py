@@ -1,12 +1,11 @@
 import pytest
 
-from edupsyadmin.api.managers import _find_changed_values, _get_empty_client_dict
 from edupsyadmin.tui.editclient import StudentEntryApp
 
 
 @pytest.mark.asyncio
 async def test_type_text() -> None:
-    app = StudentEntryApp(42, data={})
+    app = StudentEntryApp(42, data=None)
 
     async with app.run_test() as pilot:
         wid = "#first_name_encr"
@@ -21,7 +20,7 @@ async def test_type_text() -> None:
 
 @pytest.mark.asyncio
 async def test_type_date() -> None:
-    app = StudentEntryApp(42, data={})
+    app = StudentEntryApp(42, data=None)
 
     async with app.run_test() as pilot:
         wid = "#entry_date"
@@ -36,7 +35,6 @@ async def test_type_date() -> None:
 
 @pytest.mark.asyncio
 async def test_get_data() -> None:
-    empty_client_dict = _get_empty_client_dict()
     client_dict_minimal = {
         "first_name_encr": "Lieschen",
         "last_name_encr": "Müller",
@@ -46,7 +44,7 @@ async def test_get_data() -> None:
         "birthday_encr": "1990-01-01",
     }
 
-    app = StudentEntryApp(42, data={})
+    app = StudentEntryApp(42, data=None)
 
     async with app.run_test() as pilot:
         for key, value in client_dict_minimal.items():
@@ -64,5 +62,4 @@ async def test_get_data() -> None:
         await pilot.click(wid)
 
     data = app.get_data()
-    changed_data = _find_changed_values(empty_client_dict, data)
-    assert changed_data == client_dict_minimal
+    assert data == client_dict_minimal

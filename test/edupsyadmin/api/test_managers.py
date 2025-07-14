@@ -4,8 +4,6 @@ import pytest
 
 from edupsyadmin.api.managers import (
     ClientNotFoundError,
-    _find_changed_values,
-    _get_empty_client_dict,
     enter_client_untiscsv,
 )
 from edupsyadmin.tui.editclient import StudentEntryApp
@@ -132,9 +130,7 @@ class ManagersTest:
     async def test_enter_client_tui(
         self, mock_keyring, clients_manager, client_dict_all_str
     ):
-        empty_client_dict = _get_empty_client_dict()
-
-        app = StudentEntryApp(data={})
+        app = StudentEntryApp(data=None)
 
         async with app.run_test() as pilot:
             for key, value in client_dict_all_str.items():
@@ -152,8 +148,40 @@ class ManagersTest:
             await pilot.click(wid)
 
         data = app.get_data()
-        changed_data = _find_changed_values(empty_client_dict, data)
-        clients_manager.add_client(**changed_data)
+        clients_manager.add_client(**data)
+
+    @pytest.mark.asyncio
+    async def test_edit_client_tui(
+        self, mock_keyring, clients_manager, client_dict_all_str
+    ):
+        client_id = clients_manager.add_client(**client_dict_all_str)
+        current_data = clients_manager.get_decrypted_client(client_id=client_id)
+
+        app = StudentEntryApp(client_id, data=current_data.copy())
+
+        change_values = {
+            "first_name_encr": "SomeNewNameßä",
+            "lrst_last_test_date": "2026-01-01",
+        }
+
+        async with app.run_test() as pilot:
+            for key, value in change_values.items():
+                wid = f"#{key}"
+                input_widget = pilot.app.query_exactly_one(wid)
+                input_widget.value = ""
+                app.set_focus(input_widget, scroll_visible=True)
+                await pilot.wait_for_scheduled_animations()
+                await pilot.click(wid)
+                await pilot.press(*value)
+
+            wid = "#Submit"
+            input_widget = pilot.app.query_exactly_one(wid)
+            app.set_focus(input_widget, scroll_visible=True)
+            await pilot.wait_for_scheduled_animations()
+            await pilot.click(wid)
+
+        data = app.get_data()
+        assert data == change_values
 
 
 # Make the script executable.
