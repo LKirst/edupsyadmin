@@ -1,3 +1,16 @@
+## 5.1.0 (2025-07-15)
+
+### Feat
+
+- **add_convenience_data**: add workaround to fill lrst_last_test_by radio buttons
+
+### Fix
+
+- **editconfig**: do try to set password if password input widget has no value
+- **managers**: replace python or with sqlalchemy or_
+- **managers**: correct column names
+- **cli**: set default value for key_value_pairs in set_client to None
+
 ## 5.0.0 (2025-07-14)
 
 ## 5.0.0b0 (2025-07-14)
