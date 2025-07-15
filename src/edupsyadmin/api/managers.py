@@ -76,7 +76,7 @@ class ClientsManager:
             results = session.scalars(stmt).all()
             results_list_of_dict = [
                 {
-                    "ID": entry.client_id,
+                    "client_id": entry.client_id,
                     "Schule": entry.school,
                     "Nachname": entry.last_name_encr,
                     "Vorname": entry.first_name_encr,
@@ -90,7 +90,7 @@ class ClientsManager:
                 for entry in results
             ]
             df = pd.DataFrame(results_list_of_dict)
-            return df.sort_values(["school", "last_name_encr"])
+            return df.sort_values(["Schule", "Nachname"])
 
     def get_data_raw(self) -> pd.DataFrame:
         """
