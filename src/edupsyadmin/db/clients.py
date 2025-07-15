@@ -312,7 +312,7 @@ class Client(Base):
             "Notenschutzmaßnahmen zeitlich begrenzt sind"
         ),
     )
-
+    # TODO: the name should be h_sessions
     n_sessions: Mapped[float] = mapped_column(
         Float,
         doc=(
