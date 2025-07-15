@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 
 import pandas as pd
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, or_, select
 from sqlalchemy.orm import sessionmaker
 
 from edupsyadmin.api.add_convenience_data import add_convenience_data
@@ -71,7 +71,7 @@ class ClientsManager:
         with self.Session() as session:
             if nta_nos:
                 stmt = stmt.where(
-                    (Client.notenschutz == 1) or (Client.nachteilsausgleich == 1)
+                    or_(Client.notenschutz == 1, Client.nachteilsausgleich == 1)
                 )
             results = session.scalars(stmt).all()
             results_list_of_dict = [
