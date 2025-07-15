@@ -167,30 +167,31 @@ Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür 
    $ edupsyadmin edit_config
 
 1. Ersetze ``sample.username`` durch deinen Benutzernamen (keine Leerzeichen
-   und keine Sonderzeichen) in der Zeile mit ``app_username``:
+   und keine Sonderzeichen) unter App-Einstellungen:
 
 .. code-block::
 
-    app_username: DEIN.NAME
+    DEIN.NAME
 
 2. Lege einmalig ein sicheres Passwortsicheres Passwort  fest. Das Passwort solltest du für eine bestehende
    Datenbank nicht ändern, sonst können die Daten nicht mehr entschlüsselt werden.
 
 .. code-block::
 
-    Passwort: ein_sicheres_passwort
+    ein_sicheres_passwort
 
 3. Ändere dann deine Daten in den Schulpsychologie-Einstellungen:
 
 .. code-block::
 
-    schoolpsy_name: "Schreibe hier deinen Namen aus"
-    schoolpsy_street: "Deine Straße und Hausnummer"
-    schoolpsy_city: "Postleitzahl und Stadt"
+    Postleitzahl und Stadt
+    Dein Vor- und Nachname (wie er auf Formularen erscheinen soll)
+    Die Straße und Hausnummer deiner Stammschule
 
-4. Ändere unter ``school`` den Kurznamen deiner Schule zu etwas einprägsamerem
-   als ``FirstSchool``. Verwende keine Leerzeichen oder Sonderzeichen. In
-   diesem Tutorial verwenden wir den Schulnamen ``TutorialSchule``.
+4. Ändere unter "Einstellungen für Schule 1" den Kurznamen deiner Schule zu
+   etwas einprägsamerem als ``FirstSchool``. Verwende keine Leerzeichen oder
+   Sonderzeichen. In diesem Tutorial verwenden wir den Schulnamen
+   ``TutorialSchule``.
 
 .. code-block::
 
@@ -198,19 +199,20 @@ Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür 
 
 5. Füge die Daten für deine Schule hinzu. Die Variable ``end`` wird verwendet, um
    das Datum für die Vernichtung der Unterlagen (3 Jahre nach dem
-   voraussichtlichen Abschlussdatum) zu schätzen. Es benennt die
+   voraussichtlichen Abschlussdatum) zu schätzen. Sie benennt die
    Jahrgangsstufe, nach der die Schüler:innen typischerweise die Schule
    verlassen.
 
 .. code-block::
 
-    school_head_w_school: "Titel deiner Schulleitung"
-    school_name: "Name deiner Schule ausgeschrieben"
-    school_street: "Straße und Hausnummer deiner Schule"
-    school_city: "Postleitzahl und Stadt"
-    end: 11
+    11
+    Postleitzahl und Stadt
+    Straße und Hausnummer der Schul
+    Titel deiner Schulleitung
+    Name der Schule ausgeschriebe
 
-6. Über den Button ``Schule hinzufügen`` können weitere Schulen hinzugefügt werden. Wiederhole Schritt 3 und 4 für jede Schule, an der du tätig bist.
+6. Über den Button ``Schule hinzufügen`` können weitere Schulen hinzugefügt
+   werden. Wiederhole Schritt 3 und 4 für jede Schule, an der du tätig bist.
 
 7. Ändere die Pfade unter ``form_set``, um auf die (Sets von) PDF-Formularen zu
    verweisen, die du verwenden möchtest. Bitte lade für unser Beispiel folgende
@@ -228,9 +230,7 @@ Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür 
 
 .. code-block::
 
-    form_set:
-        tutorialset:
-            - 'pfad/zu/meiner/ersten_datei/sample_form_mantelbogen.pdf'
-            - 'pfad/zu/meiner/zweiten_datei/sample_form_stellungnahme.pdf'
+    pfad/zu/meiner/ersten_datei/sample_form_mantelbogen.pdf
+    pfad/zu/meiner/zweiten_datei/sample_form_stellungnahme.pdf
 
 8. Speichere die Änderungen.
