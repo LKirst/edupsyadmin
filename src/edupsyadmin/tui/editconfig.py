@@ -258,19 +258,17 @@ class ConfigEditorApp(App):
         save_config(self.config_dict, self.config_path)
         app_uid = self.config_dict["core"].get("app_uid", None)
         username = self.config_dict["core"].get("app_username", None)
-        if (
-            app_uid
-            and username
-            and self.password_input.value
-            and not keyring.get_password(app_uid, username)
-        ):
-            keyring.set_password(app_uid, username, self.password_input.value)
-        elif app_uid and username:
-            raise ValueError(
-                f"A password for UID {app_uid} and username {username} already exists."
-            )
-        else:
-            raise ValueError("app_uid and username must not be None.")
+        oldpw = keyring.get_password(app_uid, username)
+        if self.password_input.value:
+            if app_uid and username and not oldpw:
+                keyring.set_password(app_uid, username, self.password_input.value)
+            elif app_uid and username:
+                raise ValueError(
+                    f"A password for UID {app_uid} and "
+                    f"username {username} already exists."
+                )
+            else:
+                raise ValueError("app_uid and username must not be None.")
 
 
 if __name__ == "__main__":
