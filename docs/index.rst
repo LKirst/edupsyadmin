@@ -68,6 +68,7 @@ Tätigkeitsbericht verlangt.
    tutorial/addingclients
    tutorial/creatingdocumentation
    tutorial/update
+   tutorial/taetigkeitsbericht
 
 .. toctree::
    :maxdepth: 2
