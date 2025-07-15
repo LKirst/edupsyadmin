@@ -76,16 +76,16 @@ class ClientsManager:
             results = session.scalars(stmt).all()
             results_list_of_dict = [
                 {
-                    "client_id": entry.client_id,
-                    "school": entry.school,
-                    "last_name_encr": entry.last_name_encr,
-                    "first_name_encr": entry.first_name_encr,
-                    "class_name": entry.class_name,
-                    "notenschutz": entry.notenschutz,
-                    "nachteilsausgleich": entry.nachteilsausgleich,
-                    "lrst_diagnosis": entry.lrst_diagnosis,
-                    "n_sessions": entry.n_sessions,
-                    "keyword_taetigkeitsbericht": entry.keyword_taetigkeitsbericht,
+                    "ID": entry.client_id,
+                    "Schule": entry.school,
+                    "Nachname": entry.last_name_encr,
+                    "Vorname": entry.first_name_encr,
+                    "Klasse": entry.class_name,
+                    "Notenschutz": entry.notenschutz,
+                    "Nachteilsausgleich": entry.nachteilsausgleich,
+                    "LRSt Diagnose": entry.lrst_diagnosis,
+                    "Sitzungen": entry.n_sessions,
+                    "Tätigkeitsbericht": entry.keyword_taetigkeitsbericht,
                 }
                 for entry in results
             ]
