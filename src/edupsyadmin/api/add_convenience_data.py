@@ -166,4 +166,21 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
             )
         )
 
+    # convert lrst_last_test_by for pdf forms created with libreoffice
+    if data["lrst_last_test_by"]:
+        if data["lrst_last_test_by"] == "schpsy":
+            data["lrst_schpsy"] = 1
+        elif data["lrst_last_test_by"] == "psychia":
+            data["lrst_schpsy"] = 2
+        elif data["lrst_last_test_by"] == "psychoth":
+            data["lrst_schpsy"] = 3
+        elif data["lrst_last_test_by"] == "spz":
+            data["lrst_schpsy"] = 4
+        else:
+            logger.error(
+                f"Value for lrst_last_test_by must be in "
+                f"(schpsy, psychia, psychoth, spz) but is "
+                f"{data['lrst_last_test_by']}"
+            )
+
     return data
