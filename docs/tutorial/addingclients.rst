@@ -18,7 +18,7 @@ Schüler unserer, in der Konfiguration angelegten ``TutorialSchule`` zu.
 
 .. code-block:: console
 
-    $ edupsyadmin new_client --csv "./pfad/zu/samblewebuntisfile.csv" --name "MustermMax1" --school TutorialSchule
+    $ edupsyadmin new_client --csv "./pfad/zu/samplewebuntisfile.csv" --name "MustermMax1" --school TutorialSchule
 
 Einträge bearbeiten
 -------------------
