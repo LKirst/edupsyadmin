@@ -61,7 +61,7 @@ def add_categories_to_df(
     for key in category_keys:
         subcategories = get_subcategories(key)
         df.loc[df[category_colnm] == key, subcategories] = df.loc[
-            df[category_colnm] == key, "n_sessions"
+            df[category_colnm] == key, "h_sessions"
         ]
         categories_all.extend(subcategories)
 
@@ -82,16 +82,14 @@ def add_categories_to_df(
     return df, summary_categories
 
 
-def summary_statistics_n_sessions(
-    df: pd.DataFrame, min_per_ses: int = 45
-) -> pd.DataFrame:
-    n_sessions = df.groupby("school")["n_sessions"].describe()
-    n_sessions.loc[:, "sum"] = df.groupby("school")["n_sessions"].agg("sum")
-    total = df["n_sessions"].describe()
-    total["sum"] = df["n_sessions"].agg("sum")
-    n_sessions.loc["all", :] = total
-    n_sessions["zeitstunden"] = n_sessions["sum"] * min_per_ses / 60
-    return n_sessions
+def summary_statistics_h_sessions(df: pd.DataFrame) -> pd.DataFrame:
+    """Sum up Zeitstunden (h_sessions) per school and in total"""
+    h_sessions = df.groupby("school")["h_sessions"].describe()
+    h_sessions.loc[:, "sum"] = df.groupby("school")["h_sessions"].agg("sum")
+    total = df["h_sessions"].describe()
+    total["sum"] = df["h_sessions"].agg("sum")
+    h_sessions.loc["all", :] = total
+    return h_sessions
 
 
 def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> pd.DataFrame:
@@ -171,7 +169,7 @@ def summary_statistics_wstd(
         n Wochenstunden school psychology
     wstd_total : int, optional
         total n Wochenstunden (not just school psychology), by default 23
-    zst_spsy_year_actual: float, optional
+    zst_spsy_year_actual: float
         actual Zeitstunden school psychology
     *schools : str
         strings with name of the school and n students for the respective school,
@@ -218,17 +216,17 @@ def create_taetigkeitsbericht_report(
     name: str,
     summary_wstd: "pd.Series[float]",
     summary_categories: pd.DataFrame | None = None,
-    summary_n_sessions: pd.DataFrame | None = None,
+    summary_h_sessions: pd.DataFrame | None = None,
 ) -> None:
     if pdflibs_imported:
         if not os.path.exists("resources"):
             os.makedirs("resources")
         wstd_img = "resources/summary_wstd.png"
         dfi.export(summary_wstd, wstd_img, table_conversion="matplotlib")
-        if summary_n_sessions is not None:
-            n_sessions_img = "resources/summary_n_sessions.png"
+        if summary_h_sessions is not None:
+            h_sessions_img = "resources/summary_h_sessions.png"
             dfi.export(
-                summary_n_sessions, n_sessions_img, table_conversion="matplotlib"
+                summary_h_sessions, h_sessions_img, table_conversion="matplotlib"
             )
 
         report = Report(name)
@@ -251,9 +249,9 @@ def create_taetigkeitsbericht_report(
                 ]:
                     report.cell(w=50, h=9, border=0, text=f"{val[colnm]:.0f}")
                 report.ln(18)  # line break
-        if summary_n_sessions is not None:
+        if summary_h_sessions is not None:
             report.add_page()
-            report.image(n_sessions_img, x=15, y=report.HEIGHT * 1 / 4, w=180)
+            report.image(h_sessions_img, x=15, y=report.HEIGHT * 1 / 4, w=180)
         report.add_page()
         report.image(wstd_img, x=15, y=20, w=report.WIDTH - 20)
         report.output(basename_out + "_report.pdf")
@@ -272,21 +270,18 @@ def taetigkeitsbericht(
     wstd_psy: int,
     nstudents: list[str],
     out_basename: str = "Taetigkeitsbericht_Out",
-    min_per_ses: int = 45,
     wstd_total: int = 23,
     name: str = "Schulpsychologie",
 ) -> None:
     """
     Create a PDF for the Taetigkeitsbericht. This function assumes your db
-    has the columns 'keyword_taetigkeitsbericht' and 'n_sessions'
+    has the columns 'keyword_taetigkeitsbericht' and 'h_sessions'
 
     param wstd_psy [int]: Anrechnungsstunden in Wochenstunden
     param nstudents [list]: list of strings with item containing the name of
         the school and the number of students at that school, e.g. Schulname625
     param out_basename [str]: base name for the output files.
         Defaults to "Taetigkeitsbericht_Out".
-    param min_per_ses [int]: duration of one session in minutes.
-        Defaults to 45.
     param wstd_total [int]: total Wochstunden (depends on your school).
         Defaults to 23.
     )
@@ -303,12 +298,12 @@ def taetigkeitsbericht(
     summary_categories.to_csv(out_basename + "_categories.csv")
     print(summary_categories)
 
-    # Summary statistics for n_sessions
-    summarystats_n_sessions = summary_statistics_n_sessions(df, min_per_ses=min_per_ses)
-    summarystats_n_sessions.to_csv(out_basename + "_n_sessions.csv")
-    print(summarystats_n_sessions)
+    # Summary statistics for h_sessions
+    summarystats_h_sessions = summary_statistics_h_sessions(df)
+    summarystats_h_sessions.to_csv(out_basename + "_h_sessions.csv")
+    print(summarystats_h_sessions)
 
-    zstd_spsy_year_actual = summarystats_n_sessions.loc["all", "zeitstunden"]
+    zstd_spsy_year_actual = summarystats_h_sessions.loc["all", "sum"]
 
     # Summary statistics for Wochenstunden
     summarystats_wstd = summary_statistics_wstd(
@@ -322,5 +317,5 @@ def taetigkeitsbericht(
         name,
         summarystats_wstd,
         summary_categories,
-        summarystats_n_sessions,
+        summarystats_h_sessions,
     )

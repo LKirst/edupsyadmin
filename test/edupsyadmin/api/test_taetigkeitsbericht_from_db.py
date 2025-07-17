@@ -6,7 +6,7 @@ from edupsyadmin.api.taetigkeitsbericht_from_db import (
     add_categories_to_df,
     create_taetigkeitsbericht_report,
     get_subcategories,
-    summary_statistics_n_sessions,
+    summary_statistics_h_sessions,
     summary_statistics_wstd,
     taetigkeitsbericht,
     wstd_in_zstd,
@@ -24,28 +24,33 @@ def test_get_subcategories():
 
 
 def test_add_categories_to_df():
-    df = pd.DataFrame({"category": ["cat1", "cat2.sub"], "n_sessions": [5, 3]})
+    df = pd.DataFrame({"category": ["cat1", "cat2.sub"], "h_sessions": [5.3, 3]})
     df, summary = add_categories_to_df(df, "category")
     assert "cat1" in df.columns
     assert "cat2" in df.columns
     assert "cat2.sub" in df.columns
-    assert summary.loc["sum", "cat1"] == 5
+
+    # the sum for cat1 is 5.3
+    assert summary.loc["sum", "cat1"] == 5.3
+
+    # there are no sessions in the category "more than 3 for cat2.sub
     assert summary.loc["count_mt3_sessions", "cat2.sub"] == 0
 
 
-def test_summary_statistics_n_sessions():
+def test_summary_statistics_h_sessions():
     df = pd.DataFrame(
-        {"school": ["school1", "school2", "school1"], "n_sessions": [5, 2, 3]}
+        {"school": ["school1", "school2", "school1"], "h_sessions": [5.2, 2, 3]}
     )
-    result = summary_statistics_n_sessions(df)
-    assert result.loc["school1", "sum"] == 8
+    result = summary_statistics_h_sessions(df)
+    assert result.loc["school1", "sum"] == 8.2
     assert result.loc["school2", "sum"] == 2
-    assert result.loc["all", "sum"] == 10
+    assert result.loc["all", "sum"] == 10.2
 
 
 def test_wstd_in_zstd():
     result = wstd_in_zstd(5)
     assert result.loc["wstd_spsy", "value"] == 5
+    # TODO: test for a precise value
     assert result.loc["zstd_spsy_week_target", "value"] > 0
 
 
@@ -76,7 +81,7 @@ def test_create_taetigkeitsbericht_report(mock_report, mock_dfi_export, tmp_path
         ],
     )
 
-    summary_n_sessions = pd.DataFrame(
+    summary_h_sessions = pd.DataFrame(
         {
             "count": [2, 1, 3],
             "mean": [4.0, 2.0, 3.333],
@@ -93,7 +98,7 @@ def test_create_taetigkeitsbericht_report(mock_report, mock_dfi_export, tmp_path
         "Test Name",
         summary_wstd,
         summary_categories,
-        summary_n_sessions,
+        summary_h_sessions,
     )
 
     mock_dfi_export.assert_called()
@@ -106,9 +111,9 @@ def test_create_taetigkeitsbericht_report(mock_report, mock_dfi_export, tmp_path
 def test_taetigkeitsbericht(mock_create_report, mock_get_data_raw, tmp_path):
     mock_get_data_raw.return_value = pd.DataFrame(
         {
-            "school": ["FirstSchool", "SecondSchool"],
-            "keyword_taetigkeitsbericht": ["cat1", "cat2"],
-            "n_sessions": [5, 3],
+            "school": ["FirstSchool", "FirstSchool", "SecondSchool"],
+            "keyword_taetigkeitsbericht": ["cat1", "cat2", "cat2"],
+            "h_sessions": [5, 3, 2.2],
         }
     )
 
