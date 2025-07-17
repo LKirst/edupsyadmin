@@ -82,9 +82,9 @@ class ClientsManager:
                     "Vorname": entry.first_name_encr,
                     "Klasse": entry.class_name,
                     "Notenschutz": entry.notenschutz,
-                    "Nachteilsausgleich": entry.nachteilsausgleich,
+                    "NTA": entry.nachteilsausgleich,
                     "LRSt Diagnose": entry.lrst_diagnosis,
-                    "Sitzungen": entry.n_sessions,
+                    "Sitzungen (h)": entry.h_sessions,
                     "Tätigkeitsbericht": entry.keyword_taetigkeitsbericht,
                 }
                 for entry in results

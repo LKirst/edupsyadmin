@@ -294,7 +294,9 @@ class Client(Base):
         String,
         doc="Details zu anderen Formen des NTAs für den Klienten",
     )
-    nta_notes: Mapped[str | None] = mapped_column(String, doc="Notizen zu NTA")
+    nta_nos_notes: Mapped[str | None] = mapped_column(
+        String, doc="Notizen zu Notenschutz und Nachteilsausgleich"
+    )
     nta_nos_end: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
@@ -312,8 +314,7 @@ class Client(Base):
             "Notenschutzmaßnahmen zeitlich begrenzt sind"
         ),
     )
-    # TODO: the name should be h_sessions
-    n_sessions: Mapped[float] = mapped_column(
+    h_sessions: Mapped[float] = mapped_column(
         Float,
         doc=(
             "Anzahl der mit dem Klienten verbundenen Zeitstunden "
@@ -353,13 +354,13 @@ class Client(Base):
         nta_ersgew: bool | str = False,
         nta_vorlesen: bool | str = False,
         nta_other_details: str | None = None,
-        nta_notes: str | None = None,
+        nta_nos_notes: str | None = None,
         nta_nos_end_grade: int | str | None = None,
         lrst_diagnosis: str | None = None,
         lrst_last_test_date: date | str | None = None,
         lrst_last_test_by: str | None = None,
         keyword_taetigkeitsbericht: str | None = "",
-        n_sessions: int | str = 1,
+        h_sessions: int | str = 1,
     ) -> None:
         if client_id and isinstance(client_id, str):
             self.client_id = int(client_id)
@@ -424,10 +425,10 @@ class Client(Base):
         self.nta_ersgew = nta_ersgew
         self.nta_vorlesen = nta_vorlesen
         self.nta_other_details = nta_other_details
-        self.nta_notes = nta_notes
+        self.nta_nos_notes = nta_nos_notes
         self.nta_nos_end_grade = nta_nos_end_grade
 
-        self.n_sessions = n_sessions
+        self.h_sessions = h_sessions
 
         self.datetime_created = datetime.now()
         self.datetime_lastmodified = self.datetime_created
