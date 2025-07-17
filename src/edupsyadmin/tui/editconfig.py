@@ -121,7 +121,7 @@ class ConfigEditorApp(App):
         this_school_inputs = [Static(f"Einstellungen für Schule {index}")]
 
         school_key_input = Input(value=school_key, placeholder="Schullabel")
-        school_key_input.tooltip = "Schullabel (ohne Lehrzeichen)"
+        school_key_input.tooltip = "Schullabel (nur Buchstaben, ohne Lehrzeichen)"
         self.school_key_inputs[school_key] = school_key_input
         this_school_inputs.append(school_key_input)
 
