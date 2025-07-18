@@ -2,7 +2,7 @@ from datetime import date
 
 from textual import log
 from textual.app import App
-from textual.events import Key
+from textual.validation import Regex
 from textual.widgets import Button, Checkbox, Input, Label
 
 from edupsyadmin.core.python_type import get_python_type
@@ -32,34 +32,6 @@ HIDDEN_FIELDS = [
     "nta_other",
     "nta_nos_end",
 ]
-
-
-class DateInput(Input):
-    """A custom input widget that accepts dates as YYYY-MM-DD."""
-
-    def on_key(self, event: Key) -> None:
-        """Handle key press events to enforce date format."""
-        # Allow navigation and control keys
-        if event.key in {"backspace", "delete", "left", "right", "home", "end"}:
-            return
-
-        # Allow digits and dashes at the correct positions
-        if event.character and (event.character.isdigit() or event.character == "-"):
-            current_text = self.value
-
-            # Check the current length and position of the input
-            if len(current_text) < 10:  # YYYY-MM-DD has 10 characters
-                if event.character == "-":
-                    # Allow dashes only at the 5th and 8th positions
-                    if len(current_text) in {4, 7}:
-                        return
-                    event.prevent_default()
-                else:
-                    return  # Allow digits
-            else:
-                event.prevent_default()  # Prevent input if length exceeds 10
-        else:
-            event.prevent_default()  # Prevent invalid input
 
 
 class StudentEntryApp(App):
@@ -116,15 +88,29 @@ class StudentEntryApp(App):
                 widget = Checkbox(label=name, value=default)
                 self.checkboxes[name] = widget
             elif field_type is int:
-                widget = Input(value=default, placeholder=placeholder, type="integer")
-                widget.valid_empty = True
+                widget = Input(
+                    value=default,
+                    placeholder=placeholder,
+                    type="integer",
+                    valid_empty=True,
+                )
                 self.inputs[name] = widget
             elif field_type is float:
-                widget = Input(value=default, placeholder=placeholder, type="number")
-                widget.valid_empty = True
+                widget = Input(
+                    value=default,
+                    placeholder=placeholder,
+                    type="number",
+                    valid_empty=True,
+                )
                 self.inputs[name] = widget
             elif (field_type is date) or (name == "birthday_encr"):
-                widget = DateInput(value=default, placeholder=placeholder)
+                widget = Input(
+                    value=default,
+                    placeholder=placeholder,
+                    restrict=r"[\d-]*",
+                    validators=Regex(r"\d{4}-[0-1]\d-[0-3]\d"),
+                    valid_empty=True,
+                )
                 self.dates[name] = widget
             else:
                 widget = Input(value=default, placeholder=placeholder)
@@ -150,10 +136,8 @@ class StudentEntryApp(App):
 
         required_field_empty = any(current.get(f, "") == "" for f in REQUIRED_FIELDS)
 
-        # validation: every date must be "" or length 10
-        dates_valid = all(
-            len(widget.value) in (0, 10) for widget in self.dates.values()
-        )
+        # validation
+        dates_valid = all(widget.is_valid for widget in self.dates.values())
 
         if required_field_empty or not dates_valid:
             # mark required fields that are still empty
@@ -163,7 +147,7 @@ class StudentEntryApp(App):
 
             # mark dates that have a wrong length
             for widget in self.dates.values():
-                if len(widget.value) not in (0, 10):
+                if not widget.is_valid:
                     widget.add_class("-invalid")
         else:
             # find fields that changed
