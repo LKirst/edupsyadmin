@@ -1,10 +1,11 @@
 from datetime import date
 
-from textual import log
+from textual import log, on
 from textual.app import App
-from textual.validation import Regex
-from textual.widgets import Button, Checkbox, Input, Label
+from textual.validation import Function, Regex
+from textual.widgets import Button, Checkbox, Input, Label, RichLog
 
+from edupsyadmin.core.config import config
 from edupsyadmin.core.python_type import get_python_type
 from edupsyadmin.db.clients import Client
 
@@ -32,6 +33,10 @@ HIDDEN_FIELDS = [
     "nta_other",
     "nta_nos_end",
 ]
+
+
+def _is_school_key(value: str):
+    return value in config["school"]
 
 
 class StudentEntryApp(App):
@@ -108,10 +113,28 @@ class StudentEntryApp(App):
                     value=default,
                     placeholder=placeholder,
                     restrict=r"[\d-]*",
-                    validators=Regex(r"\d{4}-[0-1]\d-[0-3]\d"),
+                    validators=Regex(
+                        r"\d{4}-[0-1]\d-[0-3]\d",
+                        failure_description="Daten müssen im Format YYYY-mm-dd sein.",
+                    ),
                     valid_empty=True,
                 )
                 self.dates[name] = widget
+            elif name == "school":
+                widget = Input(
+                    value=default,
+                    placeholder=placeholder,
+                    validators=[
+                        Function(
+                            _is_school_key,
+                            failure_description=(
+                                "Der Wert für `school` entspricht keinem "
+                                "Wert aus der Konfiguration"
+                            ),
+                        )
+                    ],
+                )
+                self.inputs[name] = widget
             else:
                 widget = Input(value=default, placeholder=placeholder)
                 self.inputs[name] = widget
@@ -121,6 +144,9 @@ class StudentEntryApp(App):
             widget.id = f"{name}"
 
             yield widget
+
+        # For failures of input validation
+        yield RichLog()
 
         # Submit button
         self.submit_button = Button(label="Submit", id="Submit")
@@ -137,18 +163,14 @@ class StudentEntryApp(App):
         required_field_empty = any(current.get(f, "") == "" for f in REQUIRED_FIELDS)
 
         # validation
+        school_valid = self.query_one("#school").is_valid
         dates_valid = all(widget.is_valid for widget in self.dates.values())
 
-        if required_field_empty or not dates_valid:
+        if required_field_empty or not dates_valid or not school_valid:
             # mark required fields that are still empty
             for f in REQUIRED_FIELDS:
                 if current.get(f, "") == "":
                     self.query_one(f"#{f}", Input).add_class("-invalid")
-
-            # mark dates that have a wrong length
-            for widget in self.dates.values():
-                if not widget.is_valid:
-                    widget.add_class("-invalid")
         else:
             # find fields that changed
             self._changed_data = {
@@ -158,6 +180,13 @@ class StudentEntryApp(App):
             }
 
             self.exit()  # Exit the app after submission
+
+    @on(Input.Blurred)
+    def check_for_validation(self, event: Input.Blurred) -> None:
+        if event.validation_result:
+            log = self.query_one(RichLog)
+            log.write(event.validation_result.is_valid)
+            log.write(event.validation_result.failure_descriptions)
 
     def get_data(self):
         return self._changed_data
