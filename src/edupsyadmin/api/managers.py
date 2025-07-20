@@ -101,19 +101,20 @@ class ClientsManager:
             query = session.query(Client).statement
             return pd.read_sql_query(query, session.bind)
 
-    def edit_client(self, client_id: int, new_data: dict[str, Any]) -> None:
+    def edit_client(self, client_id: list[int], new_data: dict[str, Any]) -> None:
         # TODO: Warn if key does not exist
-        logger.debug(f"editing client (id = {client_id})")
-        with self.Session() as session:
-            client = session.get(Client, client_id)
-            if client:
-                for key, value in new_data.items():
-                    logger.debug(f"changing value for key: {key}")
-                    setattr(client, key, value)
-                client.datetime_lastmodified = datetime.now()
-                session.commit()
-            else:
-                logger.error("client could not be found!")
+        for this_client_id in client_id:
+            logger.debug(f"editing client (id = {this_client_id})")
+            with self.Session() as session:
+                client = session.get(Client, this_client_id)
+                if client:
+                    for key, value in new_data.items():
+                        logger.debug(f"changing value for key: {key}")
+                        setattr(client, key, value)
+                    client.datetime_lastmodified = datetime.now()
+                    session.commit()
+                else:
+                    logger.error("client could not be found!")
 
     def delete_client(self, client_id: int) -> None:
         logger.debug("deleting client")
@@ -155,11 +156,11 @@ def set_client(
     app_uid: str,
     database_url: str,
     salt_path: str | os.PathLike[str],
-    client_id: int,
+    client_id: list[int],
     key_value_pairs: dict[str, str | bool | None],
 ) -> None:
     """
-    Set the value for a key given a client_id
+    Set the value for a key given one or multiple client_ids
     """
     clients_manager = ClientsManager(
         database_url=database_url,
@@ -169,7 +170,11 @@ def set_client(
     )
 
     if key_value_pairs is None:
-        key_value_pairs = _get_modified_values(
+        assert len(client_id) == 1, (
+            "When no key-value pairs are passed, "
+            "only one client_id can be edited at a time"
+        )
+        key_value_pairs = _tui_get_modified_values(
             database_url=database_url,
             app_uid=app_uid,
             app_username=app_username,
@@ -295,7 +300,7 @@ def enter_client_cli(clients_manager: ClientsManager) -> int:
     return clients_manager.add_client(**data)
 
 
-def _get_modified_values(
+def _tui_get_modified_values(
     app_username: str,
     app_uid: str,
     database_url: str,

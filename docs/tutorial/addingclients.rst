@@ -24,12 +24,24 @@ Einträge bearbeiten
 -------------------
 
 Ändere Werte für den Datenbankeintrag mit ``client_id=2``. Wenn du oben
-``MustermMax1`` als zweites hinuzgefügt hast, ist hat er die ID ``2``. Hierbei
-steht ``1`` für "wahr/ja" und ``0`` für "falsch/nein".
+``MustermMax1`` als zweites hinuzgefügt hast, ist hat er die ID ``2``.
+
+Einzelne Klienten können interaktiv bearbeitet werden.
 
 .. code-block:: console
 
-    $ edupsyadmin set_client 2 \
+    $ edupsyadmin set_client 2
+
+Für eine schnellere Bearbeitung (vor allem von mehreren Klienten gleichzeitig),
+können Datenbankeinträge auch direkt unter Angabe von Schlüssel-Wert-Paaren
+bearbeitet werden. Hierbei steht ``1`` für "wahr/ja" und ``0`` für
+"falsch/nein". Mit folgendem Befehl bearbeiten wir die Klienten mit
+``client_id=1`` und ``client_id=2``.
+
+.. code-block:: console
+
+    $ edupsyadmin set_client 1 2 \
+      --key_value_pairs \
       "nta_font=1" \
       "nta_zeitverl_vieltext=20" \
       "nos_rs=0" \

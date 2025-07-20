@@ -316,7 +316,7 @@ def _set_client(
         app_uid: str,
         database_url: str,
         salt_path: str | os.PathLike[str],
-        client_id: int,
+        client_id: list[int],
         key_value_pairs: list[str] | None,
     ) -> None:
         if key_value_pairs:
@@ -335,9 +335,9 @@ def _set_client(
         description="Change values for a client",
     )
     parser.set_defaults(command=command_set_client)
-    parser.add_argument("client_id", type=int)
+    parser.add_argument("client_id", type=int, nargs="+")
     parser.add_argument(
-        "key_value_pairs",
+        "--key_value_pairs",
         type=str,
         nargs="*",
         default=None,

@@ -277,6 +277,7 @@ def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
         "--database_url",
         database_url,
         "1",
+        "--key_value_pairs",
         "street_encr='Veränderte Straße 5'",
         "class_name=42ab",
     ]

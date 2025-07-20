@@ -90,25 +90,74 @@ class ManagersTest:
             "nta_zeitv_vieltext": 25,
             "nta_font": True,
         }
-        clients_manager.edit_client(client_id, updated_data)
-        updated_client = clients_manager.get_decrypted_client(client_id)
+        clients_manager.edit_client([client_id], updated_data)
+        upd_cl = clients_manager.get_decrypted_client(client_id)
 
-        print(f"Keys of the updated client: {updated_client.keys()}")
+        assert EXPECTED_KEYS.issubset(upd_cl.keys())
+        assert upd_cl["first_name_encr"] == "Jane"
+        assert upd_cl["last_name_encr"] == "Smith"
 
-        assert EXPECTED_KEYS.issubset(updated_client.keys())
-        assert updated_client["first_name_encr"] == "Jane"
-        assert updated_client["last_name_encr"] == "Smith"
+        assert upd_cl["nta_zeitv_vieltext"] == 25
+        assert upd_cl["nta_font"] is True
+        assert upd_cl["nta_zeitv"] is True
+        assert upd_cl["nachteilsausgleich"] is True
 
-        assert updated_client["nta_zeitv_vieltext"] == 25
-        assert updated_client["nta_font"] is True
-        assert updated_client["nta_zeitv"] is True
-        assert updated_client["nachteilsausgleich"] is True
+        assert upd_cl["nta_ersgew"] is False
 
-        assert updated_client["nta_ersgew"] is False
-
-        assert updated_client["datetime_lastmodified"] > client["datetime_lastmodified"]
+        assert upd_cl["datetime_lastmodified"] > client["datetime_lastmodified"]
 
         mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
+
+        # add another client
+        another_client_dict = {
+            "school": "SecondSchool",
+            "gender_encr": "m",
+            "entry_date": date(2020, 12, 24),
+            "class_name": "5a",
+            "first_name_encr": "Aam",
+            "last_name_encr": "Admi",
+            "birthday_encr": "1992-01-01",
+            "street_encr": "Platzhalterplatz 1",
+            "city_encr": "87534 Oberstaufen",
+            "telephone1_encr": "0000 0000",
+            "email_encr": "aam.admi@example.com",
+        }
+        another_client_id = clients_manager.add_client(**another_client_dict)
+
+        # edit multiple clients
+        clients_manager.edit_client(
+            [client_id, another_client_id],
+            {
+                "nos_rs": "0",
+                "nos_les": "1",
+                "nta_font": True,
+                "nta_zeitv_vieltext": "",
+                "nta_zeitv_wenigtext": "",
+                "lrst_diagnosis": "iLst",
+            },
+        )
+        upd_cl1_multiple = clients_manager.get_decrypted_client(client_id)
+        upd_cl2_multiple = clients_manager.get_decrypted_client(another_client_id)
+
+        assert (
+            upd_cl1_multiple["first_name_encr"] != upd_cl2_multiple["first_name_encr"]
+        )
+        assert (
+            upd_cl1_multiple["notenschutz"] == upd_cl2_multiple["notenschutz"] is True
+        )
+        assert upd_cl1_multiple["nos_rs"] == upd_cl2_multiple["nos_rs"] is False
+        assert upd_cl1_multiple["nos_les"] == upd_cl2_multiple["nos_les"] is True
+        assert upd_cl1_multiple["nta_zeitv"] == upd_cl2_multiple["nta_zeitv"] is False
+        assert (
+            upd_cl1_multiple["nta_zeitv_vieltext"]
+            == upd_cl2_multiple["nta_zeitv_vieltext"]
+            is None
+        )
+        assert (
+            upd_cl1_multiple["lrst_diagnosis"]
+            == upd_cl2_multiple["lrst_diagnosis"]
+            == "iLst"
+        )
 
     def test_delete_client(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
