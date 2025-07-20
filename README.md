@@ -22,63 +22,9 @@ Run the application:
 
 ## Getting started
 
-### Modify the config file
+### keyring backend
 
-First, you have to update the config file with your data. To
-find the config file, run:
-
-`edupsyadmin info`
-
-In the output, you will see your `config_path`. Open the file
-using an editor that does not add formatting (for example
-Notepad on Windows). Change all values to the data that you
-want to appear in your documentation:
-
-1. First replace YOUR.USER.NAME with your user name (no spaces and no special
-   characters):
-
-   `  app_username: YOUR.USER.NAME`
-
-2. Then change your data under `schoolpsy`
-
-  ```
-    schoolpsy_name: "Write out your name here"
-    schoolpsy_street: "Your street and house number"
-    schoolpsy_town: "Postecode and town"
-  ```
-
-3. Under `school`, change the short name for your school to something more
-   memorable than `FirstSchool`. Do not use spaces or special characters:
-
-   `  MyMemorableSchoolName:`
-
-4. Add the data for your school. The `end` variable will be used to estimate
-   the date for the destruction of records (3 years after the estimated
-   graduation date).
-
-  ```
-    school_head_w_school: "Title of your head of school"
-    school_name: "Name of your school written out"
-    school_street: "Street and house number of your school"
-    school_town: "Postecode and town"
-    end: 11
-  ```
-
-5. Reapeat step 3 and 4 for each school you work at.
-
-6. Change the paths under filesets to point to the (sets of) files you want to
-   use.
-
-  ```
-  form_set:
-    name_of_my_form_set:
-      - "path/to/my/first_file.pdf"
-      - "path/to/my/second_file.pdf"
-  ```
-
-### Storing credentials
-
-edupsyadmin uses `keyring` for the encryption credentials. `keyring` has
+edupsyadmin uses `keyring` to store the encryption credentials. `keyring` has
 several backends.
 
 - On Windows the default is the Windows Credential Manager (German:
@@ -86,12 +32,62 @@ several backends.
 
 - On macOS, the default is Keychain (German: Schlüsselbund)
 
-For the keychain backend you want to use, add an entry using the username from
-your config.yaml.
+Those default keyring backends unlock when you login to your machine. You may
+want to install a backend that requires separate unlocking:
+<https://keyring.readthedocs.io/en/latest/#third-party-backends>
 
-- Internet or network address: `liebermann-schulpsychologie.github.io`
-- User name: `the_user_name_from_your_config_file`
-- Password: `a_secure_password`
+### Modify the config file
+
+First, you have to update the config file with your data. To
+find the config file, run:
+
+`edupsyadmin edit_config`
+
+Change all values to the data that you want to appear in your documentation:
+
+1. First replace `sample.username` with your user name (no spaces and no special
+   characters):
+
+   `  YOUR.USER.NAME`
+
+1. Set a secure password. If you have already set a password, leave this field empty.
+
+   `  a_secure_password`
+
+1. Change your data under `schoolpsy`
+
+  ```
+    Your postecode and town
+    Your first and last name
+    The street and house number of your school
+  ```
+
+1. Under `school`, change the short name for your school to something more
+   memorable than `FirstSchool`. Do not use spaces or special characters:
+
+   `  MyMemorableSchoolName`
+
+1. Add the data for your school. The `end` variable will be used to estimate
+   the date for the destruction of records (3 years after the estimated
+   graduation date).
+
+  ```
+    end: 11
+    Postecode and town
+    Street and house number of your school
+    Title of your head of school
+    Name of your school written out
+  ```
+
+1. Reapeat step 3 and 4 for each school you work at.
+
+1. Change the paths under filesets to point to the (sets of) files you want to
+   use.
+
+  ```
+  path/to/my/first_file.pdf
+  path/to/my/second_file.pdf
+  ```
 
 ## The database
 
@@ -113,10 +109,15 @@ Add a client to the database from a Webuntis csv export:
 
     $ edupsyadmin new_client --csv ./path/to/your/file.csv --name "short_name_of_client"
 
-Change values for the database entry with `client_id=42`:
+Change values for the database entry with `client_id=42` interactively:
+
+    $ edupsyadmin set_client 42
+
+Change values for the database entry with `client_id=42` from the commandline:
 
 ```
-$ edupsyadmin set_client 2 \
+$ edupsyadmin set_client 42 \
+  --key_value_pairs \
   "nta_font=1" \
   "nta_zeitverl_vieltext=20" \
   "nos_rs=0" \
