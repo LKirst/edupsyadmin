@@ -1,4 +1,3 @@
-import importlib.resources
 from pathlib import Path
 
 import keyring
@@ -40,6 +39,7 @@ class ConfigEditorApp(App):
     """A Textual app to edit edupsyadmin YAML configuration files."""
 
     CSS_PATH = "editconfig.tcss"
+
     school_count: reactive[int] = reactive(0)
     form_set_count: reactive[int] = reactive(0)
 
@@ -47,10 +47,13 @@ class ConfigEditorApp(App):
         super().__init__(**kwargs)
         self.config_path = config_path
         self.config_dict = load_config(config_path)
-        self.inputs = {}
-        self.school_key_inputs = {}
-        self.password_input = None  # password input widget
-        self.last_school_widget = None  # last school widget
+
+        self.inputs: dict[str, Input] = {}
+        self.school_key_inputs: dict[str, Input] = {}
+        self.form_set_key_inputs: dict[str, Input] = {}
+
+        self.password_input: Input | None = None
+        self.last_school_widget = None
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -59,219 +62,240 @@ class ConfigEditorApp(App):
         yield self.content
 
     async def on_mount(self) -> None:
-        """Called when the app is mounted."""
         self.title = "Konfiguration für edupsyadmin"  # title for the header
         self.generate_content()
 
     def generate_content(self):
-        """Generate content for the VerticalScroll container."""
-
-        # Create inputs for core settings
+        # core
         self.content.mount(Static("App-Einstellungen"))
         for key, value in self.config_dict["core"].items():
-            input_widget = Input(value=str(value), placeholder=key)
-            input_widget.tooltip = TOOLTIPS.get(key, "")
-            self.inputs[f"core.{key}"] = input_widget
-            self.content.mount(input_widget)
+            inp = Input(value=str(value), placeholder=key)
+            inp.tooltip = TOOLTIPS.get(key, "")
+            self.inputs[f"core.{key}"] = inp
+            self.content.mount(inp)
 
-        # Create password input widget
+        # password
         self.content.mount(
             Static(
-                "Wenn schon ein Passwort festgelegt wurde, bitte das "
-                "folgende Feld nicht bearbeiten. "
-                "Ändere das Passwort nur, wenn du eine neue Datenbank "
-                "anlegst. "
-                "Wähle ein sicheres Passwort (siehe Tipps für sichere "
-                "Passwörter auf der Website des BSI."
+                "Wenn bereits ein Passwort hinterlegt ist, lasse das Feld leer. "
+                "Ändere es nur, wenn du eine neue Datenbank anlegst."
             )
         )
         self.password_input = Input(placeholder="Passwort", password=True)
         self.content.mount(self.password_input)
 
-        # Create inputs for schoolpsy settings
+        # schoolpsy
         self.content.mount(Static("Schulpsychologie-Einstellungen"))
         for key, value in self.config_dict["schoolpsy"].items():
-            input_widget = Input(value=str(value), placeholder=key)
-            input_widget.tooltip = TOOLTIPS.get(key, "")
-            self.inputs[f"schoolpsy.{key}"] = input_widget
-            self.content.mount(input_widget)
+            inp = Input(value=str(value), placeholder=key)
+            inp.tooltip = TOOLTIPS.get(key, "")
+            self.inputs[f"schoolpsy.{key}"] = inp
+            self.content.mount(inp)
 
-        # Create inputs for each school
+        # schools
         self.load_schools()
+        self.content.mount(Button("Schule hinzufügen", id="addschool"))
 
-        # Add button for adding a school
-        add_school_button = Button(label="Schule hinzufügen", id="addschool")
-        self.content.mount(add_school_button)
-
-        # Create inputs for form sets
+        # form_sets
         self.load_form_sets()
+        self.content.mount(Button("Form-Set hinzufügen", id="addformset"))
 
-        # Add save button
-        save_button = Button(label="Speichern", id="save")
-        self.content.mount(save_button)
+        # save button
+        self.content.mount(Button("Speichern", id="save"))
 
     def load_schools(self):
         self.school_count = len(self.config_dict["school"])
-        for i, (school_key, school_info) in enumerate(
-            self.config_dict["school"].items(), start=1
-        ):
-            self.add_school_inputs(school_key, school_info, i)
+        for i, (key, info) in enumerate(self.config_dict["school"].items(), 1):
+            self.add_school_inputs(key, info, i)
 
-    def add_school_inputs(self, school_key: str, school_info: dict, index: int):
-        this_school_inputs = [Static(f"Einstellungen für Schule {index}")]
+    def add_school_inputs(self, school_key: str, info: dict, index: int):
+        widgets = [Static(f"Einstellungen für Schule {index}")]
 
-        school_key_input = Input(value=school_key, placeholder="Schullabel")
-        school_key_input.tooltip = "Schullabel (nur Buchstaben, ohne Lehrzeichen)"
-        self.school_key_inputs[school_key] = school_key_input
-        this_school_inputs.append(school_key_input)
+        key_inp = Input(value=school_key, placeholder="Schullabel")
+        key_inp.tooltip = "Schullabel (nur Buchstaben, keine Leerzeichen)"
+        self.school_key_inputs[school_key] = key_inp
+        self.inputs[f"school_key.{school_key}"] = key_inp
+        widgets.append(key_inp)
 
-        for key, value in school_info.items():
-            input_widget = Input(value=str(value), placeholder=key)
-            input_widget.tooltip = TOOLTIPS.get(key, "")
-            self.inputs[f"school.{school_key}.{key}"] = input_widget
-            this_school_inputs.append(input_widget)
+        for k, v in info.items():
+            inp = Input(value=str(v), placeholder=k)
+            inp.tooltip = TOOLTIPS.get(k, "")
+            self.inputs[f"school.{school_key}.{k}"] = inp
+            widgets.append(inp)
 
-        # Mount the new school inputs after the last school widget
         if self.last_school_widget:
-            self.content.mount_all(this_school_inputs, after=self.last_school_widget)
+            self.content.mount_all(widgets, after=self.last_school_widget)
         else:
-            self.content.mount_all(this_school_inputs)
-
-        # Update the last school widget reference
-        self.last_school_widget = this_school_inputs[-1]
+            self.content.mount_all(widgets)
+        self.last_school_widget = widgets[-1]
 
     def load_form_sets(self):
         self.form_set_count = len(self.config_dict["form_set"])
-        for form_set_key, paths in self.config_dict["form_set"].items():
-            self.add_form_set_inputs(form_set_key, paths)
+        for key, paths in self.config_dict["form_set"].items():
+            self.add_form_set_inputs(key, paths)
 
-    def add_form_set_inputs(self, form_set_key: str, paths: list):
-        self.content.mount(Static(f"Form Set: {form_set_key}"))
-        for i, path in enumerate(paths):
-            input_widget = Input(value=str(path), placeholder=f"Path {i + 1}")
-            self.inputs[f"form_set.{form_set_key}.{i}"] = input_widget
-            self.content.mount(input_widget)
+    def add_form_set_inputs(self, form_set_key: str, paths: list[str]):
+        num = len(self.form_set_key_inputs) + 1
+        self.content.mount(Static(f"Einstellungen für Form-Set {num}"))
 
-        add_file_button = Button(
-            label=f"Füge Pfad hinzu zum Set {form_set_key}",
-            id=f"addfileto{form_set_key}",
-        )
-        self.content.mount(add_file_button)
+        key_inp = Input(value=form_set_key, placeholder="Form-Set-Label")
+        key_inp.tooltip = "Name des Form-Sets"
+        self.form_set_key_inputs[form_set_key] = key_inp
+        self.inputs[f"form_set_key.{form_set_key}"] = key_inp
+        self.content.mount(key_inp)
 
-    async def on_button_pressed(self, event: Click) -> None:
-        if event.button.id == "save":
-            await self.save_config()
-            self.exit(event.button.id)
-        elif event.button.id == "addschool":
-            self.add_new_school()
-        elif event.button.id.startswith("addfileto"):
-            form_set_key = event.button.id.replace("addfileto", "")
-            self.add_form_path(form_set_key)
+        for i, p in enumerate(paths):
+            inp = Input(value=str(p), placeholder=f"Pfad {i+1}")
+            self.inputs[f"form_set.{form_set_key}.{i}"] = inp
+            self.content.mount(inp)
 
-    async def on_input_changed(self, event: Input.Changed) -> None:
-        """Called when an input is changed."""
-        # Update the config dictionary with the new value
-        for key, input_widget in self.inputs.items():
-            section, *sub_keys = key.split(".")
-            sub_dict = self.config_dict[section]
-            for sub_key in sub_keys[:-1]:
-                sub_dict = sub_dict[sub_key]
-
-            # Convert the last key to an integer if sub_dict is a list
-            if isinstance(sub_dict, list):
-                sub_dict[int(sub_keys[-1])] = input_widget.value
-            else:
-                sub_dict[sub_keys[-1]] = input_widget.value
-
-        # Handle school key changes
-        changes = []
-        for old_key, input_widget in self.school_key_inputs.items():
-            new_key = input_widget.value
-            if new_key != old_key and new_key not in self.config_dict["school"]:
-                changes.append((old_key, new_key))
-
-        for old_key, new_key in changes:
-            self.config_dict["school"][new_key] = self.config_dict["school"].pop(
-                old_key
+        self.content.mount(
+            Button(
+                f"Pfad zu »{form_set_key}« hinzufügen", id=f"addfileto{form_set_key}"
             )
-            # Update the inputs dictionary to reflect the new key
-            for key in list(self.inputs.keys()):
-                if key.startswith(f"school.{old_key}."):
-                    new_input_key = key.replace(
-                        f"school.{old_key}.", f"school.{new_key}."
-                    )
-                    self.inputs[new_input_key] = self.inputs.pop(key)
-            self.school_key_inputs[new_key] = self.school_key_inputs.pop(old_key)
+        )
 
-    def add_new_school(self) -> None:
-        """Add a new school to the configuration."""
-        new_school_key = f"Schule{self.school_count + 1}"
-        while new_school_key in self.config_dict["school"]:
+    def add_new_school(self):
+        key = f"Schule{self.school_count + 1}"
+        while key in self.config_dict["school"]:
             self.school_count += 1
-            new_school_key = f"NewSchool{self.school_count + 1}"
+            key = f"Schule{self.school_count + 1}"
 
-        self.config_dict["school"][new_school_key] = {
-            "end": "",
-            "school_city": "",
+        self.config_dict["school"][key] = {
+            "school_head_w_school": "",
             "school_name": "",
             "school_street": "",
+            "school_city": "",
+            "end": "",
         }
         self.add_school_inputs(
-            new_school_key,
-            self.config_dict["school"][new_school_key],
-            self.school_count + 1,
+            key, self.config_dict["school"][key], self.school_count + 1
         )
         self.school_count += 1
 
-    def add_form_path(self, form_set_key: str) -> None:
-        """Add a new path to the specified form set."""
-        # Retrieve the current list of paths for the form set
-        current_paths = self.config_dict["form_set"].get(form_set_key, [])
+    def add_new_form_set(self):
+        i = 1
+        key = f"FormSet{i}"
+        while key in self.config_dict["form_set"]:
+            i += 1
+            key = f"FormSet{i}"
+        self.config_dict["form_set"][key] = []
+        self.add_form_set_inputs(key, [])
+        self.form_set_count += 1
 
-        # Create a new input field for the additional path
-        new_path_index = len(current_paths)
-        new_path_input = Input(value="", placeholder=f"Path {new_path_index + 1}")
+    def add_form_path(self, form_set_key: str):
+        paths = self.config_dict["form_set"][form_set_key]
+        idx = len(paths)
+        paths.append("")
 
-        # Update the configuration dictionary to include the new path
-        self.config_dict["form_set"][form_set_key].append("")
+        inp = Input(value="", placeholder=f"Pfad {idx + 1}")
+        self.inputs[f"form_set.{form_set_key}.{idx}"] = inp
 
-        # Add the new input to the form set inputs
-        self.inputs[f"form_set.{form_set_key}.{new_path_index}"] = new_path_input
+        last = None
+        for i in range(idx):
+            k = f"form_set.{form_set_key}.{i}"
+            if k in self.inputs:
+                last = self.inputs[k]
 
-        # Find the last path input widget for the specified form set
-        last_path_input = None
-        for i in range(new_path_index):
-            input_key = f"form_set.{form_set_key}.{i}"
-            if input_key in self.inputs:
-                last_path_input = self.inputs[input_key]
-
-        # Mount the new input widget in the correct position
-        if last_path_input is not None:
-            self.content.mount(new_path_input, after=last_path_input)
+        if last:
+            self.content.mount(inp, after=last)
         else:
-            # If no paths exist, add it right after the form set key input
-            form_set_key_input = self.inputs[f"form_set_key.{form_set_key}"]
-            self.content.mount(new_path_input, after=form_set_key_input)
+            key_widget = self.inputs[f"form_set_key.{form_set_key}"]
+            self.content.mount(inp, after=key_widget)
 
-    async def save_config(self) -> None:
-        """Save the updated configuration to the file."""
+    async def on_button_pressed(self, event: Click) -> None:
+        match event.button.id:
+            case "save":
+                await self.save_config()
+                self.exit()
+            case "addschool":
+                self.add_new_school()
+            case "addformset":
+                self.add_new_form_set()
+            case id if id and id.startswith("addfileto"):
+                self.add_form_path(id.removeprefix("addfileto"))
+
+    async def on_input_changed(self, event: Input.Changed) -> None:
+        # --- reine Wertfelder (Meta-Keys ausklammern)
+        for key, inp in self.inputs.items():
+            if key.startswith(("school_key.", "form_set_key.")):
+                continue
+
+            section, *rest = key.split(".")
+            target = self.config_dict[section]
+
+            for part in rest[:-1]:
+                target = target[part]
+
+            last = rest[-1]
+            if isinstance(target, list):
+                target[int(last)] = inp.value
+            else:
+                target[last] = inp.value
+
+        # rename schools
+        changes = [
+            (old, inp.value)
+            for old, inp in self.school_key_inputs.items()
+            if inp.value
+            and inp.value != old
+            and inp.value not in self.config_dict["school"]
+        ]
+        for old, new in changes:
+            self._rename_key(
+                "school", old, new, self.school_key_inputs, prefix="school"
+            )
+
+        # rename form_sets
+        changes = [
+            (old, inp.value)
+            for old, inp in self.form_set_key_inputs.items()
+            if inp.value
+            and inp.value != old
+            and inp.value not in self.config_dict["form_set"]
+        ]
+        for old, new in changes:
+            self._rename_key(
+                "form_set", old, new, self.form_set_key_inputs, prefix="form_set"
+            )
+
+    def _rename_key(
+        self,
+        section: str,
+        old_key: str,
+        new_key: str,
+        key_dict: dict[str, Input],
+        *,
+        prefix: str,
+    ):
+        self.config_dict[section][new_key] = self.config_dict[section].pop(old_key)
+
+        for k in list(self.inputs):
+            if k.startswith(f"{prefix}.{old_key}."):
+                self.inputs[
+                    k.replace(f"{prefix}.{old_key}.", f"{prefix}.{new_key}.")
+                ] = self.inputs.pop(k)
+
+        # Meta-Key verschieben
+        meta_old = f"{prefix}_key.{old_key}"
+        meta_new = f"{prefix}_key.{new_key}"
+        if meta_old in self.inputs:
+            self.inputs[meta_new] = self.inputs.pop(meta_old)
+
+        key_dict[new_key] = key_dict.pop(old_key)
+
+    async def save_config(self):
         save_config(self.config_dict, self.config_path)
-        app_uid = self.config_dict["core"].get("app_uid", None)
-        username = self.config_dict["core"].get("app_username", None)
-        oldpw = keyring.get_password(app_uid, username)
-        if self.password_input.value:
-            if app_uid and username and not oldpw:
+
+        app_uid = self.config_dict["core"].get("app_uid")
+        username = self.config_dict["core"].get("app_username")
+        if self.password_input and self.password_input.value:
+            if app_uid and username and not keyring.get_password(app_uid, username):
                 keyring.set_password(app_uid, username, self.password_input.value)
             elif app_uid and username:
                 raise ValueError(
-                    f"A password for UID {app_uid} and "
-                    f"username {username} already exists."
+                    f"Für UID {app_uid} und "
+                    f"Benutzer {username} existiert bereits ein Passwort."
                 )
             else:
-                raise ValueError("app_uid and username must not be None.")
-
-
-if __name__ == "__main__":
-    config_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
-    app = ConfigEditorApp(config_path=config_path)
-    app.run()
+                raise ValueError("app_uid und / oder app_username fehlen.")
