@@ -266,7 +266,7 @@ def taetigkeitsbericht(
     app_username: str,
     app_uid: str,
     database_url: str,
-    config_path: str | os.PathLike[str],
+    salt_path: str | os.PathLike[str],
     wstd_psy: int,
     nstudents: list[str],
     out_basename: str = "Taetigkeitsbericht_Out",
@@ -291,7 +291,7 @@ def taetigkeitsbericht(
     """
 
     # Query the data
-    df = get_data_raw(app_username, app_uid, database_url, config_path)
+    df = get_data_raw(app_username, app_uid, database_url, salt_path)
     df, summary_categories = add_categories_to_df(df, "keyword_taetigkeitsbericht")
     df.to_csv(out_basename + "_df.csv")
     print(df)
