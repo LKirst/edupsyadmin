@@ -554,7 +554,6 @@ def _taetigkeitsbericht(
         wstd_psy: float,
         nstudents: int,
         out_basename: str | os.PathLike[str],
-        min_per_ses: int,
         wstd_total: float,
         name: str,
     ) -> None:
@@ -569,7 +568,6 @@ def _taetigkeitsbericht(
             wstd_psy,
             nstudents,
             out_basename,
-            min_per_ses,
             wstd_total,
             name,
         )
@@ -596,12 +594,6 @@ def _taetigkeitsbericht(
         type=str,
         default="Taetigkeitsbericht_Out",
         help="base name for the output files; default is 'Taetigkeitsbericht_Out'",
-    )
-    parser.add_argument(
-        "--min_per_ses",
-        type=int,
-        default=45,
-        help="duration of one session in minutes; default is 45",
     )
     parser.add_argument(
         "--wstd_total",
