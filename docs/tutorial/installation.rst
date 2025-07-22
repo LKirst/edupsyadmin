@@ -42,7 +42,7 @@ Mit winget kannst du uv installieren:
 
 .. code-block:: console
 
-    $ winget install --id=astral-sh.uv  -e
+    $ winget install --id=astral-sh.uv  -e --source winget
 
 Damit du uv verwenden kannst, musst du das Terminal *einmal schließen und wieder
 öffnen*. uv erlaubt dir, edupsyadmin zu installieren:
