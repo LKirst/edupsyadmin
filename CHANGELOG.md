@@ -1,3 +1,27 @@
+## 6.0.0a0 (2025-07-22)
+
+### BREAKING CHANGE
+
+- edupsyadmin set_client now requires the flag --key_value_pairs before key-value pairs passed from the cli
+- The renaming of ORM attributes nta_notes > nta_nos_notes and n_sessions > h_sessions requires a corresponding renaming of database columns.
+
+### Feat
+
+- **tui.editconfig**: allow adding a form_set
+- **tui.editclient**: validate input to the school input widget
+- accept multiple client_ids for set_client for bulk edits
+- **tui.editclient**: use textual input validation for dates
+
+### Fix
+
+- **taetigkeitsbericht_from_db**: fix variable naming error
+- **cli**: remove obsolete min_per_ses argument
+- **taetigkeitsbericht_from_db**: accept h_sessions (hours) instead of n_sessions (number of arbitrarily long sessions)
+
+### Refactor
+
+- rename nta_notes > nta_nos_notes and n_sessions > h_sessions
+
 ## 5.1.0 (2025-07-15)
 
 ### Feat
