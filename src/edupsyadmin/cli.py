@@ -141,17 +141,17 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     parser.set_defaults(command=None)
     subparsers = parser.add_subparsers(title="subcommands")
 
+    # TODO: Remove common arguments? I read them all from config.
     common = ArgumentParser(add_help=False)  # common subcommand arguments
+    common.add_argument("--app_username", help=argparse.SUPPRESS)
+    common.add_argument("--app_uid", default=APP_UID, help=argparse.SUPPRESS)
     common.add_argument(
-        "--app_username",
-        help=(
-            "username for encryption; if it is not set here, the app will "
-            "try to read it from the config file"
-        ),
+        "--database_url", default=DEFAULT_DB_URL, help=argparse.SUPPRESS
     )
-    common.add_argument("--app_uid", default=APP_UID)
-    common.add_argument("--database_url", default=DEFAULT_DB_URL)
-    common.add_argument("--salt_path", default=DEFAULT_SALT_PATH)
+    common.add_argument(
+        "--salt_path", default=DEFAULT_SALT_PATH, help=argparse.SUPPRESS
+    )
+
     _info(subparsers, common)
     _edit_config(subparsers, common)
     _new_client(subparsers, common)
@@ -331,8 +331,12 @@ def _set_client(
     parser = subparsers.add_parser(
         "set_client",
         parents=[common],
-        help="Change values for a client",
-        description="Change values for a client",
+        help="Change values for one or more clients",
+        description="Change values for one or more clients",
+        usage=(
+            "edupsyadmin set_client [-h] client_id [client_id ...] "
+            "[--key_value_pairs [KEY_VALUE_PAIRS ...]]"
+        ),
     )
     parser.set_defaults(command=command_set_client)
     parser.add_argument("client_id", type=int, nargs="+")
@@ -453,6 +457,10 @@ def _create_documentation(
         parents=[common],
         help="Fill a pdf form or a text file with a liquid template",
         description="Fill a pdf form or a text file with a liquid template",
+        usage=(
+            "edupsyadmin create_documentation [-h] client_id "
+            "[--form_set FORM_SET] [form_paths ...]"
+        ),
     )
     parser.set_defaults(command=command_create_documentation)
     parser.add_argument("client_id", type=int)
