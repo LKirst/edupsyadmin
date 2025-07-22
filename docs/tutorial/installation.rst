@@ -57,13 +57,28 @@ anders aussehen wird:
 .. code-block:: console
 
    $ uv tool install edupsyadmin
-   warning: `C:\Users\DeinNutzername\.local\bin` is not on your PATH. To use installed tools run `$env:PATH = "C:\\Users\\DeinNutzername\\.local\\bin;$env:PATH"`.
+   warning: `C:\Users\DeinNutzername\.local\bin` is not on your PATH. To use installed tools run `$env:PATH = "C:`\Users`\DeinNutzername`\.local`\bin;$env:PATH"` or `uv tool update-shell`.
 
 Der vorgeschlagene Befehl (``$env:PATH =
-"C:\\Users\\DeinNutzername\\.local\\bin;$env:PATH"``) macht edupsyadmin
+"C:`\Users`\DeinNutzername`\.local`\bin;$env:PATH"``) macht edupsyadmin
 verfügbar für diese Sitzung. Wir wollen aber, dass edupsyadmin dauerhaft
-verfügbar ist. Dafür fügen wir den Pfad dauerhaft zur PATH-Umgebungsvariable
-hinzu.
+verfügbar ist. uv bietet dafür einen eigenen Befehl, den wir als erstes
+versuchen:
+
+.. code-block:: console
+
+    $ uv tool update-shell
+
+Schließe und öffne das Terminal wieder. Nun sollte edupsyadmin immer verfügbar sein,
+was du testen kannst mit:
+
+.. code-block:: console
+
+   $ edupsyadmin --help
+
+Wenn eine Hilfe-Nachricht erscheint, ist die Installation gelungen. Erscheint
+ein Fehler, können wir den Pfad auch selbst hinzufügen mit den folgenden
+Schritten:
 
 1. Kopiere den Pfad aus der Warnung. Im Beispiel oben wäre dieser
    ``C:\Users\DeinNutzername\.local\bin`` (ohne ``;$env:PATH``). Wenn in dem
@@ -86,15 +101,8 @@ hinzu.
 
 7. Klicke in beiden noch offenen Fenstern ``OK``.
 
-8. Öffne und schließe das Terminal.
-
-Nun sollte edupsyadmin immer verfügbar sein, was du testen kannst mit:
-
-.. code-block:: console
-
-   $ edupsyadmin --help
-
-Wenn eine Hilfe-Nachricht erscheint, ist die Installation gelungen.
+8. Öffne und schließe das Terminal, um dann mit ``edupsyadmin --help`` die
+   Installation zu testen.
 
 Hintergrund zu den Verschlüsselungsdaten
 ----------------------------------------
