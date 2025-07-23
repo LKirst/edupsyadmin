@@ -4,15 +4,18 @@ Update
 .. caution::
 
     Aktualisiere edupsyadmin wenn möglich nur, wenn du einen neuen Datensatz
-    beginnst. Wenn du mit einem bestehenden Datensatz updatest, informiere dich
+    beginnst.
+
+    Wenn du mit einem bestehenden Datensatz updatest, informiere dich
     vorher, ob von deiner Version auf die neue Version sogenannte "breaking
     changes" durchgeführt wurden, d.h. Änderungen, die zu Inkompatibilitäten
     von deiner Datenbank zur neuen Version der App führen.
 
-    Ein verlässlicher Hinweis dafür, dass einem Update mit Migration der Daten
-    nichts im Wege steht, ist dass sich die erste Ziffer in der Version nicht
-    von der intallierten auf die neue Version geändert hat. Das kannst du auf
-    `PYPI <https://pypi.org/project/edupsyadmin/#history>`_ prüfen.
+    Ein verlässlicher Hinweis dafür, dass keine breaking changes durchgeführt
+    wurden und einem Update mit Migration der Daten nichts im Wege steht, ist
+    dass sich die erste Ziffer in der Version nicht von der installierten auf
+    die neue Version geändert hat. Das kannst du auf `PYPI
+    <https://pypi.org/project/edupsyadmin/#history>`_ prüfen.
 
 Überprüfe als erstes, welche Version deine gegenwärtige Installation hat und wo
 deine Dateien liegen, wenn du sie weiter verwenden willst.
