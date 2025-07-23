@@ -9,12 +9,21 @@ Update
     changes" durchgeführt wurden, d.h. Änderungen, die zu Inkompatibilitäten
     von deiner Datenbank zur neuen Version der App führen.
 
+    Ein verlässlicher Hinweis dafür, dass einem Update mit Migration der Daten
+    nichts im Wege steht, ist dass sich die erste Ziffer in der Version nicht
+    von der intallierten auf die neue Version geändert hat. Das kannst du auf
+    `PYPI <https://pypi.org/project/edupsyadmin/#history>`_ prüfen.
+
 Überprüfe als erstes, welche Version deine gegenwärtige Installation hat und wo
 deine Dateien liegen, wenn du sie weiter verwenden willst.
 
 .. code-block:: console
 
    $ edupsyadmin info
+
+Falls du die Daten migrieren willst, notiere dir den Text der ausgegeben wird
+mit ``edupsyadmin version``, ``database_url``, ``config_path`` und
+``salt_path``.
 
 Update der App
 --------------
@@ -30,15 +39,6 @@ edupsyadmin jetzt installiert ist.
 
 Verschieben der Dateien
 -----------------------
-
-.. caution::
-
-    Datenbank und Konfigurationsdatei können nur ohne Änderungen mit der neuen
-    Version verwendet werden, wenn keine "breaking changes" gemacht wurden
-    zwischen der alten und der neuen Version der App. Auf Github findet sich
-    beim Quellcode die Datei `CHANGELOG.md
-    <https://github.com/LKirst/edupsyadmin/blob/main/CHANGELOG.md>`_ in der die
-    Änderungen für jede Version aufgelistet sind.
 
 Um keine Dateien zu überschreiben, erstellt edupsyadmin für jede Version einen
 eigenen Unterordner für Kofigurationsdatei, Datenbank und Salt (eine Datei, die
