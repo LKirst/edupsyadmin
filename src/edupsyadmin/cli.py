@@ -127,7 +127,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     parser = ArgumentParser()
     # append allows multiple instances of the same object
     # args.config_path will therefore be a list!
-    parser.add_argument("-c", "--config_path", action="append", help="config file path")
+    parser.add_argument("-c", "--config_path", action="append", help=argparse.SUPPRESS)
     parser.add_argument(
         "-v",
         "--version",
