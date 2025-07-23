@@ -4,8 +4,10 @@ import keyring
 import yaml
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
+from textual.css.query import NoMatches
 from textual.events import Click
 from textual.reactive import reactive
+from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, Static
 
 TOOLTIPS = {
@@ -61,7 +63,8 @@ class ConfigEditorApp(App):
         self.form_set_key_inputs: dict[str, Input] = {}
 
         self.password_input: Input | None = None
-        self.last_school_widget = None
+        self.last_school_widget: Widget | None = None
+        self.last_form_set_widget: Widget | None = None
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -143,21 +146,40 @@ class ConfigEditorApp(App):
             self.add_form_set_inputs(key, paths)
 
     def add_form_set_inputs(self, form_set_key: str, paths: list[str]):
+        widgets: list[Widget] = []
+
         num = len(self.form_set_key_inputs) + 1
-        self.content.mount(Static(f"Einstellungen für Form-Set {num}"))
+        widgets.append(Static(f"Einstellungen für Form-Set {num}"))
 
         key_inp = Input(value=form_set_key, placeholder="Form-Set-Label")
         key_inp.tooltip = "Name des Form-Sets"
         self.form_set_key_inputs[form_set_key] = key_inp
         self.inputs[f"form_set_key.{form_set_key}"] = key_inp
-        self.content.mount(key_inp)
+        widgets.append(key_inp)
 
         for i, p in enumerate(paths):
             inp = Input(value=str(p), placeholder=f"Pfad {i+1}")
             self.inputs[f"form_set.{form_set_key}.{i}"] = inp
-            self.content.mount(inp)
+            widgets.append(inp)
 
-        self.content.mount(AddPathButton(form_set_key))
+        widgets.append(AddPathButton(form_set_key))
+
+        # mount widgets at the correct position
+        if self.last_form_set_widget is not None:
+            # insert widgets after the last form_set
+            self.content.mount_all(widgets, after=self.last_form_set_widget)
+        else:
+            # insert the first form-set before the addformset button
+            try:
+                addformset_btn = self.query_exactly_one(
+                    "#addformset", expect_type=Button
+                )
+                self.content.mount_all(widgets, before=addformset_btn)
+            except NoMatches:  # there is no addformset button yet
+                self.content.mount_all(widgets)
+
+        # update marker
+        self.last_form_set_widget = widgets[-1]
 
     def add_new_school(self):
         key = f"Schule{self.school_count + 1}"
