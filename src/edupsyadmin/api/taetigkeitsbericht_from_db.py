@@ -54,9 +54,28 @@ def get_subcategories(
 
 
 def add_categories_to_df(
-    df: pd.DataFrame, category_colnm: str
+    df: pd.DataFrame,
+    category_colnm: str,
+    min_per_ses: int,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Take a df with two columns (keyword_taetikgeitsbericht and h_sessions)
+    and create a table with an estimated count of sessions
+
+    :param df: DataFrame with two columns (keyword_taetikgeitsbericht and h_sessions)
+    :param category_colnm: name of the category column (e.g. keyword_taetigkeitsbericht)
+    :param min_per_ses: minutes per session; used to estimate n_sessions from h_sessions
+    :return: [TODO:description]
+    """
+
+    # get a set of unique keys from the category column
+    # (keyword_taetigkeitsbericht; not yet accounting for the hierarchy of
+    # categories)
     category_keys = sorted(set(df.loc[:, category_colnm].unique()))
+
+    # for every category (keys and their superordinate categories) add a column;
+    # if the row belongs to that category, set the value of the category column to
+    # the value of h_sessions
     categories_all = []
     for key in category_keys:
         subcategories = get_subcategories(key)
@@ -65,18 +84,23 @@ def add_categories_to_df(
         ]
         categories_all.extend(subcategories)
 
+    # create a df  with only the category columns
     categories_all_set = sorted(set(categories_all))
     categories_df = df[categories_all_set]
+
+    ses_3 = 3 * min_per_ses / 60
+    ses_1 = 1 * min_per_ses / 60
+
     summary_categories = categories_df.describe()
     summary_categories.loc["sum", :] = categories_df.agg("sum", axis=0)
     summary_categories.loc["count_mt3_sessions", :] = categories_df[
-        categories_df > 3
+        categories_df > ses_3
     ].agg("count", axis=0)
     summary_categories.loc["count_1to3_sessions", :] = categories_df[
-        (categories_df <= 3) & (categories_df >= 1)
+        (categories_df <= ses_3) & (categories_df >= ses_1)
     ].agg("count", axis=0)
     summary_categories.loc["count_einm_kurzkont", :] = categories_df[
-        categories_df < 1
+        categories_df < ses_1
     ].agg("count", axis=0)
 
     return df, summary_categories
@@ -271,6 +295,7 @@ def taetigkeitsbericht(
     nstudents: list[str],
     out_basename: str = "Taetigkeitsbericht_Out",
     wstd_total: int = 23,
+    min_per_ses: int = 60,
     name: str = "Schulpsychologie",
 ) -> None:
     """
@@ -285,6 +310,7 @@ def taetigkeitsbericht(
     param wstd_total [int]: total Wochstunden (depends on your school).
         Defaults to 23.
     )
+    param min_per_ses: minutes per session (used to estimate n_sessions from h_sessions)
     param name [str]: name for the header of the pdf report.
         Defaults to "Schulpsychologie".
     )
@@ -292,7 +318,9 @@ def taetigkeitsbericht(
 
     # Query the data
     df = get_data_raw(app_username, app_uid, database_url, salt_path)
-    df, summary_categories = add_categories_to_df(df, "keyword_taetigkeitsbericht")
+    df, summary_categories = add_categories_to_df(
+        df, "keyword_taetigkeitsbericht", min_per_ses
+    )
     df.to_csv(out_basename + "_df.csv")
     print(df)
     summary_categories.to_csv(out_basename + "_categories.csv")
