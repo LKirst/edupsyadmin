@@ -123,7 +123,7 @@ def test_taetigkeitsbericht(mock_create_report, mock_get_data_raw, tmp_path):
         app_username="user",
         app_uid="uid",
         database_url="url",
-        config_path="path",
+        salt_path="path",
         wstd_psy=5,
         nstudents=["SchoolA100", "SchoolB200"],
         out_basename=str(output_basename),
