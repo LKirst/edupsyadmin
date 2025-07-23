@@ -1,3 +1,9 @@
+## 6.0.0 (2025-07-23)
+
+### Fix
+
+- add the --min_per_ses parameter back to taetigkeitsbericht to estimate n_sessions correctly
+
 ## 6.0.0a1 (2025-07-23)
 
 ### Fix
