@@ -35,6 +35,14 @@ def save_config(config_dict: dict, file_path: Path) -> None:
         yaml.safe_dump(config_dict, f, default_flow_style=False, allow_unicode=True)
 
 
+class AddPathButton(Button):
+    """Button with a custom attribute of form_set_key"""
+
+    def __init__(self, form_set_key: str) -> None:
+        super().__init__("Pfad hinzufügen", classes="addformpath")
+        self.form_set_key = form_set_key
+
+
 class ConfigEditorApp(App):
     """A Textual app to edit edupsyadmin YAML configuration files."""
 
@@ -149,11 +157,7 @@ class ConfigEditorApp(App):
             self.inputs[f"form_set.{form_set_key}.{i}"] = inp
             self.content.mount(inp)
 
-        self.content.mount(
-            Button(
-                f"Pfad zu »{form_set_key}« hinzufügen", id=f"addfileto{form_set_key}"
-            )
-        )
+        self.content.mount(AddPathButton(form_set_key))
 
     def add_new_school(self):
         key = f"Schule{self.school_count + 1}"
@@ -204,6 +208,9 @@ class ConfigEditorApp(App):
             self.content.mount(inp, after=key_widget)
 
     async def on_button_pressed(self, event: Click) -> None:
+        if isinstance(event.button, AddPathButton):
+            self.add_form_path(event.button.form_set_key)
+            return
         match event.button.id:
             case "save":
                 await self.save_config()
@@ -212,8 +219,6 @@ class ConfigEditorApp(App):
                 self.add_new_school()
             case "addformset":
                 self.add_new_form_set()
-            case id if id and id.startswith("addfileto"):
-                self.add_form_path(id.removeprefix("addfileto"))
 
     async def on_input_changed(self, event: Input.Changed) -> None:
         # --- reine Wertfelder (Meta-Keys ausklammern)
@@ -268,21 +273,29 @@ class ConfigEditorApp(App):
         *,
         prefix: str,
     ):
+        # move entry in the config dict
         self.config_dict[section][new_key] = self.config_dict[section].pop(old_key)
 
+        # update keys in self.inputs
         for k in list(self.inputs):
             if k.startswith(f"{prefix}.{old_key}."):
                 self.inputs[
                     k.replace(f"{prefix}.{old_key}.", f"{prefix}.{new_key}.")
                 ] = self.inputs.pop(k)
 
-        # Meta-Key verschieben
+        # update meta keys
         meta_old = f"{prefix}_key.{old_key}"
         meta_new = f"{prefix}_key.{new_key}"
         if meta_old in self.inputs:
             self.inputs[meta_new] = self.inputs.pop(meta_old)
 
         key_dict[new_key] = key_dict.pop(old_key)
+
+        # change the form_set_key in addformpath buttons
+        if section == "form_set":
+            for btn in self.query(AddPathButton):
+                if btn.form_set_key == old_key:
+                    btn.form_set_key = new_key
 
     async def save_config(self):
         save_config(self.config_dict, self.config_path)
