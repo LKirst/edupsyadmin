@@ -119,7 +119,7 @@ Change values for the database entry with `client_id=42` from the commandline:
 $ edupsyadmin set_client 42 \
   --key_value_pairs \
   "nta_font=1" \
-  "nta_zeitverl_vieltext=20" \
+  "nta_zeitv_vieltext=20" \
   "nos_rs=0" \
   "lrst_diagnosis=iLst"
 ```
