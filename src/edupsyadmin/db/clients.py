@@ -139,7 +139,7 @@ class Client(Base):
         CheckConstraint(
             "lrst_diagnosis IN ('lrst', 'iLst', 'iRst') OR lrst_diagnosis IS NULL"
         ),
-        doc="Diagnose im Zusammenhang mit LRSt, iLst oder iRst",
+        doc="Diagnose im Zusammenhang mit lrst, iLst oder iRst",
     )
     lrst_last_test_date: Mapped[date | None] = mapped_column(
         Date,
