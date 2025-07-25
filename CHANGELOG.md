@@ -1,3 +1,16 @@
+## 6.0.0 (2025-07-23)
+
+### Fix
+
+- add the --min_per_ses parameter back to taetigkeitsbericht to estimate n_sessions correctly
+
+## 6.0.0a1 (2025-07-23)
+
+### Fix
+
+- **tui.editconfig**: insert new form_sets after the last form_set
+- **tui.editconfig**: allow adding a path right after renaming a form_set
+
 ## 6.0.0a0 (2025-07-22)
 
 ### BREAKING CHANGE

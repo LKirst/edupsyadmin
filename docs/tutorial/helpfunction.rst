@@ -25,32 +25,30 @@ Dies wird dir eine Übersicht über alle verfügbaren Optionen und Unterbefehle
 anzeigen. Im Beispiel unten, sind die möglichen Unterbefehle markiert.
 
 .. code-block:: console
-   :emphasize-lines: 16-24
+   :emphasize-lines: 10-21
 
     $ edupsyadmin --help
-    usage: edupsyadmin [-h] [-c CONFIG_PATH] [-s SALT_PATH] [-v] [-w WARN]
-                       {info,new_client,set_client,create_documentation,get_clients,flatten_pdfs,mk_report,taetigkeitsbericht,delete_client} ...
+    usage: edupsyadmin [-h] [-v] [-w WARN]
+                       {info,edit_config,new_client,set_client,create_documentation,get_clients,flatten_pdfs,mk_report,taetigkeitsbericht,delete_client} ...
 
     options:
       -h, --help            show this help message and exit
-      -c CONFIG_PATH, --config_path CONFIG_PATH
-                            config file path
-      -s SALT_PATH, --salt_path SALT_PATH
-                            salt file path
       -v, --version         print version and exit
-      -w WARN, --warn WARN  logger warning level [WARN]
+      -w, --warn WARN       logger warning level [WARN]
 
     subcommands:
-      {info,new_client,set_client,create_documentation,get_clients,flatten_pdfs,mk_report,taetigkeitsbericht,delete_client}
+      {info,edit_config,new_client,set_client,create_documentation,get_clients,flatten_pdfs,mk_report,taetigkeitsbericht,delete_client}
         info                Get useful information for debugging
+        edit_config         Edit app configuration
         new_client          Add a new client
-        set_client          Change values for a client
+        set_client          Change values for one or more clients
         create_documentation
                             Fill a pdf form or a text file with a liquid template
         get_clients         Show clients overview or single client
         flatten_pdfs        Flatten pdf forms (experimental)
         taetigkeitsbericht  Create a PDF output for the Taetigkeitsbericht (experimental)
         delete_client       Delete a client in the database
+
 
 Die Hilfe zeigt uns, dass wir den edupsyadmin Befehl mit verschiedenen
 Unterbefehlen zusammen ausführen (z.B. ``edupsyadmin info``, ``edupsyadmin

@@ -24,8 +24,9 @@ def test_get_subcategories():
 
 
 def test_add_categories_to_df():
-    df = pd.DataFrame({"category": ["cat1", "cat2.sub"], "h_sessions": [5.3, 3]})
-    df, summary = add_categories_to_df(df, "category")
+    df = pd.DataFrame({"category": ["cat1", "cat2.sub"], "h_sessions": [5.3, 1]})
+    min_per_ses = 45
+    df, summary = add_categories_to_df(df, "category", min_per_ses=min_per_ses)
     assert "cat1" in df.columns
     assert "cat2" in df.columns
     assert "cat2.sub" in df.columns
@@ -33,8 +34,13 @@ def test_add_categories_to_df():
     # the sum for cat1 is 5.3
     assert summary.loc["sum", "cat1"] == 5.3
 
-    # there are no sessions in the category "more than 3 for cat2.sub
+    # there is one client with 1-3 sessions in the cat2.sub category
     assert summary.loc["count_mt3_sessions", "cat2.sub"] == 0
+    assert summary.loc["count_mt3_sessions", "cat2"] == 0
+    assert summary.loc["count_einm_kurzkont", "cat2.sub"] == 0
+    assert summary.loc["count_einm_kurzkont", "cat2"] == 0
+    assert summary.loc["count_1to3_sessions", "cat2.sub"] == 1
+    assert summary.loc["count_1to3_sessions", "cat2"] == 1
 
 
 def test_summary_statistics_h_sessions():
@@ -123,7 +129,7 @@ def test_taetigkeitsbericht(mock_create_report, mock_get_data_raw, tmp_path):
         app_username="user",
         app_uid="uid",
         database_url="url",
-        config_path="path",
+        salt_path="path",
         wstd_psy=5,
         nstudents=["SchoolA100", "SchoolB200"],
         out_basename=str(output_basename),

@@ -43,7 +43,7 @@ bearbeitet werden. Hierbei steht ``1`` für "wahr/ja" und ``0`` für
     $ edupsyadmin set_client 1 2 \
       --key_value_pairs \
       "nta_font=1" \
-      "nta_zeitverl_vieltext=20" \
+      "nta_zeitv_vieltext=20" \
       "nos_rs=0" \
       "lrst_diagnosis=iLst"
 

@@ -12,6 +12,7 @@ async def test_type_text() -> None:
         input_widget = pilot.app.query_exactly_one(wid)
         app.set_focus(input_widget, scroll_visible=True)
         await pilot.wait_for_scheduled_animations()
+        await pilot.pause()
         await pilot.click(wid)
         await pilot.press(*"TestName")
 
@@ -27,6 +28,7 @@ async def test_type_date() -> None:
         input_widget = pilot.app.query_exactly_one(wid)
         app.set_focus(input_widget, scroll_visible=True)
         await pilot.wait_for_scheduled_animations()
+        await pilot.pause()
         await pilot.click(wid)
         await pilot.press(*"2025-01-01")
 
@@ -42,6 +44,7 @@ async def test_set_bool() -> None:
         bool_widget = pilot.app.query_exactly_one(wid)
         app.set_focus(bool_widget, scroll_visible=True)
         await pilot.wait_for_scheduled_animations()
+        await pilot.pause()
         assert bool_widget.value is False
 
         await pilot.click(wid)
@@ -68,6 +71,7 @@ async def test_get_data() -> None:
             input_widget = pilot.app.query_exactly_one(wid)
             app.set_focus(input_widget, scroll_visible=True)
             await pilot.wait_for_scheduled_animations()
+            await pilot.pause()
             await pilot.click(wid)
             await pilot.press(*value)
 
@@ -75,6 +79,7 @@ async def test_get_data() -> None:
         input_widget = pilot.app.query_exactly_one(wid)
         app.set_focus(input_widget, scroll_visible=True)
         await pilot.wait_for_scheduled_animations()
+        await pilot.pause()
         await pilot.click(wid)
 
     data = app.get_data()

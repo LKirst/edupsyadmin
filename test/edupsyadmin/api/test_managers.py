@@ -193,6 +193,7 @@ class ManagersTest:
                 input_widget = pilot.app.query_exactly_one(wid)
                 app.set_focus(input_widget, scroll_visible=True)
                 await pilot.wait_for_scheduled_animations()
+                await pilot.pause()
                 await pilot.click(wid)
                 await pilot.press(*value)
 
@@ -200,6 +201,7 @@ class ManagersTest:
             input_widget = pilot.app.query_exactly_one(wid)
             app.set_focus(input_widget, scroll_visible=True)
             await pilot.wait_for_scheduled_animations()
+            await pilot.pause()
             await pilot.click(wid)
 
         data = app.get_data()
@@ -227,6 +229,7 @@ class ManagersTest:
                 input_widget.value = ""
                 app.set_focus(input_widget, scroll_visible=True)
                 await pilot.wait_for_scheduled_animations()
+                await pilot.pause()
                 await pilot.click(wid)
                 if isinstance(value, bool):
                     input_widget.value = value
@@ -237,6 +240,7 @@ class ManagersTest:
             input_widget = pilot.app.query_exactly_one(wid)
             app.set_focus(input_widget, scroll_visible=True)
             await pilot.wait_for_scheduled_animations()
+            await pilot.pause()
             await pilot.click(wid)
 
         data = app.get_data()

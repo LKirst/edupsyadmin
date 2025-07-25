@@ -127,7 +127,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     parser = ArgumentParser()
     # append allows multiple instances of the same object
     # args.config_path will therefore be a list!
-    parser.add_argument("-c", "--config_path", action="append", help="config file path")
+    parser.add_argument("-c", "--config_path", action="append", help=argparse.SUPPRESS)
     parser.add_argument(
         "-v",
         "--version",
@@ -555,21 +555,23 @@ def _taetigkeitsbericht(
         nstudents: int,
         out_basename: str | os.PathLike[str],
         wstd_total: float,
+        min_per_ses: int,
         name: str,
     ) -> None:
         taetigkeitsbericht = lazy_import(
             "edupsyadmin.api.taetigkeitsbericht_from_db"
         ).taetigkeitsbericht
         taetigkeitsbericht(
-            app_username,
-            app_uid,
-            database_url,
-            salt_path,
-            wstd_psy,
-            nstudents,
-            out_basename,
-            wstd_total,
-            name,
+            app_username=app_username,
+            app_uid=app_uid,
+            database_url=database_url,
+            salt_path=salt_path,
+            wstd_psy=wstd_psy,
+            n_students=nstudents,
+            out_basename=out_basename,
+            wstd_total=wstd_total,
+            min_per_ses=min_per_ses,
+            name=name,
         )
 
     parser = subparsers.add_parser(
@@ -600,6 +602,16 @@ def _taetigkeitsbericht(
         type=int,
         default=23,
         help="total Wochstunden (depends on your school); default is 23",
+    )
+    parser.add_argument(
+        "--min_per_ses",
+        type=int,
+        default=45,
+        help=(
+            "duration of one session in minutes; "
+            "used to estimate the number of sessions from `h_sessions`; "
+            "default is 45"
+        ),
     )
     parser.add_argument(
         "--name",
