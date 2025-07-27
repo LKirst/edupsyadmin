@@ -7,7 +7,7 @@ from textual.widgets import Button, Checkbox, Input, Label, RichLog
 
 from edupsyadmin.core.config import config
 from edupsyadmin.core.python_type import get_python_type
-from edupsyadmin.db.clients import Client
+from edupsyadmin.db.clients import LRST_DIAG, Client
 
 REQUIRED_FIELDS = [
     "school",
@@ -37,6 +37,10 @@ HIDDEN_FIELDS = [
 
 def _is_school_key(value: str):
     return value in config["school"]
+
+
+def _is_lrst_diag(value: str):
+    return value in LRST_DIAG
 
 
 class StudentEntryApp(App):
@@ -120,19 +124,30 @@ class StudentEntryApp(App):
                     valid_empty=True,
                 )
                 self.dates[name] = widget
-            elif name == "school":
+            elif name in {"school", "lrst_diagnosis"}:
+                if name == "school":
+                    validator = Function(
+                        _is_school_key,
+                        failure_description=(
+                            "Der Wert für `school` entspricht keinem "
+                            "Wert aus der Konfiguration"
+                        ),
+                    )
+                    valid_empty = False
+                else:
+                    validator = Function(
+                        _is_lrst_diag,
+                        failure_description=(
+                            f"Der Wert für `lrst_diagnosis` muss einer "
+                            f"der folgenden sein: {LRST_DIAG}"
+                        ),
+                    )
+                    valid_empty = True
                 widget = Input(
                     value=default,
                     placeholder=placeholder,
-                    validators=[
-                        Function(
-                            _is_school_key,
-                            failure_description=(
-                                "Der Wert für `school` entspricht keinem "
-                                "Wert aus der Konfiguration"
-                            ),
-                        )
-                    ],
+                    validators=[validator],
+                    valid_empty=valid_empty,
                 )
                 self.inputs[name] = widget
             else:
@@ -163,10 +178,13 @@ class StudentEntryApp(App):
         required_field_empty = any(current.get(f, "") == "" for f in REQUIRED_FIELDS)
 
         # validation
-        school_valid = self.query_one("#school").is_valid
+        school_lrst_valid = (
+            self.query_one("#school").is_valid
+            and self.query_one("#lrst_diagnosis").is_valid
+        )
         dates_valid = all(widget.is_valid for widget in self.dates.values())
 
-        if required_field_empty or not dates_valid or not school_valid:
+        if required_field_empty or not dates_valid or not school_lrst_valid:
             # mark required fields that are still empty
             for f in REQUIRED_FIELDS:
                 if current.get(f, "") == "":

@@ -24,6 +24,8 @@ from edupsyadmin.core.taetigkeitsbericht_check_key import check_keyword
 
 from . import Base
 
+LRST_DIAG = {"lrst", "iLst", "iRst"}
+
 
 class EncryptedString(TypeDecorator):
     """Stores base-64 ciphertext in a TEXT/VARCHAR column;
@@ -137,9 +139,14 @@ class Client(Base):
     lrst_diagnosis: Mapped[str | None] = mapped_column(
         String,
         CheckConstraint(
-            "lrst_diagnosis IN ('lrst', 'iLst', 'iRst') OR lrst_diagnosis IS NULL"
+            f"lrst_diagnosis IN "
+            f"({', '.join(f'\'{item}\'' for item in LRST_DIAG)})"
+            f"OR lrst_diagnosis IS NULL"
         ),
-        doc="Diagnose im Zusammenhang mit lrst, iLst oder iRst",
+        doc=(
+            f"Diagnose im Zusammenhang mit LRSt. Zulässig sind die Werte: "
+            f"{', '.join(LRST_DIAG)}"
+        ),
     )
     lrst_last_test_date: Mapped[date | None] = mapped_column(
         Date,
