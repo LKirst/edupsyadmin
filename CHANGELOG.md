@@ -1,3 +1,9 @@
+## 6.1.0 (2025-07-27)
+
+### Feat
+
+- **tui.editclient**: validate lrst_diagnosis
+
 ## 6.0.0 (2025-07-23)
 
 ### Fix
