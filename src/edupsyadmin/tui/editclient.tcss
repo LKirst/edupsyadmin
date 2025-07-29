@@ -5,3 +5,7 @@ Button {
 Header {
     height: 3;
 }
+
+.log {
+    height: 20;
+}

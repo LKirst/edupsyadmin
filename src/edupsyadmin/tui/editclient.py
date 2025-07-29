@@ -44,6 +44,8 @@ def _is_lrst_diag(value: str):
 
 
 class StudentEntryApp(App):
+    CSS_PATH = "editclient.tcss"
+
     def __init__(self, client_id: int | None = None, data: dict | None = None):
         super().__init__()
 
@@ -160,12 +162,12 @@ class StudentEntryApp(App):
 
             yield widget
 
-        # For failures of input validation
-        yield RichLog()
-
         # Submit button
         self.submit_button = Button(label="Submit", id="Submit")
         yield self.submit_button
+
+        # For failures of input validation
+        yield RichLog(classes="log")
 
     def on_button_pressed(self):
         """method that is called when the submit button is pressed"""
@@ -203,7 +205,6 @@ class StudentEntryApp(App):
     def check_for_validation(self, event: Input.Blurred) -> None:
         if event.validation_result:
             log = self.query_one(RichLog)
-            log.write(event.validation_result.is_valid)
             log.write(event.validation_result.failure_descriptions)
 
     def get_data(self):
