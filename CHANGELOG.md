@@ -1,3 +1,9 @@
+## 6.1.1 (2025-07-30)
+
+### Fix
+
+- **tui.editconfig**: increase the hight of RichLog widget to show all validation failure messages
+
 ## 6.1.0 (2025-07-27)
 
 ### Feat
