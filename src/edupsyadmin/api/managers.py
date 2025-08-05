@@ -15,6 +15,7 @@ from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db import Base
 from edupsyadmin.db.clients import Client
+from edupsyadmin.tui.clientsoverview import ClientsOverview
 from edupsyadmin.tui.editclient import StudentEntryApp
 
 
@@ -74,23 +75,38 @@ class ClientsManager:
                     or_(Client.notenschutz == 1, Client.nachteilsausgleich == 1)
                 )
             results = session.scalars(stmt).all()
-            results_list_of_dict = [
-                {
-                    "client_id": entry.client_id,
-                    "Schule": entry.school,
-                    "Nachname": entry.last_name_encr,
-                    "Vorname": entry.first_name_encr,
-                    "Klasse": entry.class_name,
-                    "Notenschutz": entry.notenschutz,
-                    "NTA": entry.nachteilsausgleich,
-                    "LRSt Diagnose": entry.lrst_diagnosis,
-                    "Sitzungen (h)": entry.h_sessions,
-                    "Tätigkeitsbericht": entry.keyword_taetigkeitsbericht,
-                }
-                for entry in results
+            results_list_of_tuples = [
+                (  # column names
+                    "client_id",
+                    "school",
+                    "last_name_encr",
+                    "first_name_encr",
+                    "class_name",
+                    "notenschutz",
+                    "nachteilsausgleich",
+                    "lrst_diagnosis",
+                    "h_sessions",
+                    "keyword_taetigkeitsbericht",
+                )
             ]
-            df = pd.DataFrame(results_list_of_dict)
-            return df.sort_values(["Schule", "Nachname"])
+            results_list_of_tuples.extend(
+                [  # values
+                    (
+                        entry.client_id,
+                        entry.school,
+                        entry.last_name_encr,
+                        entry.first_name_encr,
+                        entry.class_name,
+                        entry.notenschutz,
+                        entry.nachteilsausgleich,
+                        entry.lrst_diagnosis,
+                        entry.h_sessions,
+                        entry.keyword_taetigkeitsbericht,
+                    )
+                    for entry in results
+                ]
+            )
+            return results_list_of_tuples
 
     def get_data_raw(self) -> pd.DataFrame:
         """
@@ -193,6 +209,7 @@ def get_clients(
     nta_nos: bool = False,
     client_id: int | None = None,
     out: str | None = None,
+    tui: bool = False,
 ) -> None:
     clients_manager = ClientsManager(
         database_url=database_url,
@@ -204,11 +221,17 @@ def get_clients(
         original_df = pd.DataFrame([clients_manager.get_decrypted_client(client_id)]).T
         df = original_df[~(original_df.index == "_sa_instance_state")]
     else:
-        original_df = clients_manager.get_clients_overview(nta_nos=nta_nos)
+        list_of_tuples = clients_manager.get_clients_overview(nta_nos=nta_nos)
+
+        if tui:
+            ClientsOverview(list_of_tuples)
+
+        original_df = pd.DataFrame(
+            list_of_tuples[1:], columns=list_of_tuples[0]
+        ).sort_values(["school", "last_name_encr"])
         df = original_df.set_index("client_id")
-    if out:
-        df.to_csv(out)
-    else:
+
+    if not tui:
         with pd.option_context(
             "display.max_columns",
             None,
@@ -220,6 +243,9 @@ def get_clients(
             False,
         ):
             print(df)
+
+    if out:
+        df.to_csv(out)
 
 
 def get_data_raw(

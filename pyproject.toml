@@ -65,6 +65,7 @@ dev = [
     "snakeviz>=2.2.2",
     "textual-dev>=1.7.0",
     "pytest-asyncio>=1.0.0",
+    "pytest-textual-snapshot>=1.1.0",
 ]
 
 [tool.commitizen]

@@ -397,10 +397,11 @@ def _get_clients(
         nta_nos: bool,
         client_id: int,
         out: str | os.PathLike[str],
+        tui: bool,
     ) -> None:
         get_clients = lazy_import("edupsyadmin.api.managers").get_clients
         get_clients(
-            app_username, app_uid, database_url, salt_path, nta_nos, client_id, out
+            app_username, app_uid, database_url, salt_path, nta_nos, client_id, out, tui
         )
 
     parser = subparsers.add_parser(
@@ -418,6 +419,11 @@ def _get_clients(
     parser.add_argument("--out", help="path for an output file")
     parser.add_argument(
         "--client_id", type=int, help="id for a single client to display"
+    )
+    parser.add_argument(
+        "--tui",
+        action="store_true",
+        help="show the results ina a tui instead of plain text",
     )
 
 
