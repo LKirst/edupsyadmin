@@ -1,0 +1,35 @@
+.with-border {
+    border: round green;
+}
+
+.with-red-border {
+    border: round red;
+}
+#editclientandbuttonscontainer {
+    width: 1fr;
+}
+
+#clientsoverviewcontainer {
+    width: 1fr;
+}
+
+#save {
+    width: 20;
+    height: 5;
+}
+#cancel {
+    width: 20;
+    height: 5;
+}
+#filldocumentation {
+    width: 20;
+    height: 5;
+}
+
+#buttonscontainer-inner {
+    height: 7;
+    width: 60;
+}
+#buttonscontainer-outer {
+    height: 8;
+}
