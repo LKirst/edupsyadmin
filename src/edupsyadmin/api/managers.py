@@ -224,7 +224,8 @@ def get_clients(
         list_of_tuples = clients_manager.get_clients_overview(nta_nos=nta_nos)
 
         if tui:
-            ClientsOverview(list_of_tuples)
+            app = ClientsOverview(list_of_tuples)
+            app.run()
 
         original_df = pd.DataFrame(
             list_of_tuples[1:], columns=list_of_tuples[0]
