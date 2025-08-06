@@ -1,13 +1,14 @@
 from textual.app import App, ComposeResult
 from textual.containers import (
     CenterMiddle,
+    Container,
     Horizontal,
     HorizontalGroup,
     ScrollableContainer,
     Vertical,
     VerticalScroll,
 )
-from textual.widgets import Footer, Header, Placeholder
+from textual.widgets import Button, Footer, Header, Placeholder, TabbedContent, TabPane
 
 
 class EdupsyadminTui(App):
@@ -15,31 +16,38 @@ class EdupsyadminTui(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield Horizontal(
-            ScrollableContainer(
+        with Horizontal():
+            yield ScrollableContainer(
                 Placeholder("Clients Overview (p1)", id="p1"),
                 classes="with-border",
                 id="clientsoverviewcontainer",
-            ),
-            Vertical(
-                VerticalScroll(
-                    Placeholder("Edit Client (p2)", id="p2"),
-                    id="editclientcontainer",
-                ),
-                CenterMiddle(
+            )
+            with Vertical(id="editclientandbuttonscontainer", classes="with-border"):
+                with Container(), TabbedContent(initial="clientdata", id="clienttabs"):
+                    yield TabPane(
+                        "Klientendaten",
+                        VerticalScroll(
+                            Placeholder("Edit Client (p2)", id="p2"),
+                            id="editclientcontainer",
+                        ),
+                        id="clientdata",
+                    )
+                    yield TabPane(
+                        "Sitzungen",
+                        VerticalScroll(
+                            Placeholder("Sessions", id="sessions"),
+                        ),
+                    )
+                yield CenterMiddle(
                     HorizontalGroup(
-                        Placeholder("Speichern", id="save"),
-                        Placeholder("Abbrechen", id="cancel"),
-                        Placeholder("Formular füllen", id="filldocumentation"),
+                        Button("Speichern", id="save"),
+                        Button("Abbrechen", id="cancel"),
+                        Button("Formular(e) füllen", id="filldocumentation"),
                         id="buttonscontainer-inner",
                     ),
                     classes="with-border",
                     id="buttonscontainer-outer",
-                ),
-                classes="with-border",
-                id="editclientandbuttonscontainer",
-            ),
-        )
+                )
         yield Footer()
 
 
