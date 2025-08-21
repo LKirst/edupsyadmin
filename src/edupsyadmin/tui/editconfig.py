@@ -6,7 +6,6 @@ from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
 from textual.css.query import NoMatches
 from textual.events import Click
-from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, Static
 
@@ -50,15 +49,15 @@ class ConfigEditorApp(App):
 
     CSS_PATH = "editconfig.tcss"
 
-    school_count: reactive[int] = reactive(0)
-    form_set_count: reactive[int] = reactive(0)
+    school_count: int = 0
+    form_set_count: int = 0
 
     def __init__(self, config_path: Path, **kwargs):
         super().__init__(**kwargs)
         self.config_path = config_path
         self.config_dict = load_config(config_path)
 
-        self.inputs: dict[str, Input] = {}
+        self.inputs: dict[str, Input] = {}  # input fields except for password widget
         self.school_key_inputs: dict[str, Input] = {}
         self.form_set_key_inputs: dict[str, Input] = {}
 
@@ -74,9 +73,7 @@ class ConfigEditorApp(App):
 
     async def on_mount(self) -> None:
         self.title = "Konfiguration für edupsyadmin"  # title for the header
-        self.generate_content()
 
-    def generate_content(self):
         # core
         self.content.mount(Static("App-Einstellungen"))
         for key, value in self.config_dict["core"].items():
@@ -109,19 +106,30 @@ class ConfigEditorApp(App):
 
         # form_sets
         self.load_form_sets()
-        self.content.mount(Button("Form-Set hinzufügen", id="addformset"))
+        self.content.mount(Button("Formular-Satz hinzufügen", id="addformset"))
 
         # save button
         self.content.mount(Button("Speichern", id="save"))
 
     def load_schools(self):
+        """
+        Load schools that already exist in the config dict
+        """
         self.school_count = len(self.config_dict["school"])
         for i, (key, info) in enumerate(self.config_dict["school"].items(), 1):
             self.add_school_inputs(key, info, i)
 
-    def add_school_inputs(self, school_key: str, info: dict, index: int):
-        widgets = [Static(f"Einstellungen für Schule {index}")]
+    def add_school_inputs(self, school_key: str, info: dict[str, str], index: int):
+        """
+        Add school input widgets for a given school key
 
+        :param school_key: a short key (without special characters) for the school
+        :param info: a dict with `"widget name":"widget value"`
+        :param index: index of the school
+        """
+        widgets: list[Widget] = [Static(f"Einstellungen für Schule {index}")]
+
+        # TODO: Add validator to disallow periods
         key_inp = Input(value=school_key, placeholder="Schullabel")
         key_inp.tooltip = "Schullabel (nur Buchstaben, keine Leerzeichen)"
         self.school_key_inputs[school_key] = key_inp
@@ -141,24 +149,34 @@ class ConfigEditorApp(App):
         self.last_school_widget = widgets[-1]
 
     def load_form_sets(self):
+        """
+        Load existing form sets from the config dict
+        """
         self.form_set_count = len(self.config_dict["form_set"])
         for key, paths in self.config_dict["form_set"].items():
             self.add_form_set_inputs(key, paths)
 
     def add_form_set_inputs(self, form_set_key: str, paths: list[str]):
+        """
+        Add widgets for a form set
+
+        :param form_set_key: key for this form set
+        :param paths: a list of paths belonging to this formset
+        """
         widgets: list[Widget] = []
 
-        num = len(self.form_set_key_inputs) + 1
-        widgets.append(Static(f"Einstellungen für Form-Set {num}"))
+        num = len(self.form_set_key_inputs) + 1  # the index of this form set
+        widgets.append(Static(f"Einstellungen für Formular-Satz {num}"))
 
-        key_inp = Input(value=form_set_key, placeholder="Form-Set-Label")
-        key_inp.tooltip = "Name des Form-Sets"
+        # TODO: Add validator to disallow periods
+        key_inp = Input(value=form_set_key, placeholder="Formular-Satz-Kurzname")
+        key_inp.tooltip = "Kurzname des Formular-Satzes"
         self.form_set_key_inputs[form_set_key] = key_inp
         self.inputs[f"form_set_key.{form_set_key}"] = key_inp
         widgets.append(key_inp)
 
         for i, p in enumerate(paths):
-            inp = Input(value=str(p), placeholder=f"Pfad {i+1}")
+            inp = Input(value=str(p), placeholder=f"Pfad {i + 1}")
             self.inputs[f"form_set.{form_set_key}.{i}"] = inp
             widgets.append(inp)
 
@@ -182,6 +200,9 @@ class ConfigEditorApp(App):
         self.last_form_set_widget = widgets[-1]
 
     def add_new_school(self):
+        """
+        Add new school
+        """
         key = f"Schule{self.school_count + 1}"
         while key in self.config_dict["school"]:
             self.school_count += 1
@@ -200,6 +221,9 @@ class ConfigEditorApp(App):
         self.school_count += 1
 
     def add_new_form_set(self):
+        """
+        Add a new form set with one path
+        """
         i = 1
         key = f"FormSet{i}"
         while key in self.config_dict["form_set"]:
@@ -210,10 +234,16 @@ class ConfigEditorApp(App):
         self.form_set_count += 1
 
     def add_form_path(self, form_set_key: str):
+        """
+        Add a path widget to the widgets of a form set
+
+        :param form_set_key: key of the form set
+        """
         paths = self.config_dict["form_set"][form_set_key]
         idx = len(paths)
         paths.append("")
 
+        # TODO: Add validator with pathlib.path.exists()
         inp = Input(value="", placeholder=f"Pfad {idx + 1}")
         self.inputs[f"form_set.{form_set_key}.{idx}"] = inp
 
@@ -243,7 +273,7 @@ class ConfigEditorApp(App):
                 self.add_new_form_set()
 
     async def on_input_changed(self, event: Input.Changed) -> None:
-        # --- reine Wertfelder (Meta-Keys ausklammern)
+        # ignore meta keys
         for key, inp in self.inputs.items():
             if key.startswith(("school_key.", "form_set_key.")):
                 continue
@@ -295,6 +325,23 @@ class ConfigEditorApp(App):
         *,
         prefix: str,
     ):
+        """
+        Rename a key within a section of the config and update related metadata
+
+        This function updates the configuration dictionary by renaming a
+        specified key in the given section ('school' or 'form_set').
+        It also updates the internal inputs dictionary and metadata keys
+        associated with the old key. If the section is 'form_set', it
+        updates the form_set_key in AddPathButton instances.
+
+        :param section: section within the config dictionary, where the key is located
+        :param old_key: the current name of the key to be renamed
+        :param new_key: the new name of the key to be renamed
+        :param key_dict: a dictionary mapping keys to Input widgets, used to
+            update the key mapping
+        :param prefix: the prefix used in the keys within the inputs dictionary,
+            indicating the type of data structure ('school' or 'form_set')
+        """
         # move entry in the config dict
         self.config_dict[section][new_key] = self.config_dict[section].pop(old_key)
 
@@ -320,6 +367,13 @@ class ConfigEditorApp(App):
                     btn.form_set_key = new_key
 
     async def save_config(self):
+        """
+        Save the configuration, and if there are no conflicts, save
+        the new password.
+
+        :raises ValueError: If a password already exists for the given UID and username.
+        :raises ValueError: If either the app UID or username is missing.
+        """
         save_config(self.config_dict, self.config_path)
 
         app_uid = self.config_dict["core"].get("app_uid")
