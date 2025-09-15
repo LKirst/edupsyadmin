@@ -1,18 +1,22 @@
 exclude: ".*svg"
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
+  rev: v6.0.0
   hooks:
     -   id: check-yaml
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.8.0
+  rev: v0.13.0
   hooks:
-    - id: ruff
+    - id: ruff-check
       args: [ "--config=pyproject.toml", "--fix" ]
     - id: ruff-format
+- repo: https://github.com/gitleaks/gitleaks
+  rev: v8.28.0
+  hooks:
+    - id: gitleaks
 - repo: https://github.com/commitizen-tools/commitizen
-  rev: v3.31.0
+  rev: v4.9.0
   hooks:
     - id: commitizen

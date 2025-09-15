@@ -1,7 +1,19 @@
 Button {
-    width: 50%;
+  width: 1fr;
 }
 
 Header {
-    height: 3;
+  height: 3;
+}
+
+SchoolContainer,
+FormSetContainer {
+  height: auto;
+  border: round white;
+  padding: 1;
+  margin: 1;
+}
+
+.action-buttons {
+  height: 3;
 }

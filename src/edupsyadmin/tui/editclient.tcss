@@ -1,11 +1,11 @@
 Button {
-    width: 50%;
+  width: 50%;
 }
 
 Header {
-    height: 3;
+  height: 3;
 }
 
 .log {
-    height: 20;
+  height: 20;
 }
