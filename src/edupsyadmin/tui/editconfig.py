@@ -7,7 +7,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal, VerticalScroll
 from textual.css.query import NoMatches
 from textual.events import Click
-from textual.validation import ValidationResult, Validator
+from textual.validation import Function, Regex
 from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, Static
 
@@ -23,30 +23,17 @@ TOOLTIPS = {
     "school_street": "Straße und Hausnummer der Schule",
     "school_city": "Stadt und Postleitzahl der Schule",
     "end": "Jahrgangsstufe, nach der Schüler typischerweise die Schule abschließen",
+    "nstudents": "Anzahl Schüler an der Schule",
 }
 
+NoPeriodValidator = Regex(
+    regex=r"^(?!.*\.).*$", failure_description="Darf keine Punkte enthalten"
+)
 
-class NoPeriodValidator(Validator):
-    """A validator to ensure the input does not contain periods."""
-
-    def validate(self, value: str) -> ValidationResult:
-        """Validate that the value does not contain a period."""
-        if "." in value:
-            return self.failure("Darf keine Punkte enthalten.")
-        return self.success()
-
-
-class PathIsFileValidator(Validator):
-    """A validator to ensure the input is a path to an existing file."""
-
-    def validate(self, value: str) -> ValidationResult:
-        """Validate that the value is a path to an existing file."""
-        path = Path(value).expanduser()
-        if not path.exists():
-            return self.failure("Pfad existiert nicht.")
-        if not path.is_file():
-            return self.failure("Pfad ist keine Datei.")
-        return self.success()
+PathIsFileValidator = Function(
+    function=lambda value: Path(value).expanduser().is_file(),
+    failure_description="Pfad ist keine Datei.",
+)
 
 
 def load_config(file_path: Path) -> dict:
@@ -200,7 +187,9 @@ class ConfigEditorApp(App):
         widgets: list[Widget] = [Static(f"Einstellungen für Schule {index}")]
 
         key_inp = Input(
-            value=school_key, placeholder="Schullabel", validators=[NoPeriodValidator()]
+            value=school_key,
+            placeholder="Schullabel",
+            validators=[NoPeriodValidator],
         )
         key_inp.tooltip = "Schullabel (nur Buchstaben, keine Leerzeichen)"
         self.school_key_inputs[school_key] = key_inp
@@ -208,7 +197,8 @@ class ConfigEditorApp(App):
         widgets.append(key_inp)
 
         for k, v in info.items():
-            inp = Input(value=str(v), placeholder=k)
+            input_type = "integer" if k in ["end", "nstudents"] else "text"
+            inp = Input(value=str(v), placeholder=k, type=input_type)
             inp.tooltip = TOOLTIPS.get(k, "")
             self.inputs[f"school.{school_key}.{k}"] = inp
             widgets.append(inp)
@@ -246,7 +236,7 @@ class ConfigEditorApp(App):
         key_inp = Input(
             value=form_set_key,
             placeholder="Formular-Satz-Kurzname",
-            validators=[NoPeriodValidator()],
+            validators=[NoPeriodValidator],
         )
         key_inp.tooltip = "Kurzname des Formular-Satzes"
         self.form_set_key_inputs[form_set_key] = key_inp
@@ -257,7 +247,7 @@ class ConfigEditorApp(App):
             inp = Input(
                 value=str(p),
                 placeholder=f"Pfad {i + 1}",
-                validators=[PathIsFileValidator()],
+                validators=[PathIsFileValidator],
             )
             self.inputs[f"form_set.{form_set_key}.{i}"] = inp
             widgets.append(inp)
@@ -299,6 +289,7 @@ class ConfigEditorApp(App):
             "school_street": "",
             "school_city": "",
             "end": "",
+            "nstudents": "",
         }
         self.add_school_inputs(
             key, self.config_dict["school"][key], self.school_count + 1
@@ -330,12 +321,12 @@ class ConfigEditorApp(App):
         paths.append("")
 
         inp = Input(
-            value="", placeholder=f"Pfad {idx + 1}", validators=[PathIsFileValidator()]
+            value="", placeholder=f"Pfad {idx + 1}", validators=[PathIsFileValidator]
         )
         self.inputs[f"form_set.{form_set_key}.{idx}"] = inp
 
         # Mount the new input before the button that was pressed.
-        button.parent.mount(inp, before=button)
+        self.mount(inp, before=button)
 
     def delete_school(self, school_key: str):
         """
