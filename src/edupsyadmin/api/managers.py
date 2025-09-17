@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 
 import pandas as pd
-from sqlalchemy import create_engine, or_, select
+from sqlalchemy import create_engine, inspect, or_, select
 from sqlalchemy.orm import sessionmaker
 
 from edupsyadmin.api.add_convenience_data import add_convenience_data
@@ -64,49 +64,46 @@ class ClientsManager:
             client = session.get(Client, client_id)
             if client is None:
                 raise ClientNotFoundError(client_id)
-            return client.__dict__
+            # Create a clean dictionary using the ORM mapper
+            mapper = inspect(client.__class__)
+            return {c.key: getattr(client, c.key) for c in mapper.column_attrs}
 
     def get_clients_overview(self, nta_nos: bool = True) -> pd.DataFrame:
-        logger.debug("trying to query client data")
+        logger.debug("trying to query client data for overview")
+
+        # Build the query statement outside the session context.
         stmt = select(Client)
-        with self.Session() as session:
-            if nta_nos:
-                stmt = stmt.where(
-                    or_(Client.notenschutz == 1, Client.nachteilsausgleich == 1)
-                )
-            results = session.scalars(stmt).all()
-            results_list_of_tuples = [
-                (  # column names
-                    "client_id",
-                    "school",
-                    "last_name_encr",
-                    "first_name_encr",
-                    "class_name",
-                    "notenschutz",
-                    "nachteilsausgleich",
-                    "lrst_diagnosis",
-                    "h_sessions",
-                    "keyword_taetigkeitsbericht",
-                )
-            ]
-            results_list_of_tuples.extend(
-                [  # values
-                    (
-                        entry.client_id,
-                        entry.school,
-                        entry.last_name_encr,
-                        entry.first_name_encr,
-                        entry.class_name,
-                        entry.notenschutz,
-                        entry.nachteilsausgleich,
-                        entry.lrst_diagnosis,
-                        entry.h_sessions,
-                        entry.keyword_taetigkeitsbericht,
-                    )
-                    for entry in results
-                ]
+        if nta_nos:
+            stmt = stmt.where(
+                or_(Client.notenschutz == 1, Client.nachteilsausgleich == 1)
             )
-            return results_list_of_tuples
+
+        # Use the session only to execute the query.
+        with self.Session() as session:
+            clients = session.scalars(stmt).all()
+
+        # Process the results after the session is closed.
+        if not clients:
+            return pd.DataFrame()
+
+        # By accessing attributes on the ORM objects, we ensure decryption.
+        data = [
+            {
+                "client_id": c.client_id,
+                "school": c.school,
+                "last_name_encr": c.last_name_encr,
+                "first_name_encr": c.first_name_encr,
+                "class_name": c.class_name,
+                "notenschutz": c.notenschutz,
+                "nachteilsausgleich": c.nachteilsausgleich,
+                "lrst_diagnosis": c.lrst_diagnosis,
+                "h_sessions": c.h_sessions,
+                "keyword_taetigkeitsbericht": c.keyword_taetigkeitsbericht,
+            }
+            for c in clients
+        ]
+
+        return pd.DataFrame(data)
 
     def get_data_raw(self) -> pd.DataFrame:
         """
@@ -117,20 +114,37 @@ class ClientsManager:
             query = session.query(Client).statement
             return pd.read_sql_query(query, session.bind)
 
-    def edit_client(self, client_id: list[int], new_data: dict[str, Any]) -> None:
+    def edit_client(self, client_ids: list[int], new_data: dict[str, Any]) -> None:
         # TODO: Warn if key does not exist
-        for this_client_id in client_id:
-            logger.debug(f"editing client (id = {this_client_id})")
-            with self.Session() as session:
-                client = session.get(Client, this_client_id)
-                if client:
-                    for key, value in new_data.items():
-                        logger.debug(f"changing value for key: {key}")
+        logger.debug(f"editing clients (ids = {client_ids})")
+        with self.Session() as session:
+            clients = (
+                session.query(Client).filter(Client.client_id.in_(client_ids)).all()
+            )
+
+            found_ids = {client.client_id for client in clients}
+            not_found_ids = set(client_ids) - found_ids
+
+            if not_found_ids:
+                logger.warning(
+                    f"clients with following ids could not be found: {not_found_ids}"
+                )
+
+            for client in clients:
+                for key, value in new_data.items():
+                    if hasattr(client, key):
+                        logger.debug(
+                            f"changing value for key: {key} for client: "
+                            f"{client.client_id}"
+                        )
                         setattr(client, key, value)
-                    client.datetime_lastmodified = datetime.now()
-                    session.commit()
-                else:
-                    logger.error("client could not be found!")
+                    else:
+                        logger.warning(
+                            f"key '{key}' does not exist on Client model. skipping."
+                        )
+                client.datetime_lastmodified = datetime.now()
+
+            session.commit()
 
     def delete_client(self, client_id: int) -> None:
         logger.debug("deleting client")
@@ -173,7 +187,7 @@ def set_client(
     database_url: str,
     salt_path: str | os.PathLike[str],
     client_id: list[int],
-    key_value_pairs: dict[str, str | bool | None],
+    key_value_pairs: dict[str, str | bool | None] | None,
 ) -> None:
     """
     Set the value for a key given one or multiple client_ids
@@ -198,7 +212,7 @@ def set_client(
             client_id=client_id,
         )
 
-    clients_manager.edit_client(client_id, key_value_pairs)
+    clients_manager.edit_client(client_ids=client_id, new_data=key_value_pairs)
 
 
 def get_clients(
@@ -218,18 +232,18 @@ def get_clients(
         salt_path=salt_path,
     )
     if client_id:
-        original_df = pd.DataFrame([clients_manager.get_decrypted_client(client_id)]).T
-        df = original_df[~(original_df.index == "_sa_instance_state")]
+        df = pd.DataFrame([clients_manager.get_decrypted_client(client_id)]).T
     else:
-        list_of_tuples = clients_manager.get_clients_overview(nta_nos=nta_nos)
+        df = clients_manager.get_clients_overview(nta_nos=nta_nos)
 
         if tui:
+            # Convert DataFrame to list-of-lists for the TUI
+            list_of_tuples = [df.columns.to_list(), *df.values.tolist()]
             app = ClientsOverview(list_of_tuples)
             app.run()
+            return  # Exit after TUI session
 
-        original_df = pd.DataFrame(
-            list_of_tuples[1:], columns=list_of_tuples[0]
-        ).sort_values(["school", "last_name_encr"])
+        original_df = df.sort_values(["school", "last_name_encr"])
         df = original_df.set_index("client_id")
 
     if not tui:
