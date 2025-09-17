@@ -14,12 +14,14 @@ school:
     school_street: "Beispielstr. 1" # street and house number of your school
     school_city: "87700 Beispielstadt" # postcode and town of your school
     end: 11 # grade after which students (typically) graduate from / leave your school
+    nstudents: 200 # number of students at your school
   SecondSchool: # short name 2nd school (optional)
     school_head_w_school: "Schulleitung der beruflichen Oberschulen Beispielstadt"
     school_name: "Fachoberschule"
     school_street: "Platzhalterweg 2"
     school_city: "87700 Beispielstadt"
     end: 13
+    nstudents: 100
 form_set: # sets of file paths for create_documentation; replace with your sets
   lrst:
     - '~/Templates/Beratung/LiL_Mantelbogen.pdf'
