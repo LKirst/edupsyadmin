@@ -3,8 +3,9 @@ from typing import ClassVar
 
 import keyring
 import yaml
+from textual import log
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal, VerticalScroll
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.css.query import NoMatches
 from textual.events import Click
 from textual.validation import Function, Regex
@@ -72,7 +73,7 @@ class DeleteFormSetButton(Button):
         self.form_set_key = form_set_key
 
 
-class SchoolContainer(VerticalScroll):
+class SchoolContainer(Vertical):
     """Container for a school's widgets."""
 
     def __init__(self, *children: Widget, school_key: str, **kwargs) -> None:
@@ -80,7 +81,7 @@ class SchoolContainer(VerticalScroll):
         self.school_key = school_key
 
 
-class FormSetContainer(VerticalScroll):
+class FormSetContainer(Vertical):
     """Container for a form set's widgets."""
 
     def __init__(self, *children: Widget, form_set_key: str, **kwargs) -> None:
@@ -93,8 +94,8 @@ class ConfigEditorApp(App):
 
     CSS_PATH = "editconfig.tcss"
     BINDINGS: ClassVar[list] = [
-        ("s", "save", "Speichern"),
-        ("ctrl+q", "quit", "Beenden"),
+        ("ctrl+s", "save", "Speichern"),
+        ("ctrl+q", "quit", "Abbrechen"),
     ]
 
     school_count: int = 0
@@ -107,6 +108,7 @@ class ConfigEditorApp(App):
 
         self.inputs: dict[str, Input] = {}  # input fields except for password widget
         self.school_key_inputs: dict[str, Input] = {}
+        self.school_i: int = 0
         self.form_set_key_inputs: dict[str, Input] = {}
 
         self.password_input: Input | None = None
@@ -184,12 +186,15 @@ class ConfigEditorApp(App):
         :param info: a dict with `"widget name":"widget value"`
         :param index: index of the school
         """
-        widgets: list[Widget] = [Static(f"Einstellungen für Schule {index}")]
+        self.school_i += 1
+        log("adding new school", id=f"schoolkey{self.school_i}")
+        widgets: list[Widget] = []
 
         key_inp = Input(
             value=school_key,
             placeholder="Schullabel",
             validators=[NoPeriodValidator],
+            id=f"schoolkey{self.school_i}",
         )
         key_inp.tooltip = "Schullabel (nur Buchstaben, keine Leerzeichen)"
         self.school_key_inputs[school_key] = key_inp
@@ -198,14 +203,23 @@ class ConfigEditorApp(App):
 
         for k, v in info.items():
             input_type = "integer" if k in ["end", "nstudents"] else "text"
-            inp = Input(value=str(v), placeholder=k, type=input_type)
+            inp = Input(
+                value=str(v),
+                placeholder=k,
+                type=input_type,
+                id=f"{k}{self.school_i}",
+            )
             inp.tooltip = TOOLTIPS.get(k, "")
             self.inputs[f"school.{school_key}.{k}"] = inp
             widgets.append(inp)
 
         widgets.append(DeleteSchoolButton(school_key))
 
-        container = SchoolContainer(*widgets, school_key=school_key)
+        container = SchoolContainer(
+            *widgets,
+            school_key=school_key,
+            id=f"school_container{self.school_i}",
+        )
 
         if self.last_school_widget:
             self.content.mount(container, after=self.last_school_widget)
@@ -531,6 +545,7 @@ class ConfigEditorApp(App):
         :raises ValueError: If a password already exists for the given UID and username.
         :raises ValueError: If either the app UID or username is missing.
         """
+        log("save_config was called", config_dict=self.config_dict)
         save_config(self.config_dict, self.config_path)
 
         app_uid = self.config_dict["core"].get("app_uid")
@@ -549,5 +564,5 @@ class ConfigEditorApp(App):
     async def action_save(self) -> None:
         """Save the configuration and exit the app."""
         if not self.query_one("#save", Button).disabled:
-            self.save_config()
+            await self.save_config()
             self.exit()

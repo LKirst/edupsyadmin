@@ -1,4 +1,5 @@
 import pytest
+from textual.widgets import Checkbox, Input
 
 from edupsyadmin.tui.editclient import StudentEntryApp
 
@@ -10,6 +11,8 @@ async def test_type_text() -> None:
     async with app.run_test() as pilot:
         wid = "#first_name_encr"
         input_widget = pilot.app.query_exactly_one(wid)
+        assert isinstance(input_widget, Input)
+
         app.set_focus(input_widget, scroll_visible=True)
         await pilot.wait_for_scheduled_animations()
         await pilot.pause()
@@ -26,6 +29,8 @@ async def test_type_date() -> None:
     async with app.run_test() as pilot:
         wid = "#entry_date"
         input_widget = pilot.app.query_exactly_one(wid)
+        assert isinstance(input_widget, Input)
+
         app.set_focus(input_widget, scroll_visible=True)
         await pilot.wait_for_scheduled_animations()
         await pilot.pause()
@@ -42,6 +47,8 @@ async def test_set_bool() -> None:
     async with app.run_test() as pilot:
         wid = "#nos_rs"
         bool_widget = pilot.app.query_exactly_one(wid)
+        assert isinstance(bool_widget, Checkbox)
+
         app.set_focus(bool_widget, scroll_visible=True)
         await pilot.wait_for_scheduled_animations()
         await pilot.pause()
