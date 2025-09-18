@@ -296,6 +296,9 @@ def enter_client_untiscsv(
     untis_df = pd.read_csv(csv, sep="\t", encoding="utf-8")
     client_series = untis_df[untis_df["name"] == name]
 
+    if client_series.empty:
+        raise ValueError(f"Der Name '{name}' ist nicht in der CSV-Datei '{csv}'.")
+
     # check if id is known
     if "client_id" in client_series.columns:
         client_id = client_series["client_id"].item()
@@ -393,7 +396,14 @@ def create_documentation(
         salt_path=salt_path,
     )
     if form_set:
-        form_paths.extend(config.form_set[form_set])
+        try:
+            form_paths.extend(config.form_set[form_set])
+        except KeyError:
+            raise KeyError(
+                f"Es ist in der Konfigurationsdatei kein Form Set mit dem"
+                f"Namen {form_set} angelegt."
+            )
+
     elif not form_paths:
         raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
     form_paths_normalized = [_normalize_path(p) for p in form_paths]
