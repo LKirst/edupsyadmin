@@ -360,12 +360,12 @@ class ConfigEditorApp(App):
             del self.school_key_inputs[school_key]
 
         # Remove the school's widget container
-        for container in self.query(SchoolContainer):
+        all_school_containers = list(self.query(SchoolContainer))
+        for i, container in enumerate(all_school_containers):
             if container.school_key == school_key:
                 if self.last_school_widget == container:
-                    prev_sibling = container.previous_sibling
-                    if isinstance(prev_sibling, SchoolContainer):
-                        self.last_school_widget = prev_sibling
+                    if i > 0:
+                        self.last_school_widget = all_school_containers[i - 1]
                     else:
                         self.last_school_widget = None
                 container.remove()
@@ -392,12 +392,12 @@ class ConfigEditorApp(App):
             del self.form_set_key_inputs[form_set_key]
 
         # Remove the form set's widget container
-        for container in self.query(FormSetContainer):
+        all_form_set_containers = list(self.query(FormSetContainer))
+        for i, container in enumerate(all_form_set_containers):
             if container.form_set_key == form_set_key:
                 if self.last_form_set_widget == container:
-                    prev_sibling = container.previous_sibling
-                    if isinstance(prev_sibling, FormSetContainer):
-                        self.last_form_set_widget = prev_sibling
+                    if i > 0:
+                        self.last_form_set_widget = all_form_set_containers[i - 1]
                     else:
                         self.last_form_set_widget = None
                 container.remove()
