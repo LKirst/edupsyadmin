@@ -1,3 +1,22 @@
+## 6.2.0 (2025-09-18)
+
+### Feat
+
+- **tui.editconfig**: add nstudents to school config
+- **tui**: add cancel and delete buttons, validation, and bindings
+- add option to display clients overview with textual DataTable
+
+### Fix
+
+- **tui.editconfig**: fix crash when deleting items in config_editor
+- **sampleconfig.yml**: add nstudents
+- **tui**: add missing await, refactor containers and bindings, add test
+- **api.managers**: run the ClientsOverview app
+
+### Refactor
+
+- **api.managers**: improve data handling and efficiency in managers
+
 ## 6.1.1 (2025-07-30)
 
 ### Fix
