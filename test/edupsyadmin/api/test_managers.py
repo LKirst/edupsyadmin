@@ -61,6 +61,7 @@ EXPECTED_KEYS = {
 class ManagersTest:
     def test_add_client(self, mock_keyring, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
+
         client = clients_manager.get_decrypted_client(client_id=client_id)
         assert EXPECTED_KEYS.issubset(client.keys())
         assert client["first_name_encr"] == client_dict_set_by_user["first_name_encr"]
@@ -89,6 +90,7 @@ class ManagersTest:
             "last_name_encr": "Smith",
             "nta_zeitv_vieltext": 25,
             "nta_font": True,
+            "nta_nos_end_grade": 10,
         }
         clients_manager.edit_client([client_id], updated_data)
         upd_cl = clients_manager.get_decrypted_client(client_id)
@@ -101,6 +103,8 @@ class ManagersTest:
         assert upd_cl["nta_font"] is True
         assert upd_cl["nta_zeitv"] is True
         assert upd_cl["nachteilsausgleich"] is True
+        assert upd_cl["nta_nos_end_grade"] == 10
+        assert upd_cl["nta_nos_end"] is True
 
         assert upd_cl["nta_ersgew"] is False
 
@@ -164,9 +168,10 @@ class ManagersTest:
         clients_manager.delete_client(client_id)
         try:
             clients_manager.get_decrypted_client(client_id)
-            assert (
-                False
-            ), "Expected ClientNotFoundError exception when retrieving a deleted client"
+            assert False, (
+                "Expected ClientNotFoundError exception "
+                "when retrieving a deleted client"
+            )
         except ClientNotFoundError as e:
             assert e.client_id == client_id
 

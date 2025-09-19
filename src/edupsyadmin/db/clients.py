@@ -140,7 +140,7 @@ class Client(Base):
         String,
         CheckConstraint(
             f"lrst_diagnosis IN "
-            f"({', '.join(f'\'{item}\'' for item in LRST_DIAG)})"
+            f"({', '.join(f"'{item}'" for item in LRST_DIAG)})"
             f"OR lrst_diagnosis IS NULL"
         ),
         doc=(
@@ -315,7 +315,7 @@ class Client(Base):
         ),
     )
     nta_nos_end_grade: Mapped[int | None] = mapped_column(
-        String,
+        Integer,
         doc=(
             "Jahrgangsstufe bis deren Ende Nachteilsausgleich- und "
             "Notenschutzmaßnahmen zeitlich begrenzt sind"
@@ -512,7 +512,7 @@ class Client(Base):
     @validates("nta_font", "nta_auf", "nta_arbeitsm", "nta_ersgew", "nta_vorlesen")
     def validate_nta_bool(self, key: str, value: bool | str | int) -> bool:
         boolvalue = str_to_bool(value)
-        self._update_nachteilsausgleich(key, value)
+        self._update_nachteilsausgleich(key, boolvalue)
         return boolvalue
 
     @validates("nta_other_details")
@@ -522,7 +522,11 @@ class Client(Base):
         return value
 
     @validates("nta_nos_end_grade")
-    def validate_nta_nos_end_grade(self, key: str, value: int | None) -> int | None:
+    def validate_nta_nos_end_grade(
+        self, key: str, value: str | int | None
+    ) -> int | None:
+        if isinstance(value, str):
+            value = int(value) if value else None
         self.nta_nos_end = value is not None
         return value
 
