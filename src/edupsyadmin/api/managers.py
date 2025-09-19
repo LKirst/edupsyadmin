@@ -86,7 +86,6 @@ class ClientsManager:
         if not clients:
             return pd.DataFrame()
 
-        # By accessing attributes on the ORM objects, we ensure decryption.
         data = [
             {
                 "client_id": c.client_id,
@@ -365,19 +364,6 @@ def _tui_get_modified_values(
     app.run()
 
     return app.get_data()
-
-
-# TODO: move to tests (not used here)
-def _find_changed_values(original: dict, updates: dict) -> dict:
-    changed_values = {}
-    for key, new_value in updates.items():
-        if key not in original:
-            raise KeyError(
-                f"Key '{key}' found in updates but not in original dictionary."
-            )
-        if original[key] != new_value:
-            changed_values[key] = new_value
-    return changed_values
 
 
 def create_documentation(
