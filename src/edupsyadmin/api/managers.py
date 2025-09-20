@@ -114,8 +114,14 @@ class ClientsManager:
             return pd.read_sql_query(query, session.bind)
 
     def edit_client(self, client_ids: list[int], new_data: dict[str, Any]) -> None:
-        # TODO: Warn if key does not exist
         logger.debug(f"editing clients (ids = {client_ids})")
+
+        # Validate keys
+        valid_keys = {c.key for c in inspect(Client).column_attrs}
+        invalid_keys = set(new_data.keys()) - valid_keys
+        if invalid_keys:
+            raise ValueError(f"Invalid keys found: {', '.join(invalid_keys)}")
+
         with self.Session() as session:
             clients = (
                 session.query(Client).filter(Client.client_id.in_(client_ids)).all()
@@ -131,16 +137,10 @@ class ClientsManager:
 
             for client in clients:
                 for key, value in new_data.items():
-                    if hasattr(client, key):
-                        logger.debug(
-                            f"changing value for key: {key} for client: "
-                            f"{client.client_id}"
-                        )
-                        setattr(client, key, value)
-                    else:
-                        logger.warning(
-                            f"key '{key}' does not exist on Client model. skipping."
-                        )
+                    logger.debug(
+                        f"changing value for key: {key} for client: {client.client_id}"
+                    )
+                    setattr(client, key, value)
                 client.datetime_lastmodified = datetime.now()
 
             session.commit()

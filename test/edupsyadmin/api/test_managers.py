@@ -166,14 +166,26 @@ class ManagersTest:
     def test_delete_client(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
         clients_manager.delete_client(client_id)
-        try:
+        with pytest.raises(ClientNotFoundError) as excinfo:
             clients_manager.get_decrypted_client(client_id)
-            assert False, (
-                "Expected ClientNotFoundError exception "
-                "when retrieving a deleted client"
-            )
-        except ClientNotFoundError as e:
-            assert e.client_id == client_id
+        assert excinfo.value.client_id == client_id
+
+    def test_edit_client_with_invalid_key(
+        self, clients_manager, client_dict_set_by_user
+    ):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        invalid_key = "this_key_does_not_exist"
+        new_data = {"first_name_encr": "new_name", invalid_key: "some_value"}
+
+        with pytest.raises(ValueError) as excinfo:
+            clients_manager.edit_client([client_id], new_data)
+
+        assert invalid_key in str(excinfo.value)
+
+        # Check that the valid data was not updated
+        updated_client = clients_manager.get_decrypted_client(client_id)
+        assert updated_client["first_name_encr"] != "new_name"
 
     def test_enter_client_untiscsv(self, mock_keyring, clients_manager, mock_webuntis):
         client_id = enter_client_untiscsv(
