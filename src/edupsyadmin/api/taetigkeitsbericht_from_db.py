@@ -63,13 +63,13 @@ def add_categories_to_df(
     and create a table with an estimated count of sessions
 
     :param df: DataFrame with two columns (keyword_taetikgeitsbericht and h_sessions)
-    :param category_colnm: name of the category column (e.g. keyword_taetigkeitsbericht)
+    :param category_colnm: name of the category column (e.g. keyword_taet_encr)
     :param min_per_ses: minutes per session; used to estimate n_sessions from h_sessions
     :return: [TODO:description]
     """
 
     # get a set of unique keys from the category column
-    # (keyword_taetigkeitsbericht; not yet accounting for the hierarchy of
+    # (keyword_taet_encr; not yet accounting for the hierarchy of
     # categories)
     category_keys = sorted(set(df.loc[:, category_colnm].unique()))
 
@@ -300,7 +300,7 @@ def taetigkeitsbericht(
 ) -> None:
     """
     Create a PDF for the Taetigkeitsbericht. This function assumes your db
-    has the columns 'keyword_taetigkeitsbericht' and 'h_sessions'
+    has the columns 'keyword_taet_encr' and 'h_sessions'
 
     param wstd_psy [int]: Anrechnungsstunden in Wochenstunden
     param nstudents [list]: list of strings with item containing the name of
@@ -318,9 +318,7 @@ def taetigkeitsbericht(
 
     # Query the data
     df = get_data_raw(app_username, app_uid, database_url, salt_path)
-    df, summary_categories = add_categories_to_df(
-        df, "keyword_taetigkeitsbericht", min_per_ses
-    )
+    df, summary_categories = add_categories_to_df(df, "keyword_taet_encr", min_per_ses)
     df.to_csv(out_basename + "_df.csv")
     print(df)
     summary_categories.to_csv(out_basename + "_categories.csv")

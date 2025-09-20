@@ -133,7 +133,7 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
     data["school_addr_s_wname"] = data["school_addr_m_wname"].replace("\n", ", ")
 
     # lrst_diagnosis
-    diagnosis = data["lrst_diagnosis"]
+    diagnosis = data["lrst_diagnosis_encr"]
     if diagnosis == "lrst":
         data["lrst_diagnosis_long"] = "Lese-Rechtschreib-Störung"
     elif diagnosis == "iLst":

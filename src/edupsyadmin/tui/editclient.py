@@ -126,7 +126,7 @@ class StudentEntryApp(App):
                     valid_empty=True,
                 )
                 self.dates[name] = widget
-            elif name in {"school", "lrst_diagnosis"}:
+            elif name in {"school", "lrst_diagnosis_encr"}:
                 if name == "school":
                     validator = Function(
                         _is_school_key,
@@ -140,7 +140,7 @@ class StudentEntryApp(App):
                     validator = Function(
                         _is_lrst_diag,
                         failure_description=(
-                            f"Der Wert für `lrst_diagnosis` muss einer "
+                            f"Der Wert für `lrst_diagnosis_encr` muss einer "
                             f"der folgenden sein: {LRST_DIAG}"
                         ),
                     )
@@ -182,7 +182,7 @@ class StudentEntryApp(App):
         # validation
         school_lrst_valid = (
             self.query_one("#school").is_valid
-            and self.query_one("#lrst_diagnosis").is_valid
+            and self.query_one("#lrst_diagnosis_encr").is_valid
         )
         dates_valid = all(widget.is_valid for widget in self.dates.values())
 

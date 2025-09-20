@@ -118,7 +118,7 @@ def test_taetigkeitsbericht(mock_create_report, mock_get_data_raw, tmp_path):
     mock_get_data_raw.return_value = pd.DataFrame(
         {
             "school": ["FirstSchool", "FirstSchool", "SecondSchool"],
-            "keyword_taetigkeitsbericht": ["cat1", "cat2", "cat2"],
+            "keyword_taet_encr": ["cat1", "cat2", "cat2"],
             "h_sessions": [5, 3, 2.2],
         }
     )

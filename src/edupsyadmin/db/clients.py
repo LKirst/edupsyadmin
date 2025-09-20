@@ -131,18 +131,14 @@ class Client(Base):
             ":attr:`estimated_graduation_date`."
         ),
     )
-    keyword_taetigkeitsbericht: Mapped[str | None] = mapped_column(
-        String, doc="Schlüsselwort für die Kategorie des Klienten im Tätigkeitsbericht"
+    keyword_taet_encr: Mapped[str | None] = mapped_column(
+        EncryptedString,
+        doc=("Schlüsselwort für die Kategorie des Klienten im Tätigkeitsbericht",),
     )
-    # I need lrst_diagnosis as a variable separate from keyword_taetigkeitsbericht,
+    # I need lrst_diagnosis as a variable separate from keyword_taet_encr,
     # because LRSt can be present even if it is not the most important topic
-    lrst_diagnosis: Mapped[str | None] = mapped_column(
-        String,
-        CheckConstraint(
-            f"lrst_diagnosis IN "
-            f"({', '.join(f"'{item}'" for item in LRST_DIAG)})"
-            f"OR lrst_diagnosis IS NULL"
-        ),
+    lrst_diagnosis_encr: Mapped[str | None] = mapped_column(
+        EncryptedString,
         doc=(
             f"Diagnose im Zusammenhang mit LRSt. Zulässig sind die Werte: "
             f"{', '.join(LRST_DIAG)}"
@@ -160,7 +156,7 @@ class Client(Base):
         CheckConstraint(
             "lrst_last_test_by IN "
             "('schpsy', 'psychia', 'psychoth', 'spz') "
-            "OR lrst_diagnosis IS NULL"
+            "OR lrst_diagnosis_encr IS NULL"
         ),
         doc=(
             "Fachperson, von der die letzte Überprüfung von LRSt "
@@ -363,10 +359,10 @@ class Client(Base):
         nta_other_details: str | None = None,
         nta_nos_notes: str | None = None,
         nta_nos_end_grade: int | str | None = None,
-        lrst_diagnosis: str | None = None,
+        lrst_diagnosis_encr: str | None = None,
         lrst_last_test_date: date | str | None = None,
         lrst_last_test_by: str | None = None,
-        keyword_taetigkeitsbericht: str | None = "",
+        keyword_taet_encr: str | None = "",
         h_sessions: int | str = 1,
     ) -> None:
         if client_id and isinstance(client_id, str):
@@ -412,9 +408,11 @@ class Client(Base):
                 self.estimated_graduation_date
             )
 
-        self.lrst_diagnosis = lrst_diagnosis
+        self.lrst_diagnosis_encr = lrst_diagnosis_encr
         self.lrst_last_test_date = lrst_last_test_date
         self.lrst_last_test_by = lrst_last_test_by
+
+        self.keyword_taet_encr = keyword_taet_encr
 
         # Notenschutz
         self.nos_rs = nos_rs
@@ -476,8 +474,17 @@ class Client(Base):
             nos_dict[key] = value
         self.notenschutz = any(nos_dict.values())
 
-    @validates("keyword_taetigkeitsbericht")
-    def validate_keyword_taetigkeitsbericht(self, key: str, value: str) -> str | None:
+    @validates("lrst_diagnosis_encr")
+    def validate_lrst_diagnosis(self, key: str, value: str | None) -> str | None:
+        if value is not None and value not in LRST_DIAG:
+            raise ValueError(
+                f"Invalid value for lrst_diagnosis: '{value}'. "
+                f"Allowed values are: {', '.join(LRST_DIAG)}"
+            )
+        return value
+
+    @validates("keyword_taet_encr")
+    def validate_keyword_taet_encr(self, key: str, value: str) -> str | None:
         return check_keyword(value)
 
     @validates("nos_rs_ausn_faecher")

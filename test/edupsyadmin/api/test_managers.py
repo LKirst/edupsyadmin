@@ -27,8 +27,8 @@ EXPECTED_KEYS = {
     "class_int",
     "estimated_graduation_date",
     "document_shredding_date",
-    "keyword_taetigkeitsbericht",
-    "lrst_diagnosis",
+    "keyword_taet_encr",
+    "lrst_diagnosis_encr",
     "lrst_last_test_date",
     "lrst_last_test_by",
     "datetime_created",
@@ -137,7 +137,7 @@ class ManagersTest:
                 "nta_font": True,
                 "nta_zeitv_vieltext": "",
                 "nta_zeitv_wenigtext": "",
-                "lrst_diagnosis": "iLst",
+                "lrst_diagnosis_encr": "iLst",
             },
         )
         upd_cl1_multiple = clients_manager.get_decrypted_client(client_id)
@@ -158,8 +158,8 @@ class ManagersTest:
             is None
         )
         assert (
-            upd_cl1_multiple["lrst_diagnosis"]
-            == upd_cl2_multiple["lrst_diagnosis"]
+            upd_cl1_multiple["lrst_diagnosis_encr"]
+            == upd_cl2_multiple["lrst_diagnosis_encr"]
             == "iLst"
         )
 

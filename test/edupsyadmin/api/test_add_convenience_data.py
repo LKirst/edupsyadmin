@@ -66,7 +66,7 @@ def test_add_convenience_data(mock_get_subjects, mock_config, client_dict_intern
         )
     assert result["school_subjects"] == "Math, Science, History"
 
-    diagnosis = result["lrst_diagnosis"]
+    diagnosis = result["lrst_diagnosis_encr"]
     if diagnosis == "lrst":
         assert result["lrst_diagnosis_long"] == "Lese-Rechtschreib-Störung"
     elif diagnosis == "iLst":

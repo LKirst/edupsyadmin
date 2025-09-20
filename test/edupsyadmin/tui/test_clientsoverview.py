@@ -11,7 +11,7 @@ ROWS = [
         "nachteilsausgleich",
         "lrst_diagnosis",
         "h_sessions",
-        "keyword_taetigkeitsbericht",
+        "keyword_taet_encr",
     ),
     (1, "FirstSchool", "abc123", "xyz789", "10A", False, True, "lrst", 5, "key1.a"),
     (2, "FirstSchool", "def456", "uvw345", "9B", True, False, "iRst", 3, "key1.b"),
