@@ -96,3 +96,11 @@ select = [
 "src/edupsyadmin/db/clients.py" = ["ARG002"]
 "src/edupsyadmin/tui/*" = ["ARG"]
 "test/*" = ["ARG"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "test",
+]
+python_files = "test_*.py"
+python_classes = "[A-Z]*Test"
+python_functions = "test_*"
