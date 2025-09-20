@@ -113,8 +113,9 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
         logger.debug("Couldn't add home address because of missing data: {e}")
 
     # school psychologist address
-    for i in ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]:
-        data[i] = config.schoolpsy[i]
+    data["schoolpsy_name"] = config.schoolpsy.schoolpsy_name
+    data["schoolpsy_street"] = config.schoolpsy.schoolpsy_street
+    data["schoolpsy_city"] = config.schoolpsy.schoolpsy_city
     data["schoolpsy_addr_m_wname"] = _get_addr_mulitline(
         data["schoolpsy_street"], data["schoolpsy_city"], data["schoolpsy_name"]
     )
@@ -122,8 +123,10 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
 
     # school address
     schoolconfig = config.school[data["school"]]
-    for i in ["school_name", "school_street", "school_city", "school_head_w_school"]:
-        data[i] = schoolconfig[i]
+    data["school_name"] = schoolconfig.school_name
+    data["school_street"] = schoolconfig.school_street
+    data["school_city"] = schoolconfig.school_city
+    data["school_head_w_school"] = schoolconfig.school_head_w_school
     data["school_addr_m_wname"] = _get_addr_mulitline(
         data["school_street"], data["school_city"], data["school_name"]
     )

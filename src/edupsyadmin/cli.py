@@ -67,14 +67,14 @@ def main(argv: list[str] | None = None) -> int:
 
     # config
     # if the (first) config file doesn't exist, copy a sample config
-    if not os.path.exists(args.config_path[0]):
+    if not os.path.exists(args.config_path):
         template_path = str(
             importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
         )
-        shutil.copy(template_path, args.config_path[0])
+        shutil.copy(template_path, args.config_path)
         logger.info(
             "Could not find the specified config file. "
-            f"Created a sample config at {args.config_path[0]}. "
+            f"Created a sample config at {args.config_path}. "
             "Fill it with your values."
         )
     config.load(args.config_path)
@@ -127,7 +127,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     parser = ArgumentParser()
     # append allows multiple instances of the same object
     # args.config_path will therefore be a list!
-    parser.add_argument("-c", "--config_path", action="append", help=argparse.SUPPRESS)
+    parser.add_argument("-c", "--config_path", help=argparse.SUPPRESS)
     parser.add_argument(
         "-v",
         "--version",
@@ -171,7 +171,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     if not args.config_path:
         # Don't specify this as an argument default or else it will always be
         # included in the list.
-        args.config_path = [DEFAULT_CONFIG_PATH]
+        args.config_path = DEFAULT_CONFIG_PATH
     if not args.salt_path:
         args.salt_path = DEFAULT_SALT_PATH
     return args
@@ -218,10 +218,7 @@ def _edit_config(
         config_path: str | os.PathLike[str],
     ) -> None:
         config_editor_app = lazy_import("edupsyadmin.tui.editconfig").ConfigEditorApp
-        if isinstance(config_path, str):
-            config_editor_app(config_path).run()
-        else:
-            config_editor_app(config_path[0]).run()
+        config_editor_app(config_path).run()
 
     parser = subparsers.add_parser(
         "edit_config",

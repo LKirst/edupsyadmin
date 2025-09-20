@@ -13,7 +13,7 @@ from sample_pdf_form import create_pdf_form
 from sample_webuntis_export import create_sample_webuntis_export
 
 from edupsyadmin.api.managers import ClientsManager
-from edupsyadmin.core.config import config, convert_config_to_dict
+from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import Logger, logger
 
 TEST_USERNAME = "test_user_do_not_use"
@@ -58,10 +58,10 @@ def mock_keyring(monkeysession):
 @pytest.fixture(scope="function")
 def mock_config(
     tmp_path_factory: pytest.TempPathFactory, pdf_forms, request
-) -> Generator[list[str]]:
+) -> Generator[str]:
     template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
-    conf_path = [str(tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml")]
-    shutil.copy(template_path, conf_path[0])
+    conf_path = str(tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml")
+    shutil.copy(template_path, conf_path)
     testing_logger.debug(
         f"mock_config fixture (test: {request.node.name}) - conf_path: {conf_path}"
     )
@@ -71,11 +71,12 @@ def mock_config(
     config.core.config = conf_path
     config.core.app_username = f"user_read_from_file-{request.node.name}"
     config.core.logging = "DEBUG"
-    config.form_set.lrst = [str(path) for path in pdf_forms]
+    config.form_set["lrst"] = [str(path) for path in pdf_forms]
 
     # write the changed config to file
-    with open(str(config.core.config[0]), "w", encoding="UTF-8") as f:
-        dictyaml = convert_config_to_dict(config)  # convert to dict for pyyaml
+    with open(config.core.config, "w", encoding="UTF-8") as f:
+        # convert to dict for pyyaml, excluding the runtime 'config' path
+        dictyaml = config.model_dump(exclude={"core": {"config"}})
         yaml.dump(dictyaml, f)
 
     # set different username than written to file to test which one is used
@@ -85,7 +86,7 @@ def mock_config(
     config.core.app_uid = "example.com"
 
     yield conf_path
-    os.remove(conf_path[0])
+    os.remove(conf_path)
 
 
 @pytest.fixture

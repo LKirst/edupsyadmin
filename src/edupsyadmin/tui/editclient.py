@@ -36,7 +36,7 @@ HIDDEN_FIELDS = [
 
 
 def _is_school_key(value: str):
-    return value in config["school"]
+    return value in config.school
 
 
 def _is_lrst_diag(value: str):

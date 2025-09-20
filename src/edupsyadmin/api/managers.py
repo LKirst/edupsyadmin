@@ -177,7 +177,7 @@ def new_client(
         if not keepfile:
             os.remove(csv)
     else:
-        enter_client_cli(clients_manager)
+        enter_client_tui(clients_manager)
 
 
 def set_client(
@@ -333,8 +333,7 @@ def enter_client_untiscsv(
     )
 
 
-# TODO: rename to enter_client_tui
-def enter_client_cli(clients_manager: ClientsManager) -> int:
+def enter_client_tui(clients_manager: ClientsManager) -> int:
     app = StudentEntryApp(data=None)
     app.run()
 

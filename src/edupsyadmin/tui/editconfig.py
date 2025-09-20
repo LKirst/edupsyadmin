@@ -456,10 +456,18 @@ class ConfigEditorApp(App):
                 target = target[part]
 
             last = rest[-1]
+            value = inp.value
+            if last in ["end", "nstudents"]:
+                try:
+                    value = int(value)
+                except (ValueError, TypeError):
+                    # Keep empty string for empty fields, which is the TUI's default
+                    value = ""
+
             if isinstance(target, list):
-                target[int(last)] = inp.value
+                target[int(last)] = value
             else:
-                target[last] = inp.value
+                target[last] = value
 
         # rename schools
         changes = [

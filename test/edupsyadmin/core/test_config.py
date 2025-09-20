@@ -1,88 +1,104 @@
-"""Test suite for the core.config module.
-
-The script can be executed on its own or incorporated into a larger test suite.
-However the tests are run, be aware of which version of the package is actually
-being tested. If the package is installed in site-packages, that version takes
-precedence over the version in this project directory. Use a virtualenv test
-environment or setuptools develop mode to test against the development version.
-
-"""
+"""Test suite for the core.config module."""
 
 import pytest
+from pydantic import ValidationError
 
-from edupsyadmin.core.config import YamlConfig
+from edupsyadmin.core.config import AppConfig, config
 
-conf1_content = """
-str: $$str  # literal `$`, no substitution
-var: ${var1}$var2
+# A minimal, valid config
+valid_config_content = """
+core:
+  app_username: "testuser"
+schoolpsy:
+  schoolpsy_name: "Test Psy"
+  schoolpsy_street: "123 Street"
+  schoolpsy_city: "Test City"
+school:
+  TestSchool:
+    school_head_w_school: "Head"
+    school_name: "Test School"
+    school_street: "456 Avenue"
+    school_city: "Test Town"
+    end: 12
+    nstudents: 500
 """
-conf2_content = """
-var: ${var1}$var3  # override `var` in conf1
+
+# An invalid config (missing required field `app_username`)
+invalid_config_missing_field = """
+core:
+  logging: "INFO"
+schoolpsy:
+  schoolpsy_name: "Test Psy"
+  schoolpsy_street: "123 Street"
+  schoolpsy_city: "Test City"
+school:
+  TestSchool:
+    school_head_w_school: "Head"
+    school_name: "Test School"
+    school_street: "456 Avenue"
+    school_city: "Test Town"
+    end: 12
+    nstudents: 500
+"""
+
+# An invalid config (wrong type for `nstudents`)
+invalid_config_wrong_type = """
+core:
+  app_username: "testuser"
+schoolpsy:
+  schoolpsy_name: "Test Psy"
+  schoolpsy_street: "123 Street"
+  schoolpsy_city: "Test City"
+school:
+  TestSchool:
+    school_head_w_school: "Head"
+    school_name: "Test School"
+    school_street: "456 Avenue"
+    school_city: "Test Town"
+    end: 12
+    nstudents: "five hundred"
 """
 
 
-@pytest.fixture
-def files(tmp_path):
-    """Create configuration files for testing."""
-    # Create conf1.yml and conf2.yml in the temporary path
-    conf1_path = tmp_path / "conf1.yml"
-    conf2_path = tmp_path / "conf2.yml"
-    conf1_path.write_text(conf1_content.strip())
-    conf2_path.write_text(conf2_content.strip())
+def test_successful_load(tmp_path):
+    """Test that a valid config file is loaded correctly."""
+    conf_path = tmp_path / "config.yml"
+    conf_path.write_text(valid_config_content)
 
-    return conf1_path, conf2_path
+    config.load(str(conf_path))
 
-
-@pytest.fixture
-def params():
-    """Define configuration parameters."""
-    return {"var1": "VAR1", "var2": "VAR2", "var3": "VAR3"}
+    # Check that the loaded config is an instance of our Pydantic model
+    assert isinstance(config._instance, AppConfig)
+    # Check attribute access
+    assert config.core.app_username == "testuser"
+    assert config.school["TestSchool"].nstudents == 500
+    # Check default value
+    assert config.core.logging == "WARN"
 
 
-class YamlConfigTest(object):
-    """Test suite for the YamlConfig class."""
+def test_load_invalid_config_missing_field(tmp_path):
+    """Test that loading a config with a missing required field
+    raises ValidationError.
+    """
+    conf_path = tmp_path / "invalid.yml"
+    conf_path.write_text(invalid_config_missing_field)
 
-    def test_item(self):
-        """Test item access."""
-        config = YamlConfig()
-        config["root"] = {}
-        config["root"]["key"] = "value"
-        assert config["root"]["key"] == "value"
-        return
+    with pytest.raises(ValidationError) as excinfo:
+        config.load(str(conf_path))
 
-    def test_attr(self):
-        """Test attribute access."""
-        config = YamlConfig()
-        config.root = {}
-        config.root.key = "value"
-        assert config.root.key == "value"
-        return
-
-    @pytest.mark.parametrize("root", (None, "root"))
-    def test_init(self, files, params, root):
-        """Test the __init__() method for loading a file."""
-        merged = {"str": "$str", "var": "VAR1VAR3"}
-        config = YamlConfig(files, root, params)
-        if root:
-            assert config == {root: merged}
-        else:
-            assert config == merged
-        return
-
-    @pytest.mark.parametrize("root", (None, "root"))
-    def test_load(self, files, params, root):
-        """Test the load() method."""
-        merged = {"str": "$str", "var": "VAR1VAR3"}
-        config = YamlConfig()
-        config.load(files, root, params)
-        if root:
-            assert config == {root: merged}
-        else:
-            assert config == merged
-        return
+    # Check that the error message is helpful
+    assert "core.app_username" in str(excinfo.value)
+    assert "Field required" in str(excinfo.value)
 
 
-# Make the module executable.
+def test_load_invalid_config_wrong_type(tmp_path):
+    """Test that loading a config with a wrong type raises ValidationError."""
+    conf_path = tmp_path / "invalid.yml"
+    conf_path.write_text(invalid_config_wrong_type)
 
-if __name__ == "__main__":
-    raise SystemExit(pytest.main([__file__]))
+    with pytest.raises(ValidationError) as excinfo:
+        config.load(str(conf_path))
+
+    # Check that the error message points to the right field
+    assert "school.TestSchool.nstudents" in str(excinfo.value)
+    assert "Input should be a valid integer" in str(excinfo.value)

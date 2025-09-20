@@ -101,9 +101,9 @@ def test_config_template(mock_keyring, tmp_path_factory):
         database_url,
     ]
     assert main(args) == 0
-    assert os.path.isfile(
-        config_path
-    ), f"Config file was not initialized: {config_path}"
+    assert os.path.isfile(config_path), (
+        f"Config file was not initialized: {config_path}"
+    )
 
 
 def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
@@ -113,7 +113,7 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
         "-w",
         "DEBUG",
         "-c",
-        str(mock_config[0]),
+        str(mock_config),
         "new_client",
         "--app_uid",
         "example.com",
@@ -140,7 +140,7 @@ def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_p
         "-w",
         "DEBUG",
         "-c",
-        str(mock_config[0]),
+        str(mock_config),
         "new_client",
         "--app_uid",
         "example.com",
@@ -160,7 +160,7 @@ def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_p
         "-w",
         "DEBUG",
         "-c",
-        str(mock_config[0]),
+        str(mock_config),
         "get_clients",
         "--app_uid",
         "example.com",
@@ -171,7 +171,7 @@ def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_p
     # mock_keyring.assert_called_with(
     #    "example.com", "user_read_from_file-test_get_clients_all"
     # )
-    stdout, stderr = capsys.readouterr()
+    stdout, _ = capsys.readouterr()
     assert "Mustermann" in stdout
     assert "Erika" in stdout
 
@@ -184,7 +184,7 @@ def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tm
         "-w",
         "DEBUG",
         "-c",
-        str(mock_config[0]),
+        str(mock_config),
         "new_client",
         "--app_uid",
         "example.com",
@@ -203,7 +203,7 @@ def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tm
         "-w",
         "DEBUG",
         "-c",
-        str(mock_config[0]),
+        str(mock_config),
         "new_client",
         "--app_uid",
         "example.com",
@@ -223,7 +223,7 @@ def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tm
         "-w",
         "DEBUG",
         "-c",
-        str(mock_config[0]),
+        str(mock_config),
         "get_clients",
         "--app_uid",
         "example.com",
@@ -236,7 +236,7 @@ def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tm
     # mock_keyring.assert_called_with(
     #    "example.com", "user_read_from_file-test_get_clients_single"
     # )
-    stdout, stderr = capsys.readouterr()
+    stdout, _ = capsys.readouterr()
     assert "Mustermann" in stdout
     assert "Erika" in stdout
     assert "Max" not in stdout
@@ -250,7 +250,7 @@ def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
         "-w",
         "DEBUG",
         "-c",
-        str(mock_config[0]),
+        str(mock_config),
         "new_client",
         "--app_uid",
         "example.com",
@@ -270,7 +270,7 @@ def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
         "-w",
         "DEBUG",
         "-c",
-        str(mock_config[0]),
+        str(mock_config),
         "set_client",
         "--app_uid",
         "example.com",
@@ -288,7 +288,7 @@ def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
         "-w",
         "DEBUG",
         "-c",
-        str(mock_config[0]),
+        str(mock_config),
         "get_clients",
         "--app_uid",
         "example.com",
@@ -298,7 +298,7 @@ def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
         "1",
     ]
     assert main(args) == 0
-    stdout, stderr = capsys.readouterr()
+    stdout, _ = capsys.readouterr()
     assert "Veränderte Straße 5" in stdout
     assert "42ab" in stdout
 
@@ -307,7 +307,7 @@ def test_create_documentation(
     tmp_path, mock_webuntis, mock_keyring, mock_config, pdf_forms, change_wd
 ):
     testing_logger.start(level="DEBUG")
-    testing_logger.debug(f"config path: {mock_config[0]}")
+    testing_logger.debug(f"config path: {mock_config}")
 
     # add a client
     database_path = tmp_path / "test.sqlite"
@@ -316,7 +316,7 @@ def test_create_documentation(
         "-w",
         "DEBUG",
         "-c",
-        str(mock_config[0]),
+        str(mock_config),
         "new_client",
         "--app_uid",
         "example.com",
@@ -337,7 +337,7 @@ def test_create_documentation(
         "-w",
         "DEBUG",
         "-c",
-        str(mock_config[0]),
+        str(mock_config),
         "create_documentation",
         "--app_uid",
         "example.com",
@@ -355,9 +355,9 @@ def test_create_documentation(
     # I've changed the wd with a fixture, so I can check without an absolute path
     output_paths = [f"{client_id}_{Path(path).name}" for path in pdf_forms]
     for path in output_paths:
-        assert os.path.exists(
-            path
-        ), f"Output file {path} was not created in {os.getcwd()}"
+        assert os.path.exists(path), (
+            f"Output file {path} was not created in {os.getcwd()}"
+        )
 
 
 # Make the script executable.

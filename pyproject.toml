@@ -25,6 +25,7 @@ dependencies = [
     "scipy>=1.14.1",
     "sqlalchemy>=2.0.36",
     "textual>=2.1.2",
+    "pydantic>=2.8.2",
 ]
 
 [project.scripts]
