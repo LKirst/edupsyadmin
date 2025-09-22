@@ -1,21 +1,24 @@
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from textual.app import App, ComposeResult
+from textual.binding import Binding
 from textual.widgets import DataTable, Footer
 
 
-class ClientsOverview(App):
-    BINDINGS: ClassVar[list] = [
-        ("n", "sort_by_last_name", "Sortieren nach `last_name_encr`"),
-        ("s", "sort_by_school", "Sortieren nach `schule`"),
-        ("i", "sort_by_client_id", "Sortieren nach `client_id`"),
-        ("c", "sort_by_class_name", "Sortieren nach `class_name`"),
+class ClientsOverview(App[None]):
+    """A TUI to show clients in a DataTable."""
+
+    BINDINGS: ClassVar[list[Binding | tuple[str, str] | tuple[str, str, str]]] = [
+        Binding("n", "sort_by_last_name", "Sortieren nach `last_name_encr`"),
+        Binding("s", "sort_by_school", "Sortieren nach `schule`"),
+        Binding("i", "sort_by_client_id", "Sortieren nach `client_id`"),
+        Binding("c", "sort_by_class_name", "Sortieren nach `class_name`"),
     ]
 
-    def __init__(self, data: dict):
+    def __init__(self, data: list[list[Any]]) -> None:
         super().__init__()
         self.ROWS = data
-        self.current_sorts: set = set()
+        self.current_sorts: set[str] = set()
 
     def compose(self) -> ComposeResult:
         yield DataTable()
@@ -30,8 +33,10 @@ class ClientsOverview(App):
             table.add_column(col, key=col)
         table.add_rows(self.ROWS[1:])
 
-    def sort_reverse(self, sort_type: str):
-        """Determine if `sort_type` is ascending or descending."""
+    def sort_reverse(self, sort_type: str) -> bool:
+        """
+        Determine if `sort_type` is ascending or descending.
+        """
         reverse = sort_type in self.current_sorts
         if reverse:
             self.current_sorts.remove(sort_type)

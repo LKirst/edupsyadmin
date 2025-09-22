@@ -1,7 +1,8 @@
 from datetime import date
+from typing import Any
 
 from textual import log, on
-from textual.app import App
+from textual.app import App, ComposeResult
 from textual.validation import Function, Regex
 from textual.widgets import Button, Checkbox, Input, Label, RichLog
 
@@ -35,22 +36,25 @@ HIDDEN_FIELDS = [
 ]
 
 
-def _is_school_key(value: str):
+def _is_school_key(value: str) -> bool:
     return value in config.school
 
 
-def _is_lrst_diag(value: str):
+def _is_lrst_diag(value: str) -> bool:
     return value in LRST_DIAG
 
 
-class StudentEntryApp(App):
+# NOTE: I might change the return type from None to int to show success
+class StudentEntryApp(App[None]):
     CSS_PATH = "editclient.tcss"
 
-    def __init__(self, client_id: int | None = None, data: dict | None = None):
+    def __init__(
+        self, client_id: int | None = None, data: dict[str, Any] | None = None
+    ):
         super().__init__()
 
         data = data or _get_empty_client_dict()
-        self._original_data = {}
+        self._original_data: dict[str, str | bool] = {}
 
         for key, value in data.items():
             if value is None:
@@ -61,14 +65,15 @@ class StudentEntryApp(App):
                 self._original_data[key] = value
             elif isinstance(value, int | float):
                 self._original_data[key] = str(value)
-        self._changed_data = {}
+        self._changed_data: dict[str, Any] = {}
 
         self.client_id = client_id
-        self.inputs = {}
-        self.dates = {}
-        self.checkboxes = {}
+        self.inputs: dict[str, Input] = {}
+        self.dates: dict[str, Input] = {}
+        self.checkboxes: dict[str, Checkbox] = {}
+        self.submit_button: Button  # Initialized in compose
 
-    def compose(self):
+    def compose(self) -> ComposeResult:
         # Create heading with client_id
         if self.client_id:
             yield Label(f"Daten für client_id: {self.client_id}")
@@ -83,39 +88,42 @@ class StudentEntryApp(App):
             if name in HIDDEN_FIELDS:
                 continue
 
-            # default value
-            if field_type is bool:
-                default = self._original_data.get(name, False)
-            else:
-                default = (
-                    str(self._original_data[name])
-                    if name in self._original_data
-                    else ""
-                )
-
-            # create widget
             placeholder = name + "*" if (name in REQUIRED_FIELDS) else name
+
+            # checkboxes
             if field_type is bool:
-                widget = Checkbox(label=name, value=default)
-                self.checkboxes[name] = widget
-            elif field_type is int:
-                widget = Input(
+                bool_value = self._original_data.get(name)
+                bool_default = bool_value if isinstance(bool_value, bool) else False
+                checkbox = Checkbox(label=name, value=bool_default)
+                self.checkboxes[name] = checkbox
+                # add tooltip
+                checkbox.tooltip = column.doc
+                checkbox.id = f"{name}"
+                yield checkbox
+                continue
+
+            # input widgets
+            default = (
+                str(self._original_data[name]) if name in self._original_data else ""
+            )
+            if field_type is int:
+                input_widget = Input(
                     value=default,
                     placeholder=placeholder,
                     type="integer",
                     valid_empty=True,
                 )
-                self.inputs[name] = widget
+                self.inputs[name] = input_widget
             elif field_type is float:
-                widget = Input(
+                input_widget = Input(
                     value=default,
                     placeholder=placeholder,
                     type="number",
                     valid_empty=True,
                 )
-                self.inputs[name] = widget
+                self.inputs[name] = input_widget
             elif (field_type is date) or (name == "birthday_encr"):
-                widget = Input(
+                input_widget = Input(
                     value=default,
                     placeholder=placeholder,
                     restrict=r"[\d-]*",
@@ -125,7 +133,7 @@ class StudentEntryApp(App):
                     ),
                     valid_empty=True,
                 )
-                self.dates[name] = widget
+                self.dates[name] = input_widget
             elif name in {"school", "lrst_diagnosis_encr"}:
                 if name == "school":
                     validator = Function(
@@ -145,22 +153,22 @@ class StudentEntryApp(App):
                         ),
                     )
                     valid_empty = True
-                widget = Input(
+                input_widget = Input(
                     value=default,
                     placeholder=placeholder,
                     validators=[validator],
                     valid_empty=valid_empty,
                 )
-                self.inputs[name] = widget
+                self.inputs[name] = input_widget
             else:
-                widget = Input(value=default, placeholder=placeholder)
-                self.inputs[name] = widget
+                input_widget = Input(value=default, placeholder=placeholder)
+                self.inputs[name] = input_widget
 
             # add tooltip
-            widget.tooltip = column.doc
-            widget.id = f"{name}"
+            input_widget.tooltip = column.doc
+            input_widget.id = f"{name}"
 
-            yield widget
+            yield input_widget
 
         # Submit button
         self.submit_button = Button(label="Submit", id="Submit")
@@ -169,11 +177,11 @@ class StudentEntryApp(App):
         # For failures of input validation
         yield RichLog(classes="log")
 
-    def on_button_pressed(self):
+    def on_button_pressed(self) -> None:
         """method that is called when the submit button is pressed"""
 
         # build snapshot from widgets
-        current: dict[str, object] = {}
+        current: dict[str, str | bool] = {}
         current.update({n: w.value for n, w in {**self.inputs, **self.dates}.items()})
         current.update({n: cb.value for n, cb in self.checkboxes.items()})
 
@@ -181,8 +189,8 @@ class StudentEntryApp(App):
 
         # validation
         school_lrst_valid = (
-            self.query_one("#school").is_valid
-            and self.query_one("#lrst_diagnosis_encr").is_valid
+            self.query_one("#school", Input).is_valid
+            and self.query_one("#lrst_diagnosis_encr", Input).is_valid
         )
         dates_valid = all(widget.is_valid for widget in self.dates.values())
 
@@ -207,12 +215,12 @@ class StudentEntryApp(App):
             log = self.query_one(RichLog)
             log.write(event.validation_result.failure_descriptions)
 
-    def get_data(self):
+    def get_data(self) -> dict[str, Any]:
         return self._changed_data
 
 
-def _get_empty_client_dict() -> dict[str, any]:
-    empty_client_dict = {}
+def _get_empty_client_dict() -> dict[str, str | bool]:
+    empty_client_dict: dict[str, str | bool] = {}
     for column in Client.__table__.columns:
         field_type = get_python_type(column.type)
         name = column.name

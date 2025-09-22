@@ -133,7 +133,7 @@ class Client(Base):
     )
     keyword_taet_encr: Mapped[str | None] = mapped_column(
         EncryptedString,
-        doc=("Schlüsselwort für die Kategorie des Klienten im Tätigkeitsbericht",),
+        doc="Schlüsselwort für die Kategorie des Klienten im Tätigkeitsbericht",
     )
     # I need lrst_diagnosis as a variable separate from keyword_taet_encr,
     # because LRSt can be present even if it is not the most important topic
@@ -561,7 +561,7 @@ class Client(Base):
         )
 
 
-def str_to_bool(value):
+def str_to_bool(value: str | bool | int) -> bool:
     """
     Convert a string of an int or an int to a boolean
     """

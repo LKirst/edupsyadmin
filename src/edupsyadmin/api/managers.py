@@ -46,7 +46,7 @@ class ClientsManager:
         encr.set_fernet(app_username, salt_path, app_uid)
 
         # create the table if it doesn't exist
-        Base.metadata.create_all(self.engine, tables=[Client.__table__])
+        Base.metadata.create_all(self.engine, tables=[Client.__table__])  # type: ignore[list-item]
         logger.info(f"created connection to database at {database_url}")
 
     def add_client(self, **client_data: Any) -> int:
@@ -111,7 +111,7 @@ class ClientsManager:
         logger.debug("trying to query the entire database")
         with self.Session() as session:
             query = session.query(Client).statement
-            return pd.read_sql_query(query, session.bind)
+            return pd.read_sql_query(query, self.engine)
 
     def edit_client(self, client_ids: list[int], new_data: dict[str, Any]) -> None:
         logger.debug(f"editing clients (ids = {client_ids})")
@@ -208,7 +208,7 @@ def set_client(
             app_uid=app_uid,
             app_username=app_username,
             salt_path=salt_path,
-            client_id=client_id,
+            client_id=client_id[0],
         )
 
     clients_manager.edit_client(client_ids=client_id, new_data=key_value_pairs)
@@ -346,9 +346,9 @@ def _tui_get_modified_values(
     app_username: str,
     app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike,
+    salt_path: str | os.PathLike[str],
     client_id: int,
-) -> dict:
+) -> dict[str, Any]:
     # retrieve current values
     manager = ClientsManager(
         database_url=database_url,
@@ -391,7 +391,9 @@ def create_documentation(
 
     elif not form_paths:
         raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
-    form_paths_normalized = [_normalize_path(p) for p in form_paths]
+    form_paths_normalized: list[str | os.PathLike[str]] = [
+        _normalize_path(p) for p in form_paths
+    ]
     logger.debug(f"Trying to fill the files: {form_paths_normalized}")
     client_dict = clients_manager.get_decrypted_client(client_id)
     client_dict_with_convenience_data = add_convenience_data(client_dict)

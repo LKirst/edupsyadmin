@@ -1,13 +1,13 @@
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar, Literal
 
 import keyring
 import yaml
 from textual import log
 from textual.app import App, ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.css.query import NoMatches
-from textual.events import Click
 from textual.validation import Function, Regex
 from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, Static
@@ -37,13 +37,13 @@ PathIsFileValidator = Function(
 )
 
 
-def load_config(file_path: Path) -> dict:
+def load_config(file_path: Path) -> dict[str, Any]:
     """Load the YAML configuration file."""
     with open(file_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
-def save_config(config_dict: dict, file_path: Path) -> None:
+def save_config(config_dict: dict[str, Any], file_path: Path) -> None:
     """Save the configuration dictionary back to the YAML file."""
     with open(file_path, "w", encoding="utf-8") as f:
         yaml.safe_dump(config_dict, f, default_flow_style=False, allow_unicode=True)
@@ -89,19 +89,19 @@ class FormSetContainer(Vertical):
         self.form_set_key = form_set_key
 
 
-class ConfigEditorApp(App):
+class ConfigEditorApp(App[None]):
     """A Textual app to edit edupsyadmin YAML configuration files."""
 
     CSS_PATH = "editconfig.tcss"
-    BINDINGS: ClassVar[list] = [
-        ("ctrl+s", "save", "Speichern"),
-        ("ctrl+q", "quit", "Abbrechen"),
+    BINDINGS: ClassVar[list[Binding | tuple[str, str] | tuple[str, str, str]]] = [
+        Binding("ctrl+s", "save", "Speichern", show=True),
+        Binding("ctrl+q", "quit", "Abbrechen", show=True),
     ]
 
     school_count: int = 0
     form_set_count: int = 0
 
-    def __init__(self, config_path: Path, **kwargs):
+    def __init__(self, config_path: Path, **kwargs) -> None:
         super().__init__(**kwargs)
         self.config_path = config_path
         self.config_dict = load_config(config_path)
@@ -115,6 +115,7 @@ class ConfigEditorApp(App):
         self.last_school_widget: Widget | None = None
         self.last_form_set_widget: Widget | None = None
         self.save_button: Button | None = None
+        self.content: VerticalScroll  # Declared here, initialized in compose
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -170,7 +171,7 @@ class ConfigEditorApp(App):
         )
         self.call_later(self.update_save_button_state)
 
-    def load_schools(self):
+    def load_schools(self) -> None:
         """
         Load schools that already exist in the config dict
         """
@@ -178,7 +179,9 @@ class ConfigEditorApp(App):
         for i, (key, info) in enumerate(self.config_dict["school"].items(), 1):
             self.add_school_inputs(key, info, i)
 
-    def add_school_inputs(self, school_key: str, info: dict[str, str], index: int):
+    def add_school_inputs(
+        self, school_key: str, info: dict[str, Any], index: int
+    ) -> None:
         """
         Add school input widgets for a given school key
 
@@ -202,7 +205,9 @@ class ConfigEditorApp(App):
         widgets.append(key_inp)
 
         for k, v in info.items():
-            input_type = "integer" if k in ["end", "nstudents"] else "text"
+            input_type: Literal["integer", "text"] = (
+                "integer" if k in ["end", "nstudents"] else "text"
+            )
             inp = Input(
                 value=str(v),
                 placeholder=k,
@@ -227,7 +232,7 @@ class ConfigEditorApp(App):
             self.content.mount(container)
         self.last_school_widget = container
 
-    def load_form_sets(self):
+    def load_form_sets(self) -> None:
         """
         Load existing form sets from the config dict
         """
@@ -235,7 +240,7 @@ class ConfigEditorApp(App):
         for key, paths in self.config_dict["form_set"].items():
             self.add_form_set_inputs(key, paths)
 
-    def add_form_set_inputs(self, form_set_key: str, paths: list[str]):
+    def add_form_set_inputs(self, form_set_key: str, paths: list[str]) -> None:
         """
         Add widgets for a form set
 
@@ -288,7 +293,7 @@ class ConfigEditorApp(App):
         # update marker
         self.last_form_set_widget = container
 
-    def add_new_school(self):
+    def add_new_school(self) -> None:
         """
         Add new school
         """
@@ -310,7 +315,7 @@ class ConfigEditorApp(App):
         )
         self.school_count += 1
 
-    def add_new_form_set(self):
+    def add_new_form_set(self) -> None:
         """
         Add a new form set with one path
         """
@@ -323,7 +328,7 @@ class ConfigEditorApp(App):
         self.add_form_set_inputs(key, [])
         self.form_set_count += 1
 
-    def add_form_path(self, button: AddPathButton):
+    def add_form_path(self, button: AddPathButton) -> None:
         """
         Add a path widget to the widgets of a form set
 
@@ -342,7 +347,7 @@ class ConfigEditorApp(App):
         # Mount the new input before the button that was pressed.
         self.mount(inp, before=button)
 
-    def delete_school(self, school_key: str):
+    def delete_school(self, school_key: str) -> None:
         """
         Delete a school and its widgets.
 
@@ -371,7 +376,7 @@ class ConfigEditorApp(App):
                 container.remove()
                 break
 
-    def delete_form_set(self, form_set_key: str):
+    def delete_form_set(self, form_set_key: str) -> None:
         """
         Delete a form set and its widgets.
 
@@ -418,7 +423,7 @@ class ConfigEditorApp(App):
         if self.save_button:
             self.save_button.disabled = not all_valid
 
-    async def on_button_pressed(self, event: Click) -> None:
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
         if isinstance(event.button, AddPathButton):
             self.add_form_path(event.button)
             return
@@ -456,18 +461,19 @@ class ConfigEditorApp(App):
                 target = target[part]
 
             last = rest[-1]
-            value = inp.value
+            val: str | int
             if last in ["end", "nstudents"]:
                 try:
-                    value = int(value)
+                    val = int(inp.value)
                 except (ValueError, TypeError):
-                    # Keep empty string for empty fields, which is the TUI's default
-                    value = ""
+                    val = ""
+            else:
+                val = inp.value
 
             if isinstance(target, list):
-                target[int(last)] = value
+                target[int(last)] = val
             else:
-                target[last] = value
+                target[last] = val
 
         # rename schools
         changes = [
@@ -503,7 +509,7 @@ class ConfigEditorApp(App):
         key_dict: dict[str, Input],
         *,
         prefix: str,
-    ):
+    ) -> None:
         """
         Rename a key within a section of the config and update related metadata
 
@@ -545,7 +551,7 @@ class ConfigEditorApp(App):
                 if btn.form_set_key == old_key:
                     btn.form_set_key = new_key
 
-    async def save_config(self):
+    async def save_config(self) -> None:
         """
         Save the configuration, and if there are no conflicts, save
         the new password.
