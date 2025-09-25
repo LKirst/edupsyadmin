@@ -516,7 +516,7 @@ class Client(Base):
         self._update_nachteilsausgleich()
         return value
 
-    @validates("nta_font", "nta_auf", "nta_arbeitsm", "nta_ersgew", "nta_vorlesen")
+    @validates("nta_font", "nta_aufg", "nta_arbeitsm", "nta_ersgew", "nta_vorlesen")
     def validate_nta_bool(self, key: str, value: bool | str | int) -> bool:
         boolvalue = str_to_bool(value)
         self._update_nachteilsausgleich(key, boolvalue)
