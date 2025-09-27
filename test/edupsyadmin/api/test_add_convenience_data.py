@@ -83,7 +83,7 @@ def test_add_convenience_data(mock_get_subjects, mock_config, client_dict_intern
     dates = [
         "birthday_encr",
         "today_date",
-        "lrst_last_test_date",
+        "lrst_last_test_date_encr",
         "document_shredding_date",
     ]
     for d in dates:

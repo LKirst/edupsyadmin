@@ -140,11 +140,10 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
         data["lrst_diagnosis_long"] = "isolierte Lesestörung"
     elif diagnosis == "iRst":
         data["lrst_diagnosis_long"] = "isolierte Rechtschreibstörung"
-    elif diagnosis is not None:
+    elif diagnosis:
         raise ValueError(
             f"lrst_diagnosis can be only lrst, iLst or iRst, but was {diagnosis}"
         )
-
     # subjects
     data["school_subjects"] = _get_subjects(data["school"])
 
@@ -154,7 +153,7 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
     dates = [
         "birthday_encr",
         "today_date",
-        "lrst_last_test_date",
+        "lrst_last_test_date_encr",
         "document_shredding_date",
     ]
     for idate in dates:
@@ -170,20 +169,20 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
         )
 
     # convert lrst_last_test_by for pdf forms created with libreoffice
-    if data["lrst_last_test_by"]:
-        if data["lrst_last_test_by"] == "schpsy":
+    if data["lrst_last_test_by_encr"]:
+        if data["lrst_last_test_by_encr"] == "schpsy":
             data["lrst_schpsy"] = 1
-        elif data["lrst_last_test_by"] == "psychia":
+        elif data["lrst_last_test_by_encr"] == "psychia":
             data["lrst_schpsy"] = 2
-        elif data["lrst_last_test_by"] == "psychoth":
+        elif data["lrst_last_test_by_encr"] == "psychoth":
             data["lrst_schpsy"] = 3
-        elif data["lrst_last_test_by"] == "spz":
+        elif data["lrst_last_test_by_encr"] == "spz":
             data["lrst_schpsy"] = 4
         else:
             logger.error(
                 f"Value for lrst_last_test_by must be in "
                 f"(schpsy, psychia, psychoth, spz) but is "
-                f"{data['lrst_last_test_by']}"
+                f"{data['lrst_last_test_by_encr']}"
             )
 
     return data

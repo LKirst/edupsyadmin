@@ -29,8 +29,8 @@ EXPECTED_KEYS = {
     "document_shredding_date",
     "keyword_taet_encr",
     "lrst_diagnosis_encr",
-    "lrst_last_test_date",
-    "lrst_last_test_by",
+    "lrst_last_test_date_encr",
+    "lrst_last_test_by_encr",
     "datetime_created",
     "datetime_lastmodified",
     "notenschutz",
@@ -235,7 +235,7 @@ class ManagersTest:
 
         change_values = {
             "first_name_encr": "SomeNewNameßä",
-            "lrst_last_test_date": "2026-01-01",
+            "lrst_last_test_date_encr": "2026-01-01",
             "nos_rs": True,
         }
 
