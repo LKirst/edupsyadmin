@@ -99,3 +99,10 @@ testpaths = ["test"]
 python_files = "test_*.py"
 python_classes = "[A-Z]*Test"
 python_functions = "test_*"
+
+[tool.coverage.run]
+omit = [
+  "src/edupsyadmin/api/cft_report.py",
+  "src/edupsyadmin/api/reports.py",
+  "src/edupsyadmin/api/lgvt.py",
+]
