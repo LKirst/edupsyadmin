@@ -56,7 +56,8 @@ EXPECTED_KEYS = {
     "nta_nos_notes",
     "nta_nos_end",
     "nta_nos_end_grade",
-    "h_sessions",
+    "min_sessions",
+    "n_sessions",
 }
 
 
@@ -613,20 +614,20 @@ class TestClientValidation:
         client = clients_manager.get_decrypted_client(client_id)
         assert client["keyword_taet_encr"] == ""
 
-    def test_h_sessions(self, clients_manager, client_dict_set_by_user):
+    def test_min_sessions(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
-        clients_manager.edit_client([client_id], {"h_sessions": 2.5})
+        clients_manager.edit_client([client_id], {"min_sessions": 45})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["h_sessions"] == 2.5
+        assert client["min_sessions"] == 45
 
-        clients_manager.edit_client([client_id], {"h_sessions": "3.75"})
+        clients_manager.edit_client([client_id], {"min_sessions": "120"})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["h_sessions"] == 3.75
+        assert client["min_sessions"] == 120
 
-        clients_manager.edit_client([client_id], {"h_sessions": ""})
+        clients_manager.edit_client([client_id], {"min_sessions": ""})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["h_sessions"] is None
+        assert client["min_sessions"] is None
 
     def test_nta_nos_notes(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)

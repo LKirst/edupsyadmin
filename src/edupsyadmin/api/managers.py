@@ -96,7 +96,7 @@ class ClientsManager:
                 "notenschutz": c.notenschutz,
                 "nachteilsausgleich": c.nachteilsausgleich,
                 "lrst_diagnosis_encr": c.lrst_diagnosis_encr,
-                "h_sessions": c.h_sessions,
+                "min_sessions": c.min_sessions,
                 "keyword_taet_encr": c.keyword_taet_encr,
             }
             for c in clients

@@ -4,7 +4,6 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
-    Float,
     Integer,
     String,
 )
@@ -311,13 +310,16 @@ class Client(Base):
             "Notenschutzmaßnahmen zeitlich begrenzt sind"
         ),
     )
-    h_sessions: Mapped[float] = mapped_column(
-        Float,
+    min_sessions: Mapped[int] = mapped_column(
+        Integer,
         doc=(
-            "Anzahl der mit dem Klienten verbundenen Zeitstunden "
-            "(einschließlich Vorbereitung und Auswertung von Tests); eine "
-            "Unterrichtsstunde entspricht 0,75 Zeitstunden."
+            "Anzahl der mit dem Klienten verbundenen Minuten "
+            "(einschließlich Vorbereitung und Auswertung von Tests)"
         ),
+    )
+    n_sessions: Mapped[int] = mapped_column(
+        Integer,
+        doc=("Anzahl der mit dem Klienten verbundenen Beratungs- und Testsitzungen."),
     )
 
     def __init__(
@@ -357,7 +359,8 @@ class Client(Base):
         lrst_last_test_date_encr: date | str = "",
         lrst_last_test_by_encr: str = "",
         keyword_taet_encr: str = "",
-        h_sessions: int | str = 1,
+        min_sessions: int | str = 45,
+        n_sessions: int | str = 1,
     ) -> None:
         if client_id and isinstance(client_id, str):
             self.client_id = int(client_id)
@@ -427,7 +430,8 @@ class Client(Base):
         self.nta_nos_notes = nta_nos_notes
         self.nta_nos_end_grade = nta_nos_end_grade
 
-        self.h_sessions = h_sessions
+        self.min_sessions = min_sessions
+        self.n_sessions = n_sessions
 
         self.datetime_created = datetime.now()
         self.datetime_lastmodified = self.datetime_created
@@ -499,6 +503,14 @@ class Client(Base):
     def validate_nos_other_details(self, key: str, value: str) -> str:
         self.nos_other = (value is not None) and value != ""
         self._update_notenschutz()
+        return value
+
+    @validates("min_sessions", "n_sessions")
+    def validate_sessions(self, key: str, value: str | int) -> int:
+        if isinstance(value, str):
+            value = int(value)
+        if not isinstance(value, int):
+            raise ValueError(f"{key} must be an integer")
         return value
 
     @validates("nta_zeitv_vieltext", "nta_zeitv_wenigtext")
