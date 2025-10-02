@@ -14,7 +14,7 @@ class Encryption:
     fernet = None
 
     def set_fernet(
-        self, username: str, user_data_dir: str | os.PathLike[str], uid: str
+        self, username: str, salt_path: str | os.PathLike[str], uid: str
     ) -> None:
         """use a password to derive a key
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
@@ -23,7 +23,7 @@ class Encryption:
             logger.debug("using existing fernet")
             return
 
-        salt = self._load_or_create_salt(user_data_dir)
+        salt = self._load_or_create_salt(salt_path)
         password = self._retrieve_password(username, uid)
 
         # derive a key using the password and salt
