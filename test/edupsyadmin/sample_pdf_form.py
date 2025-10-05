@@ -7,7 +7,7 @@ from reportlab.pdfgen import canvas
 
 def create_pdf_form(pdf_filename: str) -> None:
     c = canvas.Canvas(pdf_filename, pagesize=A4)
-    page_width, page_height = A4
+    _page_width, _page_height = A4
 
     # a textfield widget
     c.drawString(100, 740, "first_name:")

@@ -2,20 +2,23 @@ Tätigkeitsbericht erstellen
 ===========================
 
 Ein Tätigkeitsbericht kann nur erstellt werden, wenn für alle
-Klienten in der Datenbank jeweils eine Kategorie
-(``keyword_taetigkeitsbericht``) festgelegt ist und eine
-Stundenanzahl (``n_sessions``). Die möglichen keywords sind beschrieben in
-:doc:`Mögliche Tätigkeitsbericht-Kategorien <../taetigkeitsbericht_keywords>`.
+Klienten in der Datenbank jeweils eine Kategorie (``keyword_taet_encr``)
+festgelegt ist, die Anzahl der Sitzungen (``n_sessions``) und die Dauer der
+sitzungen in Minuten (``min_sessions``). Die möglichen keywords sind
+beschrieben in :doc:`Mögliche Tätigkeitsbericht-Kategorien
+<../taetigkeitsbericht_keywords>`.
 
-Der Befehl ``edupsyadmin taetigkeitsbericht`` erlaubt die Erstellung eines
-Tätigkeitsbericht unter der Angabe der Anzahl Anrechnungsstunden (im Beispiel
-unten 3) und der Anzahl Schüler (im Beispiel unten 500 für die Schule mit dem
-Kürzel ``schulkuerzela`` und 400 für die Schule mit dem Kürzel
-``schulkuerzelb``).
+Der Befehl ``edupsyadmin taetigkeitsbericht`` erstellt den Bericht.
+Als einziges verpflichtendes Argument muss die Anzahl der Anrechnungsstunden
+für Schulpsychologie übergeben werden (im Beispiel unten ``3``).
+
+Die Anzahl der Schüler pro Schule wird direkt aus der Konfigurationsdatei
+ausgelesen.  Stelle sicher, dass die ``nstudents``-Werte für deine Schulen
+in der Konfiguration korrekt eingetragen sind.
 
 .. code-block:: console
 
-  $ edupsyadmin taetigkeitsbericht 3 schulkuerzela500 schulkuerzelb400
+  $ edupsyadmin taetigkeitsbericht 3
 
 Dieser Befehl erstellt viele Dateien für den Tätigkeitsbericht, die dann in
 einem PDF-Bericht zusammengefasst werden.
@@ -27,4 +30,4 @@ angegebenen Anrechnungsstunden entsprechen.
 
 .. code-block:: console
 
-   $ edupsyadmin taetigkeitsbericht --wstd_total 28 3 schulkuerzela500 schulkuerzelb400
+   $ edupsyadmin taetigkeitsbericht --wstd_total 28 3

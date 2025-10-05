@@ -23,7 +23,7 @@ def logger():
     return Logger()
 
 
-class LoggerTest(object):
+class LoggerTest:
     """Test suite for the Logger class."""
 
     def test_start(self, capsys, logger):

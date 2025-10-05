@@ -555,10 +555,8 @@ def _taetigkeitsbericht(
         database_url: str,
         salt_path: str | os.PathLike[str],
         wstd_psy: float,
-        nstudents: int,
         out_basename: str | os.PathLike[str],
         wstd_total: float,
-        min_per_ses: int,
         name: str,
     ) -> None:
         taetigkeitsbericht = lazy_import(
@@ -570,10 +568,8 @@ def _taetigkeitsbericht(
             database_url=database_url,
             salt_path=salt_path,
             wstd_psy=wstd_psy,
-            n_students=nstudents,
             out_basename=out_basename,
             wstd_total=wstd_total,
-            min_per_ses=min_per_ses,
             name=name,
         )
 
@@ -587,14 +583,6 @@ def _taetigkeitsbericht(
         "wstd_psy", type=int, help="Anrechnungsstunden in Wochenstunden"
     )
     parser.add_argument(
-        "nstudents",
-        nargs="+",
-        help=(
-            "list of strings with item containing the name of the school "
-            "and the number of students at that school, e.g. Schulname625"
-        ),
-    )
-    parser.add_argument(
         "--out_basename",
         type=str,
         default="Taetigkeitsbericht_Out",
@@ -605,16 +593,6 @@ def _taetigkeitsbericht(
         type=int,
         default=23,
         help="total Wochstunden (depends on your school); default is 23",
-    )
-    parser.add_argument(
-        "--min_per_ses",
-        type=int,
-        default=45,
-        help=(
-            "duration of one session in minutes; "
-            "used to estimate the number of sessions from `h_sessions`; "
-            "default is 45"
-        ),
     )
     parser.add_argument(
         "--name",

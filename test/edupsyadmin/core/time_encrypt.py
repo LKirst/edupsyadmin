@@ -16,13 +16,11 @@ def setup():
 
 
 def encrypt(encr):
-    token = encr.encrypt(SECRET_MESSAGE)
-    return token
+    return encr.encrypt(SECRET_MESSAGE)
 
 
 def decrypt(encr, token):
-    data = encr.decrypt(token)
-    return data
+    return encr.decrypt(token)
 
 
 if __name__ == "__main__":

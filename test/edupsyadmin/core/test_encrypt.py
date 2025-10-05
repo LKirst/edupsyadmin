@@ -16,8 +16,7 @@ class EncryptionTest:
         """Create an encrypted message."""
         encr = Encryption()
         encr.set_fernet(USER_NAME, mock_salt_path, UID)
-        token = encr.encrypt(secret_message)
-        return token
+        return encr.encrypt(secret_message)
 
     def test_encrypt(self, mock_salt_path: str, mock_keyring):
         encr = Encryption()
@@ -44,7 +43,7 @@ class EncryptionTest:
         encr.set_fernet(USER_NAME, mock_salt_path, UID)
         encr.set_fernet(USER_NAME, mock_salt_path, UID)
 
-        stdout, stderr = capsys.readouterr()
+        _stdout, stderr = capsys.readouterr()
         assert "using existing fernet" in stderr
         mock_keyring.assert_called_with(UID, USER_NAME)
 
