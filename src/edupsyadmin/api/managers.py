@@ -2,6 +2,7 @@ import logging  # just for interaction with the sqlalchemy logger
 import os
 import pathlib
 from datetime import datetime
+from inspect import signature
 from typing import Any
 
 import pandas as pd
@@ -163,6 +164,7 @@ def new_client(
     school: str | None = None,
     name: str | None = None,
     keepfile: bool = False,
+    import_config: str | None = None,
 ) -> None:
     clients_manager = ClientsManager(
         database_url=database_url,
@@ -173,7 +175,7 @@ def new_client(
     if csv:
         if name is None:
             raise ValueError("Pass a name to read a client from a csv.")
-        enter_client_untiscsv(clients_manager, csv, school, name)
+        enter_client_csv(clients_manager, csv, school, name, import_config)
         if not keepfile:
             os.remove(csv)
     else:
@@ -277,60 +279,116 @@ def get_data_raw(
     return clients_manager.get_data_raw()
 
 
-def enter_client_untiscsv(
+def enter_client_csv(
     clients_manager: ClientsManager,
-    csv: str | os.PathLike[str],
+    csv_path: str | os.PathLike[str],
     school: str | None,
     name: str,
+    import_config_name: str | None = None,
 ) -> int:
     """
-    Read client from a webuntis csv
+    Read client from a csv file.
 
     :param clients_manager: a ClientsManager instance used to add the client to the db
-    :param csv: path to a tab separated webuntis export file
+    :param csv_path: path to a csv file
     :param school: short name of the school as set in the config file
     :param name: name of the client as specified in the "name" column of the csv
+    :param import_config_name: name of the csv import configuration from the config
     return: client_id
     """
-    untis_df = pd.read_csv(csv, sep="\t", encoding="utf-8")
-    client_series = untis_df[untis_df["name"] == name]
+    if import_config_name:
+        import_conf = config.csv_import[import_config_name]
+        separator = import_conf.separator
+        column_mapping = import_conf.column_mapping
+    else:
+        # Default to original hardcoded behavior
+        separator = "\t"
+        column_mapping = {
+            "gender": "gender_encr",
+            "entryDate": "entry_date",
+            "klasse.name": "class_name",
+            "foreName": "first_name_encr",
+            "longName": "last_name_encr",
+            "birthDate": "birthday_encr",
+            "address.street": "street_encr",
+            "address.postCode": "postCode",
+            "address.city": "city",
+            "address.mobile": "mobile",
+            "address.phone": "phone",
+            "address.email": "email_encr",
+        }
+
+    df = pd.read_csv(csv_path, sep=separator, encoding="utf-8")
+    df = df.rename(columns=column_mapping)
+
+    # The 'name' column is not in the mapping, it's used for lookup
+    if "name" not in df.columns:
+        # If the original 'name' column was mapped, find its new name
+        lookup_col = next(
+            (
+                new_name
+                for old_name, new_name in column_mapping.items()
+                if old_name == "name"
+            ),
+            "name",
+        )
+    else:
+        lookup_col = "name"
+
+    client_series = df[df[lookup_col] == name]
 
     if client_series.empty:
-        raise ValueError(f"Der Name '{name}' ist nicht in der CSV-Datei '{csv}'.")
+        raise ValueError(
+            f"The name '{name}' was not found in the CSV file '{csv_path}'."
+        )
 
-    # check if id is known
-    if "client_id" in client_series.columns:
-        client_id = client_series["client_id"].item()
-    else:
-        client_id = None
+    client_data = client_series.iloc[0].to_dict()
+
+    # Combine address fields if they exist
+    if "postCode" in client_data and "city" in client_data:
+        client_data["city_encr"] = (
+            str(client_data.pop("postCode", ""))
+            + " "
+            + str(client_data.pop("city", ""))
+        )
+
+    # Combine phone numbers
+    if "mobile" in client_data or "phone" in client_data:
+        client_data["telephone1_encr"] = str(
+            client_data.pop("mobile", "") or client_data.pop("phone", "")
+        )
+
+    # Handle date formatting
+    for date_col in ["entry_date", "birthday_encr"]:
+        if date_col in client_data and isinstance(client_data[date_col], str):
+            try:
+                client_data[date_col] = datetime.strptime(
+                    client_data[date_col], "%d.%m.%Y"
+                ).date()
+            except ValueError:
+                logger.error(
+                    f"Could not parse date '{client_data[date_col]}' "
+                    f"for column '{date_col}'. "
+                    "Please ensure the format is DD.MM.YYYY."
+                )
+                # Decide how to handle error: raise, or set to None, etc.
+                client_data[date_col] = None
 
     # check if school was passed and if not use the first from the config
     if school is None:
         school = next(iter(config.school.keys()))
+    client_data["school"] = school
 
-    return clients_manager.add_client(
-        school=school,
-        gender_encr=client_series["gender"].item(),
-        entry_date=datetime.strptime(
-            client_series["entryDate"].item(), "%d.%m.%Y"
-        ).date(),
-        class_name=client_series["klasse.name"].item(),
-        first_name_encr=client_series["foreName"].item(),
-        last_name_encr=client_series["longName"].item(),
-        birthday_encr=datetime.strptime(
-            client_series["birthDate"].item(), "%d.%m.%Y"
-        ).date(),
-        street_encr=client_series["address.street"].item(),
-        city_encr=str(client_series["address.postCode"].item())
-        + " "
-        + client_series["address.city"].item(),
-        telephone1_encr=str(
-            client_series["address.mobile"].item()
-            or client_series["address.phone"].item()
-        ),
-        email_encr=client_series["address.email"].item(),
-        client_id=client_id,
-    )
+    # Filter data to only include valid columns for the Client model
+    valid_keys = {c.key for c in inspect(Client).column_attrs}
+    init_sig = signature(Client.__init__)
+    valid_init_keys = set(init_sig.parameters.keys())
+
+    final_client_data = {
+        k: v for k, v in client_data.items() if k in valid_keys or k in valid_init_keys
+    }
+
+    return clients_manager.add_client(**final_client_data)
 
 
 def enter_client_tui(clients_manager: ClientsManager) -> int:

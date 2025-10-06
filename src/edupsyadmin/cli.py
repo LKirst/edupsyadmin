@@ -247,6 +247,7 @@ def _new_client(
         school: str | None,
         name: str | None,
         keepfile: bool | None,
+        import_config: str | None,
     ) -> None:
         new_client = lazy_import("edupsyadmin.api.managers").new_client
         new_client(
@@ -258,6 +259,7 @@ def _new_client(
             school=school,
             name=name,
             keepfile=keepfile,
+            import_config=import_config,
         )
 
     parser = subparsers.add_parser(
@@ -287,6 +289,13 @@ def _new_client(
             "Only relevant if --csv is set. The label of the school as you "
             "use it in the config file. If no label is passed, the first "
             "school from the config will be used."
+        ),
+    )
+    parser.add_argument(
+        "--import-config",
+        help=(
+            "Only relevant if --csv is set. The name of the csv import configuration "
+            "from the config file to use."
         ),
     )
     parser.add_argument(

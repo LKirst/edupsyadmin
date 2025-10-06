@@ -45,6 +45,13 @@ class SchoolConfig(BaseModel):
     nstudents: int
 
 
+class CsvImportConfig(BaseModel):
+    """Pydantic model for a single csv import configuration."""
+
+    separator: str
+    column_mapping: dict[str, str]
+
+
 class AppConfig(BaseModel):
     """The main Pydantic model for the entire configuration."""
 
@@ -52,6 +59,7 @@ class AppConfig(BaseModel):
     schoolpsy: SchoolpsyConfig
     school: dict[str, SchoolConfig]
     form_set: dict[str, list[str]] = Field(default_factory=dict)
+    csv_import: dict[str, CsvImportConfig] = Field(default_factory=dict)
 
 
 class Settings:

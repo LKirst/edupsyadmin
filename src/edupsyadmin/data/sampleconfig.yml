@@ -35,3 +35,19 @@ form_set: # sets of file paths for create_documentation; replace with your sets
     - '~/Templates/Beratung/LRSt_AnschreibenKeinBefund.pdf'
   mantelbogen:
     - '~/Templates/Beratung/LiL_Mantelbogen.pdf'
+csv_import:
+  webuntis:
+    separator: "\t"
+    column_mapping:
+      "gender": "gender_encr"
+      "entryDate": "entry_date"
+      "klasse.name": "class_name"
+      "foreName": "first_name_encr"
+      "longName": "last_name_encr"
+      "birthDate": "birthday_encr"
+      "address.street": "street_encr"
+      "address.postCode": "postCode"
+      "address.city": "city"
+      "address.mobile": "mobile"
+      "address.phone": "phone"
+      "address.email": "email_encr"

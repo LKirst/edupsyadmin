@@ -7,10 +7,7 @@ from textual import log
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
-from textual.css.query import NoMatches
-from textual.validation import Function, Regex
-from textual.widget import Widget
-from textual.widgets import Button, Footer, Header, Input, Static
+from textual.widgets import Button, Footer, Header, Input, Select, Static
 
 TOOLTIPS = {
     "logging": "Logging-Niveau für die Anwendung (DEBUG, INFO, WARN oder ERROR)",
@@ -27,15 +24,6 @@ TOOLTIPS = {
     "nstudents": "Anzahl Schüler an der Schule",
 }
 
-NoPeriodValidator = Regex(
-    regex=r"^(?!.*\.).*$", failure_description="Darf keine Punkte enthalten"
-)
-
-PathIsFileValidator = Function(
-    function=lambda value: Path(value).expanduser().is_file(),
-    failure_description="Pfad ist keine Datei.",
-)
-
 
 def load_config(file_path: Path) -> dict[str, Any]:
     """Load the YAML configuration file."""
@@ -50,43 +38,36 @@ def save_config(config_dict: dict[str, Any], file_path: Path) -> None:
 
 
 class AddPathButton(Button):
-    """Button with a custom attribute of form_set_key"""
+    """Button to add a new path input to a FormSetContainer."""
 
-    def __init__(self, form_set_key: str) -> None:
+    def __init__(self) -> None:
         super().__init__("Pfad hinzufügen", classes="addformpath")
-        self.form_set_key = form_set_key
 
 
-class DeleteSchoolButton(Button):
-    """Button to delete a school."""
+class AddMappingButton(Button):
+    """Button to add a new mapping to a CsvImportContainer."""
 
-    def __init__(self, school_key: str) -> None:
-        super().__init__("Schule löschen", classes="delete")
-        self.school_key = school_key
+    def __init__(self) -> None:
+        super().__init__("Mapping hinzufügen", classes="addmapping")
 
 
-class DeleteFormSetButton(Button):
-    """Button to delete a form set."""
+class DeleteItemButton(Button):
+    """Button to delete a container (school, form set, or csv import)."""
 
-    def __init__(self, form_set_key: str) -> None:
-        super().__init__("Formular-Satz löschen", classes="delete")
-        self.form_set_key = form_set_key
+    def __init__(self) -> None:
+        super().__init__("Löschen", classes="delete")
 
 
 class SchoolContainer(Vertical):
     """Container for a school's widgets."""
 
-    def __init__(self, *children: Widget, school_key: str, **kwargs) -> None:
-        super().__init__(*children, **kwargs)
-        self.school_key = school_key
-
 
 class FormSetContainer(Vertical):
     """Container for a form set's widgets."""
 
-    def __init__(self, *children: Widget, form_set_key: str, **kwargs) -> None:
-        super().__init__(*children, **kwargs)
-        self.form_set_key = form_set_key
+
+class CsvImportContainer(Vertical):
+    """Container for a csv import's widgets."""
 
 
 class ConfigEditorApp(App[None]):
@@ -98,24 +79,12 @@ class ConfigEditorApp(App[None]):
         Binding("ctrl+q", "quit", "Abbrechen", show=True),
     ]
 
-    school_count: int = 0
-    form_set_count: int = 0
-
     def __init__(self, config_path: Path, **kwargs) -> None:
         super().__init__(**kwargs)
         self.config_path = config_path
         self.config_dict = load_config(config_path)
-
-        self.inputs: dict[str, Input] = {}  # input fields except for password widget
-        self.school_key_inputs: dict[str, Input] = {}
-        self.school_i: int = 0
-        self.form_set_key_inputs: dict[str, Input] = {}
-
-        self.password_input: Input | None = None
-        self.last_school_widget: Widget | None = None
-        self.last_form_set_widget: Widget | None = None
         self.save_button: Button | None = None
-        self.content: VerticalScroll  # Declared here, initialized in compose
+        self.content: VerticalScroll
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -124,43 +93,41 @@ class ConfigEditorApp(App[None]):
         yield self.content
 
     async def on_mount(self) -> None:
-        self.title = "Konfiguration für edupsyadmin"  # title for the header
+        self.title = "Konfiguration für edupsyadmin"
+        self._build_ui_from_config()
+        self.call_later(self.update_save_button_state)
 
-        # core
+    def _build_ui_from_config(self) -> None:
+        """Build the entire UI from the self.config_dict."""
+        # Core section
         self.content.mount(Static("App-Einstellungen"))
-        for key, value in self.config_dict["core"].items():
-            inp = Input(value=str(value), placeholder=key)
+        for key, value in self.config_dict.get("core", {}).items():
+            inp = Input(value=str(value), id=f"core-{key}", placeholder=key)
             inp.tooltip = TOOLTIPS.get(key, "")
-            self.inputs[f"core.{key}"] = inp
             self.content.mount(inp)
 
-        # password
+        # Password
         self.content.mount(
             Static(
                 "Wenn bereits ein Passwort hinterlegt ist, lasse das Feld leer. "
                 "Ändere es nur, wenn du eine neue Datenbank anlegst."
             )
         )
-        self.password_input = Input(placeholder="Passwort", password=True)
-        self.content.mount(self.password_input)
+        self.content.mount(Input(placeholder="Passwort", password=True, id="password"))
 
-        # schoolpsy
+        # Schoolpsy section
         self.content.mount(Static("Schulpsychologie-Einstellungen"))
-        for key, value in self.config_dict["schoolpsy"].items():
-            inp = Input(value=str(value), placeholder=key)
+        for key, value in self.config_dict.get("schoolpsy", {}).items():
+            inp = Input(value=str(value), id=f"schoolpsy-{key}", placeholder=key)
             inp.tooltip = TOOLTIPS.get(key, "")
-            self.inputs[f"schoolpsy.{key}"] = inp
             self.content.mount(inp)
 
-        # schools
-        self.load_schools()
-        self.content.mount(Button("Schule hinzufügen", id="addschool"))
+        # Dynamic sections
+        self._build_dynamic_section("school", "Schule hinzufügen")
+        self._build_dynamic_section("form_set", "Formular-Satz hinzufügen")
+        self._build_dynamic_section("csv_import", "CSV-Import-Konfiguration hinzufügen")
 
-        # form_sets
-        self.load_form_sets()
-        self.content.mount(Button("Formular-Satz hinzufügen", id="addformset"))
-
-        # action buttons
+        # Action buttons
         self.save_button = Button("Speichern", id="save")
         self.content.mount(
             Horizontal(
@@ -169,414 +136,223 @@ class ConfigEditorApp(App[None]):
                 classes="action-buttons",
             )
         )
-        self.call_later(self.update_save_button_state)
 
-    def load_schools(self) -> None:
-        """
-        Load schools that already exist in the config dict
-        """
-        self.school_count = len(self.config_dict["school"])
-        for i, (key, info) in enumerate(self.config_dict["school"].items(), 1):
-            self.add_school_inputs(key, info, i)
+    def _build_dynamic_section(self, section_name: str, add_button_label: str) -> None:
+        """Build the UI for a dynamic section (school, form_set, csv_import)."""
+        self.content.mount(Button(add_button_label, id=f"add-{section_name}-button"))
+        for key, data in self.config_dict.get(section_name, {}).items():
+            self.add_item_widgets(section_name, key, data)
 
-    def add_school_inputs(
-        self, school_key: str, info: dict[str, Any], index: int
+    def add_item_widgets(
+        self, section_name: str, item_key: str, item_data: Any
     ) -> None:
-        """
-        Add school input widgets for a given school key
+        """Add the widgets for a single item in a dynamic section."""
+        container_class = {
+            "school": SchoolContainer,
+            "form_set": FormSetContainer,
+            "csv_import": CsvImportContainer,
+        }.get(section_name, Vertical)
 
-        :param school_key: a short key (without special characters) for the school
-        :param info: a dict with `"widget name":"widget value"`
-        :param index: index of the school
-        """
-        self.school_i += 1
-        log("adding new school", id=f"schoolkey{self.school_i}")
-        widgets: list[Widget] = []
+        child_widgets = []
+        child_widgets.append(Input(value=item_key, id="item_key"))
 
-        key_inp = Input(
-            value=school_key,
-            placeholder="Schullabel",
-            validators=[NoPeriodValidator],
-            id=f"schoolkey{self.school_i}",
-        )
-        key_inp.tooltip = "Schullabel (nur Buchstaben, keine Leerzeichen)"
-        self.school_key_inputs[school_key] = key_inp
-        self.inputs[f"school_key.{school_key}"] = key_inp
-        widgets.append(key_inp)
-
-        for k, v in info.items():
-            input_type: Literal["integer", "text"] = (
-                "integer" if k in ["end", "nstudents"] else "text"
-            )
-            inp = Input(
-                value=str(v),
-                placeholder=k,
-                type=input_type,
-                id=f"{k}{self.school_i}",
-            )
-            inp.tooltip = TOOLTIPS.get(k, "")
-            self.inputs[f"school.{school_key}.{k}"] = inp
-            widgets.append(inp)
-
-        widgets.append(DeleteSchoolButton(school_key))
-
-        container = SchoolContainer(
-            *widgets,
-            school_key=school_key,
-            id=f"school_container{self.school_i}",
-        )
-
-        if self.last_school_widget:
-            self.content.mount(container, after=self.last_school_widget)
-        else:
-            self.content.mount(container)
-        self.last_school_widget = container
-
-    def load_form_sets(self) -> None:
-        """
-        Load existing form sets from the config dict
-        """
-        self.form_set_count = len(self.config_dict["form_set"])
-        for key, paths in self.config_dict["form_set"].items():
-            self.add_form_set_inputs(key, paths)
-
-    def add_form_set_inputs(self, form_set_key: str, paths: list[str]) -> None:
-        """
-        Add widgets for a form set
-
-        :param form_set_key: key for this form set
-        :param paths: a list of paths belonging to this formset
-        """
-        widgets: list[Widget] = []
-
-        num = len(self.form_set_key_inputs) + 1  # the index of this form set
-        widgets.append(Static(f"Einstellungen für Formular-Satz {num}"))
-
-        key_inp = Input(
-            value=form_set_key,
-            placeholder="Formular-Satz-Kurzname",
-            validators=[NoPeriodValidator],
-        )
-        key_inp.tooltip = "Kurzname des Formular-Satzes"
-        self.form_set_key_inputs[form_set_key] = key_inp
-        self.inputs[f"form_set_key.{form_set_key}"] = key_inp
-        widgets.append(key_inp)
-
-        for i, p in enumerate(paths):
-            inp = Input(
-                value=str(p),
-                placeholder=f"Pfad {i + 1}",
-                validators=[PathIsFileValidator],
-            )
-            self.inputs[f"form_set.{form_set_key}.{i}"] = inp
-            widgets.append(inp)
-
-        widgets.append(AddPathButton(form_set_key))
-        widgets.append(DeleteFormSetButton(form_set_key))
-
-        container = FormSetContainer(*widgets, form_set_key=form_set_key)
-
-        # mount widgets at the correct position
-        if self.last_form_set_widget is not None:
-            # insert widgets after the last form_set
-            self.content.mount(container, after=self.last_form_set_widget)
-        else:
-            # insert the first form-set before the addformset button
-            try:
-                addformset_btn = self.query_exactly_one(
-                    "#addformset", expect_type=Button
+        if section_name == "school":
+            for key, value in item_data.items():
+                inp_type: Literal["integer", "text"] = (
+                    "integer" if key in ["end", "nstudents"] else "text"
                 )
-                self.content.mount(container, before=addformset_btn)
-            except NoMatches:  # there is no addformset button yet
-                self.content.mount(container)
+                child_widgets.append(
+                    Input(value=str(value), id=key, placeholder=key, type=inp_type)
+                )
+        elif section_name == "form_set":
+            for path in item_data:
+                child_widgets.append(Input(value=path, classes="path-input"))
+            child_widgets.append(AddPathButton())
+        elif section_name == "csv_import":
+            separator_options = [
+                ("Comma (,)", ","),
+                ("Semicolon (;)", ";"),
+                ("Tab", "\t"),
+                ("Pipe (|)", "|"),
+            ]
+            current_separator = item_data.get("separator")
 
-        # update marker
-        self.last_form_set_widget = container
+            # Default to Tab for new or empty configurations
+            default_value = current_separator if current_separator else "\t"
 
-    def add_new_school(self) -> None:
-        """
-        Add new school
-        """
-        key = f"Schule{self.school_count + 1}"
-        while key in self.config_dict["school"]:
-            self.school_count += 1
-            key = f"Schule{self.school_count + 1}"
+            # Add a custom option if the loaded value isn't standard
+            option_values = [opt[1] for opt in separator_options]
+            if current_separator and current_separator not in option_values:
+                separator_options.append(
+                    (f"Custom ('{current_separator}')", current_separator)
+                )
 
-        self.config_dict["school"][key] = {
-            "school_head_w_school": "",
-            "school_name": "",
-            "school_street": "",
-            "school_city": "",
-            "end": "",
-            "nstudents": "",
-        }
-        self.add_school_inputs(
-            key, self.config_dict["school"][key], self.school_count + 1
-        )
-        self.school_count += 1
+            child_widgets.append(
+                Select(
+                    separator_options,
+                    value=default_value,
+                    id="separator",
+                    allow_blank=False,
+                    prompt="Trennzeichen",
+                )
+            )
+            child_widgets.append(Static("Spaltenzuordnung (CSV-Spalte: DB-Feld)"))
+            for csv_col, db_col in item_data.get("column_mapping", {}).items():
+                child_widgets.append(
+                    Horizontal(
+                        Input(
+                            value=csv_col,
+                            placeholder="CSV Column Name",
+                            classes="csv-col-input",
+                        ),
+                        Input(
+                            value=db_col,
+                            placeholder="Database Field Name",
+                            classes="db-col-input",
+                        ),
+                        classes="mapping-row",
+                    )
+                )
+            child_widgets.append(AddMappingButton())
 
-    def add_new_form_set(self) -> None:
-        """
-        Add a new form set with one path
-        """
-        i = 1
-        key = f"FormSet{i}"
-        while key in self.config_dict["form_set"]:
-            i += 1
-            key = f"FormSet{i}"
-        self.config_dict["form_set"][key] = []
-        self.add_form_set_inputs(key, [])
-        self.form_set_count += 1
+        child_widgets.append(DeleteItemButton())
 
-    def add_form_path(self, button: AddPathButton) -> None:
-        """
-        Add a path widget to the widgets of a form set
-
-        :param button: The button that was pressed.
-        """
-        form_set_key = button.form_set_key
-        paths = self.config_dict["form_set"][form_set_key]
-        idx = len(paths)
-        paths.append("")
-
-        inp = Input(
-            value="", placeholder=f"Pfad {idx + 1}", validators=[PathIsFileValidator]
-        )
-        self.inputs[f"form_set.{form_set_key}.{idx}"] = inp
-
-        # Mount the new input before the button that was pressed.
-        self.mount(inp, before=button)
-
-    def delete_school(self, school_key: str) -> None:
-        """
-        Delete a school and its widgets.
-
-        :param school_key: The key of the school to delete.
-        """
-        # Remove school from config
-        if school_key in self.config_dict["school"]:
-            del self.config_dict["school"][school_key]
-
-        # Remove associated inputs from self.inputs and self.school_key_inputs
-        for k in list(self.inputs.keys()):
-            if k.startswith(f"school.{school_key}.") or k == f"school_key.{school_key}":
-                del self.inputs[k]
-        if school_key in self.school_key_inputs:
-            del self.school_key_inputs[school_key]
-
-        # Remove the school's widget container
-        all_school_containers = list(self.query(SchoolContainer))
-        for i, container in enumerate(all_school_containers):
-            if container.school_key == school_key:
-                if self.last_school_widget == container:
-                    if i > 0:
-                        self.last_school_widget = all_school_containers[i - 1]
-                    else:
-                        self.last_school_widget = None
-                container.remove()
-                break
-
-    def delete_form_set(self, form_set_key: str) -> None:
-        """
-        Delete a form set and its widgets.
-
-        :param form_set_key: The key of the form set to delete.
-        """
-        # Remove form set from config
-        if form_set_key in self.config_dict["form_set"]:
-            del self.config_dict["form_set"][form_set_key]
-
-        # Remove associated inputs from self.inputs and self.form_set_key_inputs
-        for k in list(self.inputs.keys()):
-            if (
-                k.startswith(f"form_set.{form_set_key}.")
-                or k == f"form_set_key.{form_set_key}"
-            ):
-                del self.inputs[k]
-        if form_set_key in self.form_set_key_inputs:
-            del self.form_set_key_inputs[form_set_key]
-
-        # Remove the form set's widget container
-        all_form_set_containers = list(self.query(FormSetContainer))
-        for i, container in enumerate(all_form_set_containers):
-            if container.form_set_key == form_set_key:
-                if self.last_form_set_widget == container:
-                    if i > 0:
-                        self.last_form_set_widget = all_form_set_containers[i - 1]
-                    else:
-                        self.last_form_set_widget = None
-                container.remove()
-                break
+        container = container_class(*child_widgets)
+        add_button = self.content.query(f"#add-{section_name}-button").first()
+        self.content.mount(container, before=add_button)
 
     def update_save_button_state(self) -> None:
-        """Disables the save button if any input is invalid and logs details."""
-        invalid_inputs = []
-        for key, inp in self.inputs.items():
-            if not inp.is_valid:
-                invalid_inputs.append(inp)
-
-        if self.password_input and not self.password_input.is_valid:
-            invalid_inputs.append(self.password_input)
-
-        all_valid = not invalid_inputs
-
+        """Disable the save button if any input is invalid."""
+        is_invalid = any(not inp.is_valid for inp in self.query(Input))
         if self.save_button:
-            self.save_button.disabled = not all_valid
-
-    async def on_button_pressed(self, event: Button.Pressed) -> None:
-        if isinstance(event.button, AddPathButton):
-            self.add_form_path(event.button)
-            return
-        if isinstance(event.button, DeleteSchoolButton):
-            self.delete_school(event.button.school_key)
-            return
-        if isinstance(event.button, DeleteFormSetButton):
-            self.delete_form_set(event.button.form_set_key)
-            return
-        match event.button.id:
-            case "save":
-                await self.action_save()
-            case "cancel":
-                self.exit()
-            case "addschool":
-                self.add_new_school()
-            case "addformset":
-                self.add_new_form_set()
+            self.save_button.disabled = is_invalid
 
     async def on_input_changed(self, event: Input.Changed) -> None:
         self.update_save_button_state()
 
-        if not event.input.is_valid:
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        if isinstance(event.button, DeleteItemButton):
+            event.button.parent.remove()
+            return
+        if isinstance(event.button, AddPathButton):
+            event.button.parent.mount(Input(classes="path-input"), before=event.button)
+            return
+        if isinstance(event.button, AddMappingButton):
+            event.button.parent.mount(
+                Horizontal(
+                    Input(classes="csv-col-input"),
+                    Input(classes="db-col-input"),
+                    classes="mapping-row",
+                ),
+                before=event.button,
+            )
             return
 
-        # ignore meta keys
-        for key, inp in self.inputs.items():
-            if key.startswith(("school_key.", "form_set_key.")):
+        if (
+            event.button.id
+            and event.button.id.startswith("add-")
+            and event.button.id.endswith("-button")
+        ):
+            section = event.button.id.replace("add-", "").replace("-button", "")
+
+            item_data = {}
+            if section == "school":
+                item_data = {
+                    "school_head_w_school": "",
+                    "school_name": "",
+                    "school_street": "",
+                    "school_city": "",
+                    "end": "",
+                    "nstudents": "",
+                }
+            elif section == "form_set":
+                item_data = []
+            elif section == "csv_import":
+                item_data = {"separator": "", "column_mapping": {}}
+
+            self.add_item_widgets(section, f"New{section.capitalize()}", item_data)
+            return
+
+        if event.button.id == "save":
+            await self.action_save()
+        elif event.button.id == "cancel":
+            self.exit()
+
+    def _rebuild_config_from_ui(self) -> None:
+        """Reconstructs self.config_dict from the current state of all UI widgets."""
+        new_config = {
+            "core": {},
+            "schoolpsy": {},
+            "school": {},
+            "form_set": {},
+            "csv_import": {},
+        }
+
+        # Simple sections
+        for key in self.config_dict.get("core", {}):
+            new_config["core"][key] = self.content.query(f"#core-{key}").first().value
+        for key in self.config_dict.get("schoolpsy", {}):
+            new_config["schoolpsy"][key] = (
+                self.content.query(f"#schoolpsy-{key}").first().value
+            )
+
+        # Dynamic sections
+        for container in self.query(SchoolContainer):
+            key = container.query("#item_key").first().value
+            if not key:
                 continue
+            data = {}
+            for inp in container.query(Input):
+                if inp.id != "item_key":
+                    val = (
+                        int(inp.value)
+                        if inp.id in ["end", "nstudents"] and inp.value
+                        else inp.value
+                    )
+                    data[inp.id] = val
+            new_config["school"][key] = data
 
-            section, *rest = key.split(".")
-            target = self.config_dict[section]
+        for container in self.query(FormSetContainer):
+            key = container.query("#item_key").first().value
+            if not key:
+                continue
+            paths = [inp.value for inp in container.query(".path-input") if inp.value]
+            new_config["form_set"][key] = paths
 
-            for part in rest[:-1]:
-                target = target[part]
+        for container in self.query(CsvImportContainer):
+            key = container.query("#item_key").first().value
+            if not key:
+                continue
+            data = {"column_mapping": {}}
+            data["separator"] = container.query("#separator").first().value
+            mappings = {}
+            for row in container.query(".mapping-row"):
+                inputs = row.query(Input)
+                if len(inputs) == 2 and inputs[0].value:
+                    csv_input = row.query(".csv-col-input").first()
+                    db_input = row.query(".db-col-input").first()
+                    mappings[csv_input.value] = db_input.value
+            data["column_mapping"] = mappings
+            new_config["csv_import"][key] = data
 
-            last = rest[-1]
-            val: str | int
-            if last in ["end", "nstudents"]:
-                try:
-                    val = int(inp.value)
-                except (ValueError, TypeError):
-                    val = ""
-            else:
-                val = inp.value
-
-            if isinstance(target, list):
-                target[int(last)] = val
-            else:
-                target[last] = val
-
-        # rename schools
-        changes = [
-            (old, inp.value)
-            for old, inp in self.school_key_inputs.items()
-            if inp.value
-            and inp.value != old
-            and inp.value not in self.config_dict["school"]
-        ]
-        for old, new in changes:
-            self._rename_key(
-                "school", old, new, self.school_key_inputs, prefix="school"
-            )
-
-        # rename form_sets
-        changes = [
-            (old, inp.value)
-            for old, inp in self.form_set_key_inputs.items()
-            if inp.value
-            and inp.value != old
-            and inp.value not in self.config_dict["form_set"]
-        ]
-        for old, new in changes:
-            self._rename_key(
-                "form_set", old, new, self.form_set_key_inputs, prefix="form_set"
-            )
-
-    def _rename_key(
-        self,
-        section: str,
-        old_key: str,
-        new_key: str,
-        key_dict: dict[str, Input],
-        *,
-        prefix: str,
-    ) -> None:
-        """
-        Rename a key within a section of the config and update related metadata
-
-        This function updates the configuration dictionary by renaming a
-        specified key in the given section ('school' or 'form_set').
-        It also updates the internal inputs dictionary and metadata keys
-        associated with the old key. If the section is 'form_set', it
-        updates the form_set_key in AddPathButton instances.
-
-        :param section: section within the config dictionary, where the key is located
-        :param old_key: the current name of the key to be renamed
-        :param new_key: the new name of the key to be renamed
-        :param key_dict: a dictionary mapping keys to Input widgets, used to
-            update the key mapping
-        :param prefix: the prefix used in the keys within the inputs dictionary,
-            indicating the type of data structure ('school' or 'form_set')
-        """
-        # move entry in the config dict
-        self.config_dict[section][new_key] = self.config_dict[section].pop(old_key)
-
-        # update keys in self.inputs
-        for k in list(self.inputs):
-            if k.startswith(f"{prefix}.{old_key}."):
-                self.inputs[
-                    k.replace(f"{prefix}.{old_key}.", f"{prefix}.{new_key}.")
-                ] = self.inputs.pop(k)
-
-        # update meta keys
-        meta_old = f"{prefix}_key.{old_key}"
-        meta_new = f"{prefix}_key.{new_key}"
-        if meta_old in self.inputs:
-            self.inputs[meta_new] = self.inputs.pop(meta_old)
-
-        key_dict[new_key] = key_dict.pop(old_key)
-
-        # change the form_set_key in addformpath buttons
-        if section == "form_set":
-            for btn in self.query(AddPathButton):
-                if btn.form_set_key == old_key:
-                    btn.form_set_key = new_key
-
-    async def save_config(self) -> None:
-        """
-        Save the configuration, and if there are no conflicts, save
-        the new password.
-
-        :raises ValueError: If a password already exists for the given UID and username.
-        :raises ValueError: If either the app UID or username is missing.
-        """
-        log("save_config was called", config_dict=self.config_dict)
-        save_config(self.config_dict, self.config_path)
-
-        app_uid = self.config_dict["core"].get("app_uid")
-        username = self.config_dict["core"].get("app_username")
-        if self.password_input and self.password_input.value:
-            if app_uid and username and not keyring.get_password(app_uid, username):
-                keyring.set_password(app_uid, username, self.password_input.value)
-            elif app_uid and username:
-                raise ValueError(
-                    f"Für UID {app_uid} und "
-                    f"Benutzer {username} existiert bereits ein Passwort."
-                )
-            else:
-                raise ValueError("app_uid und / oder app_username fehlen.")
+        self.config_dict = new_config
 
     async def action_save(self) -> None:
-        """Save the configuration and exit the app."""
-        if not self.query_one("#save", Button).disabled:
-            await self.save_config()
+        """Rebuilds the config from the UI and saves it."""
+        if self.save_button and not self.save_button.disabled:
+            self._rebuild_config_from_ui()
+            log("save_config was called", config_dict=self.config_dict)
+            save_config(self.config_dict, self.config_path)
+
+            password_input = self.query("#password").first()
+            if password_input.value:
+                app_uid = self.config_dict.get("core", {}).get("app_uid")
+                username = self.config_dict.get("core", {}).get("app_username")
+                if app_uid and username:
+                    keyring.set_password(app_uid, username, password_input.value)
+                else:
+                    log.error(
+                        "Cannot save password: app_uid or app_username is missing."
+                    )
+
             self.exit()

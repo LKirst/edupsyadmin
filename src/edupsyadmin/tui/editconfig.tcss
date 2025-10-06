@@ -7,11 +7,21 @@ Header {
 }
 
 SchoolContainer,
-FormSetContainer {
+FormSetContainer,
+CsvImportContainer {
   height: auto;
   border: round white;
   padding: 1;
   margin: 1;
+}
+
+.mapping-row {
+  layout: horizontal;
+  height: auto;
+}
+
+.csv-col-input, .db-col-input {
+    width: 1fr;
 }
 
 .action-buttons {
