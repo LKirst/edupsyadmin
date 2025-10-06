@@ -1,6 +1,23 @@
 FAQ
 ===
 
+Warum bleiben meine Formularfelder leer, wenn ich sie befülle?
+--------------------------------------------------------------
+
+Es gibt unterschiedliche Möglichkeiten für dieses Ergebnis:
+
+1. Erscheint eine Fehlermeldung? Dann hast du vielleicht hast du einen
+   Programmfehler (Bug) gefunden. Teile die Fehlermeldung mit Lukas über Github
+   oder andere Kanäle (nachdem du aus der Fehlermeldung alle sensiblen Daten
+   entfernt hast).
+
+2. Fehlen die Daten auch dann, wenn du die PDF-Datei mit dem Firefox-Browser als
+   PDF-Reader geöffnet hast? Manche PDF-Reader zeigen die Inhalte von
+   Formularen nicht korrekt an.
+
+3. Stimmen die Namen der Formular-Felder mit den Variablennamen in der
+   Datenbank überein?
+
 Wie greife ich auf Backups zu?
 ------------------------------
 
