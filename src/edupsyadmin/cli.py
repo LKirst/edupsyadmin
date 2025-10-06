@@ -468,7 +468,10 @@ def _create_documentation(
         "create_documentation",
         parents=[common],
         help="Fill a pdf form or a text file with a liquid template",
-        description="Fill a pdf form or a text file with a liquid template",
+        description=(
+            "Fill a pdf form or a text file with a liquid template. "
+            "Either --form_set or --form_paths must be provided."
+        ),
         usage=(
             "edupsyadmin create_documentation [-h] client_id [client_id ...] "
             "[--form_set FORM_SET] [--form_paths FORM_PATH ...]"
