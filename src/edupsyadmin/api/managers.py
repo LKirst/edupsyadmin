@@ -313,13 +313,17 @@ def enter_client_csv(
             "address.street": "street_encr",
             "address.postCode": "postCode",
             "address.city": "city",
-            "address.mobile": "mobile",
-            "address.phone": "phone",
+            "address.mobile": "telephone1_encr",
+            "address.phone": "telephone2_encr",
             "address.email": "email_encr",
         }
 
-    df = pd.read_csv(csv_path, sep=separator, encoding="utf-8")
+    df = pd.read_csv(csv_path, sep=separator, encoding="utf-8", dtype=str)
     df = df.rename(columns=column_mapping)
+
+    # this is necessary so that telephone numbers are strings that can be encrypted
+    df["telephone1_encr"] = df["telephone1_encr"].fillna("").astype(str)
+    df["telephone2_encr"] = df["telephone2_encr"].fillna("").astype(str)
 
     # The 'name' column is not in the mapping, it's used for lookup
     if "name" not in df.columns:
@@ -352,12 +356,6 @@ def enter_client_csv(
             + str(client_data.pop("city", ""))
         )
 
-    # Combine phone numbers
-    if "mobile" in client_data or "phone" in client_data:
-        client_data["telephone1_encr"] = str(
-            client_data.pop("mobile", "") or client_data.pop("phone", "")
-        )
-
     # Handle date formatting
     for date_col in ["entry_date", "birthday_encr"]:
         if date_col in client_data and isinstance(client_data[date_col], str):
@@ -371,7 +369,6 @@ def enter_client_csv(
                     f"for column '{date_col}'. "
                     "Please ensure the format is DD.MM.YYYY."
                 )
-                # Decide how to handle error: raise, or set to None, etc.
                 client_data[date_col] = None
 
     # check if school was passed and if not use the first from the config

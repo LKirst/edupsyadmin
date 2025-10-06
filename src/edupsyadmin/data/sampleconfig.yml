@@ -48,6 +48,6 @@ csv_import:
       "address.street": "street_encr"
       "address.postCode": "postCode"
       "address.city": "city"
-      "address.mobile": "mobile"
-      "address.phone": "phone"
+      "address.mobile": "telephone1_encr"
+      "address.phone": "telephone2_encr"
       "address.email": "email_encr"
