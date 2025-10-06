@@ -6,7 +6,7 @@ from textual.widgets import Checkbox, Input
 
 from edupsyadmin.api.managers import (
     ClientNotFoundError,
-    enter_client_untiscsv,
+    enter_client_csv,
 )
 from edupsyadmin.tui.editclient import StudentEntryApp
 
@@ -204,8 +204,8 @@ class ManagersTest:
         updated_client = clients_manager.get_decrypted_client(client_id)
         assert updated_client["first_name_encr"] != "new_name"
 
-    def test_enter_client_untiscsv(self, mock_keyring, clients_manager, mock_webuntis):
-        client_id = enter_client_untiscsv(
+    def test_enter_client_csv(self, mock_keyring, clients_manager, mock_webuntis):
+        client_id = enter_client_csv(
             clients_manager, mock_webuntis, school=None, name="MustermMax1"
         )
         client = clients_manager.get_decrypted_client(client_id=client_id)
