@@ -187,7 +187,7 @@ def set_client(
     app_uid: str,
     database_url: str,
     salt_path: str | os.PathLike[str],
-    client_id: list[int],
+    client_ids: list[int],
     key_value_pairs: dict[str, str | bool | None] | None,
 ) -> None:
     """
@@ -201,7 +201,7 @@ def set_client(
     )
 
     if key_value_pairs is None:
-        assert len(client_id) == 1, (
+        assert len(client_ids) == 1, (
             "When no key-value pairs are passed, "
             "only one client_id can be edited at a time"
         )
@@ -210,10 +210,10 @@ def set_client(
             app_uid=app_uid,
             app_username=app_username,
             salt_path=salt_path,
-            client_id=client_id[0],
+            client_id=client_ids[0],
         )
 
-    clients_manager.edit_client(client_ids=client_id, new_data=key_value_pairs)
+    clients_manager.edit_client(client_ids=client_ids, new_data=key_value_pairs)
 
 
 def get_clients(
@@ -428,9 +428,9 @@ def create_documentation(
     app_uid: str,
     database_url: str,
     salt_path: str | os.PathLike[str],
-    client_id: int,
+    client_ids: list[int],
     form_set: str | None = None,
-    form_paths: list[str] = [],
+    form_paths: list[str] | None = None,
 ) -> None:
     clients_manager = ClientsManager(
         database_url=database_url,
@@ -438,6 +438,8 @@ def create_documentation(
         app_username=app_username,
         salt_path=salt_path,
     )
+    if form_paths is None:
+        form_paths = []
     if form_set:
         try:
             form_paths.extend(config.form_set[form_set])
@@ -446,16 +448,16 @@ def create_documentation(
                 f"Es ist in der Konfigurationsdatei kein Form Set mit dem"
                 f"Namen {form_set} angelegt."
             )
-
     elif not form_paths:
         raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
     form_paths_normalized: list[str | os.PathLike[str]] = [
         _normalize_path(p) for p in form_paths
     ]
     logger.debug(f"Trying to fill the files: {form_paths_normalized}")
-    client_dict = clients_manager.get_decrypted_client(client_id)
-    client_dict_with_convenience_data = add_convenience_data(client_dict)
-    fill_form(client_dict_with_convenience_data, form_paths_normalized)
+    for client_id in client_ids:
+        client_dict = clients_manager.get_decrypted_client(client_id)
+        client_dict_with_convenience_data = add_convenience_data(client_dict)
+        fill_form(client_dict_with_convenience_data, form_paths_normalized)
 
 
 def _normalize_path(path_str: str) -> str:

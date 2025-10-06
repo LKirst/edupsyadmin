@@ -447,9 +447,9 @@ def _create_documentation(
         app_uid: str,
         database_url: str,
         salt_path: str | os.PathLike[str],
-        client_id: int,
+        client_id: list[int],
         form_set: str,
-        form_paths: list[str],
+        form_paths: list[str] | None,
     ) -> None:
         create_documentation = lazy_import(
             "edupsyadmin.api.managers"
@@ -470,19 +470,19 @@ def _create_documentation(
         help="Fill a pdf form or a text file with a liquid template",
         description="Fill a pdf form or a text file with a liquid template",
         usage=(
-            "edupsyadmin create_documentation [-h] client_id "
-            "[--form_set FORM_SET] [form_paths ...]"
+            "edupsyadmin create_documentation [-h] client_id [client_id ...] "
+            "[--form_set FORM_SET] [--form_paths FORM_PATH ...]"
         ),
     )
     parser.set_defaults(command=command_create_documentation)
-    parser.add_argument("client_id", type=int)
+    parser.add_argument("client_id", type=int, nargs="+")
     parser.add_argument(
         "--form_set",
         type=str,
         default=None,
         help="name of a set of file paths defined in the config file",
     )
-    parser.add_argument("form_paths", nargs="*", help="form file paths")
+    parser.add_argument("--form_paths", nargs="*", help="form file paths")
 
 
 def _mk_report(
