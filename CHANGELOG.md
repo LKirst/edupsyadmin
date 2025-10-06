@@ -1,3 +1,34 @@
+## 7.0.0 (2025-10-06)
+
+### BREAKING CHANGE
+
+- The database now includes two integer variables to describe sessions: min_sessions and n_sessions. The float variable h_sessions is removed.
+- Rename and encrypt lrst_last_test_date > lrst_last_test_date_encr and lrst_last_test_by > lrst_last_test_by_encr.
+- The name and type of two variables has changed: lrst_diagnosis > lrst_diagnosis_encr, keyword_taetigkeitsbericht > keyword_taet_encr
+- The data type of nta_nos_end_grade has changed from String to Integer in the database.
+
+### Feat
+
+- allow the user to set mappings for csv imports in config.yml
+- **api.taetigkeitsbericht_from_db**: update the taetigkeitsbericht code to use n_sessions and min_sessions and from config nstudents
+- use a min_sessions and n_sessions variable instead of a h_sessions variable
+- **db.clients**: encrypt lrst_last_test_date_encr and lrst_last_test_by_encr
+- **api.managers**: validate keys in edit_client
+- **db.clients**: encrypt lrst_diagnosis_encr and keyword_taet_encr
+
+### Fix
+
+- **db.clients**: fix spelling mistake
+- **db.clients**: correct the data type of nta_nos_end_grade and pass only bool to _update_nachteilsausgleich
+
+### Refactor
+
+- **tui.editconfig**: refactor to use compound widgets
+- **core.encrypt**: change misleading variable name
+- improve type hints
+- **core.config**: refactor to use pydantic and simplify to a single configuration file
+- **api.managers**: remove unused function
+
 ## 6.3.0 (2025-09-18)
 
 ### Feat
