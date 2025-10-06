@@ -1,29 +1,58 @@
-Button {
-  width: 1fr;
+/* General layout */
+VerticalScroll {
+    padding: 0 1;
 }
 
-Header {
-  height: 3;
+/* Headers for each section of the config */
+.section-header {
+    background: $primary-background-darken-2;
+    color: $text;
+    padding: 1;
+    margin: 2 0 1 0;
+    text-style: bold;
 }
 
-SchoolContainer,
-FormSetContainer,
-CsvImportContainer {
-  height: auto;
-  border: round white;
-  padding: 1;
-  margin: 1;
+/* Container for a single item (School, FormSet, etc.) */
+.item-container {
+    height: auto;
+    border: round $primary-lighten-2;
+    padding: 1;
+    margin: 1 0;
 }
 
+/* Spacing for inputs inside containers */
+.item-container Input {
+    margin-bottom: 1;
+}
+
+/* Row for CSV column mapping */
 .mapping-row {
-  layout: horizontal;
-  height: auto;
+    layout: horizontal;
+    height: auto;
+    margin-bottom: 1;
 }
 
-.csv-col-input, .db-col-input {
+.mapping-row Input {
     width: 1fr;
 }
 
+/* Buttons */
+Button {
+    width: 100%;
+    margin-top: 1;
+}
+
+.delete-button {
+    border: tall $error;
+    background: $error-darken-2;
+}
+
 .action-buttons {
-  height: 3;
+    height: 3;
+    padding-top: 1;
+}
+
+.action-buttons Button {
+    width: 1fr;
+    margin: 0 1;
 }
