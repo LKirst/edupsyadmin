@@ -10,6 +10,7 @@ from sqlalchemy import create_engine, inspect, or_, select
 from sqlalchemy.orm import sessionmaker
 
 from edupsyadmin.api.add_convenience_data import add_convenience_data
+from edupsyadmin.api.display_client_details import display_client_details
 from edupsyadmin.api.fill_form import fill_form
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import encr
@@ -233,7 +234,9 @@ def get_clients(
         salt_path=salt_path,
     )
     if client_id:
-        df = pd.DataFrame([clients_manager.get_decrypted_client(client_id)]).T
+        client_data = clients_manager.get_decrypted_client(client_id)
+        display_client_details(client_data)
+        df = pd.DataFrame([client_data]).T
     else:
         df = clients_manager.get_clients_overview(nta_nos=nta_nos)
 
@@ -247,18 +250,18 @@ def get_clients(
         original_df = df.sort_values(["school", "last_name_encr"])
         df = original_df.set_index("client_id")
 
-    if not tui:
-        with pd.option_context(
-            "display.max_columns",
-            None,
-            "display.width",
-            None,
-            "display.max_colwidth",
-            None,
-            "display.expand_frame_repr",
-            False,
-        ):
-            print(df)
+        if not tui:
+            with pd.option_context(
+                "display.max_columns",
+                None,
+                "display.width",
+                None,
+                "display.max_colwidth",
+                None,
+                "display.expand_frame_repr",
+                False,
+            ):
+                print(df)
 
     if out:
         df.to_csv(out)
