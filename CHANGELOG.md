@@ -1,3 +1,14 @@
+## 7.1.0 (2025-10-07)
+
+### Feat
+
+- **api.managers**: improve the formatting of output for get_clients with --client_id
+- accept several client_id values for create_documentation
+
+### Fix
+
+- **api.managers**: correctly import telephone numbers from csv
+
 ## 7.0.0 (2025-10-06)
 
 ### BREAKING CHANGE

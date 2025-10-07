@@ -153,7 +153,7 @@ def mk_report(
     )
     client_dict = clients_manager.get_decrypted_client(client_id)
 
-    name = client_dict["first_name"] + " " + client_dict["last_name"]
+    name = client_dict["first_name_encr"] + " " + client_dict["last_name_encr"]
     schoolyear = client_dict["class_int"]
 
     results = get_indeces(fn_csv, name, schoolyear, t_day, version)
