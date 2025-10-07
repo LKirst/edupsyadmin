@@ -38,56 +38,10 @@ want to install a backend that requires separate unlocking:
 
 ### Modify the config file
 
-First, you have to update the config file with your data. To
-find the config file, run:
+First, you have to update the config file with your data using the config
+editor TUI:
 
 `edupsyadmin edit_config`
-
-Change all values to the data that you want to appear in your documentation:
-
-1. First replace `sample.username` with your user name (no spaces and no special
-   characters):
-
-   `  YOUR.USER.NAME`
-
-1. Set a secure password. If you have already set a password, leave this field empty.
-
-   `  a_secure_password`
-
-1. Change your data under `schoolpsy`
-
-  ```
-    Your postecode and town
-    Your first and last name
-    The street and house number of your school
-  ```
-
-1. Under `school`, change the short name for your school to something more
-   memorable than `FirstSchool`. Do not use spaces or special characters:
-
-   `  MyMemorableSchoolName`
-
-1. Add the data for your school. The `end` variable will be used to estimate
-   the date for the destruction of records (3 years after the estimated
-   graduation date).
-
-  ```
-    end: 11
-    Postecode and town
-    Street and house number of your school
-    Title of your head of school
-    Name of your school written out
-  ```
-
-1. Reapeat step 3 and 4 for each school you work at.
-
-1. Change the paths under filesets to point to the (sets of) files you want to
-   use.
-
-  ```
-  path/to/my/first_file.pdf
-  path/to/my/second_file.pdf
-  ```
 
 ## The database
 
@@ -130,7 +84,7 @@ See an overview of all clients in the database:
 
 Fill a PDF form for the database entry with `client_id=42`:
 
-    $ edupsyadmin create_documentation 42 ./path/to/your/file.pdf
+    $ edupsyadmin create_documentation 42 --form_paths ./path/to/your/file.pdf
 
 Fill all files that belong to the form_set `lrst` (as defined in the
 config.yml) with the data for `client_id=42`:
