@@ -1,3 +1,13 @@
+## 7.2.0 (2025-10-09)
+
+### Feat
+
+- add 'andere' as an option for lrst_last_test_by_encr
+
+### Fix
+
+- **tui.editconfig**: add back title to config editor
+
 ## 7.1.0 (2025-10-07)
 
 ### Feat
