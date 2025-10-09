@@ -178,10 +178,12 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
             data["lrst_schpsy"] = 3
         elif data["lrst_last_test_by_encr"] == "spz":
             data["lrst_schpsy"] = 4
+        elif data["lrst_last_test_by_encr"] == "andere":
+            data["lrst_schpsy"] = 5
         else:
             logger.error(
                 f"Value for lrst_last_test_by must be in "
-                f"(schpsy, psychia, psychoth, spz) but is "
+                f"(schpsy, psychia, psychoth, spz, andere) but is "
                 f"{data['lrst_last_test_by_encr']}"
             )
 

@@ -564,7 +564,7 @@ class Client(Base):
     @validates("lrst_last_test_by_encr")
     def validate_lrst_last_test_by_encr(self, key: str, value: str | None) -> str:
         value = value or ""
-        allowed_values = {"schpsy", "psychia", "psychoth", "spz"}
+        allowed_values = {"schpsy", "psychia", "psychoth", "spz", "andere"}
         if value and value not in allowed_values:
             raise ValueError(
                 f"Invalid value for {key}: '{value}'. "
