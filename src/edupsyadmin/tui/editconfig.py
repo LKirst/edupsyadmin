@@ -220,6 +220,7 @@ class ConfigEditorApp(App[None]):
         super().__init__(**kwargs)
         self.config_path = config_path
         self.config_dict = load_config(config_path)
+        self.title = "Konfiguration für edupsyadmin"
 
     def compose(self) -> ComposeResult:
         yield Header()
