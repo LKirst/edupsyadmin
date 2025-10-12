@@ -52,6 +52,12 @@ class CsvImportConfig(BaseModel):
     column_mapping: dict[str, str]
 
 
+class LgvtConfig(BaseModel):
+    Rosenkohl: str | None = None
+    Laufbursche: str | None = None
+    Toechter: str | None = None
+
+
 class AppConfig(BaseModel):
     """The main Pydantic model for the entire configuration."""
 
@@ -60,6 +66,7 @@ class AppConfig(BaseModel):
     school: dict[str, SchoolConfig]
     form_set: dict[str, list[str]] = Field(default_factory=dict)
     csv_import: dict[str, CsvImportConfig] = Field(default_factory=dict)
+    lgvtcsv: LgvtConfig | None = None
 
 
 class Settings:

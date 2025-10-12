@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from edupsyadmin.core.config import config
 from edupsyadmin.core.convert_measures import percentile_to_t
 
 from .managers import ClientsManager
@@ -110,26 +111,6 @@ def get_indeces(
     return text
 
 
-def get_fn_csv(version: str) -> Path:
-    # TODO: allow the user to set the paths and document this feature
-    if version == "Rosenkohl":
-        fn_csv = Path(
-            "~/bin/school/psych_lgvt_wortzahl_und_richtige/Rosenkohl_WortzahlRichtigeAntwort.csv"
-        )
-    elif version == "Toechter":
-        fn_csv = Path(
-            "~/bin/school/psych_lgvt_wortzahl_und_richtige/Toechter_WortzahlRichtigeAntwort.csv"
-        )
-    elif version == "Laufbursche":
-        # TODO: Create that file
-        fn_csv = Path(
-            "~/bin/school/psych_lgvt_wortzahl_und_richtige/Laufbursche_WortzahlRichtigeAntwort.csv"
-        )
-    else:
-        raise OSError
-    return fn_csv
-
-
 def mk_report(
     app_username: str,
     app_uid: str,
@@ -142,7 +123,7 @@ def mk_report(
     directory: str = ".",
 ) -> None:
     out_path = Path(directory).joinpath(f"{client_id}_Auswertung_LGVT.md")
-    fn_csv = get_fn_csv(version)
+    fn_csv = getattr(config.lgvtcsv, version)
     t_day = datetime.strptime(test_date, "%Y-%m-%d").date()
 
     clients_manager = ClientsManager(

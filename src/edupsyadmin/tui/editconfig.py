@@ -207,6 +207,33 @@ class CsvImportEditor(Vertical):
         return key, data
 
 
+class LgvtEditor(Vertical):
+    """A widget to edit the LGVT CSV configuration."""
+
+    def __init__(self, lgvt_data: dict[str, Any] | None) -> None:
+        super().__init__(classes="item-container")
+        self._lgvt_data = lgvt_data or {}
+
+    def compose(self) -> ComposeResult:
+        yield Static("LGVT CSV-Dateien")
+        for key in ["Rosenkohl", "Laufbursche", "Toechter"]:
+            value = self._lgvt_data.get(key, "")
+            inp = Input(
+                str(value) if value else "",
+                id=f"lgvt-{key}",
+                placeholder=key,
+                validators=[PathIsFileValidator] if value else [],
+            )
+            yield inp
+
+    def get_data(self) -> dict[str, str | None]:
+        data = {}
+        for key in ["Rosenkohl", "Laufbursche", "Toechter"]:
+            inp = self.query_one(f"#lgvt-{key}", Input)
+            data[key] = inp.value if inp.value else None
+        return data
+
+
 class ConfigEditorApp(App[None]):
     """A Textual app to edit edupsyadmin YAML configuration files."""
 
@@ -262,6 +289,10 @@ class ConfigEditorApp(App[None]):
             for key, data in self.config_dict.get("csv_import", {}).items():
                 yield CsvImportEditor(key, data)
             yield Button("CSV-Import hinzufügen", id="add-csv_import-button")
+
+            yield Static("LGVT CSV-Konfiguration", classes="section-header")
+            yield LgvtEditor(self.config_dict.get("lgvtcsv"))
+
         yield Horizontal(
             Button("Speichern", id="save", variant="success"),
             Button("Abbrechen", id="cancel", variant="error"),
@@ -277,6 +308,7 @@ class ConfigEditorApp(App[None]):
             "school": {},
             "form_set": {},
             "csv_import": {},
+            "lgvtcsv": {},
         }
 
         # Simple sections
@@ -302,6 +334,14 @@ class ConfigEditorApp(App[None]):
             key, data = editor.get_data()
             if key and data is not None:
                 new_config["csv_import"][key] = data
+
+        lgvt_editor = self.query_one(LgvtEditor)
+        lgvt_data = lgvt_editor.get_data()
+        # Only include lgvtcsv if at least one value is set
+        if any(lgvt_data.values()):
+            new_config["lgvtcsv"] = lgvt_data
+        else:
+            new_config["lgvtcsv"] = None
 
         return new_config
 
