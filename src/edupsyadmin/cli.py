@@ -63,7 +63,6 @@ def main(argv: list[str] | None = None) -> int:
 
     # start logging
     logger.start(args.warn or "DEBUG")  # can't use default from config yet
-    logger.debug("starting execution")
 
     # config
     # if the (first) config file doesn't exist, copy a sample config
@@ -135,8 +134,10 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
         version=f"edupsyadmin {__version__}",
         help="print version and exit",
     )
+    # default must be None, otherwise the value from the config for logging
+    # level will be overwritten
     parser.add_argument(
-        "-w", "--warn", default="WARN", help="logger warning level [WARN]"
+        "-w", "--warn", default=None, help="logger warning level [WARN]"
     )
     parser.set_defaults(command=None)
     subparsers = parser.add_subparsers(title="subcommands")
@@ -178,7 +179,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
 
 
 def _info(
-    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
     """CLI adaptor for the info command.
 
@@ -206,7 +207,7 @@ def _info(
 
 
 def _edit_config(
-    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
     """CLI adaptor for the editconfig command.
 
@@ -230,7 +231,7 @@ def _edit_config(
 
 
 def _new_client(
-    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
     """CLI adaptor for the api.clients.new_client command.
 
@@ -309,7 +310,7 @@ def _new_client(
 
 
 def _set_client(
-    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
     """CLI adaptor for the api.clients.set_client command.
 
@@ -360,7 +361,7 @@ def _set_client(
 
 
 def _delete_client(
-    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
     """CLI adaptor for the api.managers.delete_client command.
 
@@ -387,7 +388,7 @@ def _delete_client(
 
 
 def _get_clients(
-    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
     """CLI adaptor for the api.clients.get_na_ns command.
 
@@ -434,7 +435,7 @@ def _get_clients(
 
 
 def _create_documentation(
-    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
     """CLI adaptor for the api.clients.create_documentation command.
 
@@ -489,7 +490,7 @@ def _create_documentation(
 
 
 def _mk_report(
-    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
     """CLI adaptor for the api.lgvt.mk_report command.
 
@@ -530,7 +531,7 @@ def _mk_report(
 
 
 def _flatten_pdfs(
-    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
     def command_flatten_pdfs(
         form_paths: list[str | os.PathLike[str]], library: str
@@ -553,7 +554,7 @@ def _flatten_pdfs(
 
 
 def _taetigkeitsbericht(
-    subparsers: "_SubParsersAction[ArgumentParser]", common: ArgumentParser
+    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
     """CLI adaptor for the api.taetigkeitsbericht_from_db.taetigkeitsbericht command.
 
