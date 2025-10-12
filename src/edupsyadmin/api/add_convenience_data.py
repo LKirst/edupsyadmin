@@ -20,7 +20,7 @@ def _get_subjects(school: str) -> str:
     :return: A string containing the subjects separated by newlines.
     """
     file_path = files("edupsyadmin.data").joinpath(f"Faecher_{school}.md")
-    logger.info(f"trying to read school subjects file: {file_path}")
+    logger.debug(f"trying to read school subjects file: {file_path}")
     if file_path.is_file():
         logger.debug("subjects file exists")
         with file_path.open("r", encoding="utf-8") as file:

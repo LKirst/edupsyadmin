@@ -84,7 +84,7 @@ class Settings:
         The file is read and validated against the Pydantic models.
         """
         with open(path, encoding="UTF-8") as stream:
-            logger.info(f"reading config data from '{path}'")
+            logger.debug(f"reading config data from '{path}'")
             data = yaml.safe_load(stream)
 
         if not data:

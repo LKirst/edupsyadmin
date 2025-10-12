@@ -52,23 +52,23 @@ class Encryption:
     def _load_or_create_salt(self, salt_path: str | os.PathLike[str]) -> bytes:
         # TODO: store the salt in the db, not in a separate file
         if Path(salt_path).is_file():
-            logger.info(f"using existing salt from `{salt_path}`")
+            logger.debug(f"using existing salt from `{salt_path}`")
             with open(salt_path, "rb") as binary_file:
                 salt = binary_file.read()
         else:
-            logger.info(f"creating new salt and writing to `{salt_path}`")
+            logger.debug(f"creating new salt and writing to `{salt_path}`")
             salt = os.urandom(16)
             with open(salt_path, "wb") as binary_file:
                 binary_file.write(salt)
         return salt
 
     def _retrieve_password(self, username: str, uid: str) -> bytes:
-        logger.info(
+        logger.debug(
             f"retrieving password for uid: '{uid}' "
             f"and username: '{username}' using keyring"
         )
         backend = keyring.get_keyring()
-        logger.info(f"using keyring backend: '{backend.__class__.__name__}'")
+        logger.debug(f"using keyring backend: '{backend.__class__.__name__}'")
         cred = keyring.get_credential(uid, username)
         if not cred or not cred.password:
             raise ValueError(

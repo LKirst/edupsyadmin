@@ -39,7 +39,7 @@ class ClientsManager:
         logging.getLogger("sqlalchemy.engine").setLevel(config.core.logging)
 
         # connect to database
-        logger.info(f"trying to connect to database at {database_url}")
+        logger.debug(f"trying to connect to database at {database_url}")
         self.database_url = database_url
         self.engine = create_engine(database_url)
         self.Session = sessionmaker(bind=self.engine)
@@ -49,7 +49,7 @@ class ClientsManager:
 
         # create the table if it doesn't exist
         Base.metadata.create_all(self.engine, tables=[Client.__table__])  # type: ignore[list-item]
-        logger.info(f"created connection to database at {database_url}")
+        logger.debug(f"created connection to database at {database_url}")
 
     def add_client(self, **client_data: Any) -> int:
         logger.debug("trying to add client")
