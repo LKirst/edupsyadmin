@@ -1,8 +1,9 @@
 from datetime import date
-from typing import Any
+from typing import Any, ClassVar
 
 from textual import log, on
 from textual.app import App, ComposeResult
+from textual.binding import Binding, BindingType
 from textual.validation import Function, Regex
 from textual.widgets import Button, Checkbox, Input, Label, RichLog
 
@@ -47,6 +48,9 @@ def _is_lrst_diag(value: str) -> bool:
 # NOTE: I might change the return type from None to int to show success
 class StudentEntryApp(App[None]):
     CSS_PATH = "editclient.tcss"
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("ctrl+s", "save", "Speichern", show=True),
+    ]
 
     def __init__(
         self, client_id: int | None = None, data: dict[str, Any] | None = None
@@ -71,7 +75,7 @@ class StudentEntryApp(App[None]):
         self.inputs: dict[str, Input] = {}
         self.dates: dict[str, Input] = {}
         self.checkboxes: dict[str, Checkbox] = {}
-        self.submit_button: Button  # Initialized in compose
+        self.save_button: Button  # Initialized in compose
 
     def compose(self) -> ComposeResult:
         # Create heading with client_id
@@ -171,15 +175,17 @@ class StudentEntryApp(App[None]):
             yield input_widget
 
         # Submit button
-        self.submit_button = Button(label="Submit", id="Submit")
-        yield self.submit_button
+        self.save_button = Button(label="Speichern", id="save", variant="success")
+        yield self.save_button
 
         # For failures of input validation
         yield RichLog(classes="log")
 
-    def on_button_pressed(self) -> None:
-        """method that is called when the submit button is pressed"""
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "save":
+            await self.action_save()
 
+    async def action_save(self) -> None:
         # build snapshot from widgets
         current: dict[str, str | bool] = {}
         current.update({n: w.value for n, w in {**self.inputs, **self.dates}.items()})
