@@ -1,3 +1,14 @@
+## 7.3.0 (2025-10-14)
+
+### Feat
+
+- **tui.editclient**: add key binding for save
+- allow setting paths to lgvt convenience files in the config
+
+### Fix
+
+- **cli.py**: respect logging level from config
+
 ## 7.2.0 (2025-10-09)
 
 ### Feat
