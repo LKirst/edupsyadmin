@@ -118,6 +118,171 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+# Command Functions
+def command_info(
+    app_uid: str | os.PathLike[str],
+    app_username: str,
+    database_url: str,
+    config_path: str | os.PathLike[str],
+    salt_path: str | os.PathLike[str],
+) -> None:
+    info = lazy_import("edupsyadmin.info").info
+    info(app_uid, app_username, database_url, config_path, salt_path)
+
+
+def command_edit_config(
+    config_path: str | os.PathLike[str],
+) -> None:
+    config_editor_app = lazy_import("edupsyadmin.tui.editconfig").ConfigEditorApp
+    config_editor_app(config_path).run()
+
+
+def command_new_client(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike[str],
+    csv: str | os.PathLike[str] | None,
+    school: str | None,
+    name: str | None,
+    keepfile: bool | None,
+    import_config: str | None,
+) -> None:
+    new_client = lazy_import("edupsyadmin.api.managers").new_client
+    new_client(
+        app_username=app_username,
+        app_uid=app_uid,
+        database_url=database_url,
+        salt_path=salt_path,
+        csv=csv,
+        school=school,
+        name=name,
+        keepfile=keepfile,
+        import_config=import_config,
+    )
+
+
+def command_set_client(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike[str],
+    client_id: list[int],
+    key_value_pairs: list[str] | None,
+) -> None:
+    if key_value_pairs:
+        key_value_dict = dict(pair.split("=", 1) for pair in key_value_pairs)
+    else:
+        key_value_dict = None
+    set_client = lazy_import("edupsyadmin.api.managers").set_client
+    set_client(
+        app_username, app_uid, database_url, salt_path, client_id, key_value_dict
+    )
+
+
+def command_delete_client(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike[str],
+    client_id: int,
+) -> None:
+    delete_client = lazy_import("edupsyadmin.api.managers").delete_client
+    delete_client(app_username, app_uid, database_url, salt_path, client_id)
+
+
+def command_get_clients(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike[str],
+    nta_nos: bool,
+    client_id: int,
+    out: str | os.PathLike[str],
+    tui: bool,
+) -> None:
+    get_clients = lazy_import("edupsyadmin.api.managers").get_clients
+    get_clients(
+        app_username, app_uid, database_url, salt_path, nta_nos, client_id, out, tui
+    )
+
+
+def command_create_documentation(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike[str],
+    client_id: list[int],
+    form_set: str,
+    form_paths: list[str] | None,
+) -> None:
+    create_documentation = lazy_import("edupsyadmin.api.managers").create_documentation
+    create_documentation(
+        app_username,
+        app_uid,
+        database_url,
+        salt_path,
+        client_id,
+        form_set,
+        form_paths,
+    )
+
+
+def command_mk_report(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike[str],
+    client_id: int,
+    test_date: str,
+    test_type: str,
+    version: str | None = None,
+) -> None:
+    mk_report = lazy_import("edupsyadmin.api.lgvt").mk_report
+    mk_report(
+        app_username,
+        app_uid,
+        database_url,
+        salt_path,
+        client_id,
+        test_date,
+        test_type,
+        version=version,
+    )
+
+
+def command_flatten_pdfs(
+    form_paths: list[str | os.PathLike[str]], library: str
+) -> None:
+    flatten_pdfs = lazy_import("edupsyadmin.api.flatten_pdf").flatten_pdfs
+    flatten_pdfs(form_paths, library)
+
+
+def command_taetigkeitsbericht(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike[str],
+    wstd_psy: float,
+    out_basename: str | os.PathLike[str],
+    wstd_total: float,
+    name: str,
+) -> None:
+    taetigkeitsbericht = lazy_import(
+        "edupsyadmin.api.taetigkeitsbericht_from_db"
+    ).taetigkeitsbericht
+    taetigkeitsbericht(
+        app_username=app_username,
+        app_uid=app_uid,
+        database_url=database_url,
+        salt_path=salt_path,
+        wstd_psy=wstd_psy,
+        out_basename=out_basename,
+        wstd_total=wstd_total,
+        name=name,
+    )
+
+
 def _args(argv: list[str] | None) -> argparse.Namespace:
     """Parse command line arguments.
 
@@ -186,17 +351,6 @@ def _info(
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-
-    def command_info(
-        app_uid: str | os.PathLike[str],
-        app_username: str,
-        database_url: str,
-        config_path: str | os.PathLike[str],
-        salt_path: str | os.PathLike[str],
-    ) -> None:
-        info = lazy_import("edupsyadmin.info").info
-        info(app_uid, app_username, database_url, config_path, salt_path)
-
     parser = subparsers.add_parser(
         "info",
         parents=[common],
@@ -214,13 +368,6 @@ def _edit_config(
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-
-    def command_edit_config(
-        config_path: str | os.PathLike[str],
-    ) -> None:
-        config_editor_app = lazy_import("edupsyadmin.tui.editconfig").ConfigEditorApp
-        config_editor_app(config_path).run()
-
     parser = subparsers.add_parser(
         "edit_config",
         parents=[common],
@@ -238,31 +385,6 @@ def _new_client(
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-
-    def command_new_client(
-        app_username: str,
-        app_uid: str,
-        database_url: str,
-        salt_path: str | os.PathLike[str],
-        csv: str | os.PathLike[str] | None,
-        school: str | None,
-        name: str | None,
-        keepfile: bool | None,
-        import_config: str | None,
-    ) -> None:
-        new_client = lazy_import("edupsyadmin.api.managers").new_client
-        new_client(
-            app_username=app_username,
-            app_uid=app_uid,
-            database_url=database_url,
-            salt_path=salt_path,
-            csv=csv,
-            school=school,
-            name=name,
-            keepfile=keepfile,
-            import_config=import_config,
-        )
-
     parser = subparsers.add_parser(
         "new_client",
         parents=[common],
@@ -317,24 +439,6 @@ def _set_client(
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-
-    def command_set_client(
-        app_username: str,
-        app_uid: str,
-        database_url: str,
-        salt_path: str | os.PathLike[str],
-        client_id: list[int],
-        key_value_pairs: list[str] | None,
-    ) -> None:
-        if key_value_pairs:
-            key_value_dict = dict(pair.split("=", 1) for pair in key_value_pairs)
-        else:
-            key_value_dict = None
-        set_client = lazy_import("edupsyadmin.api.managers").set_client
-        set_client(
-            app_username, app_uid, database_url, salt_path, client_id, key_value_dict
-        )
-
     parser = subparsers.add_parser(
         "set_client",
         parents=[common],
@@ -368,17 +472,6 @@ def _delete_client(
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-
-    def command_delete_client(
-        app_username: str,
-        app_uid: str,
-        database_url: str,
-        salt_path: str | os.PathLike[str],
-        client_id: int,
-    ) -> None:
-        delete_client = lazy_import("edupsyadmin.api.managers").delete_client
-        delete_client(app_username, app_uid, database_url, salt_path, client_id)
-
     # TODO: Write test
     parser = subparsers.add_parser(
         "delete_client", parents=[common], help="Delete a client in the database"
@@ -395,22 +488,6 @@ def _get_clients(
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-
-    def command_get_clients(
-        app_username: str,
-        app_uid: str,
-        database_url: str,
-        salt_path: str | os.PathLike[str],
-        nta_nos: bool,
-        client_id: int,
-        out: str | os.PathLike[str],
-        tui: bool,
-    ) -> None:
-        get_clients = lazy_import("edupsyadmin.api.managers").get_clients
-        get_clients(
-            app_username, app_uid, database_url, salt_path, nta_nos, client_id, out, tui
-        )
-
     parser = subparsers.add_parser(
         "get_clients",
         parents=[common],
@@ -442,29 +519,6 @@ def _create_documentation(
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-
-    def command_create_documentation(
-        app_username: str,
-        app_uid: str,
-        database_url: str,
-        salt_path: str | os.PathLike[str],
-        client_id: list[int],
-        form_set: str,
-        form_paths: list[str] | None,
-    ) -> None:
-        create_documentation = lazy_import(
-            "edupsyadmin.api.managers"
-        ).create_documentation
-        create_documentation(
-            app_username,
-            app_uid,
-            database_url,
-            salt_path,
-            client_id,
-            form_set,
-            form_paths,
-        )
-
     parser = subparsers.add_parser(
         "create_documentation",
         parents=[common],
@@ -497,29 +551,6 @@ def _mk_report(
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-
-    def command_mk_report(
-        app_username: str,
-        app_uid: str,
-        database_url: str,
-        salt_path: str | os.PathLike[str],
-        client_id: int,
-        test_date: str,
-        test_type: str,
-        version: str | None = None,
-    ) -> None:
-        mk_report = lazy_import("edupsyadmin.api.lgvt").mk_report
-        mk_report(
-            app_username,
-            app_uid,
-            database_url,
-            salt_path,
-            client_id,
-            test_date,
-            test_type,
-            version=version,
-        )
-
     parser = subparsers.add_parser("mk_report", parents=[common])
     parser.set_defaults(command=command_mk_report)
     parser.add_argument("client_id", type=int)
@@ -533,12 +564,6 @@ def _mk_report(
 def _flatten_pdfs(
     subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
-    def command_flatten_pdfs(
-        form_paths: list[str | os.PathLike[str]], library: str
-    ) -> None:
-        flatten_pdfs = lazy_import("edupsyadmin.api.flatten_pdf").flatten_pdfs
-        flatten_pdfs(form_paths, library)
-
     default_library = lazy_import("edupsyadmin.api.flatten_pdf").DEFAULT_LIBRARY
     parser = subparsers.add_parser(
         "flatten_pdfs",
@@ -561,31 +586,6 @@ def _taetigkeitsbericht(
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-
-    def command_taetigkeitsbericht(
-        app_username: str,
-        app_uid: str,
-        database_url: str,
-        salt_path: str | os.PathLike[str],
-        wstd_psy: float,
-        out_basename: str | os.PathLike[str],
-        wstd_total: float,
-        name: str,
-    ) -> None:
-        taetigkeitsbericht = lazy_import(
-            "edupsyadmin.api.taetigkeitsbericht_from_db"
-        ).taetigkeitsbericht
-        taetigkeitsbericht(
-            app_username=app_username,
-            app_uid=app_uid,
-            database_url=database_url,
-            salt_path=salt_path,
-            wstd_psy=wstd_psy,
-            out_basename=out_basename,
-            wstd_total=wstd_total,
-            name=name,
-        )
-
     parser = subparsers.add_parser(
         "taetigkeitsbericht",
         parents=[common],
