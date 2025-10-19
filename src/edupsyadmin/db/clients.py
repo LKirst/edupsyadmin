@@ -19,8 +19,7 @@ from edupsyadmin.core.encrypt import Encryption, encr
 from edupsyadmin.core.int_from_str import extract_number
 from edupsyadmin.core.logger import logger
 from edupsyadmin.core.taetigkeitsbericht_check_key import check_keyword
-
-from . import Base
+from edupsyadmin.db import Base
 
 LRST_DIAG = {"lrst", "iLst", "iRst"}
 

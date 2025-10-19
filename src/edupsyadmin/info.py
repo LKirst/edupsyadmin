@@ -2,7 +2,7 @@ import os
 
 from keyring import get_keyring
 
-from .__version__ import __version__
+from edupsyadmin.__version__ import __version__
 
 
 def info(

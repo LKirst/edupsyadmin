@@ -6,10 +6,9 @@ from pathlib import Path
 
 import pandas as pd
 
+from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.core.config import config
 from edupsyadmin.core.convert_measures import percentile_to_t
-
-from .managers import ClientsManager
 
 
 def askyn(prompt: str) -> int:

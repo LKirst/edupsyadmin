@@ -871,7 +871,7 @@ def _taetigkeitsbericht(
 if __name__ == "__main__":
     try:
         STATUS = main()
-    except:
+    except Exception:
         logger.critical("shutting down due to fatal error")
         raise  # print stack trace
     raise SystemExit(STATUS)

@@ -12,7 +12,7 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, Field
 
-from .logger import logger
+from edupsyadmin.core.logger import logger
 
 __all__ = ("AppConfig", "CoreConfig", "SchoolConfig", "SchoolpsyConfig", "config")
 
