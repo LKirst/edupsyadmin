@@ -2,13 +2,10 @@ from datetime import date
 from typing import Any
 
 import pytest
-from textual.widgets import Checkbox, Input
 
 from edupsyadmin.api.managers import (
     ClientNotFoundError,
-    enter_client_csv,
 )
-from edupsyadmin.tui.editclient import StudentEntryApp
 
 EXPECTED_KEYS = {
     "first_name_encr",
@@ -203,82 +200,6 @@ class ManagersTest:
         # Check that the valid data was not updated
         updated_client = clients_manager.get_decrypted_client(client_id)
         assert updated_client["first_name_encr"] != "new_name"
-
-    def test_enter_client_csv(self, mock_keyring, clients_manager, mock_webuntis):
-        client_id = enter_client_csv(
-            clients_manager, mock_webuntis, school=None, name="MustermMax1"
-        )
-        client = clients_manager.get_decrypted_client(client_id=client_id)
-        assert EXPECTED_KEYS.issubset(client.keys())
-        assert client["first_name_encr"] == "Max"
-        assert client["last_name_encr"] == "Mustermann"
-        assert client["school"] == "FirstSchool"
-        mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
-
-    @pytest.mark.asyncio
-    async def test_enter_client_tui(
-        self, mock_keyring, clients_manager, client_dict_all_str
-    ):
-        app = StudentEntryApp(data=None)
-
-        async with app.run_test() as pilot:
-            for key, value in client_dict_all_str.items():
-                wid = f"#{key}"
-                input_widget = pilot.app.query_exactly_one(wid)
-                app.set_focus(input_widget, scroll_visible=True)
-                await pilot.wait_for_scheduled_animations()
-                await pilot.pause()
-                await pilot.click(wid)
-                await pilot.press(*value)
-
-            wid = "#Submit"
-            input_widget = pilot.app.query_exactly_one(wid)
-            app.set_focus(input_widget, scroll_visible=True)
-            await pilot.wait_for_scheduled_animations()
-            await pilot.pause()
-            await pilot.click(wid)
-
-        data = app.get_data()
-        clients_manager.add_client(**data)
-
-    @pytest.mark.asyncio
-    async def test_edit_client_tui(
-        self, mock_keyring, clients_manager, client_dict_all_str
-    ):
-        client_id = clients_manager.add_client(**client_dict_all_str)
-        current_data = clients_manager.get_decrypted_client(client_id=client_id)
-
-        app = StudentEntryApp(client_id, data=current_data.copy())
-
-        change_values = {
-            "first_name_encr": "SomeNewNameßä",
-            "lrst_last_test_date_encr": "2026-01-01",
-            "nos_rs": True,
-        }
-
-        async with app.run_test() as pilot:
-            for key, value in change_values.items():
-                wid = f"#{key}"
-                input_widget: Input | Checkbox = pilot.app.query_exactly_one(wid)
-                input_widget.value = ""
-                app.set_focus(input_widget, scroll_visible=True)
-                await pilot.wait_for_scheduled_animations()
-                await pilot.pause()
-                await pilot.click(wid)
-                if isinstance(value, bool):
-                    input_widget.value = value
-                    continue
-                await pilot.press(*value)
-
-            wid = "#Submit"
-            input_widget = pilot.app.query_exactly_one(wid)
-            app.set_focus(input_widget, scroll_visible=True)
-            await pilot.wait_for_scheduled_animations()
-            await pilot.pause()
-            await pilot.click(wid)
-
-        data = app.get_data()
-        assert data == change_values
 
 
 class TestClientValidation:

@@ -725,7 +725,6 @@ def _delete_client(
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
     """
-    # TODO: Write test
     parser = subparsers.add_parser(
         "delete_client", parents=[common], help="Delete a client in the database"
     )

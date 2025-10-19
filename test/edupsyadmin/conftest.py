@@ -4,6 +4,7 @@ import shutil
 from collections.abc import Generator
 from datetime import date
 from pathlib import Path
+from typing import Any
 from unittest.mock import Mock
 
 import keyring
@@ -15,11 +16,18 @@ from sample_webuntis_export import create_sample_webuntis_export
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import Logger, logger
+from edupsyadmin.db import Base
 
 TEST_USERNAME = "test_user_do_not_use"
 TEST_UID = "example.com"
 
 testing_logger = Logger("conftest_logger")
+
+
+@pytest.fixture(autouse=True)
+def clear_metadata():
+    Base.metadata.clear()
+    yield
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -176,7 +184,7 @@ def client_dict_all_str() -> dict[str, str]:
     ],
     scope="session",
 )
-def client_dict_set_by_user(request) -> dict[str, any]:
+def client_dict_set_by_user(request) -> dict[str, Any]:
     """
     The data the user sets [works with clients.__init__()].
     """
@@ -242,7 +250,7 @@ def client_dict_set_by_user(request) -> dict[str, any]:
     ],
     scope="session",
 )
-def client_dict_internal(request) -> dict[str, any]:
+def client_dict_internal(request) -> dict[str, Any]:
     """
     The attributes of a clients object. Includes data that the clients object
     sets internally.
@@ -252,7 +260,12 @@ def client_dict_internal(request) -> dict[str, any]:
 
 @pytest.fixture
 def clients_manager(tmp_path, mock_salt_path, mock_config, mock_keyring):
-    """Create a clients_manager"""
+    """
+    Create a clients_manager.
+    This fixture is dependent on `mock_config` to ensure the config file
+    is loaded before this fixture is used, providing `TEST_UID` and `TEST_USERNAME`.
+    """
+
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
     manager = ClientsManager(

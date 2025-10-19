@@ -126,12 +126,13 @@ def test_create_taetigkeitsbericht_report(mock_report, mock_dfi_export, tmp_path
     mock_report_instance.output.assert_called_with(str(output_file) + "_report.pdf")
 
 
-@patch("edupsyadmin.api.taetigkeitsbericht_from_db.get_data_raw")
+@patch("edupsyadmin.api.taetigkeitsbericht_from_db.ClientsManager")
 @patch("edupsyadmin.api.taetigkeitsbericht_from_db.create_taetigkeitsbericht_report")
 def test_taetigkeitsbericht(
-    mock_create_report, mock_get_data_raw, mock_config, tmp_path
+    mock_create_report, mock_clients_manager, mock_config, tmp_path
 ):
-    mock_get_data_raw.return_value = pd.DataFrame(
+    mock_manager_instance = mock_clients_manager.return_value
+    mock_manager_instance.get_data_raw.return_value = pd.DataFrame(
         {
             "school": ["FirstSchool", "FirstSchool", "SecondSchool"],
             "keyword_taet_encr": ["cat1", "cat2", "cat2"],

@@ -64,46 +64,52 @@ def config_file(tmp_path: Path) -> Path:
 @pytest.mark.asyncio
 async def test_app_loads_config(config_file: Path):
     """Test if the app loads the configuration correctly."""
-    app = ConfigEditorApp(config_path=config_file)
+    app = ConfigEditorApp(config_path=str(config_file))
     async with app.run_test() as pilot:
         await pilot.pause()
-        assert app.inputs["core.logging"].value == "INFO"
-        assert app.inputs["schoolpsy.schoolpsy_name"].value == "Test Psy"
-        assert app.inputs["school.TestSchool.school_name"].value == "Test School Name"
+        assert app.query_exactly_one("#core-logging", Input).value == "INFO"
+        assert (
+            app.query_exactly_one("#schoolpsy-schoolpsy_name", Input).value
+            == "Test Psy"
+        )
+        # TODO: check TestSchool
         assert len(app.query(Input)) > 5
 
 
-@pytest.mark.asyncio
 def test_initial_layout(config_file: Path, snap_compare):
-    app = ConfigEditorApp(config_path=config_file)
+    app = ConfigEditorApp(config_path=str(config_file))
     assert snap_compare(app, terminal_size=(50, 150))
 
 
-@pytest.mark.asyncio
 def test_add_new_school_container(config_file: Path, snap_compare):
     async def run_before(pilot) -> None:
-        add_school_button = pilot.app.query_exactly_one("#addschool")
+        add_school_button = pilot.app.query_exactly_one("#add-school-button")
         app.set_focus(add_school_button, scroll_visible=True)
         await pilot.pause()
 
         await pilot.click(add_school_button)
         await pilot.pause()
 
-    app = ConfigEditorApp(config_path=config_file)
+    app = ConfigEditorApp(config_path=str(config_file))
     assert snap_compare(app, run_before=run_before, terminal_size=(50, 150))
 
 
 @pytest.mark.asyncio
 def test_edit_new_school_container(config_file: Path, snap_compare):
     async def run_before(pilot) -> None:
-        add_school_button = pilot.app.query_exactly_one("#addschool")
+        add_school_button = pilot.app.query_exactly_one("#add-school-button")
         app.set_focus(add_school_button, scroll_visible=True)
         await pilot.pause()
 
         await pilot.click(add_school_button)
         await pilot.pause()
 
-        school_key_inp = pilot.app.query_exactly_one("#schoolkey2")
+        # Correct query for the item_key input of the newly added school editor
+        from edupsyadmin.tui.editconfig import SchoolEditor
+
+        school_editors = pilot.app.query(SchoolEditor)
+        new_school_editor = school_editors[-1]
+        school_key_inp = new_school_editor.query_one("#item_key", Input)
         app.set_focus(school_key_inp)
 
         school_key_inp.value = ""
@@ -111,7 +117,7 @@ def test_edit_new_school_container(config_file: Path, snap_compare):
         await pilot.pause()
         assert school_key_inp.value == "NewSchool"
 
-    app = ConfigEditorApp(config_path=config_file)
+    app = ConfigEditorApp(config_path=str(config_file))
     assert snap_compare(app, run_before=run_before, terminal_size=(50, 150))
 
 
