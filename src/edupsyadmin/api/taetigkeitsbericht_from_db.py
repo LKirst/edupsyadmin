@@ -3,10 +3,9 @@ from datetime import date
 
 import pandas as pd
 
+from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
-
-from .managers import get_data_raw
 
 try:
     import dataframe_image as dfi
@@ -239,7 +238,7 @@ def summary_statistics_wstd(
 def create_taetigkeitsbericht_report(
     basename_out: str,
     name: str,
-    summary_wstd: "pd.Series[float]",
+    summary_wstd: pd.Series[float],
     summary_categories: pd.DataFrame | None = None,
     summary_h_sessions: pd.DataFrame | None = None,
 ) -> None:
@@ -315,7 +314,13 @@ def taetigkeitsbericht(
 
     # Query the data
     # TODO: Optimize the query (you don't need all data)
-    df = get_data_raw(app_username, app_uid, database_url, salt_path)
+    clients_manager = ClientsManager(
+        app_username=app_username,
+        app_uid=app_uid,
+        database_url=database_url,
+        salt_path=salt_path,
+    )
+    df = clients_manager.get_data_raw()
     df["h_sessions"] = df["min_sessions"] / 60.0
 
     df, summary_categories = add_categories_to_df(df, "keyword_taet_encr")

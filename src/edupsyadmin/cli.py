@@ -2,17 +2,25 @@ import argparse
 import importlib.resources
 import importlib.util
 import os
+import pathlib
 import shutil
 import sys
 import types
 from argparse import ArgumentParser, _SubParsersAction
+from datetime import datetime
 from inspect import signature
+from typing import TYPE_CHECKING, Any
 
 from platformdirs import user_config_dir, user_data_path
+from sqlalchemy import inspect as sa_inspect
 
 from edupsyadmin.__version__ import __version__
+from edupsyadmin.api.managers import ClientNotFoundError
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
+
+if TYPE_CHECKING:
+    from edupsyadmin.api.managers import ClientsManager
 
 __all__ = ("main",)
 
@@ -111,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         command(**filtered_args)
-    except RuntimeError as err:
+    except (RuntimeError, ClientNotFoundError) as err:
         logger.critical(err)
         return 1
     logger.debug("successful completion")
@@ -133,8 +141,130 @@ def command_info(
 def command_edit_config(
     config_path: str | os.PathLike[str],
 ) -> None:
-    config_editor_app = lazy_import("edupsyadmin.tui.editconfig").ConfigEditorApp
-    config_editor_app(config_path).run()
+    config_editor_app_cls = lazy_import("edupsyadmin.tui.editconfig").ConfigEditorApp
+    config_editor_app_cls(config_path).run()
+
+
+def _enter_client_csv(
+    clients_manager: ClientsManager,
+    csv_path: str | os.PathLike[str],
+    school: str | None,
+    name: str,
+    import_config_name: str | None = None,
+) -> int:
+    """
+    Read client from a csv file.
+
+    :param clients_manager: a ClientsManager instance used to add the client to the db
+    :param csv_path: path to a csv file
+    :param school: short name of the school as set in the config file
+    :param name: name of the client as specified in the "name" column of the csv
+    :param import_config_name: name of the csv import configuration from the config
+    return: client_id
+    """
+    pd = lazy_import("pandas")
+    client_cls = lazy_import("edupsyadmin.db.clients").Client
+
+    if import_config_name:
+        import_conf = config.csv_import[import_config_name]
+        separator = import_conf.separator
+        column_mapping = import_conf.column_mapping
+    else:
+        # Default to original hardcoded behavior
+        separator = "\t"
+        column_mapping = {
+            "gender": "gender_encr",
+            "entryDate": "entry_date",
+            "klasse.name": "class_name",
+            "foreName": "first_name_encr",
+            "longName": "last_name_encr",
+            "birthDate": "birthday_encr",
+            "address.street": "street_encr",
+            "address.postCode": "postCode",
+            "address.city": "city",
+            "address.mobile": "telephone1_encr",
+            "address.phone": "telephone2_encr",
+            "address.email": "email_encr",
+        }
+
+    df = pd.read_csv(csv_path, sep=separator, encoding="utf-8", dtype=str)
+    df = df.rename(columns=column_mapping)
+
+    # this is necessary so that telephone numbers are strings that can be encrypted
+    df["telephone1_encr"] = df["telephone1_encr"].fillna("").astype(str)
+    df["telephone2_encr"] = df["telephone2_encr"].fillna("").astype(str)
+
+    # The 'name' column is not in the mapping, it's used for lookup
+    if "name" not in df.columns:
+        # If the original 'name' column was mapped, find its new name
+        lookup_col = next(
+            (
+                new_name
+                for old_name, new_name in column_mapping.items()
+                if old_name == "name"
+            ),
+            "name",
+        )
+    else:
+        lookup_col = "name"
+
+    client_series = df[df[lookup_col] == name]
+
+    if client_series.empty:
+        raise ValueError(
+            f"The name '{name}' was not found in the CSV file '{csv_path}'."
+        )
+
+    client_data = client_series.iloc[0].to_dict()
+
+    # Combine address fields if they exist
+    if "postCode" in client_data and "city" in client_data:
+        client_data["city_encr"] = (
+            str(client_data.pop("postCode", ""))
+            + " "
+            + str(client_data.pop("city", ""))
+        )
+
+    # Handle date formatting
+    for date_col in ["entry_date", "birthday_encr"]:
+        if date_col in client_data and isinstance(client_data[date_col], str):
+            try:
+                client_data[date_col] = datetime.strptime(
+                    client_data[date_col], "%d.%m.%Y"
+                ).date()
+            except ValueError:
+                logger.error(
+                    f"Could not parse date '{client_data[date_col]}' "
+                    f"for column '{date_col}'. "
+                    "Please ensure the format is DD.MM.YYYY."
+                )
+                client_data[date_col] = None
+
+    # check if school was passed and if not use the first from the config
+    if school is None:
+        school = next(iter(config.school.keys()))
+    client_data["school"] = school
+
+    # Filter data to only include valid columns for the Client model
+    valid_keys = {c.key for c in sa_inspect(client_cls).column_attrs}
+    init_sig = signature(client_cls.__init__)
+    valid_init_keys = set(init_sig.parameters.keys())
+
+    final_client_data = {
+        k: v for k, v in client_data.items() if k in valid_keys or k in valid_init_keys
+    }
+
+    return clients_manager.add_client(**final_client_data)
+
+
+def _enter_client_tui(clients_manager: ClientsManager) -> int:
+    student_entry_app_cls = lazy_import("edupsyadmin.tui.editclient").StudentEntryApp
+    app = student_entry_app_cls(data=None)
+    app.run()
+
+    data = app.get_data()
+
+    return clients_manager.add_client(**data)
 
 
 def command_new_client(
@@ -148,18 +278,46 @@ def command_new_client(
     keepfile: bool | None,
     import_config: str | None,
 ) -> None:
-    new_client = lazy_import("edupsyadmin.api.managers").new_client
-    new_client(
-        app_username=app_username,
-        app_uid=app_uid,
+    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
+    clients_manager = clients_manager_cls(
         database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
         salt_path=salt_path,
-        csv=csv,
-        school=school,
-        name=name,
-        keepfile=keepfile,
-        import_config=import_config,
     )
+    if csv:
+        if name is None:
+            raise ValueError("Pass a name to read a client from a csv.")
+        _enter_client_csv(clients_manager, csv, school, name, import_config)
+        if not keepfile:
+            os.remove(csv)
+    else:
+        _enter_client_tui(clients_manager)
+
+
+def _tui_get_modified_values(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike[str],
+    client_id: int,
+) -> dict[str, Any]:
+    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
+    student_entry_app_cls = lazy_import("edupsyadmin.tui.editclient").StudentEntryApp
+    # retrieve current values
+    manager = clients_manager_cls(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        salt_path=salt_path,
+    )
+    current_data = manager.get_decrypted_client(client_id=client_id)
+
+    # display a form with current values filled in
+    app = student_entry_app_cls(client_id, data=current_data)
+    app.run()
+
+    return app.get_data()
 
 
 def command_set_client(
@@ -170,14 +328,33 @@ def command_set_client(
     client_id: list[int],
     key_value_pairs: list[str] | None,
 ) -> None:
-    if key_value_pairs:
-        key_value_dict = dict(pair.split("=", 1) for pair in key_value_pairs)
-    else:
-        key_value_dict = None
-    set_client = lazy_import("edupsyadmin.api.managers").set_client
-    set_client(
-        app_username, app_uid, database_url, salt_path, client_id, key_value_dict
+    """
+    Set the value for a key given one or multiple client_ids
+    """
+    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
+    clients_manager = clients_manager_cls(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        salt_path=salt_path,
     )
+
+    if not key_value_pairs:
+        assert len(client_id) == 1, (
+            "When no key-value pairs are passed, "
+            "only one client_id can be edited at a time"
+        )
+        key_value_pairs_dict = _tui_get_modified_values(
+            database_url=database_url,
+            app_uid=app_uid,
+            app_username=app_username,
+            salt_path=salt_path,
+            client_id=client_id[0],
+        )
+    else:
+        key_value_pairs_dict = dict(pair.split("=", 1) for pair in key_value_pairs)
+
+    clients_manager.edit_client(client_ids=client_id, new_data=key_value_pairs_dict)
 
 
 def command_delete_client(
@@ -187,8 +364,14 @@ def command_delete_client(
     salt_path: str | os.PathLike[str],
     client_id: int,
 ) -> None:
-    delete_client = lazy_import("edupsyadmin.api.managers").delete_client
-    delete_client(app_username, app_uid, database_url, salt_path, client_id)
+    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
+    clients_manager = clients_manager_cls(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        salt_path=salt_path,
+    )
+    clients_manager.delete_client(client_id)
 
 
 def command_get_clients(
@@ -197,14 +380,62 @@ def command_get_clients(
     database_url: str,
     salt_path: str | os.PathLike[str],
     nta_nos: bool,
-    client_id: int,
-    out: str | os.PathLike[str],
+    client_id: int | None,
+    out: str | os.PathLike[str] | None,
     tui: bool,
 ) -> None:
-    get_clients = lazy_import("edupsyadmin.api.managers").get_clients
-    get_clients(
-        app_username, app_uid, database_url, salt_path, nta_nos, client_id, out, tui
+    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
+    display_client_details = lazy_import(
+        "edupsyadmin.api.display_client_details"
+    ).display_client_details
+    pd = lazy_import("pandas")
+    clients_overview_cls = lazy_import(
+        "edupsyadmin.tui.clientsoverview"
+    ).ClientsOverview
+
+    clients_manager = clients_manager_cls(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        salt_path=salt_path,
     )
+    if client_id:
+        client_data = clients_manager.get_decrypted_client(client_id)
+        display_client_details(client_data)
+        df = pd.DataFrame([client_data]).T
+    else:
+        df = clients_manager.get_clients_overview(nta_nos=nta_nos)
+
+        if tui:
+            # Convert DataFrame to list-of-lists for the TUI
+            list_of_tuples = [df.columns.to_list(), *df.values.tolist()]
+            app = clients_overview_cls(list_of_tuples)
+            app.run()
+            return  # Exit after TUI session
+
+        original_df = df.sort_values(["school", "last_name_encr"])
+        df = original_df.set_index("client_id")
+
+        if not tui:
+            with pd.option_context(
+                "display.max_columns",
+                None,
+                "display.width",
+                None,
+                "display.max_colwidth",
+                None,
+                "display.expand_frame_repr",
+                False,
+            ):
+                print(df)
+
+    if out:
+        df.to_csv(out)
+
+
+def _normalize_path(path_str: str) -> str:
+    path = pathlib.Path(os.path.expanduser(path_str))
+    return str(path.resolve())
 
 
 def command_create_documentation(
@@ -213,19 +444,41 @@ def command_create_documentation(
     database_url: str,
     salt_path: str | os.PathLike[str],
     client_id: list[int],
-    form_set: str,
+    form_set: str | None,
     form_paths: list[str] | None,
 ) -> None:
-    create_documentation = lazy_import("edupsyadmin.api.managers").create_documentation
-    create_documentation(
-        app_username,
-        app_uid,
-        database_url,
-        salt_path,
-        client_id,
-        form_set,
-        form_paths,
+    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
+    add_convenience_data = lazy_import(
+        "edupsyadmin.api.add_convenience_data"
+    ).add_convenience_data
+    fill_form = lazy_import("edupsyadmin.api.fill_form").fill_form
+
+    clients_manager = clients_manager_cls(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        salt_path=salt_path,
     )
+    if form_paths is None:
+        form_paths = []
+    if form_set:
+        try:
+            form_paths.extend(config.form_set[form_set])
+        except KeyError:
+            raise KeyError(
+                f"Es ist in der Konfigurationsdatei kein Form Set mit dem"
+                f"Namen {form_set} angelegt."
+            )
+    elif not form_paths:
+        raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
+    form_paths_normalized: list[str | os.PathLike[str]] = [
+        _normalize_path(p) for p in form_paths
+    ]
+    logger.debug(f"Trying to fill the files: {form_paths_normalized}")
+    for cid in client_id:
+        client_dict = clients_manager.get_decrypted_client(cid)
+        client_dict_with_convenience_data = add_convenience_data(client_dict)
+        fill_form(client_dict_with_convenience_data, form_paths_normalized)
 
 
 def command_mk_report(
@@ -380,7 +633,7 @@ def _edit_config(
 def _new_client(
     subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
-    """CLI adaptor for the api.clients.new_client command.
+    """CLI adaptor for the new_client command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
@@ -434,7 +687,7 @@ def _new_client(
 def _set_client(
     subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
-    """CLI adaptor for the api.clients.set_client command.
+    """CLI adaptor for the set_client command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
@@ -467,7 +720,7 @@ def _set_client(
 def _delete_client(
     subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
-    """CLI adaptor for the api.managers.delete_client command.
+    """CLI adaptor for the delete_client command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
@@ -483,7 +736,7 @@ def _delete_client(
 def _get_clients(
     subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
-    """CLI adaptor for the api.clients.get_na_ns command.
+    """CLI adaptor for the get_clients command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments
@@ -514,7 +767,7 @@ def _get_clients(
 def _create_documentation(
     subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
 ) -> None:
-    """CLI adaptor for the api.clients.create_documentation command.
+    """CLI adaptor for the create_documentation command.
 
     :param subparsers: subcommand parsers
     :param common: parser for common subcommand arguments

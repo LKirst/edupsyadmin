@@ -94,6 +94,9 @@ select = [
 "src/edupsyadmin/tui/*" = ["ARG"]
 "test/*" = ["ARG"]
 
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports="all"
+
 [tool.pytest.ini_options]
 testpaths = ["test"]
 python_files = "test_*.py"
