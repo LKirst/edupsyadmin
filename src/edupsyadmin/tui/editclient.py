@@ -9,7 +9,7 @@ from textual.widgets import Button, Checkbox, Input, Label, RichLog
 
 from edupsyadmin.core.config import config
 from edupsyadmin.core.python_type import get_python_type
-from edupsyadmin.db.clients import LRST_DIAG, Client
+from edupsyadmin.db.clients import LRST_DIAG, LRST_TEST_BY, Client
 
 REQUIRED_FIELDS = [
     "school",
@@ -43,6 +43,10 @@ def _is_school_key(value: str) -> bool:
 
 def _is_lrst_diag(value: str) -> bool:
     return value in LRST_DIAG
+
+
+def _is_test_by_value(value: str) -> bool:
+    return value in LRST_TEST_BY
 
 
 # NOTE: I might change the return type from None to int to show success
@@ -126,7 +130,9 @@ class StudentEntryApp(App[None]):
                     valid_empty=True,
                 )
                 self.inputs[name] = input_widget
-            elif (field_type is date) or (name == "birthday_encr"):
+            elif (field_type is date) or (
+                name in {"birthday_encr", "lrst_last_test_date_encr"}
+            ):
                 input_widget = Input(
                     value=default,
                     placeholder=placeholder,
@@ -138,7 +144,7 @@ class StudentEntryApp(App[None]):
                     valid_empty=True,
                 )
                 self.dates[name] = input_widget
-            elif name in {"school", "lrst_diagnosis_encr"}:
+            elif name in {"school", "lrst_diagnosis_encr", "lrst_last_test_by_encr"}:
                 if name == "school":
                     validator = Function(
                         _is_school_key,
@@ -148,7 +154,7 @@ class StudentEntryApp(App[None]):
                         ),
                     )
                     valid_empty = False
-                else:
+                elif name == "lrst_diagnosis_encr":
                     validator = Function(
                         _is_lrst_diag,
                         failure_description=(
@@ -157,6 +163,16 @@ class StudentEntryApp(App[None]):
                         ),
                     )
                     valid_empty = True
+                else:
+                    validator = Function(
+                        _is_test_by_value,
+                        failure_description=(
+                            f"Der Wert für `lrst_last_test_by_encr` muss einer "
+                            f"der folgenden sein: {LRST_TEST_BY}"
+                        ),
+                    )
+                    valid_empty = True
+
                 input_widget = Input(
                     value=default,
                     placeholder=placeholder,

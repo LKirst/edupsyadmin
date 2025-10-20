@@ -22,6 +22,7 @@ from edupsyadmin.core.taetigkeitsbericht_check_key import check_keyword
 from edupsyadmin.db import Base
 
 LRST_DIAG = {"lrst", "iLst", "iRst"}
+LRST_TEST_BY = {"schpsy", "psychia", "psychoth", "spz", "andere"}
 
 
 class EncryptedString(TypeDecorator):
@@ -153,7 +154,7 @@ class Client(Base):
         doc=(
             "Fachperson, von der die letzte Überprüfung von LRSt "
             "durchgeführt wurde; kann nur einer der folgenden Werte sein: "
-            "schpsy, psychia, psychoth, spz"
+            f"{', '.join(LRST_TEST_BY)}"
         ),
     )
     datetime_created: Mapped[datetime] = mapped_column(
@@ -563,11 +564,10 @@ class Client(Base):
     @validates("lrst_last_test_by_encr")
     def validate_lrst_last_test_by_encr(self, key: str, value: str | None) -> str:
         value = value or ""
-        allowed_values = {"schpsy", "psychia", "psychoth", "spz", "andere"}
-        if value and value not in allowed_values:
+        if value and value not in LRST_TEST_BY:
             raise ValueError(
                 f"Invalid value for {key}: '{value}'. "
-                f"Allowed values are: {', '.join(allowed_values)}"
+                f"Allowed values are: {', '.join(LRST_TEST_BY)}"
             )
 
         if self.lrst_diagnosis_encr and not value:
