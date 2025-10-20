@@ -1,3 +1,18 @@
+## 7.4.0 (2025-10-20)
+
+### Feat
+
+- add filter option to get_clients for school filter
+
+### Fix
+
+- **data.sampleconfig.yml**: set debugging level to INFO by default
+
+### Refactor
+
+- move cli code from managers.py to cli.py
+- **cli**: move command functions to the top of the file to improve readability
+
 ## 7.3.0 (2025-10-14)
 
 ### Feat
