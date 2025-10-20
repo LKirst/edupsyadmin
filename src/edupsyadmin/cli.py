@@ -380,6 +380,7 @@ def command_get_clients(
     database_url: str,
     salt_path: str | os.PathLike[str],
     nta_nos: bool,
+    school: str | None,
     client_id: int | None,
     out: str | os.PathLike[str] | None,
     tui: bool,
@@ -404,7 +405,7 @@ def command_get_clients(
         display_client_details(client_data)
         df = pd.DataFrame([client_data]).T
     else:
-        df = clients_manager.get_clients_overview(nta_nos=nta_nos)
+        df = clients_manager.get_clients_overview(nta_nos=nta_nos, school=school)
 
         if tui:
             # Convert DataFrame to list-of-lists for the TUI
@@ -751,6 +752,9 @@ def _get_clients(
         "--nta_nos",
         action="store_true",
         help="show only students with Nachteilsausgleich or Notenschutz",
+    )
+    parser.add_argument(
+        "--school", type=str, default=None, help="filter by school name"
     )
     parser.add_argument("--out", help="path for an output file")
     parser.add_argument(

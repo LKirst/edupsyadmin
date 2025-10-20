@@ -63,18 +63,32 @@ class ClientsManager:
             mapper = inspect(client.__class__)
             return {c.key: getattr(client, c.key) for c in mapper.column_attrs}
 
-    def get_clients_overview(self, nta_nos: bool = True) -> pd.DataFrame:
+    def get_clients_overview(
+        self, nta_nos: bool = False, school: str | None = None
+    ) -> pd.DataFrame:
         logger.debug("trying to query client data for overview")
 
-        # Build the query statement outside the session context.
+        # Build the query statement outside the session context
         stmt = select(clients_db.Client)
+
+        # Build a list of filter conditions
+        conditions = []
+
         if nta_nos:
-            stmt = stmt.where(
+            conditions.append(
                 or_(
                     clients_db.Client.notenschutz == 1,
                     clients_db.Client.nachteilsausgleich == 1,
                 )
             )
+
+        # Add school filter if provided
+        if school is not None:
+            conditions.append(clients_db.Client.school == school)
+
+        # Apply all conditions together
+        if conditions:
+            stmt = stmt.where(*conditions)
 
         # Use the session only to execute the query.
         with self.Session() as session:
