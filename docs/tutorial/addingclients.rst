@@ -4,7 +4,8 @@ Klienten hinzufügen, bearbeiten, anzeigen
 Klienten hinzufügen
 -------------------
 
-Füge einen Klienten interaktiv hinzu:
+Füge einen Klienten interaktiv hinzu. Es müssen nicht alle möglichen Felder
+ausgefüllt werden. Nur die Felder mit einem Sternchen "*".
 
 .. code-block:: console
 
@@ -47,8 +48,8 @@ bearbeitet werden. Hierbei steht ``1`` für "wahr/ja" und ``0`` für
       "nos_rs=0" \
       "lrst_diagnosis=iLst"
 
-Einträge anzeigen
------------------
+Übersicht aller Einträge anzeigen
+---------------------------------
 
 Zeige eine Übersicht aller Klienten in der Datenbank an:
 
@@ -59,7 +60,28 @@ Zeige eine Übersicht aller Klienten in der Datenbank an:
 Hier sollten nun die zwei hinzugefügten Klienten angezeigt werden. In der
 ersten Spalte ist die ``client_id`` gelistet.
 
-Zeige alle Daten für einen einzelnen Klienten an:
+Die Einträge können auch gefiltert werden nach Schule mit ``--nta_nos`` und
+``--school KURZNAME_DER_SCHULE``.  Folgender Befehlt zeigt nur Einträge an, die
+der Schule "FirstSchool" zugeordnet sind und die entweder Nachteilsausgleich
+oder Notenschutz haben:
+
+.. code-block:: console
+
+    $ edupsyadmin get_clients --nta_nos --school TutorialSchule
+
+Die Einträge können auch in einer interaktiven Tabelle angezeigt werden. Die
+Tabelle lässt sich nach Nachnamen und Schule sortieren:
+
+.. code-block:: console
+
+    $ edupsyadmin get_clients --tui
+
+Einzelnen Eintrag anzeigen
+--------------------------
+
+Die Übersicht zeigt nicht alle hinterlegten Daten.  Um alle Daten für einen
+einzelnen Klienten anzuzeigen, muss ``get_clients`` mit einer client_id
+aufgerufen werden.
 
 .. code-block:: console
 

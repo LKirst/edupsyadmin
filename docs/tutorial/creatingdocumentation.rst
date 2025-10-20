@@ -15,3 +15,12 @@ config.yml definiert), mit den Daten für ``client_id=2``:
 .. code-block:: console
 
     $ edupsyadmin create_documentation 2 --form_set tutorialset
+
+``create_documentation`` akzeptiert auch mehrere client_ids was das Arbeiten
+beschleunigen kann, wenn viele Fälle gleichzeitig dokumentiert werden müssen.
+Im folgenden Beispiel werden die Formulare des Formularsatzes ``lrst``
+(definiert in der Konfiguration) für zwei Klienten ausgefüllt:
+
+.. code-block:: console
+
+    $ edupsyadmin create_documentation 1 2 --form_set lrst
