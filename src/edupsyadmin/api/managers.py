@@ -64,7 +64,7 @@ class ClientsManager:
             return {c.key: getattr(client, c.key) for c in mapper.column_attrs}
 
     def get_clients_overview(
-        self, nta_nos: bool = False, school: str | None = None
+        self, nta_nos: bool = False, schools: list[str] | None = None
     ) -> pd.DataFrame:
         logger.debug("trying to query client data for overview")
 
@@ -83,8 +83,8 @@ class ClientsManager:
             )
 
         # Add school filter if provided
-        if school is not None:
-            conditions.append(clients_db.Client.school == school)
+        if schools:
+            conditions.append(clients_db.Client.school.in_(schools))
 
         # Apply all conditions together
         if conditions:
@@ -121,9 +121,8 @@ class ClientsManager:
         Get the entire database.
         """
         logger.debug("trying to query the entire database")
-        with self.Session() as session:
-            query = session.query(clients_db.Client).statement
-            return pd.read_sql_query(query, self.engine)
+        stmt = select(clients_db.Client)
+        return pd.read_sql_query(stmt, self.engine)
 
     def edit_client(self, client_ids: list[int], new_data: dict[str, Any]) -> None:
         logger.debug(f"editing clients (ids = {client_ids})")
@@ -135,11 +134,10 @@ class ClientsManager:
             raise ValueError(f"Invalid keys found: {', '.join(invalid_keys)}")
 
         with self.Session() as session:
-            clients = (
-                session.query(clients_db.Client)
-                .filter(clients_db.Client.client_id.in_(client_ids))
-                .all()
+            stmt = select(clients_db.Client).where(
+                clients_db.Client.client_id.in_(client_ids)
             )
+            clients = session.scalars(stmt).all()
 
             found_ids = {client.client_id for client in clients}
             not_found_ids = set(client_ids) - found_ids
