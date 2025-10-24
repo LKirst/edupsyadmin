@@ -447,6 +447,7 @@ def command_create_documentation(
     client_id: list[int],
     form_set: str | None,
     form_paths: list[str] | None,
+    inject_data: dict[str, Any] | None,
 ) -> None:
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
     add_convenience_data = lazy_import(
@@ -478,8 +479,11 @@ def command_create_documentation(
     logger.debug(f"Trying to fill the files: {form_paths_normalized}")
     for cid in client_id:
         client_dict = clients_manager.get_decrypted_client(cid)
-        client_dict_with_convenience_data = add_convenience_data(client_dict)
-        fill_form(client_dict_with_convenience_data, form_paths_normalized)
+        client_dict_w_convdat = add_convenience_data(client_dict)
+        if inject_data:
+            inject_dict = dict(pair.split("=", 1) for pair in inject_data)
+            client_dict_w_convdat = client_dict_w_convdat | inject_dict
+        fill_form(client_dict_w_convdat, form_paths_normalized)
 
 
 def command_mk_report(
@@ -797,6 +801,16 @@ def _create_documentation(
         help="name of a set of file paths defined in the config file",
     )
     parser.add_argument("--form_paths", nargs="*", help="form file paths")
+    parser.add_argument(
+        "--inject_data",
+        nargs="*",
+        default=None,
+        help=(
+            "key-value pairs in the format 'key=value'; this "
+            "option can be used to override existing key=value pairs "
+            "or add new key=value pairs"
+        ),
+    )
 
 
 def _mk_report(

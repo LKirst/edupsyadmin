@@ -24,3 +24,11 @@ Im folgenden Beispiel werden die Formulare des Formularsatzes ``lrst``
 .. code-block:: console
 
     $ edupsyadmin create_documentation 1 2 --form_set lrst
+
+Falls nötig können mit ``--inject_data`` Variablen nur für das Ausfüllen
+geändert oder hinzugefügt werden. Ein Beispiel wäre, wenn ich ein anderes Datum
+für ``today_date_de`` einfüllen will als das heutige Datum:
+
+.. code-block:: console
+
+    $ edupsyadmin create_documentation 1 --form_set lrst --inject_data "today_date_de=16.10.2025"

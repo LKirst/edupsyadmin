@@ -271,6 +271,7 @@ def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
     assert client["class_name"] == "42ab"
 
 
+# TODO: test inject_data
 def test_create_documentation(
     tmp_path, mock_webuntis, mock_keyring, mock_config, pdf_forms, change_wd
 ):
@@ -306,6 +307,7 @@ def test_create_documentation(
         client_id=[client_id],
         form_set="lrst",
         form_paths=None,
+        inject_data=None,
     )
 
     # Assert
