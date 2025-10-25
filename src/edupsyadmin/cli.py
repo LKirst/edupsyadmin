@@ -163,7 +163,9 @@ def _enter_client_csv(
     return: client_id
     """
     pd = lazy_import("pandas")
-    client_cls = lazy_import("edupsyadmin.db.clients").Client
+    from edupsyadmin.db import clients
+
+    client_cls = clients.Client
 
     if import_config_name:
         import_conf = config.csv_import[import_config_name]
