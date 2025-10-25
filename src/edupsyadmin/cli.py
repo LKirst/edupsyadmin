@@ -660,7 +660,7 @@ def _new_client(
     parser.add_argument(
         "--name",
         help=(
-            "Only relevant if --csv is set."
+            "Only relevant if --csv is set. "
             "Name of the client from the name column of the csv."
         ),
     )
@@ -683,7 +683,7 @@ def _new_client(
         "--keepfile",
         action="store_true",
         help=(
-            "Only relevant if --csv is set."
+            "Only relevant if --csv is set. "
             "Don't delete the csv after adding it to the db."
         ),
     )
@@ -767,7 +767,7 @@ def _get_clients(
     parser.add_argument(
         "--tui",
         action="store_true",
-        help="show the results ina a tui instead of plain text",
+        help="show the results in a tui instead of plain text",
     )
 
 
@@ -789,7 +789,8 @@ def _create_documentation(
         ),
         usage=(
             "edupsyadmin create_documentation [-h] client_id [client_id ...] "
-            "[--form_set FORM_SET] [--form_paths FORM_PATH ...]"
+            "[--form_set FORM_SET] [--form_paths FORM_PATH ...] "
+            "[--inject_data [INJECT_DATA ...]]"
         ),
     )
     parser.set_defaults(command=command_create_documentation)
