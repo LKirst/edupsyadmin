@@ -1,3 +1,4 @@
+# vi:syntax=css:
 Button {
   width: 50%;
 }

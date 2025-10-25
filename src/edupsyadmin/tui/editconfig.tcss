@@ -1,3 +1,4 @@
+# vi:syntax=css:
 /* General layout */
 VerticalScroll {
     padding: 0 1;
@@ -22,14 +23,13 @@ VerticalScroll {
 
 /* Spacing for inputs inside containers */
 .item-container Input {
-    margin-bottom: 1;
+    margin-bottom: 0;
 }
 
 /* Row for CSV column mapping */
 .mapping-row {
     layout: horizontal;
     height: auto;
-    margin-bottom: 1;
 }
 
 .mapping-row Input {
@@ -49,7 +49,6 @@ Button {
 
 .action-buttons {
     height: 3;
-    padding-top: 1;
 }
 
 .action-buttons Button {
