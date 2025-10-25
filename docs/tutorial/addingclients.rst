@@ -14,12 +14,18 @@ ausgefüllt werden. Nur die Felder mit einem Sternchen "*".
 Füge einen weiteren Klienten aus einem Webuntis-CSV-Export zur Datenbank hinzu.
 Verwende dafür die Beispieldatei `samplewebuntisfile.csv
 <https://raw.githubusercontent.com/LKirst/edupsyadmin/refs/heads/main/docs/_static/samplewebuntisfile.csv>`_.
-Die Datei kannst du speichern, indem du :kbd:`Strg-S` klickst. Wir ordnen den
-Schüler unserer, in der Konfiguration angelegten ``TutorialSchule`` zu.
+Die Datei kannst du speichern, indem du :kbd:`Strg-S` klickst.
+
+Wir ordnen den Schüler unserer, in der Konfiguration angelegten
+``TutorialSchule`` zu.
 
 .. code-block:: console
 
     $ edupsyadmin new_client --csv "./pfad/zu/samplewebuntisfile.csv" --name "MustermMax1" --school TutorialSchule
+
+Der Befehl oben löscht die CSV-Datei nachdem der Schüler hinzugefügt wurde.
+Wenn du dieses Verhalten nicht willst, kannst du zu dem Befehl noch
+``--keepfile`` hinzufügen.
 
 Einträge bearbeiten
 -------------------
@@ -70,7 +76,8 @@ oder Notenschutz haben:
     $ edupsyadmin get_clients --nta_nos --school TutorialSchule
 
 Die Einträge können auch in einer interaktiven Tabelle angezeigt werden. Die
-Tabelle lässt sich nach Nachnamen und Schule sortieren:
+Tabelle lässt sich nach Nachnamen und Schule sortieren und kann mit
+:kbd:`Strg-Q` wieder geschlossen werden.
 
 .. code-block:: console
 
