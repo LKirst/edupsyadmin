@@ -29,6 +29,7 @@ async def test_type_text() -> None:
     app = StudentEntryApp(42, data=None)
 
     async with app.run_test() as pilot:
+        await pilot.resize_terminal(1000, 1000)
         wid = "#first_name_encr"
         input_widget = pilot.app.query_exactly_one(wid)
         assert isinstance(input_widget, Input)
@@ -47,6 +48,7 @@ async def test_type_date() -> None:
     app = StudentEntryApp(42, data=None)
 
     async with app.run_test() as pilot:
+        await pilot.resize_terminal(1000, 1000)
         wid = "#entry_date"
         input_widget = pilot.app.query_exactly_one(wid)
         assert isinstance(input_widget, Input)
@@ -65,6 +67,7 @@ async def test_set_bool() -> None:
     app = StudentEntryApp(42, data=None)
 
     async with app.run_test() as pilot:
+        await pilot.resize_terminal(1000, 1000)
         wid = "#nos_rs"
         bool_widget = pilot.app.query_exactly_one(wid)
         assert isinstance(bool_widget, Checkbox)
@@ -80,7 +83,7 @@ async def test_set_bool() -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_data() -> None:
+async def test_save_returns_data(mock_config) -> None:
     client_dict = {
         "first_name_encr": "Lieschen",
         "last_name_encr": "Müller",
@@ -93,6 +96,7 @@ async def test_get_data() -> None:
     app = StudentEntryApp(42, data=None)
 
     async with app.run_test() as pilot:
+        await pilot.resize_terminal(1000, 1000)
         for key, value in client_dict.items():
             wid = f"#{key}"
             input_widget = pilot.app.query_exactly_one(wid)
@@ -109,15 +113,15 @@ async def test_get_data() -> None:
         await pilot.pause()
         await pilot.click(wid)
 
-    data = app.get_data()
-    assert data == client_dict
+    assert app.return_value == client_dict
 
 
 @pytest.mark.asyncio
-async def test_enter_client_tui(client_dict_all_str):
+async def test_enter_client_tui(mock_config, client_dict_all_str):
     app = StudentEntryApp(data=None)
 
     async with app.run_test() as pilot:
+        await pilot.resize_terminal(1000, 1000)
         for key, value in client_dict_all_str.items():
             if key == "client_id":  # client_id is not an input field
                 continue
@@ -141,7 +145,7 @@ async def test_enter_client_tui(client_dict_all_str):
         await pilot.pause()
         await pilot.click(wid)
 
-    data = app.get_data()
+    data = app.return_value
     expected_data = _get_empty_client_dict()
     # Update with values from client_dict_all_str, excluding client_id
     for k, v in client_dict_all_str.items():
@@ -170,6 +174,7 @@ async def test_edit_client_tui(clients_manager, client_dict_all_str):
     }
 
     async with app.run_test() as pilot:
+        await pilot.resize_terminal(1000, 1000)
         for key, value in change_values.items():
             wid = f"#{key}"
             input_widget = pilot.app.query_exactly_one(wid)
@@ -190,5 +195,22 @@ async def test_edit_client_tui(clients_manager, client_dict_all_str):
         await pilot.pause()
         await pilot.click(wid)
 
-    data = app.get_data()
+    data = app.return_value
     assert data == change_values
+
+
+@pytest.mark.asyncio
+async def test_cancel_returns_none() -> None:
+    app = StudentEntryApp(data=None)
+
+    async with app.run_test() as pilot:
+        await pilot.resize_terminal(1000, 1000)
+        # Simulate clicking the cancel button
+        wid = "#cancel"
+        cancel_button = pilot.app.query_exactly_one(wid)
+        app.set_focus(cancel_button, scroll_visible=True)
+        await pilot.wait_for_scheduled_animations()
+        await pilot.pause()
+        await pilot.click(wid)
+
+    assert app.return_value is None

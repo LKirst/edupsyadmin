@@ -7,6 +7,48 @@ Header {
   height: 3;
 }
 
-.log {
-  height: 20;
+/* Container for checkboxes */
+.checkbox-container {
+    layout: horizontal;
+    height: auto;
+    margin-bottom: 1;
+}
+
+.checkbox-container > .spacer {
+    width: 1fr;
+    margin-right: 1;
+}
+
+.checkbox-container > Checkbox {
+    width: 2fr;
+}
+
+/* Container for holding a label and an input field */
+.input-container {
+    layout: horizontal;
+    height: auto;
+    align: center middle;
+    margin-bottom: 1;
+}
+
+/* The static label next to the input */
+.label {
+    width: 1fr;
+    height: 3;
+    content-align: right middle;
+    margin-right: 1;
+}
+
+/* The Input widget that is inside an input-container */
+.input-container > Input {
+    width: 2fr;
+}
+
+.action-buttons {
+    height: 3;
+}
+
+.action-buttons Button {
+    width: 1fr;
+    margin: 0 1;
 }

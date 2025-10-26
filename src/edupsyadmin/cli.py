@@ -259,14 +259,14 @@ def _enter_client_csv(
     return clients_manager.add_client(**final_client_data)
 
 
-def _enter_client_tui(clients_manager: ClientsManager) -> int:
+def _enter_client_tui(clients_manager: ClientsManager) -> int | None:
     student_entry_app_cls = lazy_import("edupsyadmin.tui.editclient").StudentEntryApp
     app = student_entry_app_cls(data=None)
-    app.run()
+    data = app.run()
 
-    data = app.get_data()
-
-    return clients_manager.add_client(**data)
+    if data:
+        return clients_manager.add_client(**data)
+    return None
 
 
 def command_new_client(
@@ -317,9 +317,9 @@ def _tui_get_modified_values(
 
     # display a form with current values filled in
     app = student_entry_app_cls(client_id, data=current_data)
-    app.run()
+    modified_data = app.run()
 
-    return app.get_data()
+    return modified_data or {}
 
 
 def command_set_client(
