@@ -1,3 +1,19 @@
+## 7.5.0 (2025-10-26)
+
+### Feat
+
+- **cli**: allow the injection or overriding of variables before filling a form
+- **api.managers**: allow selecting several schools in get_clients
+- validate lrst_last_test_by_encr and lrst_last_test_date_encr in TUI
+
+### Fix
+
+- **cli**: fix issue with lazyloading client db metadata
+
+### Refactor
+
+- **tui.editclient**: improve TUI layout and handling of cancel
+
 ## 7.4.0 (2025-10-20)
 
 ### Feat
