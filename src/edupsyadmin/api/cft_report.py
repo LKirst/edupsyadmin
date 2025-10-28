@@ -3,6 +3,7 @@ import argparse
 import os
 from datetime import datetime
 
+# TODO: Remove that dependency? Plain markdown might be enough?
 from reports import Report, normal_distribution_plot
 
 from edupsyadmin.core.convert_measures import iq_to_t, iq_to_z
@@ -25,8 +26,9 @@ def safe_iq_to_t(iq_value: int | None) -> float | None:
     return round(iq_to_t(iq_value), 2)
 
 
+# TODO: read birthday from database
 def create_report(path: str | os.PathLike[str]) -> None:
-    client_id = int(input("Client ID: "))
+    client_id = input("Client ID: ")
     birthday = datetime.strptime(
         input("Geburtsdatum (YYYY-mm-dd): "), "%Y-%m-%d"
     ).date()
@@ -109,6 +111,7 @@ def create_report(path: str | os.PathLike[str]) -> None:
     os.remove(fn_plot)
 
 
+# TODO: go through `edupsyadmin mk_report
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
