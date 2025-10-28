@@ -93,6 +93,7 @@ select = [
 "src/edupsyadmin/db/clients.py" = ["ARG002"]
 "src/edupsyadmin/tui/*" = ["ARG"]
 "test/*" = ["ARG"]
+"src/edupsyadmin/cli.py" = ["E501"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports="all"
