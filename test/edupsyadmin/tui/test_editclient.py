@@ -24,6 +24,11 @@ def convert_boolean_strings_to_bool(data: dict) -> dict:
     return converted_data
 
 
+def test_initial_layout(snap_compare):
+    app = StudentEntryApp(42, data=None)
+    assert snap_compare(app, terminal_size=(50, 80))
+
+
 @pytest.mark.asyncio
 async def test_type_text() -> None:
     app = StudentEntryApp(42, data=None)

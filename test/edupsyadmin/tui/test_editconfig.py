@@ -94,7 +94,6 @@ def test_add_new_school_container(config_file: Path, snap_compare):
     assert snap_compare(app, run_before=run_before, terminal_size=(50, 150))
 
 
-@pytest.mark.asyncio
 def test_edit_new_school_container(config_file: Path, snap_compare):
     async def run_before(pilot) -> None:
         add_school_button = pilot.app.query_exactly_one("#add-school-button")
