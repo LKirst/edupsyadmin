@@ -385,7 +385,8 @@ def command_get_clients(
     school: list[str] | None,
     client_id: int | None,
     out: str | os.PathLike[str] | None,
-    tui: bool,
+    show_notes: bool = False,
+    tui: bool = False,
 ) -> None:
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
     display_client_details = lazy_import(
@@ -407,7 +408,11 @@ def command_get_clients(
         display_client_details(client_data)
         df = pd.DataFrame([client_data]).T
     else:
-        df = clients_manager.get_clients_overview(nta_nos=nta_nos, schools=school)
+        df = clients_manager.get_clients_overview(
+            nta_nos=nta_nos,
+            schools=school,
+            show_notes=show_notes,
+        )
 
         if tui:
             # Convert DataFrame to list-of-lists for the TUI
@@ -765,6 +770,9 @@ def _get_clients(
     parser.add_argument("--out", help="path for an output file")
     parser.add_argument(
         "--client_id", type=int, help="id for a single client to display"
+    )
+    parser.add_argument(
+        "--show_notes", action="store_true", help="show the column notes_encr"
     )
     parser.add_argument(
         "--tui",

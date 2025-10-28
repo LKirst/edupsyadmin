@@ -64,12 +64,27 @@ class ClientsManager:
             return {c.key: getattr(client, c.key) for c in mapper.column_attrs}
 
     def get_clients_overview(
-        self, nta_nos: bool = False, schools: list[str] | None = None
+        self,
+        nta_nos: bool = False,
+        schools: list[str] | None = None,
+        show_notes: bool = False,
     ) -> pd.DataFrame:
         logger.debug("trying to query client data for overview")
 
-        # Build the query statement outside the session context
-        stmt = select(clients_db.Client)
+        stmt = select(
+            clients_db.Client.client_id,
+            clients_db.Client.school,
+            clients_db.Client.last_name_encr,
+            clients_db.Client.first_name_encr,
+            clients_db.Client.class_name,
+            clients_db.Client.notenschutz,
+            clients_db.Client.nachteilsausgleich,
+            clients_db.Client.min_sessions,
+            clients_db.Client.lrst_diagnosis_encr,
+            clients_db.Client.keyword_taet_encr,
+        )
+        if show_notes:
+            stmt = stmt.add_columns(clients_db.Client.notes_encr)
 
         # Build a list of filter conditions
         conditions = []
@@ -81,40 +96,12 @@ class ClientsManager:
                     clients_db.Client.nachteilsausgleich == 1,
                 )
             )
-
-        # Add school filter if provided
         if schools:
             conditions.append(clients_db.Client.school.in_(schools))
-
-        # Apply all conditions together
         if conditions:
             stmt = stmt.where(*conditions)
 
-        # Use the session only to execute the query.
-        with self.Session() as session:
-            clients = session.scalars(stmt).all()
-
-        # Process the results after the session is closed.
-        if not clients:
-            return pd.DataFrame()
-
-        data = [
-            {
-                "client_id": c.client_id,
-                "school": c.school,
-                "last_name_encr": c.last_name_encr,
-                "first_name_encr": c.first_name_encr,
-                "class_name": c.class_name,
-                "notenschutz": c.notenschutz,
-                "nachteilsausgleich": c.nachteilsausgleich,
-                "lrst_diagnosis_encr": c.lrst_diagnosis_encr,
-                "min_sessions": c.min_sessions,
-                "keyword_taet_encr": c.keyword_taet_encr,
-            }
-            for c in clients
-        ]
-
-        return pd.DataFrame(data)
+        return pd.read_sql_query(stmt, self.engine)
 
     def get_data_raw(self) -> pd.DataFrame:
         """
