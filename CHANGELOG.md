@@ -1,3 +1,9 @@
+## 7.6.0 (2025-10-28)
+
+### Feat
+
+- add option to display notes_encr in get_clients
+
 ## 7.5.0 (2025-10-26)
 
 ### Feat
