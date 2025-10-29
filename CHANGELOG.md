@@ -1,3 +1,9 @@
+## 7.7.0 (2025-10-29)
+
+### Feat
+
+- **info**: print info in a rich table
+
 ## 7.6.0 (2025-10-28)
 
 ### Feat
