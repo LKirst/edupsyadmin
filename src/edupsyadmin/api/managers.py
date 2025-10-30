@@ -67,33 +67,59 @@ class ClientsManager:
         self,
         nta_nos: bool = False,
         schools: list[str] | None = None,
-        show_notes: bool = False,
+        columns: list[str] | None = None,
     ) -> pd.DataFrame:
         logger.debug("trying to query client data for overview")
 
-        stmt = select(
-            clients_db.Client.client_id,
-            clients_db.Client.school,
-            clients_db.Client.last_name_encr,
-            clients_db.Client.first_name_encr,
-            clients_db.Client.class_name,
-            clients_db.Client.notenschutz,
-            clients_db.Client.nachteilsausgleich,
-            clients_db.Client.min_sessions,
-            clients_db.Client.lrst_diagnosis_encr,
-            clients_db.Client.keyword_taet_encr,
-        )
-        if show_notes:
-            stmt = stmt.add_columns(clients_db.Client.notes_encr)
+        # Always-present base columns
+        required_columns = [
+            "client_id",
+            "school",
+            "last_name_encr",
+            "first_name_encr",
+            "class_name",
+        ]
 
-        # Build a list of filter conditions
+        # Defaults for extra columns when none provided
+        default_extras = [
+            "notenschutz",
+            "nachteilsausgleich",
+            "min_sessions",
+            "lrst_diagnosis_encr",
+            "keyword_taet_encr",
+        ]
+
+        # Map ORM/DB keys to column expressions
+        mapper = inspect(clients_db.Client)
+        colmap = {
+            col.key: getattr(clients_db.Client, col.key) for col in mapper.columns
+        }
+
+        extras = default_extras if columns is None else columns
+
+        # Validate extras against available columns
+        invalid = set(extras) - set(colmap.keys())
+        if invalid:
+            allowed = ", ".join(sorted(colmap.keys()))
+            raise ValueError(
+                f"Invalid column names: {', '.join(sorted(invalid))}. "
+                f"Allowed: {allowed}"
+            )
+
+        # Merge required + extras, de-duplicate while preserving order
+        final_columns = list(dict.fromkeys(required_columns + extras))
+
+        # Build SELECT
+        selected_cols = [colmap[name].label(name) for name in final_columns]
+        stmt = select(*selected_cols)
+
+        # Optional filters
         conditions = []
-
         if nta_nos:
             conditions.append(
                 or_(
-                    clients_db.Client.notenschutz == 1,
-                    clients_db.Client.nachteilsausgleich == 1,
+                    clients_db.Client.notenschutz.is_(True),
+                    clients_db.Client.nachteilsausgleich.is_(True),
                 )
             )
         if schools:

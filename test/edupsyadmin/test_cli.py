@@ -177,6 +177,7 @@ def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_p
         client_id=None,
         out=None,
         tui=False,
+        columns=None,
     )
 
     # Assert
@@ -225,6 +226,7 @@ def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tm
         client_id=1,
         out=None,
         tui=False,
+        columns=None,
     )
 
     # Assert

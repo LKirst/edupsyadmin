@@ -384,9 +384,9 @@ def command_get_clients(
     salt_path: str | os.PathLike[str],
     nta_nos: bool,
     school: list[str] | None,
+    columns: list[str] | None,
     client_id: int | None,
     out: str | os.PathLike[str] | None,
-    show_notes: bool = False,
     tui: bool = False,
 ) -> None:
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
@@ -412,7 +412,7 @@ def command_get_clients(
         df = clients_manager.get_clients_overview(
             nta_nos=nta_nos,
             schools=school,
-            show_notes=show_notes,
+            columns=columns,
         )
 
         if tui:
@@ -812,6 +812,9 @@ def _get_clients(
 
           # Show all details for client with ID 2
           edupsyadmin get_clients --client_id 2
+
+          # Show all clients, and display the columns keyword_taet_encr and notes_encr
+          edupsyadmin get_clients --tui --columns keyword_taet_encr notes_encr
     """)
     parser = subparsers.add_parser(
         "get_clients",
@@ -834,9 +837,7 @@ def _get_clients(
     parser.add_argument(
         "--client_id", type=int, help="id for a single client to display"
     )
-    parser.add_argument(
-        "--show_notes", action="store_true", help="show the column notes_encr"
-    )
+    parser.add_argument("--columns", default=None, nargs="*", help="columns to show")
     parser.add_argument(
         "--tui",
         action="store_true",
