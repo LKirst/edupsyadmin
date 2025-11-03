@@ -127,7 +127,9 @@ class ClientsManager:
         if conditions:
             stmt = stmt.where(*conditions)
 
-        return pd.read_sql_query(stmt, self.engine)
+        with self.Session() as session:
+            result = session.execute(stmt, execution_options={"yield_per": 100})
+            return pd.DataFrame(result.fetchall(), columns=result.keys())
 
     def get_data_raw(self) -> pd.DataFrame:
         """
