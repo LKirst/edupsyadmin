@@ -14,7 +14,11 @@ class Encryption:
     fernet = None
 
     def set_fernet(
-        self, username: str, salt_path: str | os.PathLike[str], uid: str
+        self,
+        username: str,
+        salt_path: str | os.PathLike[str],
+        uid: str,
+        iterations: int = 480000,
     ) -> None:
         """use a password to derive a key
         (see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet)
@@ -32,7 +36,7 @@ class Encryption:
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt,
-            iterations=480000,
+            iterations=iterations,
         )
         secret_key = base64.urlsafe_b64encode(kdf.derive(password))
         self.fernet = Fernet(secret_key)

@@ -23,7 +23,7 @@ dependencies = [
   "scipy>=1.14.1",
   "sqlalchemy>=2.0.36",
   "textual>=2.1.2",
-  "pydantic>=2.8.2",
+  "pydantic>=2.12.3",
 ]
 
 [project.scripts]
@@ -60,6 +60,7 @@ dev = [
   "textual-dev>=1.7.0",
   "pytest-asyncio>=1.0.0",
   "pytest-textual-snapshot>=1.1.0",
+  "pytest-benchmark>=5.2.0",
 ]
 
 [tool.commitizen]
@@ -96,9 +97,10 @@ select = [
 "src/edupsyadmin/cli.py" = ["E501"]
 
 [tool.ruff.lint.flake8-tidy-imports]
-ban-relative-imports="all"
+ban-relative-imports = "all"
 
 [tool.pytest.ini_options]
+addopts = "--benchmark-skip"
 testpaths = ["test"]
 python_files = "test_*.py"
 python_classes = "[A-Z]*Test"
