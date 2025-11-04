@@ -455,7 +455,7 @@ def command_create_documentation(
     client_id: list[int],
     form_set: str | None,
     form_paths: list[str] | None,
-    inject_data: dict[str, Any] | None,
+    inject_data: list[str] | None,
 ) -> None:
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
     add_convenience_data = lazy_import(
