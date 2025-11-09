@@ -10,6 +10,8 @@ from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.validation import Function, Regex
 from textual.widgets import Button, Footer, Header, Input, Select, Static
 
+from edupsyadmin.core.config import config
+
 TOOLTIPS = {
     "logging": "Logging-Niveau für die Anwendung (DEBUG, INFO, WARN oder ERROR)",
     "app_uid": "Identifikator für die Anwendung (muss nicht geändert werden)",
@@ -67,19 +69,35 @@ class SchoolEditor(Vertical):
         self._school_data = school_data
 
     def compose(self) -> ComposeResult:
-        yield Input(
-            self._school_key,
-            id="item_key",
-            placeholder="Schullabel",
-            validators=[NoPeriodValidator],
-        )
-        for key, value in self._school_data.items():
-            inp_type: Literal["integer", "text"] = (
-                "integer" if key in ["end", "nstudents"] else "text"
+        with Horizontal(classes="input-container"):
+            yield Static("Schullabel:", classes="label")
+            yield Input(
+                self._school_key,
+                id="item_key",
+                placeholder="Schullabel",
+                validators=[NoPeriodValidator],
             )
-            inp = Input(str(value), id=key, placeholder=key, type=inp_type)
-            inp.tooltip = TOOLTIPS.get(key, "")
-            yield inp
+        school_order = [
+            "school_head_w_school",
+            "school_name",
+            "school_street",
+            "school_city",
+            "end",
+            "nstudents",
+        ]
+        for key in school_order:
+            if key in self._school_data:
+                value = self._school_data[key]
+                with Horizontal(classes="input-container"):
+                    label = Static(f"{key}:", classes="label")
+                    label.tooltip = TOOLTIPS.get(key, "")
+                    yield label
+                    inp_type: Literal["integer", "text"] = (
+                        "integer" if key in ["end", "nstudents"] else "text"
+                    )
+                    inp = Input(str(value), id=key, placeholder=key, type=inp_type)
+                    inp.tooltip = TOOLTIPS.get(key, "")
+                    yield inp
         yield DeleteItemButton()
 
     def get_data(self) -> tuple[str | None, dict[str, Any] | None]:
@@ -107,14 +125,20 @@ class FormSetEditor(Vertical):
         self._paths = paths
 
     def compose(self) -> ComposeResult:
-        yield Input(
-            self._form_set_key,
-            id="item_key",
-            placeholder="Formular-Satz-Name",
-            validators=[NoPeriodValidator],
-        )
+        with Horizontal(classes="input-container"):
+            yield Static("Name:", classes="label")
+            yield Input(
+                self._form_set_key,
+                id="item_key",
+                placeholder="Formular-Satz-Name",
+                validators=[NoPeriodValidator],
+            )
         for path in self._paths:
-            yield Input(path, classes="path-input", validators=[PathIsFileValidator])
+            with Horizontal(classes="input-container"):
+                yield Static("Pfad:", classes="label")
+                yield Input(
+                    path, classes="path-input", validators=[PathIsFileValidator]
+                )
         yield Button("Pfad hinzufügen", classes="add-path-button")
         yield DeleteItemButton()
 
@@ -143,12 +167,14 @@ class CsvImportEditor(Vertical):
         self._import_data = import_data
 
     def compose(self) -> ComposeResult:
-        yield Input(
-            self._import_key,
-            id="item_key",
-            placeholder="CSV-Import-Name",
-            validators=[NoPeriodValidator],
-        )
+        with Horizontal(classes="input-container"):
+            yield Static("Name:", classes="label")
+            yield Input(
+                self._import_key,
+                id="item_key",
+                placeholder="CSV-Import-Name",
+                validators=[NoPeriodValidator],
+            )
 
         separator_options = [
             ("Comma (,)", ","),
@@ -163,13 +189,13 @@ class CsvImportEditor(Vertical):
             separator_options.append(
                 (f"Custom ('{current_separator}')", current_separator)
             )
-
-        yield Select(
-            separator_options,
-            value=default_value,
-            id="separator",
-            prompt="Trennzeichen",
-        )
+        with Horizontal(classes="input-container"):
+            yield Static("Trennzeichen:", classes="label")
+            yield Select(
+                separator_options,
+                value=default_value,
+                id="separator",
+            )
         yield Static("Spaltenzuordnung (CSV-Spalte -> DB-Feld)")
         for csv_col, db_col in self._import_data.get("column_mapping", {}).items():
             yield Horizontal(
@@ -218,13 +244,15 @@ class LgvtEditor(Vertical):
         yield Static("LGVT CSV-Dateien")
         for key in ["Rosenkohl", "Laufbursche", "Toechter"]:
             value = self._lgvt_data.get(key, "")
-            inp = Input(
-                str(value) if value else "",
-                id=f"lgvt-{key}",
-                placeholder=key,
-                validators=[PathIsFileValidator] if value else [],
-            )
-            yield inp
+            with Horizontal(classes="input-container"):
+                yield Static(f"{key}:", classes="label")
+                inp = Input(
+                    str(value) if value else "",
+                    id=f"lgvt-{key}",
+                    placeholder=key,
+                    validators=[PathIsFileValidator] if value else [],
+                )
+                yield inp
 
     def get_data(self) -> dict[str, str | None]:
         data = {}
@@ -243,10 +271,10 @@ class ConfigEditorApp(App[None]):
         Binding("ctrl+q", "quit", "Abbrechen", show=True),
     ]
 
-    def __init__(self, config_path: Path, **kwargs) -> None:
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.config_path = config_path
-        self.config_dict = load_config(config_path)
+        self.config_path = Path(config.core.config)
+        self.config_dict = config.model_dump(exclude_defaults=False)
         self.title = "Konfiguration für edupsyadmin"
 
     def compose(self) -> ComposeResult:
@@ -254,25 +282,62 @@ class ConfigEditorApp(App[None]):
         with VerticalScroll(id="main-scroll"):
             # Core section
             yield Static("App-Einstellungen", classes="section-header")
-            for key, value in self.config_dict.get("core", {}).items():
-                inp = Input(str(value), id=f"core-{key}", placeholder=key)
-                inp.tooltip = TOOLTIPS.get(key, "")
-                yield inp
+            core_config = self.config_dict.get("core", {})
+            core_order = [
+                "logging",
+                "app_uid",
+                "app_username",
+            ]
+            for key in core_order:
+                if key in core_config:
+                    value = core_config[key]
+                    with Horizontal(classes="input-container"):
+                        label = Static(f"{key}:", classes="label")
+                        label.tooltip = TOOLTIPS.get(key, "")
+                        yield label
+
+                        display_value = str(value) if value is not None else ""
+                        inp_type: Literal["integer", "text"] = (
+                            "integer"
+                            if key in ["kdf_iterations", "kdf_iterations_old"]
+                            else "text"
+                        )
+
+                        inp = Input(
+                            display_value,
+                            id=f"core-{key}",
+                            placeholder=key,
+                            type=inp_type,
+                        )
+                        inp.tooltip = TOOLTIPS.get(key, "")
+                        yield inp
 
             # Password
             yield Static("Passwort", classes="section-header")
-            yield Input(
-                placeholder="(Leer lassen, um nicht zu ändern)",
-                password=True,
-                id="password",
-            )
+            with Horizontal(classes="input-container"):
+                yield Static("Neues Passwort:", classes="label")
+                yield Input(
+                    placeholder=(
+                        "Leer lassen, falls schon ein Passwort festegelegt wurde"
+                    ),
+                    password=True,
+                    id="password",
+                )
 
             # Schoolpsy section
             yield Static("Schulpsychologie-Einstellungen", classes="section-header")
-            for key, value in self.config_dict.get("schoolpsy", {}).items():
-                inp = Input(str(value), id=f"schoolpsy-{key}", placeholder=key)
-                inp.tooltip = TOOLTIPS.get(key, "")
-                yield inp
+            schoolpsy_config = self.config_dict.get("schoolpsy", {})
+            schoolpsy_order = ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]
+            for key in schoolpsy_order:
+                if key in schoolpsy_config:
+                    value = schoolpsy_config[key]
+                    with Horizontal(classes="input-container"):
+                        label = Static(f"{key}:", classes="label")
+                        label.tooltip = TOOLTIPS.get(key, "")
+                        yield label
+                        inp = Input(str(value), id=f"schoolpsy-{key}", placeholder=key)
+                        inp.tooltip = TOOLTIPS.get(key, "")
+                        yield inp
 
             # Dynamic sections
             yield Static("Schulen", classes="section-header")
@@ -311,13 +376,24 @@ class ConfigEditorApp(App[None]):
             "lgvtcsv": {},
         }
 
-        # Simple sections
-        for key in self.config_dict.get("core", {}):
-            new_config["core"][key] = self.query_one(f"#core-{key}", Input).value
+        # Core section
+        core_data = {}
+        core_keys = [
+            "logging",
+            "app_uid",
+            "app_username",
+        ]
+        for key in core_keys:
+            input_widget = self.query_one(f"#core-{key}", Input)
+            raw_value = input_widget.value
+
+        new_config["core"] = core_data
+
+        # Schoolpsy section
+        schoolpsy_data = {}
         for key in self.config_dict.get("schoolpsy", {}):
-            new_config["schoolpsy"][key] = self.query_one(
-                f"#schoolpsy-{key}", Input
-            ).value
+            schoolpsy_data[key] = self.query_one(f"#schoolpsy-{key}", Input).value
+        new_config["schoolpsy"] = schoolpsy_data
 
         # Dynamic sections
         for editor in self.query(SchoolEditor):

@@ -55,3 +55,23 @@ Button {
     width: 1fr;
     margin: 0 1;
 }
+
+/* Container for holding a label and an input field */
+.input-container {
+    layout: horizontal;
+    height: auto;
+    align: center middle;
+}
+
+/* The static label next to the input */
+.label {
+    width: 1fr;
+    height: 3;
+    content-align: right middle;
+    margin-right: 1;
+}
+
+/* The Input widget that is inside an input-container */
+.input-container > Input {
+    width: 2fr;
+}

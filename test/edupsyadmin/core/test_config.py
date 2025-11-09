@@ -60,7 +60,7 @@ school:
 """
 
 
-def test_successful_load(tmp_path):
+def test_successful_load_minimal(tmp_path):
     """Test that a valid config file is loaded correctly."""
     conf_path = tmp_path / "config.yml"
     conf_path.write_text(valid_config_content)
@@ -74,6 +74,16 @@ def test_successful_load(tmp_path):
     assert config.school["TestSchool"].nstudents == 500
     # Check default value
     assert config.core.logging == "WARN"
+
+
+def test_successful_load_sampleconfig(mock_config):
+    """Test that sample config file is loaded correctly."""
+    config.load(mock_config)
+
+    # Check that the loaded config is an instance of our Pydantic model
+    assert isinstance(config._instance, AppConfig)
+    # Check attribute access
+    assert config.school["FirstSchool"].nstudents == 200
 
 
 def test_load_invalid_config_missing_field(tmp_path):

@@ -1,8 +1,5 @@
-from pathlib import Path
-
 import keyring
 import pytest
-import yaml
 from textual.widgets import Input
 
 from edupsyadmin.tui.editconfig import (
@@ -30,41 +27,10 @@ def mock_keyring(monkeypatch):
     monkeypatch.setattr(keyring, "delete_password", delete_password)
 
 
-@pytest.fixture
-def config_file(tmp_path: Path) -> Path:
-    form_path = tmp_path / "form.pdf"
-    form_path.touch()
-
-    config_data = {
-        "core": {"logging": "INFO", "app_uid": "test_uid", "app_username": "test_user"},
-        "schoolpsy": {
-            "schoolpsy_name": "Test Psy",
-            "schoolpsy_street": "Street",
-            "schoolpsy_city": "City",
-        },
-        "school": {
-            "TestSchool": {
-                "school_head_w_school": "Head",
-                "school_name": "Test School Name",
-                "school_street": "School Street",
-                "school_city": "School City",
-                "end": "10",
-                "nstudents": "100",
-            }
-        },
-        "form_set": {"anschreiben": ["pfad_anschreiben.pdf"]},
-    }
-    config_path = tmp_path / "config.yaml"
-    with open(config_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(config_data, f)
-
-    return config_path
-
-
 @pytest.mark.asyncio
-async def test_app_loads_config(config_file: Path):
+async def test_app_loads_config(mock_config):
     """Test if the app loads the configuration correctly."""
-    app = ConfigEditorApp(config_path=str(config_file))
+    app = ConfigEditorApp()
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app.query_exactly_one("#core-logging", Input).value == "INFO"
@@ -76,12 +42,12 @@ async def test_app_loads_config(config_file: Path):
         assert len(app.query(Input)) > 5
 
 
-def test_initial_layout(config_file: Path, snap_compare):
-    app = ConfigEditorApp(config_path=str(config_file))
+def test_initial_layout(mock_config, snap_compare):
+    app = ConfigEditorApp()
     assert snap_compare(app, terminal_size=(50, 150))
 
 
-def test_add_new_school_container(config_file: Path, snap_compare):
+def test_add_new_school_container(mock_config, snap_compare):
     async def run_before(pilot) -> None:
         add_school_button = pilot.app.query_exactly_one("#add-school-button")
         app.set_focus(add_school_button, scroll_visible=True)
@@ -90,11 +56,11 @@ def test_add_new_school_container(config_file: Path, snap_compare):
         await pilot.click(add_school_button)
         await pilot.pause()
 
-    app = ConfigEditorApp(config_path=str(config_file))
+    app = ConfigEditorApp()
     assert snap_compare(app, run_before=run_before, terminal_size=(50, 150))
 
 
-def test_edit_new_school_container(config_file: Path, snap_compare):
+def test_edit_new_school_container(mock_config, snap_compare):
     async def run_before(pilot) -> None:
         add_school_button = pilot.app.query_exactly_one("#add-school-button")
         app.set_focus(add_school_button, scroll_visible=True)
@@ -116,7 +82,7 @@ def test_edit_new_school_container(config_file: Path, snap_compare):
         await pilot.pause()
         assert school_key_inp.value == "NewSchool"
 
-    app = ConfigEditorApp(config_path=str(config_file))
+    app = ConfigEditorApp()
     assert snap_compare(app, run_before=run_before, terminal_size=(50, 150))
 
 
