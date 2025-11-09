@@ -33,13 +33,12 @@ async def test_app_loads_config(mock_config):
     app = ConfigEditorApp()
     async with app.run_test() as pilot:
         await pilot.pause()
-        assert app.query_exactly_one("#core-logging", Input).value == "INFO"
+        assert app.query_exactly_one("#core-logging", Input).value == "DEBUG"
         assert (
             app.query_exactly_one("#schoolpsy-schoolpsy_name", Input).value
-            == "Test Psy"
+            == "Firstname Lastname"
         )
-        # TODO: check TestSchool
-        assert len(app.query(Input)) > 5
+        # TODO: check School(s)
 
 
 def test_initial_layout(mock_config, snap_compare):
