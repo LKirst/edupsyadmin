@@ -1,3 +1,9 @@
+## 7.8.1 (2025-11-09)
+
+### Fix
+
+- require only python >=3.13 but instruct user to install with --python 3.14
+
 ## 7.8.0 (2025-11-09)
 
 ### Feat
