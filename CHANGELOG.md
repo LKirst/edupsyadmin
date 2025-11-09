@@ -1,3 +1,14 @@
+## 7.8.0 (2025-11-09)
+
+### Feat
+
+- **editconfig**: improve layout for edit_config TUI
+- replace --show_notes with a --columns option to allow flexible selection of columns
+
+### Fix
+
+- **managers**: improve handling large numbers of db entries
+
 ## 7.7.0 (2025-10-29)
 
 ### Feat
