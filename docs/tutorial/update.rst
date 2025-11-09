@@ -17,10 +17,12 @@ Update
     die neue Version geändert hat. Das kannst du auf `PYPI
     <https://pypi.org/project/edupsyadmin/#history>`_ prüfen.
 
-Edupsyadmin legt für eine neue Version der App eine neue Datenbank an. Die
-Datenbank für die ältere Version der App wird nicht automatisch gelöscht oder
-überschrieben. Die Datenbank, die mit der alten Version erstellt wurde bleibt
-als Backup bestehen.
+Um keine Dateien zu überschreiben, erstellt edupsyadmin für jede Version
+einen eigenen Unterordner für Kofigurationsdatei, Datenbank und Salt (eine
+Datei, die für die Verschlüsselung verwendet wird). Die Datenbank für die
+ältere Version der App wird nicht automatisch gelöscht oder überschrieben.
+Die Datenbank, die mit der alten Version erstellt wurde bleibt als Backup
+bestehen.
 
 .. warning::
 
@@ -46,21 +48,24 @@ löschen willst.
 Update der App
 --------------
 
+Aktualisiere vor dem Update uv und python:
+
+.. code-block:: console
+
+   winget upgrade uv
+   uv python upgrade
+
 Nun aktualisiere edupsyadmin mit:
 
 .. code-block:: console
 
-   $ uv tool upgrade edupsyadmin
+   $ uv tool upgrade edupsyadmin --python 3.14
 
 Mit ``edupsyadmin --version`` kannst du überprüfen, welche Version von
 edupsyadmin jetzt installiert ist.
 
 Verschieben der Dateien
 -----------------------
-
-Um keine Dateien zu überschreiben, erstellt edupsyadmin für jede Version einen
-eigenen Unterordner für Kofigurationsdatei, Datenbank und Salt (eine Datei, die
-für die Verschlüsselung verwendet wird).
 
 Mit ``edupsyadmin info`` kannst du nach Aktualisierung der App überprüfen, wo
 Konfigurationsdatei, Datenbank und Salt für die neue Version liegen (sollten).

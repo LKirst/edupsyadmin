@@ -83,7 +83,7 @@ uv erlaubt dir, edupsyadmin zu installieren:
 
 .. code-block:: console
 
-   $ uv tool install edupsyadmin
+   $ uv tool install edupsyadmin --python 3.14
 
 Dieser Befehl zeigt wahrscheinlich eine Warnung wie unten an, wobei dein Pfad
 anders aussehen wird:
