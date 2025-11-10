@@ -4,7 +4,7 @@ from datetime import datetime
 from edupsyadmin.core.datediff import mydatediff
 
 
-class TestDatediff(unittest.TestCase):
+class DatediffTest(unittest.TestCase):
     def test_mydatediff(self):
         date1 = datetime(2020, 1, 1)
         date2 = datetime(2021, 1, 1)

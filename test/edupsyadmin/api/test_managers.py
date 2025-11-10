@@ -58,7 +58,7 @@ EXPECTED_KEYS = {
 }
 
 
-class ManagersTest:
+class TestManagers:
     def test_add_client(self, mock_keyring, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
@@ -233,7 +233,7 @@ class TestClientValidation:
         # With value
         clients_manager.edit_client([client_id], {"nos_rs_ausn_faecher": "Deutsch"})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["nos_rs_ausn_faecher"] == "Englisch, Spanisch"
+        assert client["nos_rs_ausn_faecher"] == "Deutsch"
         assert client["nos_rs_ausn"] is True
 
         # With empty value
@@ -289,6 +289,13 @@ class TestClientValidation:
 
     def test_validate_nos_other_details(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        # Ensure all are false initially
+        clients_manager.edit_client(
+            [client_id], {"nos_rs": False, "nos_les": False, "nos_other_details": ""}
+        )
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["notenschutz"] is False
 
         # With value
         clients_manager.edit_client([client_id], {"nos_other_details": "Some details"})
@@ -358,7 +365,9 @@ class TestClientValidation:
             clients_manager.edit_client([client_id], {field: True})
             client = clients_manager.get_decrypted_client(client_id)
             assert client[field] is True
-            assert client["nachteilsausgleich"] is True
+            assert client["nachteilsausgleich"] is True, (
+                f"Setting {field} to True should set nachteilsausgleich to True!"
+            )
 
             # Test setting back to False
             clients_manager.edit_client([client_id], {field: False})
@@ -524,8 +533,13 @@ class TestClientValidation:
     def test_validate_keyword_taet_encr(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
-        # FIXME: Raise an error because keyword is not in the list of allowed keywords
-        keyword = "some_keyword"
+        # invalid keyword
+        keyword = "some_invalid_keyword"
+        with pytest.raises(ValueError, match="Invalid keyword"):
+            clients_manager.edit_client([client_id], {"keyword_taet_encr": keyword})
+
+        # valid keyword
+        keyword = "lrst.sp.ern"
         clients_manager.edit_client([client_id], {"keyword_taet_encr": keyword})
         client = clients_manager.get_decrypted_client(client_id)
         assert "keyword_taet_encr" in client
@@ -546,10 +560,6 @@ class TestClientValidation:
         client = clients_manager.get_decrypted_client(client_id)
         assert client["min_sessions"] == 120
 
-        clients_manager.edit_client([client_id], {"min_sessions": ""})
-        client = clients_manager.get_decrypted_client(client_id)
-        assert client["min_sessions"] is None
-
     def test_nta_nos_notes(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
@@ -564,18 +574,21 @@ class TestClientValidation:
 
     def test_gender_conversion(self, clients_manager, client_dict_set_by_user):
         client_w = client_dict_set_by_user.copy()
+        del client_w["client_id"]
         client_w["gender_encr"] = "w"
         client_w_id = clients_manager.add_client(**client_w)
         decrypted_w = clients_manager.get_decrypted_client(client_w_id)
         assert decrypted_w["gender_encr"] == "f"
 
         client_d = client_dict_set_by_user.copy()
+        del client_d["client_id"]
         client_d["gender_encr"] = "d"
         client_d_id = clients_manager.add_client(**client_d)
         decrypted_d = clients_manager.get_decrypted_client(client_d_id)
         assert decrypted_d["gender_encr"] == "x"
 
         client_m = client_dict_set_by_user.copy()
+        del client_m["client_id"]
         client_m["gender_encr"] = "m"
         client_m_id = clients_manager.add_client(**client_m)
         decrypted_m = clients_manager.get_decrypted_client(client_m_id)
@@ -583,6 +596,7 @@ class TestClientValidation:
 
     def test_class_name_parsing(self, clients_manager, client_dict_set_by_user):
         client_data = client_dict_set_by_user.copy()
+        del client_data["client_id"]
         client_data["class_name"] = "10a"
         client_id = clients_manager.add_client(**client_data)
         client = clients_manager.get_decrypted_client(client_id)

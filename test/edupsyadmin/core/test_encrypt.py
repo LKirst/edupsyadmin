@@ -10,7 +10,7 @@ USER_NAME = "encryptiontest_user_do_not_use"
 UID = "encryptionexample.com"
 
 
-class EncryptionTest:
+class TestEncryption:
     @pytest.fixture
     def encrypted_message(self, mock_salt_path: str, mock_keyring):
         """Create an encrypted message."""

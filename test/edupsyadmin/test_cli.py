@@ -67,7 +67,7 @@ def command(request):
     return request.param
 
 
-class BasicSanityCheckTest:
+class TestBasicSanityCheck:
     def test_main(self, command):
         """Test the main() function."""
         try:

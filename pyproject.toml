@@ -103,7 +103,7 @@ ban-relative-imports = "all"
 addopts = "--benchmark-skip"
 testpaths = ["test"]
 python_files = "test_*.py"
-python_classes = "[A-Z]*Test"
+python_classes = "Test*"
 python_functions = "test_*"
 
 [tool.coverage.run]
