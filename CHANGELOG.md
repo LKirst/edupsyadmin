@@ -1,3 +1,9 @@
+## 7.8.2 (2025-11-10)
+
+### Fix
+
+- add validation for nta_struktur and improve error message for check of taet_key_encr
+
 ## 7.8.1 (2025-11-09)
 
 ### Fix
