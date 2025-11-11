@@ -418,7 +418,13 @@ def command_get_clients(
         if tui:
             # Convert DataFrame to list-of-lists for the TUI
             list_of_tuples = [df.columns.to_list(), *df.values.tolist()]
-            app = clients_overview_cls(list_of_tuples)
+            app = clients_overview_cls(
+                manager=clients_manager,
+                nta_nos=nta_nos,
+                schools=school,
+                columns=columns,
+                data=list_of_tuples,
+            )
             app.run()
             return  # Exit after TUI session
 

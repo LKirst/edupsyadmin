@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from edupsyadmin.tui.clientsoverview import ClientsOverview
 
 ROWS = [
@@ -26,5 +28,8 @@ ROWS = [
 
 
 def test_clients_overview(snap_compare) -> None:
-    app = ClientsOverview(data=ROWS)
+    mock_manager = MagicMock()
+    app = ClientsOverview(
+        manager=mock_manager, nta_nos=False, schools=None, columns=None, data=ROWS
+    )
     assert snap_compare(app, terminal_size=(150, 30))

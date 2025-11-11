@@ -1,8 +1,13 @@
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.widgets import DataTable, Footer
+
+if TYPE_CHECKING:
+    import pandas as pd
+
+    from edupsyadmin.api.managers import ClientsManager
 
 
 class ClientsOverview(App[None]):
@@ -13,10 +18,22 @@ class ClientsOverview(App[None]):
         Binding("s", "sort_by_school", "Sortieren nach `schule`"),
         Binding("i", "sort_by_client_id", "Sortieren nach `client_id`"),
         Binding("c", "sort_by_class_name", "Sortieren nach `class_name`"),
+        Binding("ctrl+r", "reload", "Neu laden", show=True),
     ]
 
-    def __init__(self, data: list[list[Any]]) -> None:
+    def __init__(
+        self,
+        manager: "ClientsManager",
+        nta_nos: bool,
+        schools: list[str] | None,
+        columns: list[str] | None,
+        data: list[list[Any]],
+    ) -> None:
         super().__init__()
+        self.manager = manager
+        self.nta_nos = nta_nos
+        self.schools = schools
+        self.columns = columns
         self.ROWS = data
         self.current_sorts: set[str] = set()
 
@@ -43,6 +60,26 @@ class ClientsOverview(App[None]):
         else:
             self.current_sorts.add(sort_type)
         return reverse
+
+    async def action_reload(self) -> None:
+        """Reloads the data in the table from the database."""
+        self.notify("Lade Daten neu...")
+
+        # Re-fetch data using the stored manager and filters
+        df: pd.DataFrame = self.manager.get_clients_overview(
+            nta_nos=self.nta_nos,
+            schools=self.schools,
+            columns=self.columns,
+        )
+
+        new_rows = df.values.tolist()
+
+        # Clear existing rows and add the new ones
+        table = self.query_one(DataTable)
+        table.clear()
+        table.add_rows(new_rows)
+
+        self.notify("Tabelle neu geladen.")
 
     def action_sort_by_client_id(self) -> None:
         """Sort DataTable by client_id"""
