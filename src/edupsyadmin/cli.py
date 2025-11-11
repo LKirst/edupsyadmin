@@ -475,9 +475,11 @@ def command_create_documentation(
         try:
             form_paths.extend(config.form_set[form_set])
         except KeyError:
+            available_sets = ", ".join(config.form_set.keys())
             raise KeyError(
-                f"Es ist in der Konfigurationsdatei kein Form Set mit dem"
-                f"Namen {form_set} angelegt."
+                "Es ist in der Konfigurationsdatei kein Form Set mit dem "
+                f"Namen '{form_set}' angelegt. Verfügbare Sets sind: "
+                f"{available_sets}"
             )
     elif not form_paths:
         raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
