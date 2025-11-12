@@ -25,6 +25,19 @@ testing_logger = Logger("conftest_logger")
 
 
 @pytest.fixture(autouse=True)
+def _reset_config_instance():
+    """Reset the config singleton instance after each test.
+
+    This is crucial because the `config` object is a singleton and would
+    otherwise carry state between tests, leading to unpredictable behavior
+    depending on test execution order.
+
+    """
+    yield
+    config._instance = None
+
+
+@pytest.fixture(autouse=True)
 def clear_metadata():
     Base.metadata.clear()
     yield
