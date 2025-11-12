@@ -1,3 +1,17 @@
+## 7.9.0 (2025-11-12)
+
+### Feat
+
+- **tui.clientsoverview**: add reloading keybinding
+
+### Fix
+
+- **db.clients**: fix issue with typing
+
+### Refactor
+
+- **cli**: show available sets when form_set value is not in config
+
 ## 7.8.2 (2025-11-10)
 
 ### Fix
