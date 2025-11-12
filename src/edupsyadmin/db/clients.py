@@ -328,7 +328,7 @@ class Client(Base):
 
     def __init__(
         self,
-        encr: Encryption,
+        encr: "Encryption",
         school: str,
         gender_encr: str,
         class_name: str,
