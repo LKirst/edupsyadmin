@@ -1,6 +1,6 @@
 ## Example runtime configuration for the edupsyadmin application.
 core:
-  logging: WARN
+  logging: INFO
   app_uid: liebermann-schulpsychologie.github.io
   app_username: sample.username # replace this with your username
 schoolpsy:
@@ -14,12 +14,14 @@ school:
     school_street: "Beispielstr. 1" # street and house number of your school
     school_city: "87700 Beispielstadt" # postcode and town of your school
     end: 11 # grade after which students (typically) graduate from / leave your school
+    nstudents: 200 # number of students at your school
   SecondSchool: # short name 2nd school (optional)
     school_head_w_school: "Schulleitung der beruflichen Oberschulen Beispielstadt"
     school_name: "Fachoberschule"
     school_street: "Platzhalterweg 2"
     school_city: "87700 Beispielstadt"
     end: 13
+    nstudents: 100
 form_set: # sets of file paths for create_documentation; replace with your sets
   lrst:
     - '~/Templates/Beratung/LiL_Mantelbogen.pdf'
@@ -33,3 +35,19 @@ form_set: # sets of file paths for create_documentation; replace with your sets
     - '~/Templates/Beratung/LRSt_AnschreibenKeinBefund.pdf'
   mantelbogen:
     - '~/Templates/Beratung/LiL_Mantelbogen.pdf'
+csv_import:
+  webuntis:
+    separator: "\t"
+    column_mapping:
+      "gender": "gender_encr"
+      "entryDate": "entry_date"
+      "klasse.name": "class_name"
+      "foreName": "first_name_encr"
+      "longName": "last_name_encr"
+      "birthDate": "birthday_encr"
+      "address.street": "street_encr"
+      "address.postCode": "postCode"
+      "address.city": "city"
+      "address.mobile": "telephone1_encr"
+      "address.phone": "telephone2_encr"
+      "address.email": "email_encr"

@@ -1,10 +1,11 @@
 import datetime
+from typing import Any
 
 from sqlalchemy import VARCHAR, Boolean, Date, DateTime, Float, Integer, String
-from sqlalchemy.types import TypeDecorator
+from sqlalchemy.types import TypeDecorator, TypeEngine
 
 
-def get_python_type(sqlalchemy_type: type) -> type:
+def get_python_type(sqlalchemy_type: TypeEngine[Any]) -> type:
     """
     Maps SQLAlchemy types to Python standard types.
 
@@ -13,7 +14,7 @@ def get_python_type(sqlalchemy_type: type) -> type:
     """
 
     if isinstance(sqlalchemy_type, TypeDecorator):
-        sqlalchemy_type = sqlalchemy_type.impl
+        sqlalchemy_type = sqlalchemy_type.impl  # type: ignore[assignment]
 
     if isinstance(sqlalchemy_type, Integer):
         return int

@@ -68,31 +68,29 @@ Dies wird dir die Optionen und Argumente für den ``create_documentation``
 Unterbefehl anzeigen:
 
 .. code-block:: console
-   :emphasize-lines: 2,3,7,11
+   :emphasize-lines: 2,6,9
 
     $ edupsyadmin create_documentation --help
-    usage: edupsyadmin create_documentation [-h] [--app_username APP_USERNAME] [--app_uid APP_UID] [--database_url DATABASE_URL] [--form_set FORM_SET]
-                                            client_id [form_paths ...]
+    usage: edupsyadmin create_documentation [-h] client_id [client_id ...] [--form_set FORM_SET] [--form_paths FORM_PATH ...]
 
-    Fill a pdf form or a text file with a liquid template
+    Fill a pdf form or a text file with a liquid template. Either --form_set or --form_paths must be provided.
 
     positional arguments:
       client_id
-      form_paths            form file paths
 
     options:
       -h, --help            show this help message and exit
-      --app_username APP_USERNAME
-                            username for encryption; if it is not set here, the app will try to read it from the config file
-      --app_uid APP_UID
-      --database_url DATABASE_URL
       --form_set FORM_SET   name of a set of file paths defined in the config file
+      --form_paths [FORM_PATHS ...]
+                            form file paths
 
 Die Hilfe zeigt ``positional arguments``  und ``options``. Die positional
 arguments sind Argumente, die du dem Unterbefehl in einer bestimmten
 Reihenfolge übergeben musst. Die options sind hingegen optionale Parameter, mit
 denen du das Verhalten des Unterbefehls beeinflussen kannst. Insgesamt siehst
-du hier, dass der Unterbefehl "create_documentation" zwei positional arguments
-(client_id und form_paths) und mehrere optionale Optionen akzeptiert.
+du hier, dass der Unterbefehl "create_documentation" ein positional argument
+(client_id) und mehrere optionale Optionen akzeptiert.
 Argumente oder Optionen, die bei ``usage:`` in eckigen Klammern stehen, sind
-optional.
+optional. (Bei ``create_documentation`` gibt es noch die Besonderheit, dass
+entweder ein ``form_set`` oder mindestens ein ``form_path`` angegeben werden
+müssen.)

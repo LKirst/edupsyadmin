@@ -13,15 +13,34 @@ Einstieg
     *Installationsanleitung bezieht sich auf Windows*. Ich hoffe, Information für
     die anderen Betriebssysteme in der Zukunft zu ergänzen.
 
-Installation
-------------
+Voraussetzungen
+---------------
+
+Terminal
+^^^^^^^^
+
+Edupsyadmin wird in einem Terminal aufgerufen. Dafür muss ein modernes
+Terminal installiert sein.
+
+Auf Windows ist dies **Windows Terminal**, das seit Win11 meist vorinstalliert
+ist. Ist es nicht vorhanden, kann es über den `Microsoft Store installiert
+werden <https://aka.ms/terminal>`__.
+
+Auch MacOS hat eine Terminal App vorinstalliert, mit der edupsyadmin
+funktioniert. Für die beste user experience ist aber empfohlen, ein moderneres
+Terminal zu installieren wie `gostty <https://ghostty.org/>`__, `kitty
+<https://sw.kovidgoyal.net/kitty/>`__, `westerm <https://wezterm.org/>`__ oder
+`iTerm2 <https://iterm2.com/features.html>`__
+
+uv (auf Windows)
+^^^^^^^^^^^^^^^^
 
 .. note:: Die :kbd:`Win` Taste ist die Taste mit dem Windows Symbol |WinKey|.
 
 .. |WinKey| unicode:: U+229E
 
 Als erstes öffne ein Terminal. Auf Windows, drücke dafür die Tasten
-:kbd:`Win-X`. Dann wähle "Windows Powershell" oder "(Windows) Terminal". Es
+:kbd:`Win-X`. Dann wähle "(Windows) Terminal". Es
 sind keine Administratorrechte nötig.
 
 Zur Installation verwenden wir winget. Kontrolliere zunächst, ob winget
@@ -44,12 +63,27 @@ Mit winget kannst du uv installieren:
 
     $ winget install --id=astral-sh.uv  -e --source winget
 
-Damit du uv verwenden kannst, musst du das Terminal *einmal schließen und wieder
-öffnen*. uv erlaubt dir, edupsyadmin zu installieren:
+Damit du uv verwenden kannst, musst du das Terminal *einmal schließen und
+wieder öffnen*.
+
+uv (MacOS)
+^^^^^^^^^^
+
+1. Öffne das Terminal deiner Wahl über eine Suche nach Terminal im Launchpad.
+
+1. Gebe ein: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+
+   Sollte der Befehl nicht funktionieren, gebe ein:
+   `wget -qO- https://astral.sh/uv/install.sh | sh`
+
+Installation
+------------
+
+uv erlaubt dir, edupsyadmin zu installieren:
 
 .. code-block:: console
 
-   $ uv tool install edupsyadmin
+   $ uv tool install edupsyadmin --python 3.14
 
 Dieser Befehl zeigt wahrscheinlich eine Warnung wie unten an, wobei dein Pfad
 anders aussehen wird:
@@ -77,7 +111,7 @@ was du testen kannst mit:
    $ edupsyadmin --help
 
 Wenn eine Hilfe-Nachricht erscheint, ist die Installation gelungen. Erscheint
-ein Fehler, können wir den Pfad auch selbst hinzufügen mit den folgenden
+ein Fehler, können wir den Pfad auf Windows auch selbst hinzufügen mit den folgenden
 Schritten:
 
 1. Kopiere den Pfad aus der Warnung. Im Beispiel oben wäre dieser
@@ -85,23 +119,23 @@ Schritten:
    Pfad noch das Zeichen ````` auftaucht vor den Backslashs ``\``, dann
    entferne es.
 
-2. Drücke die Tasten :kbd:`Win-S`, um die Suche zu öffnen.
+1. Drücke die Tasten :kbd:`Win-S`, um die Suche zu öffnen.
 
-3. Gebe in die Suche ein "Umgebungsvariablen für dieses Konto bearbeiten" und
+1. Gebe in die Suche ein "Umgebungsvariablen für dieses Konto bearbeiten" und
    wähle den Vorschlag mit der höchsten Übereinstimmung aus.
 
-4. In dem Fenster das sich öffnet, klicke unter "Benutzervariablen" die Zeile
+1. In dem Fenster das sich öffnet, klicke unter "Benutzervariablen" die Zeile
    mit ``Path`` an, sodass sie blau hinterlegt ist.
 
-5. Wähle darunter ``Bearbeiten`` aus (im Abschnitt zu Benutzervariablen,
+1. Wähle darunter ``Bearbeiten`` aus (im Abschnitt zu Benutzervariablen,
    *nicht* im Abschnitt zu Systemvariablen).
 
-6. In dem Fenster, das sich öffnet, wähle rechts ``Neu`` und füge dann links den
+1. In dem Fenster, das sich öffnet, wähle rechts ``Neu`` und füge dann links den
    Pfad ein, den du in Schritt 1 kopiert hast.
 
-7. Klicke in beiden noch offenen Fenstern ``OK``.
+1. Klicke in beiden noch offenen Fenstern ``OK``.
 
-8. Öffne und schließe das Terminal, um dann mit ``edupsyadmin --help`` die
+1. Öffne und schließe das Terminal, um dann mit ``edupsyadmin --help`` die
    Installation zu testen.
 
 Hintergrund zu den Verschlüsselungsdaten
@@ -113,7 +147,7 @@ Befehls von edupsyadmin vorrübergehend entschlüsselt (alle Variablen, deren
 Name auf "_encr" endet, s. Dokumentation der Datenbank).
 
 Standard Backends
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 edupsyadmin verwendet ``keyring``, um die Verschlüsselungsdaten zu speichern.
 ``keyring`` hat mehrere Backends. Unter Windows ist der Standard Windows
@@ -132,7 +166,7 @@ Login separates Password für Keychain gesetzt werden kann, was die Sicherheit
 erhöht.
 
 Bitwarden Backend
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 Eine für alle Betriebssysteme mögliche Alternative ist die Bitwarden CLI. Sie
 erfordert vor jeder Nutzung von edupsyadmin, dass der Zugang zum Password für
@@ -142,20 +176,20 @@ die Sitzung entschlüsselt werden, was die Sicherheit erhöht. Dafür musst du:
 - die Bitwarden CLI installieren: `<https://bitwarden.com/help/cli/>`_
 - edupsyadmin mit dem optionalen Paket bitwarden-keyring installieren:
 
-.. code-block ::
+.. code-block :: console
 
   uv tool install --with bitwarden-keyring edupsyadmin
 
 - dich einmalig in der Shell (z.B. Powershell über das Windows Terminal) einloggen:
 
-.. code-block ::
+.. code-block :: console
 
   bw login
 
 - vor jeder Sitzung Bitwarden mit dem für Bitwarden gesetzten
   Passwort entschlüsseln
 
-.. code-block ::
+.. code-block :: console
 
   bw unlock
 
@@ -168,61 +202,66 @@ die Sitzung entschlüsselt werden, was die Sicherheit erhöht. Dafür musst du:
 Konfiguration und Verschlüsselungsdaten festlegen
 -------------------------------------------------
 
-Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür folgenden Befehl aus:
+Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür
+folgenden Befehl aus:
 
 .. code-block:: console
 
    $ edupsyadmin edit_config
 
+Für die meisten Eingabefelder ist in dieser Ansicht eine Erklärung hinterlegt,
+die sichtbar wird, wenn du die Maus darüber bewegst.
+
 1. Ersetze ``sample.username`` durch deinen Benutzernamen (keine Leerzeichen
    und keine Sonderzeichen) unter App-Einstellungen:
 
-.. code-block::
+.. code-block:: text
 
     DEIN.NAME
 
-2. Lege einmalig ein sicheres Passwortsicheres Passwort  fest. Das Passwort solltest du für eine bestehende
+1. Lege einmalig ein sicheres Passwortsicheres Passwort  fest. Das Passwort solltest du für eine bestehende
    Datenbank nicht ändern, sonst können die Daten nicht mehr entschlüsselt werden.
 
-.. code-block::
+.. code-block:: text
 
     ein_sicheres_passwort
 
-3. Ändere dann deine Daten in den Schulpsychologie-Einstellungen:
+1. Ändere dann deine Daten in den Schulpsychologie-Einstellungen:
 
-.. code-block::
+.. code-block:: text
 
     Postleitzahl und Stadt
     Dein Vor- und Nachname (wie er auf Formularen erscheinen soll)
     Die Straße und Hausnummer deiner Stammschule
 
-4. Ändere unter "Einstellungen für Schule 1" den Kurznamen deiner Schule zu
+1. Ändere unter "Einstellungen für Schule 1" den Kurznamen deiner Schule zu
    etwas einprägsamerem als ``FirstSchool``. Verwende keine Leerzeichen oder
    Sonderzeichen. In diesem Tutorial verwenden wir den Schulnamen
    ``TutorialSchule``.
 
-.. code-block::
+.. code-block:: text
 
     TutorialSchule
 
-5. Füge die Daten für deine Schule hinzu. Die Variable ``end`` wird verwendet, um
+1. Füge die Daten für deine Schule hinzu. Die Variable ``end`` wird verwendet, um
    das Datum für die Vernichtung der Unterlagen (3 Jahre nach dem
    voraussichtlichen Abschlussdatum) zu schätzen. Sie benennt die
    Jahrgangsstufe, nach der die Schüler:innen typischerweise die Schule
    verlassen.
 
-.. code-block::
+.. code-block:: text
 
     11
+    300
     Postleitzahl und Stadt
     Straße und Hausnummer der Schul
     Titel deiner Schulleitung
     Name der Schule ausgeschriebe
 
-6. Über den Button ``Schule hinzufügen`` können weitere Schulen hinzugefügt
-   werden. Wiederhole Schritt 3 und 4 für jede Schule, an der du tätig bist.
+1. Über den Button ``Schule hinzufügen`` können weitere Schulen hinzugefügt
+   werden. Wiederhole die zwei letzten Schritte für jede Schule, an der du tätig bist.
 
-7. Ändere die Pfade unter ``form_set``, um auf die (Sets von) PDF-Formularen zu
+1. Ändere die Pfade unter ``form_set``, um auf die (Sets von) PDF-Formularen zu
    verweisen, die du verwenden möchtest. Bitte lade für unser Beispiel folgende
    zwei Beispiel-PDFs herunter und speichere Sie:
 
@@ -236,9 +275,9 @@ Zuerst musst du die Konfiguration mit deinen Daten aktualisieren. Führe dafür 
     Pfad kopieren". Kopiere den Pfad in ein form_set. Unser form_set nennen wir für diese Tutorial
     ``tutorialset``.
 
-.. code-block::
+.. code-block:: text
 
     pfad/zu/meiner/ersten_datei/sample_form_mantelbogen.pdf
     pfad/zu/meiner/zweiten_datei/sample_form_stellungnahme.pdf
 
-8. Speichere die Änderungen.
+1. Speichere die Änderungen.

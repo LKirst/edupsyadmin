@@ -68,7 +68,7 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
                             )
                     except KeyError:
                         logger.debug(
-                            f"Couldn't fill in {key} on " f"p. {i + 1} of {fn.name}"
+                            f"Couldn't fill in {key} on p. {i + 1} of {fn.name}"
                         )
     if out_fn.exists():
         raise FileExistsError

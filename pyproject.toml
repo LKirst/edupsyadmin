@@ -4,68 +4,63 @@ build-backend = "hatchling.build"
 
 [project]
 name = "edupsyadmin"
-version = "6.1.1"
-authors=[
-    {name = "Lukas Liebermann"}
-]
+version = "7.9.0"
+authors = [{ name = "Lukas Liebermann" }]
 description = "edupsyadmin provides tools to help school psychologists with their documentation"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13" # python 3.14 is not yet available for readthedocs
 homepage = "https://github.com/LKirst/edupsyadmin.git"
 license = { text = "MIT" }
 dependencies = [
-    "cryptography>=43.0.3",
-    "fillpdf>=0.7.3",
-    "keyring>=25.5.0",
-    "pandas>=2.2.3",
-    "platformdirs>=4.3.6",
-    "pypdf>=5.1.0",
-    "python-liquid>=1.12.1",
-    "pyyaml>=6.0.2",
-    "scipy>=1.14.1",
-    "sqlalchemy>=2.0.36",
-    "textual>=2.1.2",
+  "cryptography>=43.0.3",
+  "fillpdf>=0.7.3",
+  "keyring>=25.5.0",
+  "pandas>=2.2.3",
+  "platformdirs>=4.3.6",
+  "pypdf>=5.1.0",
+  "python-liquid>=1.12.1",
+  "pyyaml>=6.0.2",
+  "scipy>=1.14.1",
+  "sqlalchemy>=2.0.36",
+  "textual>=2.1.2",
+  "pydantic>=2.12.3",
 ]
 
 [project.scripts]
 edupsyadmin = "edupsyadmin.cli:main"
 
 [project.optional-dependencies]
-flattenpdf = [
-    "pdf2image>=1.17.0",
-]
+flattenpdf = ["pdf2image>=1.17.0"]
 reportsandtaetigkeitsber = [
-    "matplotlib>=3.9.2",
-    "dataframe-image>=0.2.6",
-    "fpdf2>=2.8.3",
+  "matplotlib>=3.9.2",
+  "dataframe-image>=0.2.6",
+  "fpdf2>=2.8.3",
 ]
-bwbackend = [
-    "bitwarden-keyring>=0.3.1",
-]
+bwbackend = ["bitwarden-keyring>=0.3.1"]
 
 [dependency-groups]
 dev = [
-    "commitizen>=3.31.0",
-    "mypy>=1.13.0",
-    "pandas-stubs>=2.2.3.241009",
-    "pre-commit>=4.0.1",
-    "pytest-cov>=6.0.0",
-    "pytest>=8.3.3",
-    "reportlab>=4.2.5",
-    "sphinx>=8.1.3",
-    "pytest-xdist>=3.6.1",
-    "types-pyyaml>=6.0.12.20241221",
-    "types-fpdf2>=2.8.2.20241223",
-    "types-openpyxl>=3.1.5.20241225",
-    "types-python-dateutil>=2.9.0.20241206",
-    "types-defusedxml>=0.7.0.20240218",
-    "types-greenlet>=3.1.0.20241221",
-    "sphinx-rtd-theme>=3.0.2",
-    "alembic>=1.14.1",
-    "snakeviz>=2.2.2",
-    "textual-dev>=1.7.0",
-    "pytest-asyncio>=1.0.0",
-    "pytest-textual-snapshot>=1.1.0",
+  "commitizen>=3.31.0",
+  "mypy>=1.13.0",
+  "pandas-stubs>=2.2.3.241009",
+  "pytest-cov>=6.0.0",
+  "pytest>=8.3.3",
+  "reportlab>=4.2.5",
+  "sphinx>=8.1.3",
+  "pytest-xdist>=3.6.1",
+  "types-pyyaml>=6.0.12.20241221",
+  "types-fpdf2>=2.8.2.20241223",
+  "types-openpyxl>=3.1.5.20241225",
+  "types-python-dateutil>=2.9.0.20241206",
+  "types-defusedxml>=0.7.0.20240218",
+  "types-greenlet>=3.1.0.20241221",
+  "sphinx-rtd-theme>=3.0.2",
+  "alembic>=1.14.1",
+  "snakeviz>=2.2.2",
+  "textual-dev>=1.7.0",
+  "pytest-asyncio>=1.0.0",
+  "pytest-textual-snapshot>=1.1.0",
+  "pytest-benchmark>=5.2.0",
 ]
 
 [tool.commitizen]
@@ -74,18 +69,21 @@ tag_format = "$version"
 version_scheme = "pep440"
 version_provider = "pep621"
 update_changelog_on_bump = true
-version_files = [
-    "src/edupsyadmin/__version__.py"
-]
+version_files = ["src/edupsyadmin/__version__.py"]
 
 [tool.ruff.lint]
 select = [
   # Core correctness / style
-  "F", "E", "W", "I", "N",
+  "F",
+  "E",
+  "W",
+  "I",
+  "N",
 
   "UP",  # pyupgrade – rewrite to modern Python syntax (f-strings, walrus, etc.)
   "C4",  # flake8-comprehensions – point out sub-optimal list/dict/set comps
   "SIM", # flake8-simplify – suggest clearer, shorter boolean / loop logic
+  "ISC", # flake-8-implicit-str-concat - implicitly string concatenation
   "RET", # flake8-return – keep return statements consistent and meaningful
   "ARG", # flake8-unused-arguments – flag unused, shadowed or *args/**kwargs
   "TID", # flake8-tidy-imports – ban unused or overly-relative imports
@@ -96,3 +94,21 @@ select = [
 "src/edupsyadmin/db/clients.py" = ["ARG002"]
 "src/edupsyadmin/tui/*" = ["ARG"]
 "test/*" = ["ARG"]
+"src/edupsyadmin/cli.py" = ["E501"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.pytest.ini_options]
+addopts = "--benchmark-skip"
+testpaths = ["test"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.coverage.run]
+omit = [
+  "src/edupsyadmin/api/cft_report.py",
+  "src/edupsyadmin/api/reports.py",
+  "src/edupsyadmin/api/lgvt.py",
+]

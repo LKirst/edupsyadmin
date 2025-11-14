@@ -4,6 +4,7 @@ import shutil
 from collections.abc import Generator
 from datetime import date
 from pathlib import Path
+from typing import Any
 from unittest.mock import Mock
 
 import keyring
@@ -13,13 +14,33 @@ from sample_pdf_form import create_pdf_form
 from sample_webuntis_export import create_sample_webuntis_export
 
 from edupsyadmin.api.managers import ClientsManager
-from edupsyadmin.core.config import config, convert_config_to_dict
+from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import Logger, logger
+from edupsyadmin.db import Base
 
 TEST_USERNAME = "test_user_do_not_use"
 TEST_UID = "example.com"
 
 testing_logger = Logger("conftest_logger")
+
+
+@pytest.fixture(autouse=True)
+def _reset_config_instance():
+    """Reset the config singleton instance after each test.
+
+    This is crucial because the `config` object is a singleton and would
+    otherwise carry state between tests, leading to unpredictable behavior
+    depending on test execution order.
+
+    """
+    yield
+    config._instance = None
+
+
+@pytest.fixture(autouse=True)
+def clear_metadata():
+    Base.metadata.clear()
+    yield
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -58,10 +79,10 @@ def mock_keyring(monkeysession):
 @pytest.fixture(scope="function")
 def mock_config(
     tmp_path_factory: pytest.TempPathFactory, pdf_forms, request
-) -> Generator[list[str]]:
+) -> Generator[str]:
     template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
-    conf_path = [str(tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml")]
-    shutil.copy(template_path, conf_path[0])
+    conf_path = str(tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml")
+    shutil.copy(template_path, conf_path)
     testing_logger.debug(
         f"mock_config fixture (test: {request.node.name}) - conf_path: {conf_path}"
     )
@@ -71,11 +92,12 @@ def mock_config(
     config.core.config = conf_path
     config.core.app_username = f"user_read_from_file-{request.node.name}"
     config.core.logging = "DEBUG"
-    config.form_set.lrst = [str(path) for path in pdf_forms]
+    config.form_set["lrst"] = [str(path) for path in pdf_forms]
 
     # write the changed config to file
-    with open(str(config.core.config[0]), "w", encoding="UTF-8") as f:
-        dictyaml = convert_config_to_dict(config)  # convert to dict for pyyaml
+    with open(config.core.config, "w", encoding="UTF-8") as f:
+        # convert to dict for pyyaml, excluding the runtime 'config' path
+        dictyaml = config.model_dump(exclude={"core": {"config"}})
         yaml.dump(dictyaml, f)
 
     # set different username than written to file to test which one is used
@@ -85,7 +107,7 @@ def mock_config(
     config.core.app_uid = "example.com"
 
     yield conf_path
-    os.remove(conf_path[0])
+    os.remove(conf_path)
 
 
 @pytest.fixture
@@ -120,9 +142,10 @@ def client_dict_all_str() -> dict[str, str]:
         "nos_rs": "0",
         "nta_zeitv_vieltext": "10",
         "nta_nos_end_grade": "11",
-        "lrst_diagnosis": "iLst",
-        "lrst_last_test_date": "2025-05-11",
-        "lrst_last_test_by": "schpsy",
+        "lrst_diagnosis_encr": "iLst",
+        "lrst_last_test_date_encr": "2025-05-11",
+        "lrst_last_test_by_encr": "schpsy",
+        "keyword_taet_encr": "slbb.slb.sonstige",
     }
 
 
@@ -145,9 +168,10 @@ def client_dict_all_str() -> dict[str, str]:
             "nos_les": False,
             "nta_zeitv_vieltext": 10,
             "nta_nos_end_grade": 11,
-            "lrst_diagnosis": "iLst",
-            "lrst_last_test_date": date(2025, 5, 11),
-            "lrst_last_test_by": "schpsy",
+            "lrst_diagnosis_encr": "iLst",
+            "lrst_last_test_date_encr": date(2025, 5, 11),
+            "lrst_last_test_by_encr": "schpsy",
+            "keyword_taet_encr": "slbb.slb.sonstige",
         },
         {
             "client_id": 2,
@@ -165,14 +189,15 @@ def client_dict_all_str() -> dict[str, str]:
             "nos_rs": True,
             "nta_zeitv_vieltext": None,
             "nta_nos_end_grade": None,
-            "lrst_diagnosis": None,
-            "lrst_last_test_date": None,
-            "lrst_last_test_by": None,
+            "lrst_diagnosis_encr": "",
+            "lrst_last_test_date_encr": "",
+            "lrst_last_test_by_encr": "",
+            "keyword_taet_encr": "",
         },
     ],
     scope="session",
 )
-def client_dict_set_by_user(request) -> dict[str, any]:
+def client_dict_set_by_user(request) -> dict[str, Any]:
     """
     The data the user sets [works with clients.__init__()].
     """
@@ -202,10 +227,11 @@ def client_dict_set_by_user(request) -> dict[str, any]:
             "nachteilsausgleich": True,
             "nta_nos_end": True,
             "nta_nos_end_grade": 11,
-            "lrst_diagnosis": "iLst",
-            "lrst_last_test_date": date(2025, 5, 11),
-            "lrst_last_test_by": "schpsy",
+            "lrst_diagnosis_encr": "iLst",
+            "lrst_last_test_date_encr": date(2025, 5, 11),
+            "lrst_last_test_by_encr": "schpsy",
             "document_shredding_date": date(2025, 12, 24),
+            "keyword_taet_encr": "slbb.slb.sonstige",
         },
         {
             "client_id": 2,
@@ -228,15 +254,16 @@ def client_dict_set_by_user(request) -> dict[str, any]:
             "nachteilsausgleich": False,
             "nta_nos_end": False,
             "nta_nos_end_grade": None,
-            "lrst_diagnosis": None,
-            "lrst_last_test_date": None,
-            "lrst_last_test_by": None,
+            "lrst_diagnosis_encr": "",
+            "lrst_last_test_date_encr": "",
+            "lrst_last_test_by_encr": "",
             "document_shredding_date": date(2025, 12, 24),
+            "keyword_taet_encr": "",
         },
     ],
     scope="session",
 )
-def client_dict_internal(request) -> dict[str, any]:
+def client_dict_internal(request) -> dict[str, Any]:
     """
     The attributes of a clients object. Includes data that the clients object
     sets internally.
@@ -246,7 +273,12 @@ def client_dict_internal(request) -> dict[str, any]:
 
 @pytest.fixture
 def clients_manager(tmp_path, mock_salt_path, mock_config, mock_keyring):
-    """Create a clients_manager"""
+    """
+    Create a clients_manager.
+    This fixture is dependent on `mock_config` to ensure the config file
+    is loaded before this fixture is used, providing `TEST_UID` and `TEST_USERNAME`.
+    """
+
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
     manager = ClientsManager(

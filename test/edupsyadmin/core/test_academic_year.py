@@ -17,7 +17,7 @@ if TODAY.month > DEFAULT_LAST_MONTH:
     end_of_year = end_of_year.replace(year=end_of_year.year + 1)
 
 
-class TestAcademicYearFunctions(unittest.TestCase):
+class AcademicYearFunctionsTest(unittest.TestCase):
     def test_get_academic_year_string(self):
         end_of_year = date(2023, 7, 31)
         self.assertEqual(get_academic_year_string(end_of_year), "2022/23")

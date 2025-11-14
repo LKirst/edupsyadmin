@@ -1,7 +1,7 @@
 """Package for the edupsyadmin application."""
 
-from . import api, core
-from .__main__ import main
-from .__version__ import __version__ as __version__  # public re-export
+from edupsyadmin import api, core
+from edupsyadmin.__main__ import main
+from edupsyadmin.__version__ import __version__ as __version__  # public re-export
 
 __all__ = ["__version__", "api", "core", "main"]

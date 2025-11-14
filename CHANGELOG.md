@@ -1,3 +1,171 @@
+## 7.9.0 (2025-11-12)
+
+### Feat
+
+- **tui.clientsoverview**: add reloading keybinding
+
+### Fix
+
+- **db.clients**: fix issue with typing
+
+### Refactor
+
+- **cli**: show available sets when form_set value is not in config
+
+## 7.8.2 (2025-11-10)
+
+### Fix
+
+- add validation for nta_struktur and improve error message for check of taet_key_encr
+
+## 7.8.1 (2025-11-09)
+
+### Fix
+
+- require only python >=3.13 but instruct user to install with --python 3.14
+
+## 7.8.0 (2025-11-09)
+
+### Feat
+
+- **editconfig**: improve layout for edit_config TUI
+- replace --show_notes with a --columns option to allow flexible selection of columns
+
+### Fix
+
+- **managers**: improve handling large numbers of db entries
+
+## 7.7.0 (2025-10-29)
+
+### Feat
+
+- **info**: print info in a rich table
+
+## 7.6.0 (2025-10-28)
+
+### Feat
+
+- add option to display notes_encr in get_clients
+
+## 7.5.0 (2025-10-26)
+
+### Feat
+
+- **cli**: allow the injection or overriding of variables before filling a form
+- **api.managers**: allow selecting several schools in get_clients
+- validate lrst_last_test_by_encr and lrst_last_test_date_encr in TUI
+
+### Fix
+
+- **cli**: fix issue with lazyloading client db metadata
+
+### Refactor
+
+- **tui.editclient**: improve TUI layout and handling of cancel
+
+## 7.4.0 (2025-10-20)
+
+### Feat
+
+- add filter option to get_clients for school filter
+
+### Fix
+
+- **data.sampleconfig.yml**: set debugging level to INFO by default
+
+### Refactor
+
+- move cli code from managers.py to cli.py
+- **cli**: move command functions to the top of the file to improve readability
+
+## 7.3.0 (2025-10-14)
+
+### Feat
+
+- **tui.editclient**: add key binding for save
+- allow setting paths to lgvt convenience files in the config
+
+### Fix
+
+- **cli.py**: respect logging level from config
+
+## 7.2.0 (2025-10-09)
+
+### Feat
+
+- add 'andere' as an option for lrst_last_test_by_encr
+
+### Fix
+
+- **tui.editconfig**: add back title to config editor
+
+## 7.1.0 (2025-10-07)
+
+### Feat
+
+- **api.managers**: improve the formatting of output for get_clients with --client_id
+- accept several client_id values for create_documentation
+
+### Fix
+
+- **api.managers**: correctly import telephone numbers from csv
+
+## 7.0.0 (2025-10-06)
+
+### BREAKING CHANGE
+
+- The database now includes two integer variables to describe sessions: min_sessions and n_sessions. The float variable h_sessions is removed.
+- Rename and encrypt lrst_last_test_date > lrst_last_test_date_encr and lrst_last_test_by > lrst_last_test_by_encr.
+- The name and type of two variables has changed: lrst_diagnosis > lrst_diagnosis_encr, keyword_taetigkeitsbericht > keyword_taet_encr
+- The data type of nta_nos_end_grade has changed from String to Integer in the database.
+
+### Feat
+
+- allow the user to set mappings for csv imports in config.yml
+- **api.taetigkeitsbericht_from_db**: update the taetigkeitsbericht code to use n_sessions and min_sessions and from config nstudents
+- use a min_sessions and n_sessions variable instead of a h_sessions variable
+- **db.clients**: encrypt lrst_last_test_date_encr and lrst_last_test_by_encr
+- **api.managers**: validate keys in edit_client
+- **db.clients**: encrypt lrst_diagnosis_encr and keyword_taet_encr
+
+### Fix
+
+- **db.clients**: fix spelling mistake
+- **db.clients**: correct the data type of nta_nos_end_grade and pass only bool to _update_nachteilsausgleich
+
+### Refactor
+
+- **tui.editconfig**: refactor to use compound widgets
+- **core.encrypt**: change misleading variable name
+- improve type hints
+- **core.config**: refactor to use pydantic and simplify to a single configuration file
+- **api.managers**: remove unused function
+
+## 6.3.0 (2025-09-18)
+
+### Feat
+
+- **api.managers**: improve error messages when user input is incorrect
+
+## 6.2.0 (2025-09-18)
+
+### Feat
+
+- **tui.editconfig**: add nstudents to school config
+- **tui**: add cancel and delete buttons, validation, and bindings
+- add option to display clients overview with textual DataTable
+
+### Fix
+
+- **tui.editconfig**: fix crash when deleting items in config_editor
+- **sampleconfig.yml**: add nstudents
+- **tui**: add missing await, refactor containers and bindings, add test
+- **api.managers**: run the ClientsOverview app
+
+### Refactor
+
+- **api.managers**: improve data handling and efficiency in managers
+
 ## 6.1.1 (2025-07-30)
 
 ### Fix

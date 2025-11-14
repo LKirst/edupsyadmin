@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import pandas as pd
+import pytest
 
 from edupsyadmin.api.taetigkeitsbericht_from_db import (
     add_categories_to_df,
@@ -24,23 +25,38 @@ def test_get_subcategories():
 
 
 def test_add_categories_to_df():
-    df = pd.DataFrame({"category": ["cat1", "cat2.sub"], "h_sessions": [5.3, 1]})
-    min_per_ses = 45
-    df, summary = add_categories_to_df(df, "category", min_per_ses=min_per_ses)
+    df = pd.DataFrame(
+        {
+            "category": ["cat1", "cat2.sub", "cat2"],
+            "h_sessions": [5.3, 1.0, 2.5],
+            "n_sessions": [4, 1, 2],  # Represents >3, 1, and 2-3 sessions respectively
+        }
+    )
+
+    df, summary = add_categories_to_df(df, "category")
+
     assert "cat1" in df.columns
     assert "cat2" in df.columns
     assert "cat2.sub" in df.columns
 
-    # the sum for cat1 is 5.3
     assert summary.loc["sum", "cat1"] == 5.3
+    assert summary.loc["sum", "cat2"] == pytest.approx(3.5)
 
-    # there is one client with 1-3 sessions in the cat2.sub category
+    # The row 'cat1' had 4 sessions (>3)
+    assert summary.loc["count_mt3_sessions", "cat1"] == 1
+    assert summary.loc["count_2to3_sessions", "cat1"] == 0
+    assert summary.loc["count_1_session", "cat1"] == 0
+
+    # The row 'cat2.sub' had 1 session
     assert summary.loc["count_mt3_sessions", "cat2.sub"] == 0
+    assert summary.loc["count_2to3_sessions", "cat2.sub"] == 0
+    assert summary.loc["count_1_session", "cat2.sub"] == 1
+
+    # Check the parent category 'cat2', which aggregates counts from itself
+    # and its children
     assert summary.loc["count_mt3_sessions", "cat2"] == 0
-    assert summary.loc["count_einm_kurzkont", "cat2.sub"] == 0
-    assert summary.loc["count_einm_kurzkont", "cat2"] == 0
-    assert summary.loc["count_1to3_sessions", "cat2.sub"] == 1
-    assert summary.loc["count_1to3_sessions", "cat2"] == 1
+    assert summary.loc["count_2to3_sessions", "cat2"] == 1  # From the 'cat2' entry
+    assert summary.loc["count_1_session", "cat2"] == 1  # From the 'cat2.sub' entry
 
 
 def test_summary_statistics_h_sessions():
@@ -56,12 +72,13 @@ def test_summary_statistics_h_sessions():
 def test_wstd_in_zstd():
     result = wstd_in_zstd(5)
     assert result.loc["wstd_spsy", "value"] == 5
-    # TODO: test for a precise value
     assert result.loc["zstd_spsy_week_target", "value"] > 0
 
 
 def test_summary_statistics_wstd():
-    result = summary_statistics_wstd(5, 23, 1000.0, "SchoolA100", "SchoolB200")
+    school_students = {"SchoolA": 100, "SchoolB": 200}
+    result = summary_statistics_wstd(5, 23, 1000.0, school_students)
+
     assert result.loc["nstudents_SchoolA", "value"] == 100
     assert result.loc["nstudents_SchoolB", "value"] == 200
     assert result.loc["nstudents_all", "value"] == 300
@@ -71,9 +88,7 @@ def test_summary_statistics_wstd():
 @patch("edupsyadmin.api.taetigkeitsbericht_from_db.Report")
 def test_create_taetigkeitsbericht_report(mock_report, mock_dfi_export, tmp_path):
     summary_wstd = pd.DataFrame(
-        {
-            "value": [5, 251, 50],
-        },
+        {"value": [5, 251, 50]},
         index=["wstd_spsy", "wd_year", "zstd_week"],
     )
 
@@ -82,8 +97,8 @@ def test_create_taetigkeitsbericht_report(mock_report, mock_dfi_export, tmp_path
         index=[
             "sum",
             "count_mt3_sessions",
-            "count_1to3_sessions",
-            "count_einm_kurzkont",
+            "count_2to3_sessions",
+            "count_1_session",
         ],
     )
 
@@ -92,7 +107,6 @@ def test_create_taetigkeitsbericht_report(mock_report, mock_dfi_export, tmp_path
             "count": [2, 1, 3],
             "mean": [4.0, 2.0, 3.333],
             "sum": [8, 2, 10],
-            "zeitstunden": [6.0, 1.5, 7.5],
         },
         index=["school1", "school2", "all"],
     )
@@ -112,14 +126,18 @@ def test_create_taetigkeitsbericht_report(mock_report, mock_dfi_export, tmp_path
     mock_report_instance.output.assert_called_with(str(output_file) + "_report.pdf")
 
 
-@patch("edupsyadmin.api.taetigkeitsbericht_from_db.get_data_raw")
+@patch("edupsyadmin.api.taetigkeitsbericht_from_db.ClientsManager")
 @patch("edupsyadmin.api.taetigkeitsbericht_from_db.create_taetigkeitsbericht_report")
-def test_taetigkeitsbericht(mock_create_report, mock_get_data_raw, tmp_path):
-    mock_get_data_raw.return_value = pd.DataFrame(
+def test_taetigkeitsbericht(
+    mock_create_report, mock_clients_manager, mock_config, tmp_path
+):
+    mock_manager_instance = mock_clients_manager.return_value
+    mock_manager_instance.get_data_raw.return_value = pd.DataFrame(
         {
             "school": ["FirstSchool", "FirstSchool", "SecondSchool"],
-            "keyword_taetigkeitsbericht": ["cat1", "cat2", "cat2"],
-            "h_sessions": [5, 3, 2.2],
+            "keyword_taet_encr": ["cat1", "cat2", "cat2"],
+            "min_sessions": [300, 180, 132],
+            "n_sessions": [4, 2, 1],
         }
     )
 
@@ -131,7 +149,6 @@ def test_taetigkeitsbericht(mock_create_report, mock_get_data_raw, tmp_path):
         database_url="url",
         salt_path="path",
         wstd_psy=5,
-        nstudents=["SchoolA100", "SchoolB200"],
         out_basename=str(output_basename),
     )
 

@@ -20,7 +20,7 @@ def _get_subjects(school: str) -> str:
     :return: A string containing the subjects separated by newlines.
     """
     file_path = files("edupsyadmin.data").joinpath(f"Faecher_{school}.md")
-    logger.info(f"trying to read school subjects file: {file_path}")
+    logger.debug(f"trying to read school subjects file: {file_path}")
     if file_path.is_file():
         logger.debug("subjects file exists")
         with file_path.open("r", encoding="utf-8") as file:
@@ -113,8 +113,9 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
         logger.debug("Couldn't add home address because of missing data: {e}")
 
     # school psychologist address
-    for i in ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]:
-        data[i] = config.schoolpsy[i]
+    data["schoolpsy_name"] = config.schoolpsy.schoolpsy_name
+    data["schoolpsy_street"] = config.schoolpsy.schoolpsy_street
+    data["schoolpsy_city"] = config.schoolpsy.schoolpsy_city
     data["schoolpsy_addr_m_wname"] = _get_addr_mulitline(
         data["schoolpsy_street"], data["schoolpsy_city"], data["schoolpsy_name"]
     )
@@ -122,26 +123,27 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
 
     # school address
     schoolconfig = config.school[data["school"]]
-    for i in ["school_name", "school_street", "school_city", "school_head_w_school"]:
-        data[i] = schoolconfig[i]
+    data["school_name"] = schoolconfig.school_name
+    data["school_street"] = schoolconfig.school_street
+    data["school_city"] = schoolconfig.school_city
+    data["school_head_w_school"] = schoolconfig.school_head_w_school
     data["school_addr_m_wname"] = _get_addr_mulitline(
         data["school_street"], data["school_city"], data["school_name"]
     )
     data["school_addr_s_wname"] = data["school_addr_m_wname"].replace("\n", ", ")
 
     # lrst_diagnosis
-    diagnosis = data["lrst_diagnosis"]
+    diagnosis = data["lrst_diagnosis_encr"]
     if diagnosis == "lrst":
         data["lrst_diagnosis_long"] = "Lese-Rechtschreib-Störung"
     elif diagnosis == "iLst":
         data["lrst_diagnosis_long"] = "isolierte Lesestörung"
     elif diagnosis == "iRst":
         data["lrst_diagnosis_long"] = "isolierte Rechtschreibstörung"
-    elif diagnosis is not None:
+    elif diagnosis:
         raise ValueError(
             f"lrst_diagnosis can be only lrst, iLst or iRst, but was {diagnosis}"
         )
-
     # subjects
     data["school_subjects"] = _get_subjects(data["school"])
 
@@ -151,7 +153,7 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
     dates = [
         "birthday_encr",
         "today_date",
-        "lrst_last_test_date",
+        "lrst_last_test_date_encr",
         "document_shredding_date",
     ]
     for idate in dates:
@@ -167,20 +169,22 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
         )
 
     # convert lrst_last_test_by for pdf forms created with libreoffice
-    if data["lrst_last_test_by"]:
-        if data["lrst_last_test_by"] == "schpsy":
+    if data["lrst_last_test_by_encr"]:
+        if data["lrst_last_test_by_encr"] == "schpsy":
             data["lrst_schpsy"] = 1
-        elif data["lrst_last_test_by"] == "psychia":
+        elif data["lrst_last_test_by_encr"] == "psychia":
             data["lrst_schpsy"] = 2
-        elif data["lrst_last_test_by"] == "psychoth":
+        elif data["lrst_last_test_by_encr"] == "psychoth":
             data["lrst_schpsy"] = 3
-        elif data["lrst_last_test_by"] == "spz":
+        elif data["lrst_last_test_by_encr"] == "spz":
             data["lrst_schpsy"] = 4
+        elif data["lrst_last_test_by_encr"] == "andere":
+            data["lrst_schpsy"] = 5
         else:
             logger.error(
                 f"Value for lrst_last_test_by must be in "
-                f"(schpsy, psychia, psychoth, spz) but is "
-                f"{data['lrst_last_test_by']}"
+                f"(schpsy, psychia, psychoth, spz, andere) but is "
+                f"{data['lrst_last_test_by_encr']}"
             )
 
     return data

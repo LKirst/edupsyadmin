@@ -28,4 +28,7 @@ def check_keyword(keyword: str | None) -> str | None:
     possible_keywords = get_taet_categories()
     if (not keyword) or (keyword in possible_keywords):
         return keyword
-    raise ValueError
+    raise ValueError(
+        f"Invalid keyword: '{keyword}'. Possible keywords are: "
+        f"{', '.join(sorted(possible_keywords))}"
+    )

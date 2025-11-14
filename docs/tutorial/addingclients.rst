@@ -4,7 +4,8 @@ Klienten hinzufügen, bearbeiten, anzeigen
 Klienten hinzufügen
 -------------------
 
-Füge einen Klienten interaktiv hinzu:
+Füge einen Klienten interaktiv hinzu. Es müssen nicht alle möglichen Felder
+ausgefüllt werden. Nur die Felder mit einem Sternchen "*".
 
 .. code-block:: console
 
@@ -13,12 +14,18 @@ Füge einen Klienten interaktiv hinzu:
 Füge einen weiteren Klienten aus einem Webuntis-CSV-Export zur Datenbank hinzu.
 Verwende dafür die Beispieldatei `samplewebuntisfile.csv
 <https://raw.githubusercontent.com/LKirst/edupsyadmin/refs/heads/main/docs/_static/samplewebuntisfile.csv>`_.
-Die Datei kannst du speichern, indem du :kbd:`Strg-S` klickst. Wir ordnen den
-Schüler unserer, in der Konfiguration angelegten ``TutorialSchule`` zu.
+Die Datei kannst du speichern, indem du :kbd:`Strg-S` klickst.
+
+Wir ordnen den Schüler unserer, in der Konfiguration angelegten
+``TutorialSchule`` zu.
 
 .. code-block:: console
 
     $ edupsyadmin new_client --csv "./pfad/zu/samplewebuntisfile.csv" --name "MustermMax1" --school TutorialSchule
+
+Der Befehl oben löscht die CSV-Datei nachdem der Schüler hinzugefügt wurde.
+Wenn du dieses Verhalten nicht willst, kannst du zu dem Befehl noch
+``--keepfile`` hinzufügen.
 
 Einträge bearbeiten
 -------------------
@@ -47,8 +54,8 @@ bearbeitet werden. Hierbei steht ``1`` für "wahr/ja" und ``0`` für
       "nos_rs=0" \
       "lrst_diagnosis=iLst"
 
-Einträge anzeigen
------------------
+Übersicht aller Einträge anzeigen
+---------------------------------
 
 Zeige eine Übersicht aller Klienten in der Datenbank an:
 
@@ -59,7 +66,29 @@ Zeige eine Übersicht aller Klienten in der Datenbank an:
 Hier sollten nun die zwei hinzugefügten Klienten angezeigt werden. In der
 ersten Spalte ist die ``client_id`` gelistet.
 
-Zeige alle Daten für einen einzelnen Klienten an:
+Die Einträge können auch gefiltert werden nach Schule mit ``--nta_nos`` und
+``--school KURZNAME_DER_SCHULE``.  Folgender Befehlt zeigt nur Einträge an, die
+der Schule "FirstSchool" zugeordnet sind und die entweder Nachteilsausgleich
+oder Notenschutz haben:
+
+.. code-block:: console
+
+    $ edupsyadmin get_clients --nta_nos --school TutorialSchule
+
+Die Einträge können auch in einer interaktiven Tabelle angezeigt werden. Die
+Tabelle lässt sich nach Nachnamen und Schule sortieren und kann mit
+:kbd:`Strg-Q` wieder geschlossen werden.
+
+.. code-block:: console
+
+    $ edupsyadmin get_clients --tui
+
+Einzelnen Eintrag anzeigen
+--------------------------
+
+Die Übersicht zeigt nicht alle hinterlegten Daten.  Um alle Daten für einen
+einzelnen Klienten anzuzeigen, muss ``get_clients`` mit einer client_id
+aufgerufen werden.
 
 .. code-block:: console
 

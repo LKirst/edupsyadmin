@@ -1,7 +1,77 @@
-Button {
-    width: 50%;
+# vi:syntax=css:
+/* General layout */
+VerticalScroll {
+    padding: 0 1;
 }
 
-Header {
+/* Headers for each section of the config */
+.section-header {
+    background: $primary-background-darken-2;
+    color: $text;
+    padding: 1;
+    margin: 2 0 1 0;
+    text-style: bold;
+}
+
+/* Container for a single item (School, FormSet, etc.) */
+.item-container {
+    height: auto;
+    border: round $primary-lighten-2;
+    padding: 1;
+    margin: 1 0;
+}
+
+/* Spacing for inputs inside containers */
+.item-container Input {
+    margin-bottom: 0;
+}
+
+/* Row for CSV column mapping */
+.mapping-row {
+    layout: horizontal;
+    height: auto;
+}
+
+.mapping-row Input {
+    width: 1fr;
+}
+
+/* Buttons */
+Button {
+    width: 100%;
+    margin-top: 1;
+}
+
+.delete-button {
+    border: tall $error;
+    background: $error-darken-2;
+}
+
+.action-buttons {
     height: 3;
+}
+
+.action-buttons Button {
+    width: 1fr;
+    margin: 0 1;
+}
+
+/* Container for holding a label and an input field */
+.input-container {
+    layout: horizontal;
+    height: auto;
+    align: center middle;
+}
+
+/* The static label next to the input */
+.label {
+    width: 1fr;
+    height: 3;
+    content-align: right middle;
+    margin-right: 1;
+}
+
+/* The Input widget that is inside an input-container */
+.input-container > Input {
+    width: 2fr;
 }

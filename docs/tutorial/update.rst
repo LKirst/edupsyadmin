@@ -17,8 +17,23 @@ Update
     die neue Version geändert hat. Das kannst du auf `PYPI
     <https://pypi.org/project/edupsyadmin/#history>`_ prüfen.
 
-Überprüfe als erstes, welche Version deine gegenwärtige Installation hat und wo
-deine Dateien liegen, wenn du sie weiter verwenden willst.
+Um keine Dateien zu überschreiben, erstellt edupsyadmin für jede Version
+einen eigenen Unterordner für Kofigurationsdatei, Datenbank und Salt (eine
+Datei, die für die Verschlüsselung verwendet wird). Die Datenbank für die
+ältere Version der App wird nicht automatisch gelöscht oder überschrieben.
+Die Datenbank, die mit der alten Version erstellt wurde bleibt als Backup
+bestehen.
+
+.. warning::
+
+    Backups müssen manuell gelöscht werden, wenn zum Beispiel mit einer neuen
+    Version der App ein Klient gelöscht wird oder die Verschlüsselung der
+    Datenbank aktualisiert wird (z.B. bei einer Änderung des Passworts). Sonst
+    bestehen die Daten des gelöschten Klienten weiter im Backup oder Daten des
+    Backups sind weiter mit der alten Verschlüsselung gespeichert.
+
+Überprüfe als erstes (vor dem Update), welche Version deine gegenwärtige
+Installation hat und wo deine Dateien (d.h. nach dem Update das Backup) liegen:
 
 .. code-block:: console
 
@@ -26,26 +41,31 @@ deine Dateien liegen, wenn du sie weiter verwenden willst.
 
 Falls du die Daten migrieren willst, notiere dir den Text der ausgegeben wird
 mit ``edupsyadmin version``, ``database_url``, ``config_path`` und
-``salt_path``.
+``salt_path``. Auch wenn du die Daten nicht migrieren willst, solltest du dir
+die ``database_url`` notieren, damit du das Backup später findest, wenn du es
+löschen willst.
 
 Update der App
 --------------
+
+Aktualisiere vor dem Update uv und python:
+
+.. code-block:: console
+
+   winget upgrade uv
+   uv python upgrade
 
 Nun aktualisiere edupsyadmin mit:
 
 .. code-block:: console
 
-   $ uv tool upgrade edupsyadmin
+   $ uv tool upgrade edupsyadmin --python 3.14
 
 Mit ``edupsyadmin --version`` kannst du überprüfen, welche Version von
 edupsyadmin jetzt installiert ist.
 
 Verschieben der Dateien
 -----------------------
-
-Um keine Dateien zu überschreiben, erstellt edupsyadmin für jede Version einen
-eigenen Unterordner für Kofigurationsdatei, Datenbank und Salt (eine Datei, die
-für die Verschlüsselung verwendet wird).
 
 Mit ``edupsyadmin info`` kannst du nach Aktualisierung der App überprüfen, wo
 Konfigurationsdatei, Datenbank und Salt für die neue Version liegen (sollten).

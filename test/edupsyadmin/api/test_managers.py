@@ -1,12 +1,11 @@
 from datetime import date
+from typing import Any
 
 import pytest
 
 from edupsyadmin.api.managers import (
     ClientNotFoundError,
-    enter_client_untiscsv,
 )
-from edupsyadmin.tui.editclient import StudentEntryApp
 
 EXPECTED_KEYS = {
     "first_name_encr",
@@ -27,10 +26,10 @@ EXPECTED_KEYS = {
     "class_int",
     "estimated_graduation_date",
     "document_shredding_date",
-    "keyword_taetigkeitsbericht",
-    "lrst_diagnosis",
-    "lrst_last_test_date",
-    "lrst_last_test_by",
+    "keyword_taet_encr",
+    "lrst_diagnosis_encr",
+    "lrst_last_test_date_encr",
+    "lrst_last_test_by_encr",
     "datetime_created",
     "datetime_lastmodified",
     "notenschutz",
@@ -54,13 +53,15 @@ EXPECTED_KEYS = {
     "nta_nos_notes",
     "nta_nos_end",
     "nta_nos_end_grade",
-    "h_sessions",
+    "min_sessions",
+    "n_sessions",
 }
 
 
-class ManagersTest:
+class TestManagers:
     def test_add_client(self, mock_keyring, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
+
         client = clients_manager.get_decrypted_client(client_id=client_id)
         assert EXPECTED_KEYS.issubset(client.keys())
         assert client["first_name_encr"] == client_dict_set_by_user["first_name_encr"]
@@ -81,6 +82,20 @@ class ManagersTest:
         client_id = clients_manager.add_client(**client_dict_with_id)
         assert client_id == 99
 
+    def test_add_client_set_id_str(self, mock_keyring, clients_manager):
+        client_dict_with_id = {
+            "client_id": "98",
+            "school": "FirstSchool",
+            "gender_encr": "f",
+            "entry_date": date(2021, 6, 30),
+            "class_name": "7TKKG",
+            "first_name_encr": "Lieschen",
+            "last_name_encr": "Müller",
+            "birthday_encr": "1990-01-01",
+        }
+        client_id = clients_manager.add_client(**client_dict_with_id)
+        assert client_id == 98
+
     def test_edit_client(self, mock_keyring, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
         client = clients_manager.get_decrypted_client(client_id=client_id)
@@ -89,6 +104,7 @@ class ManagersTest:
             "last_name_encr": "Smith",
             "nta_zeitv_vieltext": 25,
             "nta_font": True,
+            "nta_nos_end_grade": 10,
         }
         clients_manager.edit_client([client_id], updated_data)
         upd_cl = clients_manager.get_decrypted_client(client_id)
@@ -101,6 +117,8 @@ class ManagersTest:
         assert upd_cl["nta_font"] is True
         assert upd_cl["nta_zeitv"] is True
         assert upd_cl["nachteilsausgleich"] is True
+        assert upd_cl["nta_nos_end_grade"] == 10
+        assert upd_cl["nta_nos_end"] is True
 
         assert upd_cl["nta_ersgew"] is False
 
@@ -133,7 +151,7 @@ class ManagersTest:
                 "nta_font": True,
                 "nta_zeitv_vieltext": "",
                 "nta_zeitv_wenigtext": "",
-                "lrst_diagnosis": "iLst",
+                "lrst_diagnosis_encr": "iLst",
             },
         )
         upd_cl1_multiple = clients_manager.get_decrypted_client(client_id)
@@ -154,97 +172,447 @@ class ManagersTest:
             is None
         )
         assert (
-            upd_cl1_multiple["lrst_diagnosis"]
-            == upd_cl2_multiple["lrst_diagnosis"]
+            upd_cl1_multiple["lrst_diagnosis_encr"]
+            == upd_cl2_multiple["lrst_diagnosis_encr"]
             == "iLst"
         )
 
     def test_delete_client(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
         clients_manager.delete_client(client_id)
-        try:
+        with pytest.raises(ClientNotFoundError) as excinfo:
             clients_manager.get_decrypted_client(client_id)
-            assert (
-                False
-            ), "Expected ClientNotFoundError exception when retrieving a deleted client"
-        except ClientNotFoundError as e:
-            assert e.client_id == client_id
+        assert excinfo.value.client_id == client_id
 
-    def test_enter_client_untiscsv(self, mock_keyring, clients_manager, mock_webuntis):
-        client_id = enter_client_untiscsv(
-            clients_manager, mock_webuntis, school=None, name="MustermMax1"
+    def test_edit_client_with_invalid_key(
+        self, clients_manager, client_dict_set_by_user
+    ):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        invalid_key = "this_key_does_not_exist"
+        new_data = {"first_name_encr": "new_name", invalid_key: "some_value"}
+
+        with pytest.raises(ValueError) as excinfo:
+            clients_manager.edit_client([client_id], new_data)
+
+        assert invalid_key in str(excinfo.value)
+
+        # Check that the valid data was not updated
+        updated_client = clients_manager.get_decrypted_client(client_id)
+        assert updated_client["first_name_encr"] != "new_name"
+
+
+class TestClientValidation:
+    def test_validate_lrst_diagnosis(self, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        # Valid value
+        clients_manager.edit_client([client_id], {"lrst_diagnosis_encr": "lrst"})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["lrst_diagnosis_encr"] == "lrst"
+
+        # Invalid value
+        with pytest.raises(ValueError, match="Invalid value for lrst_diagnosis"):
+            clients_manager.edit_client([client_id], {"lrst_diagnosis_encr": "invalid"})
+
+        # Empty value
+        clients_manager.edit_client([client_id], {"lrst_diagnosis_encr": ""})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["lrst_diagnosis_encr"] == ""
+
+        # None value
+        clients_manager.edit_client([client_id], {"lrst_diagnosis_encr": None})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["lrst_diagnosis_encr"] == ""
+
+    def test_validate_nos_rs_ausn_faecher(
+        self, clients_manager, client_dict_set_by_user
+    ):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        # With value
+        clients_manager.edit_client([client_id], {"nos_rs_ausn_faecher": "Deutsch"})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nos_rs_ausn_faecher"] == "Deutsch"
+        assert client["nos_rs_ausn"] is True
+
+        # With empty value
+        clients_manager.edit_client([client_id], {"nos_rs_ausn_faecher": " "})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nos_rs_ausn_faecher"] == " "
+        assert client["nos_rs_ausn"] is False
+
+        # With None
+        clients_manager.edit_client([client_id], {"nos_rs_ausn_faecher": None})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nos_rs_ausn_faecher"] is None
+        assert client["nos_rs_ausn"] is False
+
+    def test_validate_nos_bool(self, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        # Ensure all are false initially
+        clients_manager.edit_client(
+            [client_id], {"nos_rs": False, "nos_les": False, "nos_other_details": ""}
         )
-        client = clients_manager.get_decrypted_client(client_id=client_id)
-        assert EXPECTED_KEYS.issubset(client.keys())
-        assert client["first_name_encr"] == "Max"
-        assert client["last_name_encr"] == "Mustermann"
-        assert client["school"] == "FirstSchool"
-        mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nos_rs"] is False
+        assert client["nos_les"] is False
+        assert client["nos_other"] is False
+        assert client["notenschutz"] is False
 
-    @pytest.mark.asyncio
-    async def test_enter_client_tui(
-        self, mock_keyring, clients_manager, client_dict_all_str
+        # nos_rs
+        clients_manager.edit_client([client_id], {"nos_rs": "1"})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nos_rs"] is True
+        assert client["notenschutz"] is True
+
+        clients_manager.edit_client([client_id], {"nos_rs": False})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nos_rs"] is False
+        assert client["notenschutz"] is False
+
+        # nos_les
+        clients_manager.edit_client([client_id], {"nos_les": True})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nos_les"] is True
+        assert client["notenschutz"] is True
+
+        clients_manager.edit_client([client_id], {"nos_les": 0})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nos_les"] is False
+        assert client["notenschutz"] is False
+
+        # invalid value
+        with pytest.raises(ValueError, match="cannot be converted to a boolean"):
+            clients_manager.edit_client([client_id], {"nos_rs": "abc"})
+
+    def test_validate_nos_other_details(self, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        # Ensure all are false initially
+        clients_manager.edit_client(
+            [client_id], {"nos_rs": False, "nos_les": False, "nos_other_details": ""}
+        )
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["notenschutz"] is False
+
+        # With value
+        clients_manager.edit_client([client_id], {"nos_other_details": "Some details"})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nos_other_details"] == "Some details"
+        assert client["nos_other"] is True
+        assert client["notenschutz"] is True
+
+        # With empty value
+        clients_manager.edit_client([client_id], {"nos_other_details": ""})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nos_other_details"] == ""
+        assert client["nos_other"] is False
+        assert client["notenschutz"] is False
+
+    def test_validate_nta_zeitv_percentage(
+        self, clients_manager, client_dict_set_by_user
     ):
-        app = StudentEntryApp(data=None)
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
 
-        async with app.run_test() as pilot:
-            for key, value in client_dict_all_str.items():
-                wid = f"#{key}"
-                input_widget = pilot.app.query_exactly_one(wid)
-                app.set_focus(input_widget, scroll_visible=True)
-                await pilot.wait_for_scheduled_animations()
-                await pilot.pause()
-                await pilot.click(wid)
-                await pilot.press(*value)
+        # nta_zeitv_vieltext
+        clients_manager.edit_client([client_id], {"nta_zeitv_vieltext": "25"})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nta_zeitv_vieltext"] == 25
+        assert client["nta_zeitv"] is True
+        assert client["nachteilsausgleich"] is True
 
-            wid = "#Submit"
-            input_widget = pilot.app.query_exactly_one(wid)
-            app.set_focus(input_widget, scroll_visible=True)
-            await pilot.wait_for_scheduled_animations()
-            await pilot.pause()
-            await pilot.click(wid)
+        clients_manager.edit_client([client_id], {"nta_zeitv_vieltext": 0})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nta_zeitv_vieltext"] == 0
+        assert client["nta_zeitv"] is False
+        assert client["nachteilsausgleich"] is False
 
-        data = app.get_data()
-        clients_manager.add_client(**data)
+        # nta_zeitv_wenigtext
+        clients_manager.edit_client([client_id], {"nta_zeitv_wenigtext": 10})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nta_zeitv_wenigtext"] == 10
+        assert client["nta_zeitv"] is True
+        assert client["nachteilsausgleich"] is True
 
-    @pytest.mark.asyncio
-    async def test_edit_client_tui(
-        self, mock_keyring, clients_manager, client_dict_all_str
+        clients_manager.edit_client([client_id], {"nta_zeitv_wenigtext": None})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nta_zeitv_wenigtext"] is None
+        assert client["nta_zeitv"] is False
+        assert client["nachteilsausgleich"] is False
+
+    def test_validate_nta_bool(self, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        # Ensure all are false initially
+        nta_bool_fields = [
+            "nta_font",
+            "nta_aufg",
+            "nta_struktur",
+            "nta_arbeitsm",
+            "nta_ersgew",
+            "nta_vorlesen",
+        ]
+        reset_data: dict[str, str | Any] = dict.fromkeys(nta_bool_fields, False)
+        reset_data["nta_other_details"] = ""  # makes sure nta_other is False
+        clients_manager.edit_client([client_id], reset_data)
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nachteilsausgleich"] is False
+
+        for field in nta_bool_fields:
+            # Test setting to True
+            clients_manager.edit_client([client_id], {field: True})
+            client = clients_manager.get_decrypted_client(client_id)
+            assert client[field] is True
+            assert client["nachteilsausgleich"] is True, (
+                f"Setting {field} to True should set nachteilsausgleich to True!"
+            )
+
+            # Test setting back to False
+            clients_manager.edit_client([client_id], {field: False})
+            client = clients_manager.get_decrypted_client(client_id)
+            assert client[field] is False
+            assert client["nachteilsausgleich"] is False
+
+    def test_validate_nta_other_details(self, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        # Ensure all are false initially
+        nta_bool_fields = [
+            "nta_font",
+            "nta_aufg",
+            "nta_struktur",
+            "nta_arbeitsm",
+            "nta_ersgew",
+            "nta_vorlesen",
+        ]
+        reset_data: dict[str, str | Any] = dict.fromkeys(nta_bool_fields, False)
+        reset_data["nta_other_details"] = ""  # makes sure nta_other is False
+        clients_manager.edit_client([client_id], reset_data)
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nachteilsausgleich"] is False
+
+        # With value
+        clients_manager.edit_client([client_id], {"nta_other_details": "Some details"})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nta_other_details"] == "Some details"
+        assert client["nta_other"] is True
+        assert client["nachteilsausgleich"] is True
+
+        # With empty value
+        clients_manager.edit_client([client_id], {"nta_other_details": ""})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nta_other_details"] == ""
+        assert client["nta_other"] is False
+        assert client["nachteilsausgleich"] is False
+
+    def test_validate_nta_nos_end_grade(self, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        # With value
+        clients_manager.edit_client([client_id], {"nta_nos_end_grade": "10"})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nta_nos_end_grade"] == 10
+        assert client["nta_nos_end"] is True
+
+        # With None
+        clients_manager.edit_client([client_id], {"nta_nos_end_grade": None})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nta_nos_end_grade"] is None
+        assert client["nta_nos_end"] is False
+
+    def test_validate_lrst_last_test_date_encr(
+        self, clients_manager, client_dict_set_by_user
     ):
-        client_id = clients_manager.add_client(**client_dict_all_str)
-        current_data = clients_manager.get_decrypted_client(client_id=client_id)
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
 
-        app = StudentEntryApp(client_id, data=current_data.copy())
+        # Valid date string
+        clients_manager.edit_client(
+            [client_id], {"lrst_last_test_date_encr": "2023-01-01"}
+        )
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["lrst_last_test_date_encr"] == "2023-01-01"
 
-        change_values = {
-            "first_name_encr": "SomeNewNameßä",
-            "lrst_last_test_date": "2026-01-01",
-            "nos_rs": True,
-        }
+        # date object
+        test_date = date(2023, 2, 1)
+        clients_manager.edit_client(
+            [client_id], {"lrst_last_test_date_encr": test_date}
+        )
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["lrst_last_test_date_encr"] == "2023-02-01"
 
-        async with app.run_test() as pilot:
-            for key, value in change_values.items():
-                wid = f"#{key}"
-                input_widget = pilot.app.query_exactly_one(wid)
-                input_widget.value = ""
-                app.set_focus(input_widget, scroll_visible=True)
-                await pilot.wait_for_scheduled_animations()
-                await pilot.pause()
-                await pilot.click(wid)
-                if isinstance(value, bool):
-                    input_widget.value = value
-                    continue
-                await pilot.press(*value)
+        # Invalid date string
+        with pytest.raises(ValueError, match="Invalid date format"):
+            clients_manager.edit_client(
+                [client_id], {"lrst_last_test_date_encr": "2023-13-01"}
+            )
 
-            wid = "#Submit"
-            input_widget = pilot.app.query_exactly_one(wid)
-            app.set_focus(input_widget, scroll_visible=True)
-            await pilot.wait_for_scheduled_animations()
-            await pilot.pause()
-            await pilot.click(wid)
+        # Empty string
+        clients_manager.edit_client([client_id], {"lrst_last_test_date_encr": ""})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["lrst_last_test_date_encr"] == ""
 
-        data = app.get_data()
-        assert data == change_values
+    def test_validate_lrst_last_test_by_encr(
+        self, clients_manager, client_dict_set_by_user
+    ):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        # Valid value
+        clients_manager.edit_client([client_id], {"lrst_last_test_by_encr": "schpsy"})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["lrst_last_test_by_encr"] == "schpsy"
+
+        # Invalid value
+        with pytest.raises(
+            ValueError, match="Invalid value for lrst_last_test_by_encr"
+        ):
+            clients_manager.edit_client(
+                [client_id], {"lrst_last_test_by_encr": "invalid"}
+            )
+
+        # Required when lrst_diagnosis_encr is set
+        clients_manager.edit_client([client_id], {"lrst_diagnosis_encr": "lrst"})
+        with pytest.raises(
+            ValueError, match="is required when lrst_diagnosis_encr is set"
+        ):
+            clients_manager.edit_client([client_id], {"lrst_last_test_by_encr": ""})
+
+        # Not required when lrst_diagnosis_encr is not set
+        clients_manager.edit_client([client_id], {"lrst_diagnosis_encr": ""})
+        clients_manager.edit_client([client_id], {"lrst_last_test_by_encr": ""})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["lrst_last_test_by_encr"] == ""
+
+    def test_validate_birthday(self, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        # Valid date string
+        clients_manager.edit_client([client_id], {"birthday_encr": "2000-01-01"})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["birthday_encr"] == "2000-01-01"
+
+        # date object
+        test_date = date(2001, 2, 3)
+        clients_manager.edit_client([client_id], {"birthday_encr": test_date})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["birthday_encr"] == "2001-02-03"
+
+        # Invalid date string
+        with pytest.raises(ValueError, match="does not match format"):
+            clients_manager.edit_client([client_id], {"birthday_encr": "2000-20-20"})
+
+    def test_validate_unencrypted_dates(self, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        # Valid date string
+        clients_manager.edit_client([client_id], {"entry_date": "2022-01-01"})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["entry_date"] == date(2022, 1, 1)
+
+        # None
+        clients_manager.edit_client([client_id], {"entry_date": None})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["entry_date"] is None
+
+        # date object
+        test_date = date(2022, 2, 1)
+        clients_manager.edit_client([client_id], {"entry_date": test_date})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["entry_date"] == test_date
+
+        # Empty string
+        clients_manager.edit_client([client_id], {"entry_date": ""})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["entry_date"] is None
+
+        # Invalid date string
+        with pytest.raises(ValueError):
+            clients_manager.edit_client([client_id], {"entry_date": "invalid-date"})
+
+    def test_validate_keyword_taet_encr(self, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        # invalid keyword
+        keyword = "some_invalid_keyword"
+        with pytest.raises(ValueError, match="Invalid keyword"):
+            clients_manager.edit_client([client_id], {"keyword_taet_encr": keyword})
+
+        # valid keyword
+        keyword = "lrst.sp.ern"
+        clients_manager.edit_client([client_id], {"keyword_taet_encr": keyword})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert "keyword_taet_encr" in client
+
+        # Test with empty string
+        clients_manager.edit_client([client_id], {"keyword_taet_encr": ""})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["keyword_taet_encr"] == ""
+
+    def test_min_sessions(self, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        clients_manager.edit_client([client_id], {"min_sessions": 45})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["min_sessions"] == 45
+
+        clients_manager.edit_client([client_id], {"min_sessions": "120"})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["min_sessions"] == 120
+
+    def test_nta_nos_notes(self, clients_manager, client_dict_set_by_user):
+        client_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        notes = "Some notes about NTA/NOS"
+        clients_manager.edit_client([client_id], {"nta_nos_notes": notes})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nta_nos_notes"] == notes
+
+        clients_manager.edit_client([client_id], {"nta_nos_notes": None})
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["nta_nos_notes"] is None
+
+    def test_gender_conversion(self, clients_manager, client_dict_set_by_user):
+        client_w = client_dict_set_by_user.copy()
+        del client_w["client_id"]
+        client_w["gender_encr"] = "w"
+        client_w_id = clients_manager.add_client(**client_w)
+        decrypted_w = clients_manager.get_decrypted_client(client_w_id)
+        assert decrypted_w["gender_encr"] == "f"
+
+        client_d = client_dict_set_by_user.copy()
+        del client_d["client_id"]
+        client_d["gender_encr"] = "d"
+        client_d_id = clients_manager.add_client(**client_d)
+        decrypted_d = clients_manager.get_decrypted_client(client_d_id)
+        assert decrypted_d["gender_encr"] == "x"
+
+        client_m = client_dict_set_by_user.copy()
+        del client_m["client_id"]
+        client_m["gender_encr"] = "m"
+        client_m_id = clients_manager.add_client(**client_m)
+        decrypted_m = clients_manager.get_decrypted_client(client_m_id)
+        assert decrypted_m["gender_encr"] == "m"
+
+    def test_class_name_parsing(self, clients_manager, client_dict_set_by_user):
+        client_data = client_dict_set_by_user.copy()
+        del client_data["client_id"]
+        client_data["class_name"] = "10a"
+        client_id = clients_manager.add_client(**client_data)
+        client = clients_manager.get_decrypted_client(client_id)
+        assert client["class_int"] == 10
+        assert client["estimated_graduation_date"] is not None
+        assert client["document_shredding_date"] is not None
+
+        # Test with no number in class_name
+        # FIXME: Raise an error because it containes no integer
+        # TODO: write a validates method for the db model and a validator for the tui
+        client_data["class_name"] = "Vorklasse"
+        client_id_2 = clients_manager.add_client(**client_data)
+        client2 = clients_manager.get_decrypted_client(client_id_2)
+        assert client2["class_int"] is None
+        assert client2["estimated_graduation_date"] is None
+        assert client2["document_shredding_date"] is None
 
 
 # Make the script executable.

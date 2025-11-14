@@ -1,11 +1,10 @@
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
-    CheckConstraint,
     Date,
     DateTime,
-    Float,
     Integer,
     String,
 )
@@ -17,14 +16,17 @@ from edupsyadmin.core.academic_year import (
     get_estimated_end_of_academic_year,
 )
 from edupsyadmin.core.config import config
-from edupsyadmin.core.encrypt import Encryption, encr
+from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.int_from_str import extract_number
 from edupsyadmin.core.logger import logger
 from edupsyadmin.core.taetigkeitsbericht_check_key import check_keyword
+from edupsyadmin.db import Base
 
-from . import Base
+if TYPE_CHECKING:
+    from edupsyadmin.core.encrypt import Encryption
 
 LRST_DIAG = {"lrst", "iLst", "iRst"}
+LRST_TEST_BY = {"schpsy", "psychia", "psychoth", "spz", "andere"}
 
 
 class EncryptedString(TypeDecorator):
@@ -131,41 +133,32 @@ class Client(Base):
             ":attr:`estimated_graduation_date`."
         ),
     )
-    keyword_taetigkeitsbericht: Mapped[str | None] = mapped_column(
-        String, doc="Schlüsselwort für die Kategorie des Klienten im Tätigkeitsbericht"
+    keyword_taet_encr: Mapped[str] = mapped_column(
+        EncryptedString,
+        doc="Schlüsselwort für die Kategorie des Klienten im Tätigkeitsbericht",
     )
-    # I need lrst_diagnosis as a variable separate from keyword_taetigkeitsbericht,
+    # I need lrst_diagnosis as a variable separate from keyword_taet_encr,
     # because LRSt can be present even if it is not the most important topic
-    lrst_diagnosis: Mapped[str | None] = mapped_column(
-        String,
-        CheckConstraint(
-            f"lrst_diagnosis IN "
-            f"({', '.join(f'\'{item}\'' for item in LRST_DIAG)})"
-            f"OR lrst_diagnosis IS NULL"
-        ),
+    lrst_diagnosis_encr: Mapped[str] = mapped_column(
+        EncryptedString,
         doc=(
             f"Diagnose im Zusammenhang mit LRSt. Zulässig sind die Werte: "
             f"{', '.join(LRST_DIAG)}"
         ),
     )
-    lrst_last_test_date: Mapped[date | None] = mapped_column(
-        Date,
+    lrst_last_test_date_encr: Mapped[str] = mapped_column(
+        EncryptedString,
         doc=(
             "Datum (YYYY-MM-DD) der letzten Testung im Zusammenhang "
             "einer Überprüfung von LRSt"
         ),
     )
-    lrst_last_test_by: Mapped[str | None] = mapped_column(
-        String,
-        CheckConstraint(
-            "lrst_last_test_by IN "
-            "('schpsy', 'psychia', 'psychoth', 'spz') "
-            "OR lrst_diagnosis IS NULL"
-        ),
+    lrst_last_test_by_encr: Mapped[str] = mapped_column(
+        EncryptedString,
         doc=(
             "Fachperson, von der die letzte Überprüfung von LRSt "
             "durchgeführt wurde; kann nur einer der folgenden Werte sein: "
-            "schpsy, psychia, psychoth, spz"
+            f"{', '.join(LRST_TEST_BY)}"
         ),
     )
     datetime_created: Mapped[datetime] = mapped_column(
@@ -315,24 +308,27 @@ class Client(Base):
         ),
     )
     nta_nos_end_grade: Mapped[int | None] = mapped_column(
-        String,
+        Integer,
         doc=(
             "Jahrgangsstufe bis deren Ende Nachteilsausgleich- und "
             "Notenschutzmaßnahmen zeitlich begrenzt sind"
         ),
     )
-    h_sessions: Mapped[float] = mapped_column(
-        Float,
+    min_sessions: Mapped[int] = mapped_column(
+        Integer,
         doc=(
-            "Anzahl der mit dem Klienten verbundenen Zeitstunden "
-            "(einschließlich Vorbereitung und Auswertung von Tests); eine "
-            "Unterrichtsstunde entspricht 0,75 Zeitstunden."
+            "Anzahl der mit dem Klienten verbundenen Minuten "
+            "(einschließlich Vorbereitung und Auswertung von Tests)"
         ),
+    )
+    n_sessions: Mapped[int] = mapped_column(
+        Integer,
+        doc=("Anzahl der mit dem Klienten verbundenen Beratungs- und Testsitzungen."),
     )
 
     def __init__(
         self,
-        encr: Encryption,
+        encr: "Encryption",
         school: str,
         gender_encr: str,
         class_name: str,
@@ -363,11 +359,12 @@ class Client(Base):
         nta_other_details: str | None = None,
         nta_nos_notes: str | None = None,
         nta_nos_end_grade: int | str | None = None,
-        lrst_diagnosis: str | None = None,
-        lrst_last_test_date: date | str | None = None,
-        lrst_last_test_by: str | None = None,
-        keyword_taetigkeitsbericht: str | None = "",
-        h_sessions: int | str = 1,
+        lrst_diagnosis_encr: str = "",
+        lrst_last_test_date_encr: date | str = "",
+        lrst_last_test_by_encr: str = "",
+        keyword_taet_encr: str = "",
+        min_sessions: int | str = 45,
+        n_sessions: int | str = 1,
     ) -> None:
         if client_id and isinstance(client_id, str):
             self.client_id = int(client_id)
@@ -406,15 +403,17 @@ class Client(Base):
             # convert grade_target to int to handle configs with a string value
             self.estimated_graduation_date = get_estimated_end_of_academic_year(
                 grade_current=self.class_int,
-                grade_target=int(config.school[self.school]["end"]),
+                grade_target=config.school[self.school].end,
             )
             self.document_shredding_date = get_date_destroy_records(
                 self.estimated_graduation_date
             )
 
-        self.lrst_diagnosis = lrst_diagnosis
-        self.lrst_last_test_date = lrst_last_test_date
-        self.lrst_last_test_by = lrst_last_test_by
+        self.lrst_diagnosis_encr = lrst_diagnosis_encr
+        self.lrst_last_test_date_encr = lrst_last_test_date_encr
+        self.lrst_last_test_by_encr = lrst_last_test_by_encr
+
+        self.keyword_taet_encr = keyword_taet_encr
 
         # Notenschutz
         self.nos_rs = nos_rs
@@ -435,7 +434,8 @@ class Client(Base):
         self.nta_nos_notes = nta_nos_notes
         self.nta_nos_end_grade = nta_nos_end_grade
 
-        self.h_sessions = h_sessions
+        self.min_sessions = min_sessions
+        self.n_sessions = n_sessions
 
         self.datetime_created = datetime.now()
         self.datetime_lastmodified = self.datetime_created
@@ -476,9 +476,19 @@ class Client(Base):
             nos_dict[key] = value
         self.notenschutz = any(nos_dict.values())
 
-    @validates("keyword_taetigkeitsbericht")
-    def validate_keyword_taetigkeitsbericht(self, key: str, value: str) -> str | None:
-        return check_keyword(value)
+    @validates("lrst_diagnosis_encr")
+    def validate_lrst_diagnosis(self, key: str, value: str | None) -> str:
+        value = value or ""
+        if value and value not in LRST_DIAG:
+            raise ValueError(
+                f"Invalid value for lrst_diagnosis: '{value}'. "
+                f"Allowed values are: {', '.join(LRST_DIAG)}"
+            )
+        return value
+
+    @validates("keyword_taet_encr")
+    def validate_keyword_taet_encr(self, key: str, value: str) -> str:
+        return check_keyword(value) or ""
 
     @validates("nos_rs_ausn_faecher")
     def validate_nos_rs_ausn_faecher(self, key: str, value: str | None) -> str | None:
@@ -499,6 +509,14 @@ class Client(Base):
         self._update_notenschutz()
         return value
 
+    @validates("min_sessions", "n_sessions")
+    def validate_sessions(self, key: str, value: str | int) -> int:
+        if isinstance(value, str):
+            value = int(value)
+        if not isinstance(value, int):
+            raise ValueError(f"{key} must be an integer")
+        return value
+
     @validates("nta_zeitv_vieltext", "nta_zeitv_wenigtext")
     def validate_nta_zeitv_percentage(
         self, key: str, value: str | int | None
@@ -509,10 +527,17 @@ class Client(Base):
         self._update_nachteilsausgleich()
         return value
 
-    @validates("nta_font", "nta_auf", "nta_arbeitsm", "nta_ersgew", "nta_vorlesen")
+    @validates(
+        "nta_font",
+        "nta_aufg",
+        "nta_arbeitsm",
+        "nta_ersgew",
+        "nta_vorlesen",
+        "nta_struktur",
+    )
     def validate_nta_bool(self, key: str, value: bool | str | int) -> bool:
         boolvalue = str_to_bool(value)
-        self._update_nachteilsausgleich(key, value)
+        self._update_nachteilsausgleich(key, boolvalue)
         return boolvalue
 
     @validates("nta_other_details")
@@ -522,8 +547,42 @@ class Client(Base):
         return value
 
     @validates("nta_nos_end_grade")
-    def validate_nta_nos_end_grade(self, key: str, value: int | None) -> int | None:
+    def validate_nta_nos_end_grade(
+        self, key: str, value: str | int | None
+    ) -> int | None:
+        if isinstance(value, str):
+            value = int(value) if value else None
         self.nta_nos_end = value is not None
+        return value
+
+    @validates("lrst_last_test_date_encr")
+    def validate_lrst_last_test_date_encr(
+        self, key: str, value: str | date | None
+    ) -> str:
+        if not value:
+            return ""
+        if isinstance(value, date):
+            return value.isoformat()
+        value = str(value)
+        try:
+            datetime.strptime(value, "%Y-%m-%d")
+            return value
+        except ValueError:
+            raise ValueError(
+                f"Invalid date format for {key}: '{value}'. Use YYYY-MM-DD."
+            )
+
+    @validates("lrst_last_test_by_encr")
+    def validate_lrst_last_test_by_encr(self, key: str, value: str | None) -> str:
+        value = value or ""
+        if value and value not in LRST_TEST_BY:
+            raise ValueError(
+                f"Invalid value for {key}: '{value}'. "
+                f"Allowed values are: {', '.join(LRST_TEST_BY)}"
+            )
+
+        if self.lrst_diagnosis_encr and not value:
+            raise ValueError(f"{key} is required when lrst_diagnosis_encr is set.")
         return value
 
     @validates("birthday_encr")
@@ -533,12 +592,14 @@ class Client(Base):
         parsed = datetime.strptime(value, "%Y-%m-%d").date()
         return parsed.isoformat()
 
-    @validates("entry_date", "lrst_last_test_date")
+    @validates("entry_date")
     def validate_unencrypted_dates(
         self, key: str, value: str | date | None
     ) -> date | None:
-        if isinstance(value, str):
+        if isinstance(value, str) and value:
             return date.fromisoformat(value)
+        if not value:
+            return None
         return value
 
     def __repr__(self) -> str:
@@ -550,7 +611,7 @@ class Client(Base):
         )
 
 
-def str_to_bool(value):
+def str_to_bool(value: str | bool | int) -> bool:
     """
     Convert a string of an int or an int to a boolean
     """

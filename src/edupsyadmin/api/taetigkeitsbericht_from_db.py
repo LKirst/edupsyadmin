@@ -1,12 +1,11 @@
 import os
-import re
 from datetime import date
 
 import pandas as pd
 
+from edupsyadmin.api.managers import ClientsManager
+from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
-
-from .managers import get_data_raw
 
 try:
     import dataframe_image as dfi
@@ -56,20 +55,18 @@ def get_subcategories(
 def add_categories_to_df(
     df: pd.DataFrame,
     category_colnm: str,
-    min_per_ses: int,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Take a df with two columns (keyword_taetikgeitsbericht and h_sessions)
+    Take a df with columns keyword_taet_encr, h_sessions, n_sessions
     and create a table with an estimated count of sessions
 
-    :param df: DataFrame with two columns (keyword_taetikgeitsbericht and h_sessions)
-    :param category_colnm: name of the category column (e.g. keyword_taetigkeitsbericht)
-    :param min_per_ses: minutes per session; used to estimate n_sessions from h_sessions
-    :return: [TODO:description]
+    :param df: DataFrame with keyword_taet_encr, h_sessions, n_sessions
+    :param category_colnm: name of the category column (e.g. keyword_taet_encr)
+    :return: A tuple containing the modified DataFrame and a summary DataFrame
     """
 
     # get a set of unique keys from the category column
-    # (keyword_taetigkeitsbericht; not yet accounting for the hierarchy of
+    # (keyword_taet_encr; not yet accounting for the hierarchy of
     # categories)
     category_keys = sorted(set(df.loc[:, category_colnm].unique()))
 
@@ -88,20 +85,28 @@ def add_categories_to_df(
     categories_all_set = sorted(set(categories_all))
     categories_df = df[categories_all_set]
 
-    ses_3 = 3 * min_per_ses / 60
-    ses_1 = 1 * min_per_ses / 60
+    # create a temporary DataFrame for counting based on n_sessions
+    # This aligns the n_sessions with the categories for accurate counting
+    count_df = df[["n_sessions", *categories_all_set]].copy()
+    # Fill non-relevant category cells with 0 so we can group by them
+    count_df[categories_all_set] = count_df[categories_all_set].notna().astype(int)
 
     summary_categories = categories_df.describe()
     summary_categories.loc["sum", :] = categories_df.agg("sum", axis=0)
-    summary_categories.loc["count_mt3_sessions", :] = categories_df[
-        categories_df > ses_3
-    ].agg("count", axis=0)
-    summary_categories.loc["count_1to3_sessions", :] = categories_df[
-        (categories_df <= ses_3) & (categories_df >= ses_1)
-    ].agg("count", axis=0)
-    summary_categories.loc["count_einm_kurzkont", :] = categories_df[
-        categories_df < ses_1
-    ].agg("count", axis=0)
+
+    for cat in categories_all_set:
+        # Filter for rows belonging to the current category
+        cat_specific_counts = count_df[count_df[cat] == 1]["n_sessions"]
+
+        summary_categories.loc["count_mt3_sessions", cat] = (
+            cat_specific_counts > 3
+        ).sum()
+        summary_categories.loc["count_2to3_sessions", cat] = (
+            cat_specific_counts.between(2, 3).sum()
+        )
+        summary_categories.loc["count_1_session", cat] = (
+            cat_specific_counts == 1
+        ).sum()
 
     return df, summary_categories
 
@@ -183,7 +188,10 @@ def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> pd.DataFrame:
 
 
 def summary_statistics_wstd(
-    wstd_spsy: int, wstd_total: int, zstd_spsy_year_actual: float, *schools: str
+    wstd_spsy: int,
+    wstd_total: int,
+    zstd_spsy_year_actual: float,
+    school_students: dict[str, int],
 ) -> pd.DataFrame:
     """Calculate Wochenstunden summary statistics
 
@@ -195,9 +203,9 @@ def summary_statistics_wstd(
         total n Wochenstunden (not just school psychology), by default 23
     zst_spsy_year_actual: float
         actual Zeitstunden school psychology
-    *schools : str
-        strings with name of the school and n students for the respective school,
-        e.g. 'Schulname625'
+    school_students:
+        a dictionary mapping school names to their number of students
+        e.g. {'Schulname': 100, 'SchulnameB': 200}
 
     Returns
     -------
@@ -206,21 +214,13 @@ def summary_statistics_wstd(
     """
     summarystats_wstd = wstd_in_zstd(wstd_spsy, wstd_total)
 
-    pattern = re.compile(r"([^\d]+)(\d+)")
-    nstudents = {}
-    for school in schools:
-        match = pattern.match(school)
-        if not match or len(match.groups()) != 2:
-            raise ValueError(f"Invalid format for the school string: {school}")
-        school_name, student_count = match.groups()
-        nstudents[school_name] = int(student_count)
-        summarystats_wstd.loc["nstudents_" + school_name, "value"] = nstudents[
-            school_name
-        ]
+    for school_name, student_count in school_students.items():
+        summarystats_wstd.loc["nstudents_" + school_name, "value"] = student_count
 
-    summarystats_wstd.loc["nstudents_all", "value"] = sum(nstudents.values())
+    nstudents_total = sum(school_students.values())
+    summarystats_wstd.loc["nstudents_all", "value"] = nstudents_total
     summarystats_wstd.loc["ratio_nstudens_wstd_spsy", "value"] = (
-        sum(nstudents.values()) / wstd_spsy
+        nstudents_total / wstd_spsy if wstd_spsy > 0 else 0
     )
 
     if zstd_spsy_year_actual is not None:
@@ -238,7 +238,7 @@ def summary_statistics_wstd(
 def create_taetigkeitsbericht_report(
     basename_out: str,
     name: str,
-    summary_wstd: "pd.Series[float]",
+    summary_wstd: pd.Series[float],
     summary_categories: pd.DataFrame | None = None,
     summary_h_sessions: pd.DataFrame | None = None,
 ) -> None:
@@ -267,8 +267,8 @@ def create_taetigkeitsbericht_report(
                     report.cell(w=50, h=9, border=0, text=text)
                 report.ln(6)  # linebreak
                 for colnm in [
-                    "count_einm_kurzkont",
-                    "count_1to3_sessions",
+                    "count_1_session",
+                    "count_2to3_sessions",
                     "count_mt3_sessions",
                 ]:
                     report.cell(w=50, h=9, border=0, text=f"{val[colnm]:.0f}")
@@ -292,35 +292,38 @@ def taetigkeitsbericht(
     database_url: str,
     salt_path: str | os.PathLike[str],
     wstd_psy: int,
-    nstudents: list[str],
     out_basename: str = "Taetigkeitsbericht_Out",
     wstd_total: int = 23,
-    min_per_ses: int = 60,
     name: str = "Schulpsychologie",
 ) -> None:
     """
     Create a PDF for the Taetigkeitsbericht. This function assumes your db
-    has the columns 'keyword_taetigkeitsbericht' and 'h_sessions'
+    has the columns 'keyword_taet_encr', 'min_sessions' and 'n_sessions'
+    and reads nstudents from the config.
 
     param wstd_psy [int]: Anrechnungsstunden in Wochenstunden
-    param nstudents [list]: list of strings with item containing the name of
-        the school and the number of students at that school, e.g. Schulname625
     param out_basename [str]: base name for the output files.
         Defaults to "Taetigkeitsbericht_Out".
     param wstd_total [int]: total Wochstunden (depends on your school).
         Defaults to 23.
     )
-    param min_per_ses: minutes per session (used to estimate n_sessions from h_sessions)
     param name [str]: name for the header of the pdf report.
         Defaults to "Schulpsychologie".
     )
     """
 
     # Query the data
-    df = get_data_raw(app_username, app_uid, database_url, salt_path)
-    df, summary_categories = add_categories_to_df(
-        df, "keyword_taetigkeitsbericht", min_per_ses
+    # TODO: Optimize the query (you don't need all data)
+    clients_manager = ClientsManager(
+        app_username=app_username,
+        app_uid=app_uid,
+        database_url=database_url,
+        salt_path=salt_path,
     )
+    df = clients_manager.get_data_raw()
+    df["h_sessions"] = df["min_sessions"] / 60.0
+
+    df, summary_categories = add_categories_to_df(df, "keyword_taet_encr")
     df.to_csv(out_basename + "_df.csv")
     print(df)
     summary_categories.to_csv(out_basename + "_categories.csv")
@@ -333,9 +336,14 @@ def taetigkeitsbericht(
 
     zstd_spsy_year_actual = summarystats_h_sessions.loc["all", "sum"]
 
+    # Get student data from the config
+    school_students_dict = {
+        school.school_name: school.nstudents for school in config.school.values()
+    }
+
     # Summary statistics for Wochenstunden
     summarystats_wstd = summary_statistics_wstd(
-        wstd_psy, wstd_total, zstd_spsy_year_actual, *nstudents
+        wstd_psy, wstd_total, zstd_spsy_year_actual, school_students_dict
     )
     summarystats_wstd.to_csv(out_basename + "_wstd.csv")
     print(summarystats_wstd)

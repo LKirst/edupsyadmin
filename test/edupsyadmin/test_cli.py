@@ -16,8 +16,21 @@ from sys import executable
 
 import pytest
 
-from edupsyadmin.cli import main
+# I'm not importing ClientsManager direclty here because then I might mask
+# errors that come up when ClientsManager is not imported in cli.py
+from edupsyadmin.api import managers
+from edupsyadmin.cli import (
+    command_create_documentation,
+    command_delete_client,
+    command_get_clients,
+    command_new_client,
+    command_set_client,
+    main,
+)
 from edupsyadmin.core.logger import Logger
+
+TEST_USERNAME = "test_user_do_not_use"
+TEST_UID = "example.com"
 
 testing_logger = Logger("clitest_logger")
 
@@ -56,7 +69,7 @@ def command(request):
     return request.param
 
 
-class BasicSanityCheckTest:
+class TestBasicSanityCheck:
     def test_main(self, command):
         """Test the main() function."""
         try:
@@ -101,263 +114,247 @@ def test_config_template(mock_keyring, tmp_path_factory):
         database_url,
     ]
     assert main(args) == 0
-    assert os.path.isfile(
-        config_path
-    ), f"Config file was not initialized: {config_path}"
+    assert os.path.isfile(config_path), (
+        f"Config file was not initialized: {config_path}"
+    )
 
 
 def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
-    args = [
-        "-w",
-        "DEBUG",
-        "-c",
-        str(mock_config[0]),
-        "new_client",
-        "--app_uid",
-        "example.com",
-        "--database_url",
+    salt_path = tmp_path / "salt.txt"
+
+    command_new_client(
+        app_username=TEST_USERNAME,
+        app_uid=TEST_UID,
+        database_url=database_url,
+        salt_path=salt_path,
+        csv=str(mock_webuntis),
+        name="MustermErika1",
+        school="FirstSchool",
+        keepfile=False,
+        import_config=None,
+    )
+
+    clients_manager = managers.ClientsManager(
         database_url,
-        "--csv",
-        str(mock_webuntis),
-        "--name",
-        "MustermErika1",
-        "--school",
-        "FirstSchool",
-    ]
-    assert main(args) == 0
-    # mock_keyring.assert_called_with(
-    #    "example.com", "user_read_from_file-test_new_client"
-    # )
+        app_uid=TEST_UID,
+        app_username=TEST_USERNAME,
+        salt_path=salt_path,
+    )
+    client = clients_manager.get_decrypted_client(client_id=1)
+    assert client["first_name_encr"] == "Erika"
+    assert client["last_name_encr"] == "Mustermann"
 
 
 def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
-    # add a client
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
-    args = [
-        "-w",
-        "DEBUG",
-        "-c",
-        str(mock_config[0]),
-        "new_client",
-        "--app_uid",
-        "example.com",
-        "--database_url",
-        database_url,
-        "--csv",
-        str(mock_webuntis),
-        "--name",
-        "MustermErika1",
-        "--school",
-        "FirstSchool",
-    ]
-    assert main(args) == 0
+    salt_path = tmp_path / "salt.txt"
 
-    # test get_clients
-    args = [
-        "-w",
-        "DEBUG",
-        "-c",
-        str(mock_config[0]),
-        "get_clients",
-        "--app_uid",
-        "example.com",
-        "--database_url",
+    # Arrange
+    clients_manager = managers.ClientsManager(
         database_url,
-    ]
-    assert main(args) == 0
-    # mock_keyring.assert_called_with(
-    #    "example.com", "user_read_from_file-test_get_clients_all"
-    # )
-    stdout, stderr = capsys.readouterr()
+        app_uid=TEST_UID,
+        app_username=TEST_USERNAME,
+        salt_path=salt_path,
+    )
+    clients_manager.add_client(
+        school="FirstSchool",
+        gender_encr="f",
+        class_name="11TKKG",
+        first_name_encr="Erika",
+        last_name_encr="Mustermann",
+        birthday_encr="2000-12-24",
+    )
+
+    # Act
+    command_get_clients(
+        app_username=TEST_USERNAME,
+        app_uid=TEST_UID,
+        database_url=database_url,
+        salt_path=salt_path,
+        nta_nos=False,
+        school=None,
+        client_id=None,
+        out=None,
+        tui=False,
+        columns=None,
+    )
+
+    # Assert
+    stdout, _ = capsys.readouterr()
     assert "Mustermann" in stdout
     assert "Erika" in stdout
 
 
 def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
-    # add two clients
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
-    args = [
-        "-w",
-        "DEBUG",
-        "-c",
-        str(mock_config[0]),
-        "new_client",
-        "--app_uid",
-        "example.com",
-        "--database_url",
-        database_url,
-        "--csv",
-        str(mock_webuntis),
-        "--name",
-        "MustermErika1",
-        "--school",
-        "FirstSchool",
-        "--keepfile",
-    ]
-    assert main(args) == 0
-    args = [
-        "-w",
-        "DEBUG",
-        "-c",
-        str(mock_config[0]),
-        "new_client",
-        "--app_uid",
-        "example.com",
-        "--database_url",
-        database_url,
-        "--csv",
-        str(mock_webuntis),
-        "--name",
-        "MustermMax1",
-        "--school",
-        "FirstSchool",
-    ]
-    assert main(args) == 0
+    salt_path = tmp_path / "salt.txt"
 
-    # test get_clients for client 1
-    args = [
-        "-w",
-        "DEBUG",
-        "-c",
-        str(mock_config[0]),
-        "get_clients",
-        "--app_uid",
-        "example.com",
-        "--database_url",
+    # Arrange
+    clients_manager = managers.ClientsManager(
         database_url,
-        "--client_id",
-        "1",
-    ]
-    assert main(args) == 0
-    # mock_keyring.assert_called_with(
-    #    "example.com", "user_read_from_file-test_get_clients_single"
-    # )
-    stdout, stderr = capsys.readouterr()
+        app_uid=TEST_UID,
+        app_username=TEST_USERNAME,
+        salt_path=salt_path,
+    )
+    clients_manager.add_client(
+        school="FirstSchool",
+        gender_encr="f",
+        class_name="11TKKG",
+        first_name_encr="Erika",
+        last_name_encr="Mustermann",
+        birthday_encr="2000-12-24",
+    )
+    clients_manager.add_client(
+        school="FirstSchool",
+        gender_encr="m",
+        class_name="11TKKG",
+        first_name_encr="Max",
+        last_name_encr="Mustermann",
+        birthday_encr="2000-01-01",
+    )
+
+    # Act
+    command_get_clients(
+        app_username=TEST_USERNAME,
+        app_uid=TEST_UID,
+        database_url=database_url,
+        salt_path=salt_path,
+        nta_nos=False,
+        school=None,
+        client_id=1,
+        out=None,
+        tui=False,
+        columns=None,
+    )
+
+    # Assert
+    stdout, _ = capsys.readouterr()
     assert "Mustermann" in stdout
     assert "Erika" in stdout
     assert "Max" not in stdout
 
 
 def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
-    # add client
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
-    args = [
-        "-w",
-        "DEBUG",
-        "-c",
-        str(mock_config[0]),
-        "new_client",
-        "--app_uid",
-        "example.com",
-        "--database_url",
+    salt_path = tmp_path / "salt.txt"
+
+    # Arrange
+    clients_manager = managers.ClientsManager(
         database_url,
-        "--csv",
-        str(mock_webuntis),
-        "--name",
-        "MustermErika1",
-        "--school",
-        "FirstSchool",
-    ]
-    assert main(args) == 0
+        app_uid=TEST_UID,
+        app_username=TEST_USERNAME,
+        salt_path=salt_path,
+    )
+    clients_manager.add_client(
+        school="FirstSchool",
+        gender_encr="f",
+        class_name="11TKKG",
+        first_name_encr="Erika",
+        last_name_encr="Mustermann",
+        birthday_encr="2000-12-24",
+    )
 
-    # test set_clients for client 1
-    args = [
-        "-w",
-        "DEBUG",
-        "-c",
-        str(mock_config[0]),
-        "set_client",
-        "--app_uid",
-        "example.com",
-        "--database_url",
-        database_url,
-        "1",
-        "--key_value_pairs",
-        "street_encr='Veränderte Straße 5'",
-        "class_name=42ab",
-    ]
-    assert main(args) == 0
+    # Act
+    command_set_client(
+        app_username=TEST_USERNAME,
+        app_uid=TEST_UID,
+        database_url=database_url,
+        salt_path=salt_path,
+        client_id=[1],
+        key_value_pairs=["street_encr=Veränderte Straße 5", "class_name=42ab"],
+    )
 
-    # call get_clients for client_id=1
-    args = [
-        "-w",
-        "DEBUG",
-        "-c",
-        str(mock_config[0]),
-        "get_clients",
-        "--app_uid",
-        "example.com",
-        "--database_url",
-        database_url,
-        "--client_id",
-        "1",
-    ]
-    assert main(args) == 0
-    stdout, stderr = capsys.readouterr()
-    assert "Veränderte Straße 5" in stdout
-    assert "42ab" in stdout
+    # Assert
+    client = clients_manager.get_decrypted_client(client_id=1)
+    assert client["street_encr"] == "Veränderte Straße 5"
+    assert client["class_name"] == "42ab"
 
 
+# TODO: test inject_data
 def test_create_documentation(
     tmp_path, mock_webuntis, mock_keyring, mock_config, pdf_forms, change_wd
 ):
     testing_logger.start(level="DEBUG")
-    testing_logger.debug(f"config path: {mock_config[0]}")
+    testing_logger.debug(f"config path: {mock_config}")
 
-    # add a client
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
-    args = [
-        "-w",
-        "DEBUG",
-        "-c",
-        str(mock_config[0]),
-        "new_client",
-        "--app_uid",
-        "example.com",
-        "--database_url",
-        database_url,
-        "--csv",
-        str(mock_webuntis),
-        "--name",
-        "MustermErika1",
-        "--school",
-        "FirstSchool",
-    ]
-    assert main(args) == 0
+    salt_path = tmp_path / "salt.txt"
 
-    # create documentation
-    client_id = 1
-    args = [
-        "-w",
-        "DEBUG",
-        "-c",
-        str(mock_config[0]),
-        "create_documentation",
-        "--app_uid",
-        "example.com",
-        "--database_url",
+    # Arrange
+    clients_manager = managers.ClientsManager(
         database_url,
-        "--form_set",
-        "lrst",
-        str(client_id),
-    ]
-    assert main(args) == 0
-    # mock_keyring.assert_called_with(
-    #    "example.com", "user_read_from_file-test_create_documentation"
-    # )
+        app_uid=TEST_UID,
+        app_username=TEST_USERNAME,
+        salt_path=salt_path,
+    )
+    client_id = clients_manager.add_client(
+        school="FirstSchool",
+        gender_encr="f",
+        class_name="11TKKG",
+        first_name_encr="Erika",
+        last_name_encr="Mustermann",
+        birthday_encr="2000-12-24",
+    )
 
-    # I've changed the wd with a fixture, so I can check without an absolute path
+    # Act
+    command_create_documentation(
+        app_username=TEST_USERNAME,
+        app_uid=TEST_UID,
+        database_url=database_url,
+        salt_path=salt_path,
+        client_id=[client_id],
+        form_set="lrst",
+        form_paths=None,
+        inject_data=None,
+    )
+
+    # Assert
     output_paths = [f"{client_id}_{Path(path).name}" for path in pdf_forms]
     for path in output_paths:
-        assert os.path.exists(
-            path
-        ), f"Output file {path} was not created in {os.getcwd()}"
+        assert os.path.exists(path), (
+            f"Output file {path} was not created in {os.getcwd()}"
+        )
+
+
+def test_delete_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
+    database_path = tmp_path / "test.sqlite"
+    database_url = f"sqlite:///{database_path}"
+    salt_path = tmp_path / "salt.txt"
+
+    # Arrange
+    clients_manager = managers.ClientsManager(
+        database_url,
+        app_uid=TEST_UID,
+        app_username=TEST_USERNAME,
+        salt_path=salt_path,
+    )
+    client_id = clients_manager.add_client(
+        school="FirstSchool",
+        gender_encr="f",
+        class_name="11TKKG",
+        first_name_encr="Erika",
+        last_name_encr="Mustermann",
+        birthday_encr="2000-12-24",
+    )
+
+    # Act
+    command_delete_client(
+        app_username=TEST_USERNAME,
+        app_uid=TEST_UID,
+        database_url=database_url,
+        salt_path=salt_path,
+        client_id=client_id,
+    )
+
+    # Assert
+    with pytest.raises(Exception):
+        clients_manager.get_decrypted_client(client_id=client_id)
 
 
 # Make the script executable.
