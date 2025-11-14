@@ -147,7 +147,7 @@ def command_edit_config(
 
 
 def _enter_client_csv(
-    clients_manager: ClientsManager,
+    clients_manager: "ClientsManager",
     csv_path: str | os.PathLike[str],
     school: str | None,
     name: str,

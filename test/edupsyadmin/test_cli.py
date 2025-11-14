@@ -16,7 +16,9 @@ from sys import executable
 
 import pytest
 
-from edupsyadmin.api.managers import ClientsManager
+# I'm not importing ClientsManager direclty here because then I might mask
+# errors that come up when ClientsManager is not imported in cli.py
+from edupsyadmin.api import managers
 from edupsyadmin.cli import (
     command_create_documentation,
     command_delete_client,
@@ -134,7 +136,7 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
         import_config=None,
     )
 
-    clients_manager = ClientsManager(
+    clients_manager = managers.ClientsManager(
         database_url,
         app_uid=TEST_UID,
         app_username=TEST_USERNAME,
@@ -151,7 +153,7 @@ def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_p
     salt_path = tmp_path / "salt.txt"
 
     # Arrange
-    clients_manager = ClientsManager(
+    clients_manager = managers.ClientsManager(
         database_url,
         app_uid=TEST_UID,
         app_username=TEST_USERNAME,
@@ -192,7 +194,7 @@ def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tm
     salt_path = tmp_path / "salt.txt"
 
     # Arrange
-    clients_manager = ClientsManager(
+    clients_manager = managers.ClientsManager(
         database_url,
         app_uid=TEST_UID,
         app_username=TEST_USERNAME,
@@ -242,7 +244,7 @@ def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
     salt_path = tmp_path / "salt.txt"
 
     # Arrange
-    clients_manager = ClientsManager(
+    clients_manager = managers.ClientsManager(
         database_url,
         app_uid=TEST_UID,
         app_username=TEST_USERNAME,
@@ -285,7 +287,7 @@ def test_create_documentation(
     salt_path = tmp_path / "salt.txt"
 
     # Arrange
-    clients_manager = ClientsManager(
+    clients_manager = managers.ClientsManager(
         database_url,
         app_uid=TEST_UID,
         app_username=TEST_USERNAME,
@@ -326,7 +328,7 @@ def test_delete_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
     salt_path = tmp_path / "salt.txt"
 
     # Arrange
-    clients_manager = ClientsManager(
+    clients_manager = managers.ClientsManager(
         database_url,
         app_uid=TEST_UID,
         app_username=TEST_USERNAME,
