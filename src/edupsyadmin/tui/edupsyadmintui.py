@@ -1,14 +1,13 @@
 from textual.app import App, ComposeResult
 from textual.containers import (
     CenterMiddle,
-    Container,
     Horizontal,
     HorizontalGroup,
     ScrollableContainer,
     Vertical,
     VerticalScroll,
 )
-from textual.widgets import Button, Footer, Header, Placeholder, TabbedContent, TabPane
+from textual.widgets import Button, Footer, Header, Placeholder
 
 
 class EdupsyadminTui(App):
@@ -23,21 +22,10 @@ class EdupsyadminTui(App):
                 id="clientsoverviewcontainer",
             )
             with Vertical(id="editclientandbuttonscontainer", classes="with-border"):
-                with Container(), TabbedContent(initial="clientdata", id="clienttabs"):
-                    yield TabPane(
-                        "Klientendaten",
-                        VerticalScroll(
-                            Placeholder("Edit Client (p2)", id="p2"),
-                            id="editclientcontainer",
-                        ),
-                        id="clientdata",
-                    )
-                    yield TabPane(
-                        "Sitzungen",
-                        VerticalScroll(
-                            Placeholder("Sessions", id="sessions"),
-                        ),
-                    )
+                yield VerticalScroll(
+                    Placeholder("Edit Client (p2)", id="p2"),
+                    id="editclientcontainer",
+                )
                 yield CenterMiddle(
                     HorizontalGroup(
                         Button("Speichern", id="save"),
