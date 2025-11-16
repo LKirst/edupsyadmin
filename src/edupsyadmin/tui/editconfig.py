@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Any, ClassVar, Literal
 
@@ -271,9 +272,10 @@ class ConfigEditorApp(App[None]):
         Binding("ctrl+q", "quit", "Abbrechen", show=True),
     ]
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, config_path: str | os.PathLike, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.config_path = Path(config.core.config)
+        self.config_path = Path(config_path)
+        config.load(self.config_path)
         self.config_dict = config.model_dump(exclude_defaults=False)
         self.title = "Konfiguration für edupsyadmin"
 
@@ -384,8 +386,7 @@ class ConfigEditorApp(App[None]):
             "app_username",
         ]
         for key in core_keys:
-            input_widget = self.query_one(f"#core-{key}", Input)
-            raw_value = input_widget.value
+            self.query_one(f"#core-{key}", Input)
 
         new_config["core"] = core_data
 

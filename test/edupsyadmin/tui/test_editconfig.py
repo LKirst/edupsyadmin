@@ -30,7 +30,7 @@ def mock_keyring(monkeypatch):
 @pytest.mark.asyncio
 async def test_app_loads_config(mock_config):
     """Test if the app loads the configuration correctly."""
-    app = ConfigEditorApp()
+    app = ConfigEditorApp(mock_config)
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app.query_exactly_one("#core-logging", Input).value == "DEBUG"
@@ -42,7 +42,7 @@ async def test_app_loads_config(mock_config):
 
 
 def test_initial_layout(mock_config, snap_compare):
-    app = ConfigEditorApp()
+    app = ConfigEditorApp(mock_config)
     assert snap_compare(app, terminal_size=(50, 150))
 
 
@@ -55,7 +55,7 @@ def test_add_new_school_container(mock_config, snap_compare):
         await pilot.click(add_school_button)
         await pilot.pause()
 
-    app = ConfigEditorApp()
+    app = ConfigEditorApp(mock_config)
     assert snap_compare(app, run_before=run_before, terminal_size=(50, 150))
 
 
@@ -81,7 +81,7 @@ def test_edit_new_school_container(mock_config, snap_compare):
         await pilot.pause()
         assert school_key_inp.value == "NewSchool"
 
-    app = ConfigEditorApp()
+    app = ConfigEditorApp(mock_config)
     assert snap_compare(app, run_before=run_before, terminal_size=(50, 150))
 
 
