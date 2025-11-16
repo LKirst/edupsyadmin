@@ -1,3 +1,9 @@
+## 7.9.3 (2025-11-16)
+
+### Fix
+
+- fix edit_config TypeError and improve tui/cli testing
+
 ## 7.9.2 (2025-11-15)
 
 ### Fix
