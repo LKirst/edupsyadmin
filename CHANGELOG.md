@@ -1,3 +1,21 @@
+## 7.9.3 (2025-11-16)
+
+### Fix
+
+- fix edit_config TypeError and improve tui/cli testing
+
+## 7.9.2 (2025-11-15)
+
+### Fix
+
+- **cli**: fix typing
+
+## 7.9.1 (2025-11-14)
+
+### Fix
+
+- **cli**: fix type hints
+
 ## 7.9.0 (2025-11-12)
 
 ### Feat

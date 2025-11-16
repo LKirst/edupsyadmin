@@ -260,7 +260,7 @@ def _enter_client_csv(
     return clients_manager.add_client(**final_client_data)
 
 
-def _enter_client_tui(clients_manager: ClientsManager) -> int | None:
+def _enter_client_tui(clients_manager: "ClientsManager") -> int | None:
     student_entry_app_cls = lazy_import("edupsyadmin.tui.editclient").StudentEntryApp
     app = student_entry_app_cls(data=None)
     data = app.run()

@@ -13,6 +13,7 @@ from pathlib import Path
 from shlex import split
 from subprocess import call
 from sys import executable
+from unittest.mock import patch
 
 import pytest
 
@@ -22,6 +23,7 @@ from edupsyadmin.api import managers
 from edupsyadmin.cli import (
     command_create_documentation,
     command_delete_client,
+    command_edit_config,
     command_get_clients,
     command_new_client,
     command_set_client,
@@ -62,6 +64,7 @@ def change_wd(tmp_path):
         "flatten_pdfs --help",
         "taetigkeitsbericht --help",
         "delete_client --help",
+        "edit_config --help",
     )
 )
 def command(request):
@@ -355,6 +358,25 @@ def test_delete_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
     # Assert
     with pytest.raises(Exception):
         clients_manager.get_decrypted_client(client_id=client_id)
+
+
+def test_edit_config_command(mock_config):
+    """Test that the edit_config command starts the TUI."""
+    with patch("edupsyadmin.cli.lazy_import") as mock_lazy_import:
+        # Prevent the app from actually running
+        mock_app_instance = mock_lazy_import.return_value.ConfigEditorApp.return_value
+        mock_app_instance.run.return_value = None
+
+        # Call the command function
+        command_edit_config(config_path=mock_config)
+
+        # Assert that the app was initialized with the correct config path
+        mock_lazy_import.return_value.ConfigEditorApp.assert_called_once_with(
+            mock_config
+        )
+
+        # Assert that the app was run
+        mock_app_instance.run.assert_called_once()
 
 
 # Make the script executable.
