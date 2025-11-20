@@ -117,7 +117,6 @@ def mk_report(
     salt_path: str,
     client_id: int,
     test_date: str,
-    test_type: str = "lgvt",  # noqa : ARG001
     version: str = "Rosenkohl",
     directory: str = ".",
 ) -> None:

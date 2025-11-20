@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-import argparse
 import os
 from datetime import datetime
 
-# TODO: Remove that dependency? Plain markdown might be enough?
-from reports import Report, normal_distribution_plot
+from edupsyadmin.api.managers import ClientsManager
 
+# TODO: Remove FPDF dependency?
+from edupsyadmin.api.reports import Report, normal_distribution_plot
 from edupsyadmin.core.convert_measures import iq_to_t, iq_to_z
 from edupsyadmin.core.datediff import mydatediff
 
@@ -26,13 +26,25 @@ def safe_iq_to_t(iq_value: int | None) -> float | None:
     return round(iq_to_t(iq_value), 2)
 
 
-# TODO: read birthday from database
-def create_report(path: str | os.PathLike[str]) -> None:
-    client_id = input("Client ID: ")
-    birthday = datetime.strptime(
-        input("Geburtsdatum (YYYY-mm-dd): "), "%Y-%m-%d"
-    ).date()
-    testdate = datetime.strptime(input("Testdatum (YYYY-mm-dd): "), "%Y-%m-%d").date()
+def create_report(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str,
+    client_id: int,
+    test_date: str,
+    directory: str = ".",
+) -> None:
+    clients_manager = ClientsManager(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        salt_path=salt_path,
+    )
+    client_dict = clients_manager.get_decrypted_client(client_id)
+
+    testdate = datetime.strptime(test_date, "%Y-%m-%d").date()
+    birthday = datetime.strptime(client_dict["birthday_encr"], "%Y-%m-%d").date()
 
     age_str = f"Alter: {mydatediff(birthday, testdate)}"
     text = []
@@ -105,21 +117,7 @@ def create_report(path: str | os.PathLike[str]) -> None:
     heading = f"CFT 20-R (Testdatum: {testdate}; Code: {client_id})"
     report = Report(heading, text, fn_plot)
     report.print_page()
-    report.output(os.path.join(path, f"{client_id}_Auswertung.pdf"), "F")
+    report.output(os.path.join(directory, f"{client_id}_Auswertung.pdf"))
 
     # remove the plot png
     os.remove(fn_plot)
-
-
-# TODO: go through `edupsyadmin mk_report
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-p",
-        "--path",
-        default=".",
-        help="The directory where the output pdf should be saved",
-    )
-    args = parser.parse_args()
-
-    create_report(args.path)

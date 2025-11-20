@@ -512,17 +512,29 @@ def command_mk_report(
     test_type: str,
     version: str | None = None,
 ) -> None:
-    mk_report = lazy_import("edupsyadmin.api.lgvt").mk_report
-    mk_report(
-        app_username,
-        app_uid,
-        database_url,
-        salt_path,
-        client_id,
-        test_date,
-        test_type,
-        version=version,
-    )
+    if test_type == "LGVT":
+        mk_report = lazy_import("edupsyadmin.api.lgvt").mk_report
+        mk_report(
+            app_username,
+            app_uid,
+            database_url,
+            salt_path,
+            client_id,
+            test_date,
+            version=version,
+        )
+    elif test_type == "CFT":
+        create_report = lazy_import("edupsyadmin.api.cft_report").create_report
+        create_report(
+            app_username,
+            app_uid,
+            database_url,
+            salt_path,
+            client_id,
+            test_date,
+        )
+    else:
+        logger.warn("Testauswertung bisher nur für CFT und LGVT implementiert")
 
 
 def command_flatten_pdfs(
@@ -923,7 +935,10 @@ def _mk_report(
     parser.add_argument("test_date", type=str, help="Testdatum (YYYY-mm-dd)")
     parser.add_argument("test_type", type=str, choices=["LGVT", "CFT", "RSTARR"])
     parser.add_argument(
-        "--version", type=str, choices=["Rosenkohl", "Toechter", "Laufbursche"]
+        "--version",
+        type=str,
+        choices=["Rosenkohl", "Toechter", "Laufbursche"],
+        default=None,
     )
 
 
