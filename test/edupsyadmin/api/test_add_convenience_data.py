@@ -1,7 +1,10 @@
 from datetime import datetime
 from unittest.mock import patch
 
+import pytest
+
 from edupsyadmin.api.add_convenience_data import add_convenience_data
+from edupsyadmin.core.academic_year import get_this_academic_year_string
 
 
 def _is_valid_german_date(date_str: str | None) -> bool:
@@ -66,7 +69,7 @@ def test_add_convenience_data(mock_get_subjects, mock_config, client_dict_intern
         )
     assert result["school_subjects"] == "Math, Science, History"
 
-    diagnosis = result["lrst_diagnosis_encr"]
+    diagnosis = result.get("lrst_diagnosis_encr")
     if diagnosis == "lrst":
         assert result["lrst_diagnosis_long"] == "Lese-Rechtschreib-Störung"
     elif diagnosis == "iLst":
@@ -91,3 +94,51 @@ def test_add_convenience_data(mock_get_subjects, mock_config, client_dict_intern
 
     # Verify that the school subjects were fetched
     mock_get_subjects.assert_called_once_with(client_dict_internal["school"])
+
+    # Check school_year
+    assert result["school_year"] == get_this_academic_year_string()
+
+    # Check nta_nos_end_schoolyear
+    if client_dict_internal.get("nta_nos_end"):
+        assert result["nta_nos_end_schoolyear"] == get_this_academic_year_string()
+    else:
+        assert "nta_nos_end_schoolyear" not in result
+
+    # Check lrst_schpsy
+    if client_dict_internal.get("lrst_last_test_by_encr") == "schpsy":
+        assert result["lrst_schpsy"] == 1
+    elif not client_dict_internal.get("lrst_last_test_by_encr"):
+        assert "lrst_schpsy" not in result
+
+
+@patch("edupsyadmin.api.add_convenience_data._get_subjects")
+def test_add_convenience_data_invalid_lrst_diagnosis(mock_get_subjects, mock_config):
+    mock_get_subjects.return_value = "Math"
+    client_data = {"lrst_diagnosis_encr": "invalid_diagnosis", "school": "FirstSchool"}
+    with pytest.raises(ValueError, match="lrst_diagnosis can be only one of"):
+        add_convenience_data(client_data)
+
+
+@patch("edupsyadmin.api.add_convenience_data._get_subjects")
+def test_add_convenience_data_missing_address_parts(mock_get_subjects, mock_config):
+    mock_get_subjects.return_value = "Math"
+    client_data = {
+        "first_name_encr": "John",
+        "last_name_encr": "Doe",
+        "school": "FirstSchool",
+    }
+    result = add_convenience_data(client_data)
+    assert "addr_s_nname" not in result
+    assert "addr_m_wname" not in result
+
+
+@patch("edupsyadmin.api.add_convenience_data.logger.error")
+@patch("edupsyadmin.api.add_convenience_data._get_subjects")
+def test_add_convenience_data_invalid_lrst_test_by(
+    mock_get_subjects, mock_logger_error, mock_config
+):
+    mock_get_subjects.return_value = "Math"
+    client_data = {"lrst_last_test_by_encr": "invalid_tester", "school": "FirstSchool"}
+    result = add_convenience_data(client_data)
+    assert "lrst_schpsy" not in result
+    mock_logger_error.assert_called_once()
