@@ -10,7 +10,7 @@ import types
 from argparse import ArgumentParser, RawDescriptionHelpFormatter, _SubParsersAction
 from datetime import datetime
 from inspect import signature
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from platformdirs import user_config_dir, user_data_path
 from sqlalchemy import inspect as sa_inspect
@@ -260,16 +260,6 @@ def _enter_client_csv(
     return clients_manager.add_client(**final_client_data)
 
 
-def _enter_client_tui(clients_manager: "ClientsManager") -> int | None:
-    student_entry_app_cls = lazy_import("edupsyadmin.tui.editclient").StudentEntryApp
-    app = student_entry_app_cls(data=None)
-    data = app.run()
-
-    if data:
-        return clients_manager.add_client(**data)
-    return None
-
-
 def command_new_client(
     app_username: str,
     app_uid: str,
@@ -288,6 +278,7 @@ def command_new_client(
         app_username=app_username,
         salt_path=salt_path,
     )
+
     if csv:
         if name is None:
             raise ValueError("Pass a name to read a client from a csv.")
@@ -295,32 +286,10 @@ def command_new_client(
         if not keepfile:
             os.remove(csv)
     else:
-        _enter_client_tui(clients_manager)
-
-
-def _tui_get_modified_values(
-    app_username: str,
-    app_uid: str,
-    database_url: str,
-    salt_path: str | os.PathLike[str],
-    client_id: int,
-) -> dict[str, Any]:
-    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
-    student_entry_app_cls = lazy_import("edupsyadmin.tui.editclient").StudentEntryApp
-    # retrieve current values
-    manager = clients_manager_cls(
-        database_url=database_url,
-        app_uid=app_uid,
-        app_username=app_username,
-        salt_path=salt_path,
-    )
-    current_data = manager.get_decrypted_client(client_id=client_id)
-
-    # display a form with current values filled in
-    app = student_entry_app_cls(client_id, data=current_data)
-    modified_data = app.run()
-
-    return modified_data or {}
+        edit_client_app_cls = lazy_import(
+            "edupsyadmin.tui.edit_client_app"
+        ).EditClientApp
+        edit_client_app_cls(clients_manager=clients_manager).run()
 
 
 def command_set_client(
@@ -343,19 +312,8 @@ def command_set_client(
     )
 
     if not key_value_pairs:
-        assert len(client_id) == 1, (
-            "When no key-value pairs are passed, "
-            "only one client_id can be edited at a time"
-        )
-        key_value_pairs_dict = _tui_get_modified_values(
-            database_url=database_url,
-            app_uid=app_uid,
-            app_username=app_username,
-            salt_path=salt_path,
-            client_id=client_id[0],
-        )
-    else:
-        key_value_pairs_dict = dict(pair.split("=", 1) for pair in key_value_pairs)
+        raise ValueError("At least one key-value pair must be provided.")
+    key_value_pairs_dict = dict(pair.split("=", 1) for pair in key_value_pairs)
 
     clients_manager.edit_client(client_ids=client_id, new_data=key_value_pairs_dict)
 
@@ -390,48 +348,40 @@ def command_get_clients(
     tui: bool = False,
 ) -> None:
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
-    display_client_details = lazy_import(
-        "edupsyadmin.api.display_client_details"
-    ).display_client_details
-    pd = lazy_import("pandas")
-    clients_overview_cls = lazy_import(
-        "edupsyadmin.tui.clientsoverview"
-    ).ClientsOverview
-
     clients_manager = clients_manager_cls(
         database_url=database_url,
         app_uid=app_uid,
         app_username=app_username,
         salt_path=salt_path,
     )
-    if client_id:
-        client_data = clients_manager.get_decrypted_client(client_id)
-        display_client_details(client_data)
-        df = pd.DataFrame([client_data]).T
-    else:
-        df = clients_manager.get_clients_overview(
-            nta_nos=nta_nos,
-            schools=school,
-            columns=columns,
-        )
 
-        if tui:
-            # Convert DataFrame to list-of-lists for the TUI
-            list_of_tuples = [df.columns.to_list(), *df.values.tolist()]
-            app = clients_overview_cls(
-                manager=clients_manager,
+    if tui:
+        clients_overview_app_cls = lazy_import(
+            "edupsyadmin.tui.clients_overview_app"
+        ).ClientsOverviewApp
+        clients_overview_app_cls(
+            clients_manager=clients_manager, nta_nos=nta_nos, schools=school
+        ).run()
+    else:
+        display_client_details = lazy_import(
+            "edupsyadmin.api.display_client_details"
+        ).display_client_details
+        pd = lazy_import("pandas")
+
+        if client_id:
+            client_data = clients_manager.get_decrypted_client(client_id)
+            display_client_details(client_data)
+            df = pd.DataFrame([client_data]).T
+        else:
+            df = clients_manager.get_clients_overview(
                 nta_nos=nta_nos,
                 schools=school,
                 columns=columns,
-                data=list_of_tuples,
             )
-            app.run()
-            return  # Exit after TUI session
 
-        original_df = df.sort_values(["school", "last_name_encr"])
-        df = original_df.set_index("client_id")
+            original_df = df.sort_values(["school", "last_name_encr"])
+            df = original_df.set_index("client_id")
 
-        if not tui:
             with pd.option_context(
                 "display.max_columns",
                 None,
@@ -444,8 +394,8 @@ def command_get_clients(
             ):
                 print(df)
 
-    if out:
-        df.to_csv(out)
+        if out:
+            df.to_csv(out)
 
 
 def _normalize_path(path_str: str) -> str:
@@ -569,6 +519,27 @@ def command_taetigkeitsbericht(
     )
 
 
+def command_tui(
+    app_username: str,
+    app_uid: str,
+    database_url: str,
+    salt_path: str | os.PathLike[str],
+) -> None:
+    """Entry point for the TUI."""
+    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
+    edupsyadmin_tui_cls = lazy_import("edupsyadmin.tui.edupsyadmintui").EdupsyadminTui
+
+    clients_manager = clients_manager_cls(
+        database_url=database_url,
+        app_uid=app_uid,
+        app_username=app_username,
+        salt_path=salt_path,
+    )
+
+    app = edupsyadmin_tui_cls(clients_manager)
+    app.run()
+
+
 def _args(argv: list[str] | None) -> argparse.Namespace:
     """Parse command line arguments.
 
@@ -614,6 +585,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     _mk_report(subparsers, common)
     _taetigkeitsbericht(subparsers, common)
     _delete_client(subparsers, common)
+    _tui(subparsers, common)
 
     args = parser.parse_args(argv)
     if not args.command:
@@ -1014,6 +986,28 @@ def _taetigkeitsbericht(
         default="Schulpsychologie",
         help="name for the header of the pdf report",
     )
+
+
+def _tui(subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser) -> None:
+    """CLI adaptor for the tui command.
+
+    :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
+    """
+    epilog = textwrap.dedent("""\
+        Example:
+          # Start the TUI
+          edupsyadmin tui
+    """)
+    parser = subparsers.add_parser(
+        "tui",
+        parents=[common],
+        description="Start the TUI",
+        help="Start the TUI",
+        epilog=epilog,
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    parser.set_defaults(command=command_tui)
 
 
 # Make the module executable.
