@@ -6,18 +6,21 @@ from textual.app import ComposeResult
 from textual.binding import Binding, BindingType
 from textual.containers import Container, Horizontal, VerticalScroll
 from textual.message import Message
-from textual.validation import Function, Regex
+from textual.validation import Regex
 from textual.widgets import (
     Button,
     Checkbox,
     Input,
     RichLog,
+    Select,
     Static,
 )
 
 from edupsyadmin.core.config import config
 from edupsyadmin.core.python_type import get_python_type
 from edupsyadmin.db.clients import LRST_DIAG, LRST_TEST_BY, Client
+
+EMPTY_OPTION_VALUE = "__None__"
 
 REQUIRED_FIELDS = [
     "school",
@@ -44,23 +47,47 @@ HIDDEN_FIELDS = [
     "nta_nos_end",
 ]
 
+HIDDEN_FIELDS = {
+    "class_int",
+    "estimated_graduation_date",
+    "document_shredding_date",
+    "datetime_created",
+    "datetime_lastmodified",
+    "notenschutz",
+    "nos_rs_ausn",
+    "nos_other",
+    "nachteilsausgleich",
+    "nta_zeitv",
+    "nta_other",
+    "nta_nos_end",
+}
 
-def _is_school_key(value: str) -> bool:
-    return value in config.school
+DATE_FIELDS = {"birthday_encr", "lrst_last_test_date_encr"}
+DATE_REGEX = r"\d{4}-[0-1]\d-[0-3]\d"
+
+CHOICE_FIELDS: dict[str, list[tuple[str, str]]] = {
+    "school": [(k, k) for k in config.school],
+    "lrst_diagnosis_encr": [(v, v) for v in LRST_DIAG],
+    "lrst_last_test_by_encr": [(v, v) for v in LRST_TEST_BY],
+}
 
 
-def _is_lrst_diag(value: str) -> bool:
-    return value in LRST_DIAG
-
-
-def _is_test_by_value(value: str) -> bool:
-    return value in LRST_TEST_BY
+def _to_str_or_bool(value: Any) -> str | bool:
+    if value is None:
+        return ""
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, bool | str):  # check this before checking if int!
+        return value
+    if isinstance(value, int | float):
+        return str(value)
+    return str(value)
 
 
 class InputRow(Horizontal):
     """A widget to display a label and an input field."""
 
-    def __init__(self, label: str, widget: Input) -> None:
+    def __init__(self, label: str, widget: Input | Select) -> None:
         super().__init__()
         self.label = Static(label, classes="label")
         self.widget = widget
@@ -97,7 +124,7 @@ class EditClient(Container):
         content-align: right middle;
         margin-right: 1;
     }
-    InputRow > Input {
+    InputRow > Input, Select {
         width: 2fr;
     }
     CheckboxRow {
@@ -150,7 +177,7 @@ class EditClient(Container):
         self.client_id: int | None = None
         self._original_data: dict[str, str | bool] = {}
         self._changed_data: dict[str, Any] = {}
-        self.inputs: dict[str, Input] = {}
+        self.inputs: dict[str, Input | Select] = {}
         self.dates: dict[str, Input] = {}
         self.checkboxes: dict[str, Checkbox] = {}
         self.save_button: Button | None = None
@@ -162,6 +189,128 @@ class EditClient(Container):
                 id="placeholder",
             )
         yield RichLog(classes="log", id="edit-client-log")
+
+    def _normalize_original_data(self, data: dict[str, Any]) -> dict[str, str | bool]:
+        return {k: _to_str_or_bool(v) for k, v in data.items()}
+
+    def _visible_columns(self):
+        for column in Client.__table__.columns:
+            if column.name not in HIDDEN_FIELDS:
+                yield column
+
+    def _is_required(self, name: str) -> bool:
+        return name in REQUIRED_FIELDS
+
+    def _register_widget(self, name: str, widget) -> None:
+        if isinstance(widget, Checkbox):
+            self.checkboxes[name] = widget
+        elif isinstance(widget, Input):
+            if (name in DATE_FIELDS) or (
+                get_python_type(Client.__table__.columns[name].type) is date
+            ):
+                self.dates[name] = widget
+            else:
+                self.inputs[name] = widget
+        elif isinstance(widget, Select):
+            # Treat Select like other inputs for save/compare purposes
+            self.inputs[name] = widget
+        else:
+            self.inputs[name] = widget  # fallback
+
+    def _build_field_widget(
+        self,
+        name: str,
+        field_type: type,
+        default: str | bool,
+        required: bool,
+        tooltip: str | None,
+    ):
+        # Booleans -> Checkbox
+        if field_type is bool:
+            widget = Checkbox(
+                label=name,
+                value=bool(default) if isinstance(default, bool) else False,
+                id=name,
+            )
+
+        # Choice fields -> Select
+        elif name in CHOICE_FIELDS:
+            base_options = CHOICE_FIELDS[name]
+            # For optional selects, add a "no selection" entry
+            options = (
+                [(EMPTY_OPTION_VALUE, "- Keine Auswahl -"), *base_options]
+                if not required
+                else base_options
+            )
+            widget = Select(
+                options=options,
+                id=name,
+                prompt="Auswählen ...",
+                allow_blank=(not required),
+            )
+            # Set initial value if we have a valid non-empty default present in options
+            # else: leave unselected
+            if (
+                isinstance(default, str)
+                and default
+                and any(default == v for v, _ in base_options)
+            ):
+                widget.value = default
+
+        # Dates -> Input with shared config
+        elif field_type is date or name in DATE_FIELDS:
+            widget = Input(
+                value=str(default or ""),
+                placeholder="JJJJ-MM-TT",
+                restrict=r"[\d-]*",
+                validators=Regex(
+                    DATE_REGEX,
+                    failure_description="Daten müssen im Format YYYY-mm-dd sein.",
+                ),
+                valid_empty=not required,
+                id=name,
+            )
+
+        # Numbers
+        elif field_type is int:
+            widget = Input(
+                value=str(default or ""),
+                placeholder="Erforderlich" if required else "",
+                type="integer",
+                valid_empty=not required,
+                id=name,
+            )
+        elif field_type is float:
+            widget = Input(
+                value=str(default or ""),
+                placeholder="Erforderlich" if required else "",
+                type="number",
+                valid_empty=not required,
+                id=name,
+            )
+
+        # Fallback = plain text
+        else:
+            widget = Input(
+                value=str(default or ""),
+                placeholder="Erforderlich" if required else "",
+                valid_empty=not required,
+                id=name,
+            )
+
+        # Attach tooltip uniformly
+        widget.tooltip = tooltip
+        return widget
+
+    def _mount_actions(self, form: VerticalScroll) -> None:
+        self.save_button = Button(label="Speichern", id="save", variant="success")
+        form.mount(
+            Horizontal(
+                self.save_button,
+                Button("Abbrechen", id="cancel", variant="error"),
+                classes="action-buttons",
+            )
+        )
 
     def _clear_form(self) -> None:
         form = self.query_one("#edit-client-form", VerticalScroll)
@@ -177,17 +326,8 @@ class EditClient(Container):
 
         self.client_id = client_id
         data = data or _get_empty_client_dict()
-        self._original_data: dict[str, str | bool] = {}
 
-        for key, value in data.items():
-            if value is None:
-                self._original_data[key] = ""
-            elif isinstance(value, date):
-                self._original_data[key] = value.isoformat()
-            elif isinstance(value, bool | str):  # check this before checking if int!
-                self._original_data[key] = value
-            elif isinstance(value, int | float):
-                self._original_data[key] = str(value)
+        self._original_data: dict[str, str | bool] = self._normalize_original_data(data)
         self._changed_data: dict[str, Any] = {}
 
         form = self.query_one("#edit-client-form", VerticalScroll)
@@ -197,115 +337,47 @@ class EditClient(Container):
         else:
             form.mount(Static("Daten für einen neuen Klienten"))
 
-        for column in Client.__table__.columns:
-            field_type = get_python_type(column.type)
+        # Build rows
+        for column in self._visible_columns():
             name = column.name
-            if name in HIDDEN_FIELDS:
-                continue
+            field_type = get_python_type(column.type)
+            required = self._is_required(name)
+            label_text = f"{name}*" if required else name
+            default = self._original_data.get(name, "")
 
-            label_text = name + "*" if (name in REQUIRED_FIELDS) else name
-
-            # checkbox widgets
-            if field_type is bool:
-                bool_value = self._original_data.get(name)
-                bool_default = bool_value if isinstance(bool_value, bool) else False
-                checkbox = Checkbox(label=name, value=bool_default, id=f"{name}")
-                checkbox.tooltip = column.doc
-                self.checkboxes[name] = checkbox
-                form.mount(CheckboxRow(checkbox))
-                continue
-
-            # input widgets
-            default = str(self._original_data.get(name, ""))
-            placeholder = "Erforderlich" if name in REQUIRED_FIELDS else ""
-            valid_empty = name not in REQUIRED_FIELDS
-            input_widget: Input
-            if field_type is int:
-                input_widget = Input(
-                    value=default,
-                    placeholder=placeholder,
-                    type="integer",
-                    valid_empty=valid_empty,
-                )
-            elif field_type is float:
-                valid_empty = name not in REQUIRED_FIELDS
-                input_widget = Input(
-                    value=default,
-                    placeholder=placeholder,
-                    type="number",
-                    valid_empty=valid_empty,
-                )
-            elif (field_type is date) or (
-                name in {"birthday_encr", "lrst_last_test_date_encr"}
-            ):
-                input_widget = Input(
-                    value=default,
-                    placeholder="JJJJ-MM-TT",
-                    restrict=r"[\d-]*",
-                    validators=Regex(
-                        r"\d{4}-[0-1]\d-[0-3]\d",
-                        failure_description=("Daten müssen im Format YYYY-mm-dd sein."),
-                    ),
-                    valid_empty=valid_empty,
-                )
-                self.dates[name] = input_widget
-            elif name in {"school", "lrst_diagnosis_encr", "lrst_last_test_by_encr"}:
-                validator: Function
-                if name == "school":
-                    validator = Function(
-                        _is_school_key,
-                        failure_description=(
-                            "Der Wert für `school` entspricht keinem Wert "
-                            "aus der Konfiguration"
-                        ),
-                    )
-                elif name == "lrst_diagnosis_encr":
-                    validator = Function(
-                        _is_lrst_diag,
-                        failure_description=(
-                            f"Der Wert für `lrst_diagnosis_encr` muss "
-                            f"einer der folgenden sein: {LRST_DIAG}"
-                        ),
-                    )
-                else:
-                    validator = Function(
-                        _is_test_by_value,
-                        failure_description=(
-                            f"Der Wert für `lrst_last_test_by_encr` muss "
-                            f"einer der folgenden sein: {LRST_TEST_BY}"
-                        ),
-                    )
-                input_widget = Input(
-                    value=default,
-                    placeholder=placeholder,
-                    validators=[validator],
-                    valid_empty=valid_empty,
-                )
-            else:
-                input_widget = Input(value=default, placeholder=placeholder)
-
-            input_widget.id = f"{name}"
-            if name not in self.dates:
-                self.inputs[name] = input_widget
-
-            row = InputRow(f"{label_text}:", input_widget)
-            row.tooltip = column.doc
-            form.mount(row)
-
-        self.save_button = Button(label="Speichern", id="save", variant="success")
-        form.mount(
-            Horizontal(
-                self.save_button,
-                Button("Abbrechen", id="cancel", variant="error"),
-                classes="action-buttons",
+            widget = self._build_field_widget(
+                name=name,
+                field_type=field_type,
+                default=default,
+                required=required,
+                tooltip=column.doc,
             )
-        )
+            self._register_widget(name, widget)
+
+            # Keep the original row layout choices
+            if isinstance(widget, Checkbox):
+                form.mount(CheckboxRow(widget))
+            else:
+                form.mount(InputRow(f"{label_text}:", widget))
+
+        # Actions
+        self._mount_actions(form)
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "save":
             await self.action_save()
         elif event.button.id == "cancel":
             await self.action_cancel()
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        # If the user picked the "Keine Auswahl" option on an optional Select, clear it.
+        name = event.select.id
+        if (
+            name in CHOICE_FIELDS
+            and name not in REQUIRED_FIELDS
+            and event.value == EMPTY_OPTION_VALUE
+        ):
+            event.select.clear()  # value becomes None and prompt is shown again
 
     async def action_save(self) -> None:
         log = self.query_one("#edit-client-log", RichLog)
@@ -316,17 +388,27 @@ class EditClient(Container):
         required_fields_empty = False
         for field_name in REQUIRED_FIELDS:
             widget = self.inputs.get(field_name) or self.dates.get(field_name)
-            if widget and not widget.value.strip():
+            if not widget:
+                continue
+            value = widget.value
+            if value is None or (not value.strip()):
                 required_fields_empty = True
 
         # Check if all inputs are valid according to their validators
-        all_widgets_valid = all(widget.is_valid for widget in all_inputs)
+        all_widgets_valid = all(
+            widget.is_valid for widget in all_inputs if isinstance(widget, Input)
+        )
 
         # If any validation fails, notify user and stop
         if required_fields_empty or not all_widgets_valid:
             # Trigger validation display on all inputs to show which ones are invalid
             for widget in all_inputs:
-                if not widget.is_valid:
+                is_w_valid = True
+                if isinstance(widget, Input):
+                    is_w_valid = widget.is_valid
+                # Select widgets are considered valid here, as their requirement
+                # is checked separately.
+                if not is_w_valid:
                     widget.remove_class("-valid")
                     widget.add_class("-invalid")
                 else:
@@ -340,7 +422,12 @@ class EditClient(Container):
 
         # Proceed with saving if validation passed
         current: dict[str, str | bool] = {}
-        current.update({n: w.value for n, w in {**self.inputs, **self.dates}.items()})
+        current.update(
+            {
+                n: w.value if w.value is not None else ""
+                for n, w in {**self.inputs, **self.dates}.items()
+            }
+        )
         current.update({n: cb.value for n, cb in self.checkboxes.items()})
 
         self._changed_data = {
