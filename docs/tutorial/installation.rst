@@ -146,6 +146,13 @@ personenbezogene Daten verschlüsselt und werden bei der Ausführung eines
 Befehls von edupsyadmin vorrübergehend entschlüsselt (alle Variablen, deren
 Name auf "_encr" endet, s. Dokumentation der Datenbank).
 
+.. warning::
+
+   Die Datenbank ist verschlüsselt, aber die PDF-Formular-Dateien nicht, die mit
+   edupsyadmin befüllt werden, nicht! Daher sollte der Speicher verschlüsselt
+   sein: `Link zur Erklärung des BSI
+   <https://www.bsi.bund.de/DE/Themen/Verbraucherinnen-und-Verbraucher/Informationen-und-Empfehlungen/Cyber-Sicherheitsempfehlungen/Daten-sichern-verschluesseln-und-loeschen/Datenverschluesselung/Soft-und-hardwaregestuetzte-Verschluesselung/soft-und-hardwaregestuetzte-verschluesselung_node.html#doc504660bodyText2>`_
+
 Standard Backends
 ^^^^^^^^^^^^^^^^^
 
@@ -155,15 +162,15 @@ Credential Manager (Deutsch: Anmeldeinformationsverwaltung), auf macOS Keychain
 (Deutsch: Schlüsselbund).
 
 Wenn du den Windows Credential Manager verwendest, sollte dein Rechner mit
-einem guten Passwort geschützt und nur für dich zugänglich sein, denn
-jeder, der die Login Daten für deinen Rechner kennt, hat damit Zugriff auf
-deine Anmeldeinformationsverwaltung und auf die dort gespeicherten
-Verschlüsselungsdaten für edupsyadmin. Jenachdem wie du edupsyadmin
-nutzt, ist das Bitwarden Backend eine sicherere Alternative (s.u.).
+einem guten Passwort geschützt und nur für dich zugänglich sein, denn jeder,
+der die Login Daten für deinen Rechner kennt, hat damit Zugriff auf deine
+Anmeldeinformationsverwaltung und auf die dort gespeicherten
+Verschlüsselungsdaten für edupsyadmin. Das Bitwarden Backend entschlüsselt
+nicht mit dem Login des Betriebsystems (s.u.).
 
-Standardmäßig gilt dasselbe für den macOS Keychain, wobei hier ein vom
-Login separates Password für Keychain gesetzt werden kann, was die Sicherheit
-erhöht.
+Standardmäßig gilt auch für die macOS Keychain, dass ein Nutzer mit dem Login
+in das Betriebsystem Zugriff auf die Zugangsdaten hat, wobei hier ein vom Login
+separates Password für Keychain gesetzt werden kann.
 
 Bitwarden Backend
 ^^^^^^^^^^^^^^^^^
