@@ -311,11 +311,15 @@ def command_set_client(
         salt_path=salt_path,
     )
 
-    if not key_value_pairs:
-        raise ValueError("At least one key-value pair must be provided.")
-    key_value_pairs_dict = dict(pair.split("=", 1) for pair in key_value_pairs)
-
-    clients_manager.edit_client(client_ids=client_id, new_data=key_value_pairs_dict)
+    if key_value_pairs:
+        key_value_pairs_dict = dict(pair.split("=", 1) for pair in key_value_pairs)
+        clients_manager.edit_client(client_ids=client_id, new_data=key_value_pairs_dict)
+    else:
+        edit_client_app_cls = lazy_import(
+            "edupsyadmin.tui.edit_client_app"
+        ).EditClientApp
+        for cid in client_id:
+            edit_client_app_cls(clients_manager=clients_manager, client_id=cid).run()
 
 
 def command_delete_client(

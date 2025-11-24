@@ -33,9 +33,13 @@ class EditClientApp(App):
         yield Footer()
 
     def on_mount(self) -> None:
+        data = None
+        if self.client_id is not None:
+            data = self.clients_manager.get_decrypted_client(self.client_id)
+
         # Update the EditClient with data for a new client or existing one
         # For new client, client_id is None
-        self.query_one(EditClient).update_client(self.client_id, None)
+        self.query_one(EditClient).update_client(self.client_id, data)
 
     async def on_edit_client_save_client(self, message: EditClient.SaveClient) -> None:
         """Handle the save message from the EditClient widget."""

@@ -65,12 +65,6 @@ HIDDEN_FIELDS = {
 DATE_FIELDS = {"birthday_encr", "lrst_last_test_date_encr"}
 DATE_REGEX = r"\d{4}-[0-1]\d-[0-3]\d"
 
-CHOICE_FIELDS: dict[str, list[tuple[str, str]]] = {
-    "school": [(k, k) for k in config.school],
-    "lrst_diagnosis_encr": [(v, v) for v in LRST_DIAG],
-    "lrst_last_test_by_encr": [(v, v) for v in LRST_TEST_BY],
-}
-
 
 def _to_str_or_bool(value: Any) -> str | bool:
     if value is None:
@@ -181,6 +175,11 @@ class EditClient(Container):
         self.dates: dict[str, Input] = {}
         self.checkboxes: dict[str, Checkbox] = {}
         self.save_button: Button | None = None
+        self.choice_fields: dict[str, list[tuple[str, str]]] = {
+            "school": [(k, k) for k in config.school],
+            "lrst_diagnosis_encr": [(v, v) for v in LRST_DIAG],
+            "lrst_last_test_by_encr": [(v, v) for v in LRST_TEST_BY],
+        }
 
     def compose(self) -> ComposeResult:
         with VerticalScroll(id="edit-client-form"):
@@ -234,28 +233,30 @@ class EditClient(Container):
             )
 
         # Choice fields -> Select
-        elif name in CHOICE_FIELDS:
-            base_options = CHOICE_FIELDS[name]
+        elif name in self.choice_fields:
+            base_options = self.choice_fields[name]
             # For optional selects, add a "no selection" entry
             options = (
                 [(EMPTY_OPTION_VALUE, "- Keine Auswahl -"), *base_options]
                 if not required
                 else base_options
             )
+            # Determine the initial value before creating the widget
+            initial_value = None
+            if isinstance(default, str):
+                stripped_default = default.strip()
+                if stripped_default and any(
+                    stripped_default == v for v, _ in base_options
+                ):
+                    initial_value = stripped_default
+
             widget = Select(
                 options=options,
                 id=name,
                 prompt="Auswählen ...",
                 allow_blank=(not required),
+                value=initial_value,
             )
-            # Set initial value if we have a valid non-empty default present in options
-            # else: leave unselected
-            if (
-                isinstance(default, str)
-                and default
-                and any(default == v for v, _ in base_options)
-            ):
-                widget.value = default
 
         # Dates -> Input with shared config
         elif field_type is date or name in DATE_FIELDS:
@@ -373,7 +374,7 @@ class EditClient(Container):
         # If the user picked the "Keine Auswahl" option on an optional Select, clear it.
         name = event.select.id
         if (
-            name in CHOICE_FIELDS
+            name in self.choice_fields
             and name not in REQUIRED_FIELDS
             and event.value == EMPTY_OPTION_VALUE
         ):
