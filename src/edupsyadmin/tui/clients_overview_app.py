@@ -18,16 +18,21 @@ class ClientsOverviewApp(App):
         clients_manager: ClientsManager,
         nta_nos: bool = False,
         schools: list[str] | None = None,
+        columns: list[str] | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.clients_manager = clients_manager
         self.nta_nos = nta_nos
         self.schools = schools
+        self.columns = columns
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield ClientsOverview(
-            self.clients_manager, nta_nos=self.nta_nos, schools=self.schools
+            self.clients_manager,
+            nta_nos=self.nta_nos,
+            schools=self.schools,
+            columns=self.columns,
         )
         yield Footer()

@@ -360,7 +360,10 @@ def command_get_clients(
             "edupsyadmin.tui.clients_overview_app"
         ).ClientsOverviewApp
         clients_overview_app_cls(
-            clients_manager=clients_manager, nta_nos=nta_nos, schools=school
+            clients_manager=clients_manager,
+            nta_nos=nta_nos,
+            schools=school,
+            columns=columns,
         ).run()
     else:
         display_client_details = lazy_import(

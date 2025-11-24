@@ -44,6 +44,7 @@ class ClientsOverview(Static):
         manager: ClientsManager,
         nta_nos: bool = False,
         schools: list[str] | None = None,
+        columns: list[str] | None = None,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
@@ -52,6 +53,7 @@ class ClientsOverview(Static):
         self.manager = manager
         self.nta_nos = nta_nos
         self.schools = schools
+        self.columns = columns
         self.current_sorts: set[str] = set()
 
     def compose(self) -> ComposeResult:
@@ -79,7 +81,7 @@ class ClientsOverview(Static):
     def get_clients_df(self) -> None:
         """Get clients overview as a pandas DataFrame."""
         df = self.manager.get_clients_overview(
-            nta_nos=self.nta_nos, schools=self.schools
+            nta_nos=self.nta_nos, schools=self.schools, columns=self.columns
         )
         self.post_message(self._DfLoaded(df))
 
