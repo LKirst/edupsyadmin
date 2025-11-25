@@ -1,3 +1,22 @@
+## 7.10.0 (2025-11-25)
+
+### Feat
+
+- restore TUI use when using set_client without key-value pairs and using Select widgets
+- **tui.edit_client**: use select widgets in edit_client
+- add `edupsyadmin tui` command that combines an overview with an edit_client view
+
+### Fix
+
+- **tui.edit_client**: handle initial None values in Select widgets correctly
+- restore the functionalitiy of the --columns option for get_clients
+- make cft report available through mk_report
+
+### Refactor
+
+- **api.add_convenience_data**: refactor for readability
+- **edupsyadmintui**: remove pane for sessions (for now)
+
 ## 7.9.3 (2025-11-16)
 
 ### Fix
