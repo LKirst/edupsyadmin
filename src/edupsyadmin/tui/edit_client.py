@@ -192,10 +192,10 @@ class EditClient(Container):
     def _normalize_original_data(self, data: dict[str, Any]) -> dict[str, str | bool]:
         return {k: _to_str_or_bool(v) for k, v in data.items()}
 
-    def _visible_columns(self):
-        for column in Client.__table__.columns:
-            if column.name not in HIDDEN_FIELDS:
-                yield column
+    def _visible_db_columns(self):
+        for db_column in Client.__table__.columns:
+            if db_column.name not in HIDDEN_FIELDS:
+                yield db_column
 
     def _is_required(self, name: str) -> bool:
         return name in REQUIRED_FIELDS
@@ -339,9 +339,9 @@ class EditClient(Container):
             form.mount(Static("Daten für einen neuen Klienten"))
 
         # Build rows
-        for column in self._visible_columns():
-            name = column.name
-            field_type = get_python_type(column.type)
+        for db_column in self._visible_db_columns():
+            name = db_column.name
+            field_type = get_python_type(db_column.type)
             required = self._is_required(name)
             label_text = f"{name}*" if required else name
             default = self._original_data.get(name, "")
@@ -351,7 +351,7 @@ class EditClient(Container):
                 field_type=field_type,
                 default=default,
                 required=required,
-                tooltip=column.doc,
+                tooltip=db_column.doc,
             )
             self._register_widget(name, widget)
 
@@ -450,9 +450,9 @@ class EditClient(Container):
 
 def _get_empty_client_dict() -> dict[str, str | bool]:
     empty_client_dict: dict[str, str | bool] = {}
-    for column in Client.__table__.columns:
-        field_type = get_python_type(column.type)
-        name = column.name
+    for db_column in Client.__table__.columns:
+        field_type = get_python_type(db_column.type)
+        name = db_column.name
 
         if field_type is bool:
             empty_client_dict[name] = False
