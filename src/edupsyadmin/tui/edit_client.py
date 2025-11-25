@@ -242,7 +242,7 @@ class EditClient(Container):
                 else base_options
             )
             # Determine the initial value before creating the widget
-            initial_value = None
+            initial_value: object = Select.BLANK
             if isinstance(default, str):
                 stripped_default = default.strip()
                 if stripped_default and any(
