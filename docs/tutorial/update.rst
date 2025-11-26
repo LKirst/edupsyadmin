@@ -52,8 +52,8 @@ Aktualisiere vor dem Update uv und python:
 
 .. code-block:: console
 
-   winget upgrade uv
-   uv python upgrade
+   $ winget upgrade uv
+   $ uv python upgrade
 
 Nun aktualisiere edupsyadmin mit:
 
