@@ -61,12 +61,18 @@ Tätigkeitsbericht verlangt.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Tutorial
+   :caption: Einstiegstutorial
 
    tutorial/installation
    tutorial/helpfunction
-   tutorial/addingclients
+   tutorial/tui
    tutorial/creatingdocumentation
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorial für Fortgeschrittene
+
+   tutorial/addingclients
    tutorial/update
    tutorial/taetigkeitsbericht
 

@@ -1,6 +1,11 @@
 Klienten hinzufügen, bearbeiten, anzeigen
 =========================================
 
+Die einfachste Möglichkeit, Klienten hinzuzufügen, zu bearbeiten und anzuzeigen
+ist über die TUI (``edupsyadmin tui``). Die folgenden Befehle erlauben aber
+größere Kontrolle über den Prozess, z.B., wenn wir aus einer Datei importieren
+oder wenn wir mehrere Einträge gleichzeitig bearbeiten.
+
 Klienten hinzufügen
 -------------------
 
@@ -14,7 +19,7 @@ ausgefüllt werden. Nur die Felder mit einem Sternchen "*".
 Füge einen weiteren Klienten aus einem Webuntis-CSV-Export zur Datenbank hinzu.
 Verwende dafür die Beispieldatei `samplewebuntisfile.csv
 <https://raw.githubusercontent.com/LKirst/edupsyadmin/refs/heads/main/docs/_static/samplewebuntisfile.csv>`_.
-Die Datei kannst du speichern, indem du :kbd:`Strg-S` klickst.
+Die Datei kannst du speichern, indem du :kbd:`Strg-s` klickst.
 
 Wir ordnen den Schüler unserer, in der Konfiguration angelegten
 ``TutorialSchule`` zu.
@@ -77,11 +82,14 @@ oder Notenschutz haben:
 
 Die Einträge können auch in einer interaktiven Tabelle angezeigt werden. Die
 Tabelle lässt sich nach Nachnamen und Schule sortieren und kann mit
-:kbd:`Strg-Q` wieder geschlossen werden.
+:kbd:`Strg-q` wieder geschlossen werden.
 
 .. code-block:: console
 
     $ edupsyadmin get_clients --tui
+
+Wenn wir in einem anderen Fenster einen Klienten bearbeitet haben, können wir
+die Übersicht mit :kbd:`Strg-r` aktualisieren.
 
 Einzelnen Eintrag anzeigen
 --------------------------
