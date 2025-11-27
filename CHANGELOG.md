@@ -1,3 +1,10 @@
+## 7.10.1 (2025-11-27)
+
+### Fix
+
+- **tui.edupsyadmintui**: fix issue with adding new client from `edupsyadmin tui`
+- **tui.edit_client**: fix handling of None values in Select widgets
+
 ## 7.10.0 (2025-11-25)
 
 ### Feat
