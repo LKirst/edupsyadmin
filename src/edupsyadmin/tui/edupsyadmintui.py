@@ -73,7 +73,7 @@ class EdupsyadminTui(App[None]):
             if client_id is not None:
                 self.manager.edit_client(client_ids=[client_id], new_data=data)
             else:
-                self.manager.add_client(data)
+                self.manager.add_client(**data)
             self.post_message(self._ClientDataSaveResult())
         except Exception as e:
             self.post_message(self._ClientDataSaveResult(error=e))
