@@ -68,7 +68,7 @@ DATE_REGEX = r"\d{4}-[0-1]\d-[0-3]\d"
 
 def _to_str_or_bool(value: Any) -> str | bool:
     if value is None:
-        return ""
+        return None
     if isinstance(value, date):
         return value.isoformat()
     if isinstance(value, bool | str):  # check this before checking if int!
@@ -169,8 +169,8 @@ class EditClient(Container):
     ):
         super().__init__(name=name, id=id, classes=classes)
         self.client_id: int | None = None
-        self._original_data: dict[str, str | bool] = {}
-        self._changed_data: dict[str, Any] = {}
+        self._original_data: dict[str, str | bool | None] = {}
+        self._changed_data: dict[str, str | bool | None] = {}
         self.inputs: dict[str, Input | Select] = {}
         self.dates: dict[str, Input] = {}
         self.checkboxes: dict[str, Checkbox] = {}
@@ -392,7 +392,7 @@ class EditClient(Container):
             if not widget:
                 continue
             value = widget.value
-            if value is None or (not value.strip()):
+            if value is None or (isinstance(value, str) and not value.strip()):
                 required_fields_empty = True
 
         # Check if all inputs are valid according to their validators
@@ -422,13 +422,26 @@ class EditClient(Container):
             return
 
         # Proceed with saving if validation passed
-        current: dict[str, str | bool] = {}
-        current.update(
-            {
-                n: w.value if w.value is not None else ""
-                for n, w in {**self.inputs, **self.dates}.items()
-            }
-        )
+        current: dict[str, str | bool | None] = {}
+
+        # Handle inputs and dates
+        for name, widget in {**self.inputs, **self.dates}.items():
+            if isinstance(widget, Select):
+                # For Select: None or EMPTY_OPTION_VALUE should become None
+                value = widget.value
+                if (
+                    value is None
+                    or value == EMPTY_OPTION_VALUE
+                    or value == Select.BLANK
+                ):
+                    current[name] = None
+                else:
+                    current[name] = value
+            else:
+                # For Input: keep as string (empty string if None)
+                current[name] = widget.value if widget.value is not None else ""
+
+        # Handle checkboxes
         current.update({n: cb.value for n, cb in self.checkboxes.items()})
 
         self._changed_data = {
