@@ -8,7 +8,7 @@ version = "7.10.1"
 authors = [{ name = "Lukas Liebermann" }]
 description = "edupsyadmin provides tools to help school psychologists with their documentation"
 readme = "README.md"
-requires-python = ">=3.13" # python 3.14 is not yet available for readthedocs
+requires-python = ">=3.14"
 homepage = "https://github.com/LKirst/edupsyadmin.git"
 license = { text = "MIT" }
 dependencies = [
