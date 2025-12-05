@@ -147,7 +147,7 @@ def command_edit_config(
 
 
 def _enter_client_csv(
-    clients_manager: "ClientsManager",
+    clients_manager: ClientsManager,
     csv_path: str | os.PathLike[str],
     school: str | None,
     name: str,
@@ -547,6 +547,12 @@ def command_tui(
     app.run()
 
 
+def command_setup_demo() -> None:
+    """Create a sandboxed demo environment."""
+    setup_demo = lazy_import("edupsyadmin.api.setup_demo").setup_demo
+    setup_demo()
+
+
 def _args(argv: list[str] | None) -> argparse.Namespace:
     """Parse command line arguments.
 
@@ -592,6 +598,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     _mk_report(subparsers, common)
     _taetigkeitsbericht(subparsers, common)
     _delete_client(subparsers, common)
+    _setup_demo(subparsers)
     _tui(subparsers, common)
 
     args = parser.parse_args(argv)
@@ -788,6 +795,25 @@ def _delete_client(
     )
     parser.set_defaults(command=command_delete_client)
     parser.add_argument("client_id", type=int, help="id of the client to delete")
+
+
+def _setup_demo(subparsers: _SubParsersAction[ArgumentParser]) -> None:
+    """CLI adaptor for the setup_demo command.
+    :param subparsers: subcommand parsers
+    """
+    epilog = textwrap.dedent("""\
+        Example:
+          # Create a sandboxed demo environment
+          edupsyadmin setup_demo
+    """)
+    parser = subparsers.add_parser(
+        "setup_demo",
+        description="Create a sandboxed demo environment (demo-config.yml, demo-salt.txt, demo.db).",
+        help="Create a sandboxed demo environment.",
+        epilog=epilog,
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    parser.set_defaults(command=command_setup_demo)
 
 
 def _get_clients(
