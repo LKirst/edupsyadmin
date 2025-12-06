@@ -24,7 +24,7 @@ Suche zu erleichtern.
 Klienten hinzufügen
 -------------------
 
-Mit :kbd:`Strg-a` kann ein neuer Klient hinzugefügt werden. Rechts erscheint
+Mit :kbd:`Strg-n` kann ein neuer Klient hinzugefügt werden. Rechts erscheint
 ein Formular zur Eingabe des Klienten.
 
 Klienten anzeigen (und bearbeiten)
