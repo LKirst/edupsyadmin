@@ -203,8 +203,7 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
         - **name**: Vor- und Nachname,
         - **addr_s_nname**: Adresse in einer Zeile ohne Name,
         - **addr_m_wname**: Adresse mit Zeilenumbrüchen mit Name,
-        - **schoolpsy_addr_s_wname**: Adresse des Nutzers in einer Ziele mit
-            Name,
+        - **schoolpsy_addr_s_wname**: Adresse des Nutzers in einer Ziele mit Name,
         - **schoolpsy_addr_m_wname** Adresse des Nutzers mit Zeilenumbrüchen
             mit Name,
         - **school_addr_s_wname**: Adresse der Schule,
@@ -213,10 +212,8 @@ def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
         - **lrst_last_test_de**: Datum des letzten Tests, im Format DD.MM.YYYY,
         - **today_date_de**: Heutiges Datum, im Format DD.MM.YYYY,
         - **birthday_encr_de**: Geburtsdatum des Schülers im Format DD.MM.YYYY,
-        - **document_shredding_date_de**: Datum für Aktenvernichtung im Format
-            DD.MM.YYYY,
-        - **nta_nos_end_schoolyear**: Schuljahr bis zu dem NTA und Notenschutz
-            begrenzt sind
+        - **document_shredding_date_de**: Datum für Aktenvernichtung im Format DD.MM.YYYY,
+        - **nta_nos_end_schoolyear**: Schuljahr bis zu dem NTA und Notenschutz begrenzt sind
     """
     _add_client_address(data)
     _add_school_psychologist_address(data)
