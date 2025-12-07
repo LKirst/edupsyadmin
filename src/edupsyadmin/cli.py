@@ -531,6 +531,9 @@ def command_tui(
     app_uid: str,
     database_url: str,
     salt_path: str | os.PathLike[str],
+    nta_nos: bool,
+    school: list[str] | None,
+    columns: list[str] | None,
 ) -> None:
     """Entry point for the TUI."""
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
@@ -543,7 +546,9 @@ def command_tui(
         salt_path=salt_path,
     )
 
-    app = edupsyadmin_tui_cls(clients_manager)
+    app = edupsyadmin_tui_cls(
+        manager=clients_manager, nta_nos=nta_nos, schools=school, columns=columns
+    )
     app.run()
 
 
@@ -1041,6 +1046,15 @@ def _tui(subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser) 
         formatter_class=RawDescriptionHelpFormatter,
     )
     parser.set_defaults(command=command_tui)
+    parser.add_argument(
+        "--nta_nos",
+        action="store_true",
+        help="show only students with Nachteilsausgleich or Notenschutz",
+    )
+    parser.add_argument(
+        "--school", nargs="*", type=str, default=None, help="filter by school name"
+    )
+    parser.add_argument("--columns", default=None, nargs="*", help="columns to show")
 
 
 # Make the module executable.

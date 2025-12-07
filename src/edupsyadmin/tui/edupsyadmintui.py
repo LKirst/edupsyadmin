@@ -37,15 +37,29 @@ class EdupsyadminTui(App[None]):
     }
     """
 
-    def __init__(self, manager: ClientsManager):
+    def __init__(
+        self,
+        manager: ClientsManager,
+        nta_nos: bool = False,
+        schools: list[str] | None = None,
+        columns: list[str] | None = None,
+    ):
         super().__init__()
         self.manager = manager
         self.is_busy = False
+        self.nta_nos = nta_nos
+        self.schools = schools
+        self.columns = columns
 
     def compose(self) -> ComposeResult:
         yield Header()
         with Horizontal(id="main-container"):
-            yield ClientsOverview(self.manager)
+            yield ClientsOverview(
+                self.manager,
+                nta_nos=self.nta_nos,
+                schools=self.schools,
+                columns=self.columns,
+            )
             yield EditClient()
         yield Footer()
         yield LoadingIndicator(id="main-loading-indicator")
