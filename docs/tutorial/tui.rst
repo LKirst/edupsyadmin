@@ -10,6 +10,31 @@ Um die interaktive Benutzeroberfläche zu starten, führe den folgenden Befehl a
 
     $ edupsyadmin tui
 
+Ansicht beim Start anpassen
+---------------------------
+
+Die in der Übersicht angezeigten Klienten können bereits beim Start der TUI
+gefiltert werden.
+
+Der folgende Befehl filtert die Klienten so, dass nur die Klienten angezeigt
+werden, die Nachteilsausgleich oder Notenschutz haben und der ``TutorialSchule``
+angehören:
+
+.. code-block:: console
+
+    $ edupsyadmin tui --nta_nos --school TutorialSchule
+
+Zusätzlich können die angezeigten Spalten mit ``--columns`` angepasst werden.
+Eine Auswahl an Spalten wird immer angezeigt (``client_id``, ``school``,
+``last_name_encr``, ``first_name_encr``, ``class_name``). Mit ``--columns``
+können weitere Spalten hinzugefügt werden.
+
+Folgender Befehl zeigt zusätzlich die Spalte für ``notes_encr`` und
+``lrst_diagnosis_encr`` an:
+
+.. code-block:: console
+
+    $ edupsyadmin tui --columns notes_encr lrst_diagnosis_encr
 
 Übersicht
 ---------
