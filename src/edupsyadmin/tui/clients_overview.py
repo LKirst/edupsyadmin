@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from textual import on, work
 from textual.app import ComposeResult
-from textual.binding import Binding
 from textual.message import Message
 from textual.widgets import DataTable, Static
 
@@ -16,14 +15,6 @@ if TYPE_CHECKING:
 
 class ClientsOverview(Static):
     """A TUI to show clients in a DataTable."""
-
-    BINDINGS: ClassVar[list[Binding | tuple[str, str] | tuple[str, str, str]]] = [
-        Binding("n", "sort_by_last_name", "Sortieren nach `last_name_encr`"),
-        Binding("s", "sort_by_school", "Sortieren nach `schule`"),
-        Binding("i", "sort_by_client_id", "Sortieren nach `client_id`"),
-        Binding("c", "sort_by_class_name", "Sortieren nach `class_name`"),
-        Binding("ctrl+r", "reload", "Neu laden", show=True),
-    ]
 
     class ClientSelected(Message):
         """Message to indicate a client has been selected."""
