@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import yaml
 
 from edupsyadmin.api.managers import ClientsManager
@@ -101,3 +103,30 @@ def setup_demo() -> None:
         "  edupsyadmin --config_path demo-config.yml "
         "--salt_path demo-salt.txt --database_url sqlite:///demo.db tui"
     )
+
+    # Generate alias suggestions
+    abs_config_path = Path(demo_config_path).resolve()
+    abs_salt_path = Path(demo_salt_path).resolve()
+    abs_db_path = Path("demo.db").resolve()
+
+    bash_alias = (
+        f"alias edupsyadmin_demo='edupsyadmin "
+        f'--config_path "{abs_config_path}" '
+        f'--salt_path "{abs_salt_path}" '
+        f'--database_url "sqlite:///{abs_db_path}"\''
+    )
+    powershell_alias = (
+        f"function edupsyadmin_demo {{ "
+        f'edupsyadmin --config_path \\"{abs_config_path}\\" '
+        f'--salt_path \\"{abs_salt_path}\\" '
+        f'--database_url \\"sqlite:///{abs_db_path}\\" @args '
+        f"}}"
+    )
+
+    print("\nTo quickly use the demo environment, consider setting up an alias:")
+    print("\n  For Bash/Zsh, add this to your .bashrc or .zshrc:")
+    print(f"    {bash_alias}")
+    print("    # Then, you can run: edupsyadmin_demo tui")
+    print("\n  For PowerShell, add this to your profile:")
+    print(f"    {powershell_alias}")
+    print("    # Then, you can run: edupsyadmin_demo tui")
