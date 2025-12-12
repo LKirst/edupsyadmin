@@ -1,3 +1,15 @@
+## 7.11.0 (2025-12-12)
+
+### Feat
+
+- **api.setup_demo**: suggest alias for demo setup
+- make the same filters available for edupsyadmin tui as for edupsyadmin get_clients
+- add a setup_demo command to cli
+
+### Fix
+
+- **tui**: move bindings to the application level
+
 ## 7.10.1 (2025-11-27)
 
 ### Fix
