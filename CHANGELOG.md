@@ -1,3 +1,9 @@
+## 7.11.1 (2025-12-18)
+
+### Fix
+
+- make setup_demo use the correct config and reuse existing keyring entry for demos
+
 ## 7.11.0 (2025-12-12)
 
 ### Feat
