@@ -75,18 +75,18 @@ def main(argv: list[str] | None = None) -> int:
 
     # config
     # if the (first) config file doesn't exist, copy a sample config
-    if not os.path.exists(args.config_path):
+    if not os.path.exists(args.config_path[0]):
         template_path = str(
             importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
         )
-        shutil.copy(template_path, args.config_path)
+        shutil.copy(template_path, args.config_path[0])
         logger.info(
             "Could not find the specified config file. "
-            f"Created a sample config at {args.config_path}. "
+            f"Created a sample config at {args.config_path[0]}. "
             "Fill it with your values."
         )
-    config.load(args.config_path)
-    config.core.config = args.config_path
+    config.load(args.config_path[0])
+    config.core.config = args.config_path[0]
     if args.warn:
         config.core.logging = args.warn
 
@@ -566,7 +566,13 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     parser = ArgumentParser(formatter_class=RawDescriptionHelpFormatter)
     # append allows multiple instances of the same object
     # args.config_path will therefore be a list!
-    parser.add_argument("-c", "--config_path", help=argparse.SUPPRESS)
+    parser.add_argument("-c", "--config_path", action="append", help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--database_url", default=DEFAULT_DB_URL, help=argparse.SUPPRESS
+    )
+    parser.add_argument(
+        "--salt_path", default=DEFAULT_SALT_PATH, help=argparse.SUPPRESS
+    )
     parser.add_argument(
         "-v",
         "--version",
@@ -586,12 +592,6 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     common = ArgumentParser(add_help=False)  # common subcommand arguments
     common.add_argument("--app_username", help=argparse.SUPPRESS)
     common.add_argument("--app_uid", default=APP_UID, help=argparse.SUPPRESS)
-    common.add_argument(
-        "--database_url", default=DEFAULT_DB_URL, help=argparse.SUPPRESS
-    )
-    common.add_argument(
-        "--salt_path", default=DEFAULT_SALT_PATH, help=argparse.SUPPRESS
-    )
 
     _info(subparsers, common)
     _edit_config(subparsers, common)
@@ -603,7 +603,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     _mk_report(subparsers, common)
     _taetigkeitsbericht(subparsers, common)
     _delete_client(subparsers, common)
-    _setup_demo(subparsers)
+    _setup_demo(subparsers, common)
     _tui(subparsers, common)
 
     args = parser.parse_args(argv)
@@ -614,7 +614,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     if not args.config_path:
         # Don't specify this as an argument default or else it will always be
         # included in the list.
-        args.config_path = DEFAULT_CONFIG_PATH
+        args.config_path = [DEFAULT_CONFIG_PATH]
     if not args.salt_path:
         args.salt_path = DEFAULT_SALT_PATH
     return args
@@ -802,9 +802,12 @@ def _delete_client(
     parser.add_argument("client_id", type=int, help="id of the client to delete")
 
 
-def _setup_demo(subparsers: _SubParsersAction[ArgumentParser]) -> None:
+def _setup_demo(
+    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
+) -> None:
     """CLI adaptor for the setup_demo command.
     :param subparsers: subcommand parsers
+    :param common: parser for common subcommand arguments
     """
     epilog = textwrap.dedent("""\
         Example:
@@ -813,6 +816,7 @@ def _setup_demo(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     """)
     parser = subparsers.add_parser(
         "setup_demo",
+        parents=[common],
         description="Create a sandboxed demo environment (demo-config.yml, demo-salt.txt, demo.db).",
         help="Create a sandboxed demo environment.",
         epilog=epilog,

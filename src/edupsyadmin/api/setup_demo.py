@@ -1,5 +1,7 @@
+import os
 from pathlib import Path
 
+import keyring
 import yaml
 
 from edupsyadmin.api.managers import ClientsManager
@@ -12,13 +14,22 @@ def setup_demo() -> None:
     demo_config_path = "demo-config.yml"
     demo_salt_path = "demo-salt.txt"
     demo_db_url = "sqlite:///demo.db"
+    demo_db_path = "demo.db"
+    demo_username = "demouser"
+    demo_app_uid = "liebermann-schulpsychologie.github.io"
+
+    # remove old demo files to have a clean slate
+    if os.path.exists(demo_db_path):
+        os.remove(demo_db_path)
+    if os.path.exists(demo_salt_path):
+        os.remove(demo_salt_path)
 
     # Create demo-config.yml
     demo_config = {
         "core": {
             "logging": "INFO",
-            "app_uid": "liebermann-schulpsychologie.github.io",
-            "app_username": "demouser",
+            "app_uid": demo_app_uid,
+            "app_username": demo_username,
         },
         "schoolpsy": {
             "schoolpsy_name": "DemoVornameSP DemoNachnameSP",
@@ -43,6 +54,15 @@ def setup_demo() -> None:
 
     # Load the new demo config
     config.load(demo_config_path)
+
+    # Set a password for the demo user
+    if not keyring.get_password(demo_app_uid, demo_username):
+        keyring.set_password(
+            config.core.app_uid, config.core.app_username, "edupsyadmin-demo-password"
+        )
+        logger.info("Password for demo user set in keyring.")
+    else:
+        logger.info("Demo user already exists in keyring. Using existing password.")
 
     # Instantiate ClientsManager to create demo.db and demo-salt.txt
     clients_manager = ClientsManager(
