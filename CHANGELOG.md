@@ -1,3 +1,9 @@
+## 7.11.2 (2025-12-19)
+
+### Fix
+
+- **tui.clients_overview**: retain the ordering of the table when reloading the table
+
 ## 7.11.1 (2025-12-18)
 
 ### Fix
