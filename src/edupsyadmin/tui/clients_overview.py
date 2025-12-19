@@ -45,7 +45,8 @@ class ClientsOverview(Static):
         self.nta_nos = nta_nos
         self.schools = schools
         self.columns = columns
-        self.current_sorts: set[str] = set()
+        self._last_applied_sort: tuple[tuple[str, ...], bool] = ((), False)
+        self._reverse_states: dict[str, bool] = {}
 
     def compose(self) -> ComposeResult:
         yield DataTable(id="clients_overview_table")
@@ -57,16 +58,12 @@ class ClientsOverview(Static):
         table.zebra_stripes = True
         self.action_reload()
 
-    def sort_reverse(self, sort_type: str) -> bool:
+    def _get_toggle_reverse_state(self, sort_key: str) -> bool:
         """
-        Determine if `sort_type` is ascending or descending.
+        Determine and toggle the reverse state for a given sort key.
         """
-        reverse = sort_type in self.current_sorts
-        if reverse:
-            self.current_sorts.remove(sort_type)
-        else:
-            self.current_sorts.add(sort_type)
-        return reverse
+        self._reverse_states[sort_key] = not self._reverse_states.get(sort_key, False)
+        return self._reverse_states[sort_key]
 
     @work(exclusive=True, thread=True)
     def get_clients_df(self) -> None:
@@ -86,12 +83,17 @@ class ClientsOverview(Static):
                     table.add_column(col, key=col)
             table.add_rows(df.values.tolist())
 
+            # Re-apply last applied sort if any
+            if self._last_applied_sort[0]:
+                table.sort(
+                    *self._last_applied_sort[0], reverse=self._last_applied_sort[1]
+                )
+
         table.loading = False
         self.notify("Tabelle neu geladen.")
 
     def action_reload(self) -> None:
         """Reloads the data in the table from the database."""
-        self.notify("Lade Daten neu...")
         table = self.query_one(DataTable)
         table.loading = True
         table.clear()
@@ -115,36 +117,27 @@ class ClientsOverview(Static):
             except (ValueError, TypeError):
                 self.notify(f"Ungültige client_id: {client_id_str}")
 
+    def _sort_table_by(self, *column_keys: str) -> None:
+        """Sorts the DataTable by the given column keys, toggling direction."""
+        table = self.query_one(DataTable)
+        # The primary column key is used for toggling state.
+        primary_key = column_keys[0]
+        reverse_flag = self._get_toggle_reverse_state(primary_key)
+        table.sort(*column_keys, reverse=reverse_flag)
+        self._last_applied_sort = (column_keys, reverse_flag)
+
     def action_sort_by_client_id(self) -> None:
         """Sort DataTable by client_id"""
-        table = self.query_one(DataTable)
-        table.sort(
-            "client_id",
-            reverse=self.sort_reverse("client_id"),
-        )
+        self._sort_table_by("client_id")
 
     def action_sort_by_last_name(self) -> None:
         """Sort DataTable by last name"""
-        table = self.query_one(DataTable)
-        table.sort(
-            "last_name_encr",
-            reverse=self.sort_reverse("last_name_encr"),
-        )
+        self._sort_table_by("last_name_encr")
 
     def action_sort_by_school(self) -> None:
         """Sort DataTable by school and last name"""
-        table = self.query_one(DataTable)
-        table.sort(
-            "school",
-            "last_name_encr",
-            reverse=self.sort_reverse("school"),
-        )
+        self._sort_table_by("school", "last_name_encr")
 
     def action_sort_by_class_name(self) -> None:
         """Sort DataTable by class_name and last name"""
-        table = self.query_one(DataTable)
-        table.sort(
-            "class_name",
-            "last_name_encr",
-            reverse=self.sort_reverse("class_name"),
-        )
+        self._sort_table_by("class_name", "last_name_encr")
