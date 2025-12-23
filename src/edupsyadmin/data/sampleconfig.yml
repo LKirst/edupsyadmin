@@ -24,17 +24,15 @@ school:
     nstudents: 100
 form_set: # sets of file paths for create_documentation; replace with your sets
   lrst:
-    - '~/Templates/Beratung/LiL_Mantelbogen.pdf'
-    - '~/Templates/Beratung/LRSt_GenehmigungSchulleitung.pdf'
-    - '~/Templates/Beratung/LRSt_Stellungnahme.pdf'
-    - '~/Templates/Beratung/LRSt_Informationsschreiben.pdf'
-    - '~/Templates/Beratung/LRSt_Anschreiben.pdf'
+    - 'Pfad/zu/LiL_Mantelbogen.pdf'
+    - 'Pfad/zu/LRSt_GenehmigungSchulleitung.pdf'
+    - 'Pfad/zu/LRSt_Stellungnahme.pdf'
+    - 'Pfad/zu/LRSt_Informationsschreiben.pdf'
+    - 'Pfad/zu/LRSt_Anschreiben.pdf'
   noLrst:
-    - '~/Templates/Beratung/LiL_Mantelbogen.pdf'
-    - '~/Templates/Beratung/LRSt_StellungnahmeKeinBefund.pdf'
-    - '~/Templates/Beratung/LRSt_AnschreibenKeinBefund.pdf'
-  mantelbogen:
-    - '~/Templates/Beratung/LiL_Mantelbogen.pdf'
+    - 'Pfad/zu/LiL_Mantelbogen.pdf'
+    - 'Pfad/zu/LRSt_StellungnahmeKeinBefund.pdf'
+    - 'Pfad/zu/LRSt_AnschreibenKeinBefund.pdf'
 csv_import:
   webuntis:
     separator: "\t"

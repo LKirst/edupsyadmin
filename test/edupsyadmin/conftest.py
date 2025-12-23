@@ -110,6 +110,41 @@ def mock_config(
     os.remove(conf_path)
 
 
+@pytest.fixture(scope="function")
+def mock_config_snapshots(
+    tmp_path_factory: pytest.TempPathFactory, request
+) -> Generator[str]:
+    """
+    If I use the mock_config from above, shapshots are different on every
+    machine because the pdf paths are absolute.
+    """
+    template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
+    conf_path = str(tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml")
+    shutil.copy(template_path, conf_path)
+    config.load(conf_path)
+
+    # set or override some config values
+    config.core.config = conf_path
+    config.core.app_username = f"user_read_from_file-{request.node.name}"
+    config.core.logging = "DEBUG"
+    del config.school["SecondSchool"]  # keep it simple for snapshots
+
+    # write the changed config to file
+    with open(config.core.config, "w", encoding="UTF-8") as f:
+        # convert to dict for pyyaml, excluding the runtime 'config' path
+        dictyaml = config.model_dump(exclude={"core": {"config"}})
+        yaml.dump(dictyaml, f)
+
+    # set different username than written to file to test which one is used
+    config.core.app_username = f"user_set_in_fixture-{request.node.name}"
+
+    # app uid is not set in the config, so don't write it to file
+    config.core.app_uid = "example.com"
+
+    yield conf_path
+    os.remove(conf_path)
+
+
 @pytest.fixture
 def mock_salt_path(tmp_path):
     salt_path = tmp_path / "salt.txt"
