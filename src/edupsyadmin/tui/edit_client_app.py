@@ -19,7 +19,7 @@ class EditClientApp(App):
 
     def __init__(
         self,
-        clients_manager: "ClientsManager",
+        clients_manager: ClientsManager,
         client_id: int | None = None,
         **kwargs,
     ):
@@ -54,3 +54,7 @@ class EditClientApp(App):
             self.exit()  # Exit after saving
         except Exception as e:
             self.notify(f"Fehler beim Speichern: {e}", severity="error")
+
+    async def on_edit_client_cancel_edit(self, message: EditClient.CancelEdit) -> None:
+        """Handle the cancel message from the EditClient widget."""
+        self.exit()
