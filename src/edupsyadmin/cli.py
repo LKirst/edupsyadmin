@@ -568,9 +568,6 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     # args.config_path will therefore be a list!
     parser.add_argument("-c", "--config_path", action="append", help=argparse.SUPPRESS)
     parser.add_argument(
-        "--database_url", default=DEFAULT_DB_URL, help=argparse.SUPPRESS
-    )
-    parser.add_argument(
         "--salt_path", default=DEFAULT_SALT_PATH, help=argparse.SUPPRESS
     )
     parser.add_argument(
@@ -592,6 +589,9 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     common = ArgumentParser(add_help=False)  # common subcommand arguments
     common.add_argument("--app_username", help=argparse.SUPPRESS)
     common.add_argument("--app_uid", default=APP_UID, help=argparse.SUPPRESS)
+    common.add_argument(
+        "--database_url", default=DEFAULT_DB_URL, help=argparse.SUPPRESS
+    )
 
     _info(subparsers, common)
     _edit_config(subparsers, common)
