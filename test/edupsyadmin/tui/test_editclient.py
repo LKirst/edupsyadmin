@@ -1,176 +1,165 @@
+from datetime import date
+from unittest.mock import MagicMock
+
 import pytest
-from textual.widgets import Checkbox, Input
+from textual.widgets import Checkbox, Input, Select
 
-from edupsyadmin.tui.editclient import StudentEntryApp, _get_empty_client_dict
+from edupsyadmin.tui.edit_client import EditClient, _get_empty_client_dict
+from edupsyadmin.tui.edit_client_app import EditClientApp
 
-
-def convert_boolean_strings_to_bool(data: dict) -> dict:
-    converted_data = data.copy()
-    for key in [
-        "nos_rs",
-        "nos_les",
-        "nos_other",
-        "nta_font",
-        "nta_aufg",
-        "nta_struktur",
-        "nta_arbeitsm",
-        "nta_ersgew",
-        "nta_vorlesen",
-        "nta_other",
-        "nta_nos_end",
-    ]:
-        if key in converted_data and isinstance(converted_data[key], str):
-            converted_data[key] = bool(int(converted_data[key]))
-    return converted_data
+TERMINAL_SIZE = (70, 160)
 
 
-def test_initial_layout(snap_compare):
-    app = StudentEntryApp(42, data=None)
-    assert snap_compare(app, terminal_size=(50, 80))
+@pytest.fixture
+def mock_clients_manager(client_dict_set_by_user, mock_config):
+    """A mock clients manager that uses mock_config to ensure config is loaded."""
+    manager = MagicMock()
+    client_data = client_dict_set_by_user.copy()
+    if "birthday_encr" in client_data and isinstance(client_data["birthday_encr"], str):
+        try:
+            client_data["birthday_encr"] = date.fromisoformat(
+                client_data["birthday_encr"]
+            )
+        except (ValueError, TypeError):
+            client_data["birthday_encr"] = None
+    manager.get_decrypted_client.return_value = client_data
+    return manager
+
+
+def test_initial_layout_existing_client(
+    snap_compare, mock_clients_manager, client_dict_set_by_user, mock_config
+):
+    """Test the initial layout of the edit client screen for an existing client."""
+    client_id = client_dict_set_by_user.get("client_id") or 42
+    app = EditClientApp(clients_manager=mock_clients_manager, client_id=client_id)
+
+    async def run_before(pilot):
+        await pilot.pause()
+        while not pilot.app.query(Input):
+            await pilot.pause(0.01)
+
+    assert snap_compare(app, run_before=run_before, terminal_size=TERMINAL_SIZE)
+
+
+def test_initial_layout_new_client(snap_compare, mock_config):
+    """Test the initial layout of the edit client screen for a new client."""
+    local_mock_manager = MagicMock()
+    local_mock_manager.get_decrypted_client.return_value = None
+    app = EditClientApp(clients_manager=local_mock_manager, client_id=None)
+
+    async def run_before(pilot):
+        await pilot.pause()
+        while not pilot.app.query(Input):
+            await pilot.pause(0.01)
+
+    assert snap_compare(app, run_before=run_before, terminal_size=TERMINAL_SIZE)
 
 
 @pytest.mark.asyncio
-async def test_type_text() -> None:
-    app = StudentEntryApp(42, data=None)
+async def test_type_text(mock_config):
+    local_mock_manager = MagicMock()
+    local_mock_manager.get_decrypted_client.return_value = None
+    app = EditClientApp(clients_manager=local_mock_manager, client_id=None)
 
-    async with app.run_test() as pilot:
-        await pilot.resize_terminal(1000, 1000)
-        wid = "#first_name_encr"
-        input_widget = pilot.app.query_exactly_one(wid)
-        assert isinstance(input_widget, Input)
-
-        app.set_focus(input_widget, scroll_visible=True)
-        await pilot.wait_for_scheduled_animations()
+    async with app.run_test(size=TERMINAL_SIZE) as pilot:
         await pilot.pause()
-        await pilot.click(wid)
+        wid = "#first_name_encr"
+        input_widget = pilot.app.query_one(wid, Input)
+        input_widget.focus()
         await pilot.press(*"TestName")
-
         assert input_widget.value == "TestName"
 
 
 @pytest.mark.asyncio
-async def test_type_date() -> None:
-    app = StudentEntryApp(42, data=None)
+async def test_type_date(mock_config):
+    local_mock_manager = MagicMock()
+    local_mock_manager.get_decrypted_client.return_value = None
+    app = EditClientApp(clients_manager=local_mock_manager, client_id=None)
 
-    async with app.run_test() as pilot:
-        await pilot.resize_terminal(1000, 1000)
-        wid = "#entry_date"
-        input_widget = pilot.app.query_exactly_one(wid)
-        assert isinstance(input_widget, Input)
-
-        app.set_focus(input_widget, scroll_visible=True)
-        await pilot.wait_for_scheduled_animations()
+    async with app.run_test(size=TERMINAL_SIZE) as pilot:
         await pilot.pause()
-        await pilot.click(wid)
+        wid = "#entry_date"
+        input_widget = pilot.app.query_one(wid, Input)
+        input_widget.focus()
         await pilot.press(*"2025-01-01")
-
         assert input_widget.value == "2025-01-01"
 
 
 @pytest.mark.asyncio
-async def test_set_bool() -> None:
-    app = StudentEntryApp(42, data=None)
+async def test_set_bool(mock_config):
+    local_mock_manager = MagicMock()
+    local_mock_manager.get_decrypted_client.return_value = None
+    app = EditClientApp(clients_manager=local_mock_manager, client_id=None)
 
-    async with app.run_test() as pilot:
-        await pilot.resize_terminal(1000, 1000)
-        wid = "#nos_rs"
-        bool_widget = pilot.app.query_exactly_one(wid)
-        assert isinstance(bool_widget, Checkbox)
-
-        app.set_focus(bool_widget, scroll_visible=True)
-        await pilot.wait_for_scheduled_animations()
+    async with app.run_test(size=TERMINAL_SIZE) as pilot:
         await pilot.pause()
+        wid = "#nos_rs"
+        bool_widget = pilot.app.query_one(wid, Checkbox)
         assert bool_widget.value is False
-
         await pilot.click(wid)
-        bool_widget.value = True
         assert bool_widget.value is True
 
 
 @pytest.mark.asyncio
-async def test_save_returns_data(mock_config) -> None:
-    client_dict = {
-        "first_name_encr": "Lieschen",
-        "last_name_encr": "Müller",
-        "school": "FirstSchool",
-        "gender_encr": "f",
-        "class_name": "7TKKG",
-        "birthday_encr": "1990-01-01",
-    }
+async def test_save_new_client_triggers_add(client_dict_all_str, mock_config):
+    """Test that saving a new client triggers the `add_client` method on the manager."""
+    mock_manager = MagicMock()
+    mock_manager.get_decrypted_client.return_value = None
+    app = EditClientApp(clients_manager=mock_manager, client_id=None)
 
-    app = StudentEntryApp(42, data=None)
+    typed_values = client_dict_all_str.copy()
+    typed_values.pop("client_id", None)
 
-    async with app.run_test() as pilot:
-        await pilot.resize_terminal(1000, 1000)
-        for key, value in client_dict.items():
-            wid = f"#{key}"
-            input_widget = pilot.app.query_exactly_one(wid)
-            app.set_focus(input_widget, scroll_visible=True)
-            await pilot.wait_for_scheduled_animations()
-            await pilot.pause()
-            await pilot.click(wid)
-            await pilot.press(*value)
+    widget_types = {}
 
-        wid = "#save"
-        input_widget = pilot.app.query_exactly_one(wid)
-        app.set_focus(input_widget, scroll_visible=True)
-        await pilot.wait_for_scheduled_animations()
+    async with app.run_test(size=TERMINAL_SIZE) as pilot:
         await pilot.pause()
-        await pilot.click(wid)
+        while not pilot.app.query(Input):
+            await pilot.pause(0.01)
 
-    assert app.return_value == client_dict
-
-
-@pytest.mark.asyncio
-async def test_enter_client_tui(mock_config, client_dict_all_str):
-    app = StudentEntryApp(data=None)
-
-    async with app.run_test() as pilot:
-        await pilot.resize_terminal(1000, 1000)
-        for key, value in client_dict_all_str.items():
-            if key == "client_id":  # client_id is not an input field
+        edit_client = pilot.app.query_one(EditClient)
+        for key, value in typed_values.items():
+            if not value:
                 continue
-            wid = f"#{key}"
-            input_widget = pilot.app.query_exactly_one(wid)
-            app.set_focus(input_widget, scroll_visible=True)
-            await pilot.wait_for_scheduled_animations()
-            await pilot.pause()
-            await pilot.click(wid)
-            if isinstance(input_widget, Checkbox):
-                input_widget.value = bool(
-                    int(value)
-                )  # Convert string "0" or "1" to boolean
-            else:
-                await pilot.press(*value)
+            widget = edit_client.query_one(f"#{key}")
+            widget_types[key] = type(widget)
+            if isinstance(widget, Checkbox):
+                widget.value = value == "1"
+            elif isinstance(widget, Input | Select):
+                widget.value = value
 
-        wid = "#save"
-        input_widget = pilot.app.query_exactly_one(wid)
-        app.set_focus(input_widget, scroll_visible=True)
-        await pilot.wait_for_scheduled_animations()
+        await edit_client.action_save()
         await pilot.pause()
-        await pilot.click(wid)
 
-    data = app.return_value
-    expected_data = _get_empty_client_dict()
-    # Update with values from client_dict_all_str, excluding client_id
-    for k, v in client_dict_all_str.items():
-        if k != "client_id":
-            expected_data[k] = v
-    expected_data = convert_boolean_strings_to_bool(expected_data)
+    mock_manager.add_client.assert_called_once()
+    called_kwargs = mock_manager.add_client.call_args.kwargs
 
-    # Filter expected_data to only include keys present in data
-    # This is because app.get_data() only returns changed fields
-    filtered_expected_data = {k: expected_data[k] for k in data if k in expected_data}
+    # The data sent to add_client should only be the data that differs
+    # from a default new client.
+    defaults = _get_empty_client_dict()
 
-    assert data == filtered_expected_data
+    expected_data = {}
+    for k, v in typed_values.items():
+        if not v:
+            continue
+
+        val_to_check = None
+        val_to_check = v == "1" if widget_types.get(k) is Checkbox else v
+
+        if val_to_check != defaults.get(k):
+            expected_data[k] = val_to_check
+
+    assert called_kwargs == expected_data
 
 
 @pytest.mark.asyncio
-async def test_edit_client_tui(clients_manager, client_dict_all_str):
+async def test_edit_client_triggers_edit(
+    clients_manager, client_dict_all_str, mock_config
+):
+    """Test that editing an existing client triggers the `edit_client` method."""
     client_id = clients_manager.add_client(**client_dict_all_str)
-    current_data = clients_manager.get_decrypted_client(client_id=client_id)
 
-    app = StudentEntryApp(client_id, data=current_data.copy())
+    app = EditClientApp(clients_manager=clients_manager, client_id=client_id)
 
     change_values = {
         "first_name_encr": "SomeNewNameßä",
@@ -178,44 +167,45 @@ async def test_edit_client_tui(clients_manager, client_dict_all_str):
         "nos_rs": True,
     }
 
-    async with app.run_test() as pilot:
-        await pilot.resize_terminal(1000, 1000)
-        for key, value in change_values.items():
-            wid = f"#{key}"
-            input_widget = pilot.app.query_exactly_one(wid)
-            app.set_focus(input_widget, scroll_visible=True)
-            await pilot.wait_for_scheduled_animations()
-            await pilot.pause()
-            await pilot.click(wid)
-            if isinstance(input_widget, Checkbox):
-                input_widget.value = value
-            else:
-                input_widget.value = ""  # Clear the input field
-                await pilot.press(*value)
-
-        wid = "#save"
-        input_widget = pilot.app.query_exactly_one(wid)
-        app.set_focus(input_widget, scroll_visible=True)
-        await pilot.wait_for_scheduled_animations()
+    async with app.run_test(size=TERMINAL_SIZE) as pilot:
         await pilot.pause()
-        await pilot.click(wid)
+        while not pilot.app.query(Input):
+            await pilot.pause(0.01)
 
-    data = app.return_value
-    assert data == change_values
+        edit_client = pilot.app.query_one(EditClient)
+        for key, value in change_values.items():
+            widget = edit_client.query_one(f"#{key}")
+            if isinstance(widget, Input | Select):
+                widget.value = str(value)
+            elif isinstance(widget, Checkbox):
+                widget.value = value
+
+        await edit_client.action_save()
+        await pilot.pause()
+
+    edited_client = clients_manager.get_decrypted_client(client_id)
+    for key, value in change_values.items():
+        retrieved_value = edited_client[key]
+        if isinstance(retrieved_value, date):
+            assert retrieved_value.isoformat() == value
+        elif isinstance(retrieved_value, bool):
+            assert retrieved_value == value
+        else:
+            assert str(retrieved_value) == str(value)
 
 
 @pytest.mark.asyncio
-async def test_cancel_returns_none() -> None:
-    app = StudentEntryApp(data=None)
-
+async def test_cancel_exits(mock_config):
+    """Test that cancelling an edit exits the app."""
+    local_mock_manager = MagicMock()
+    local_mock_manager.get_decrypted_client.return_value = None
+    app = EditClientApp(clients_manager=local_mock_manager, client_id=None)
     async with app.run_test() as pilot:
-        await pilot.resize_terminal(1000, 1000)
-        # Simulate clicking the cancel button
-        wid = "#cancel"
-        cancel_button = pilot.app.query_exactly_one(wid)
-        app.set_focus(cancel_button, scroll_visible=True)
-        await pilot.wait_for_scheduled_animations()
         await pilot.pause()
-        await pilot.click(wid)
+        while not pilot.app.query(Input):
+            await pilot.pause(0.01)
 
-    assert app.return_value is None
+        await pilot.app.query_one(EditClient).action_cancel()
+        await pilot.pause()
+
+    assert app._exit is True
