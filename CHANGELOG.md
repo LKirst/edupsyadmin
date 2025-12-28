@@ -1,3 +1,13 @@
+## 7.11.3 (2025-12-28)
+
+### Fix
+
+- **tui.edit_client_app**: close app if edit is cancelled
+
+### Refactor
+
+- **cli**: move --database_url to common arguments
+
 ## 7.11.2 (2025-12-19)
 
 ### Fix
