@@ -327,7 +327,14 @@ def clients_manager(tmp_path, mock_salt_path, mock_config, mock_keyring):
 
 
 @pytest.fixture
-def pdf_forms(tmp_path: Path) -> list[Path]:
+def pdf_forms(tmp_path_factory: pytest.TempPathFactory) -> list[Path]:
+    """
+    Create sample PDF forms for testing.
+
+    Uses its own temporary directory to avoid interfering with tests that
+    manage their own `tmp_path`.
+    """
+    forms_dir = tmp_path_factory.mktemp("pdf_forms")
     sample_files = [
         Path("test/edupsyadmin/data/sample_form_mantelbogen.pdf").resolve(),
         Path("test/edupsyadmin/data/sample_form_anschreiben.pdf").resolve(),
@@ -337,7 +344,7 @@ def pdf_forms(tmp_path: Path) -> list[Path]:
     pdf_form_paths = []
 
     reportlab_form_filename = "sample_form_reportlab.pdf"
-    reportlab_form_path = tmp_path / reportlab_form_filename
+    reportlab_form_path = forms_dir / reportlab_form_filename
     create_pdf_form(str(reportlab_form_path))
     pdf_form_paths.append(reportlab_form_path)
 

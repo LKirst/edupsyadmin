@@ -379,6 +379,29 @@ def test_edit_config_command(mock_config):
         mock_app_instance.run.assert_called_once()
 
 
+# TODO: Do the same for `get_clients --tui` and `edit_client --tui`
+def test_create_documentation_tui(mock_config):
+    """Test that `create_documentation --tui` starts the FillFormApp."""
+    with patch("edupsyadmin.cli.lazy_import") as mock_lazy_import:
+        # Prevent the app from actually running
+        mock_app_instance = mock_lazy_import.return_value.FillFormApp.return_value
+        mock_app_instance.run.return_value = None
+
+        # Call the main function with the mock config and the TUI flag
+        main(split(f"-c {mock_config} create_documentation --tui"))
+
+        # Assert that the app was initialized
+        mock_lazy_import.return_value.FillFormApp.assert_called_once()
+        # Assert that a clients_manager was passed to the app's constructor
+        assert (
+            "clients_manager"
+            in mock_lazy_import.return_value.FillFormApp.call_args.kwargs
+        )
+
+        # Assert that the app was run
+        mock_app_instance.run.assert_called_once()
+
+
 # Make the script executable.
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__]))

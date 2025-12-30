@@ -419,19 +419,30 @@ def command_create_documentation(
     form_set: str | None,
     form_paths: list[str] | None,
     inject_data: list[str] | None,
+    tui: bool = False,
 ) -> None:
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
-    add_convenience_data = lazy_import(
-        "edupsyadmin.api.add_convenience_data"
-    ).add_convenience_data
-    fill_form = lazy_import("edupsyadmin.api.fill_form").fill_form
-
     clients_manager = clients_manager_cls(
         database_url=database_url,
         app_uid=app_uid,
         app_username=app_username,
         salt_path=salt_path,
     )
+    if tui:
+        fill_form_app_cls = lazy_import("edupsyadmin.tui.fill_form_app").FillFormApp
+        fill_form_app_cls(clients_manager=clients_manager).run()
+        return
+
+    if not client_id:
+        raise ValueError(
+            "At least one 'client_id' must be provided when not using --tui."
+        )
+
+    add_convenience_data = lazy_import(
+        "edupsyadmin.api.add_convenience_data"
+    ).add_convenience_data
+    fill_form = lazy_import("edupsyadmin.api.fill_form").fill_form
+
     if form_paths is None:
         form_paths = []
     if form_set:
@@ -444,8 +455,9 @@ def command_create_documentation(
                 f"Namen '{form_set}' angelegt. Verfügbare Sets sind: "
                 f"{available_sets}"
             )
-    elif not form_paths:
+    elif not form_paths and not tui:
         raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
+
     form_paths_normalized: list[str | os.PathLike[str]] = [
         _normalize_path(p) for p in form_paths
     ]
@@ -582,29 +594,29 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument(
         "-w", "--warn", default=None, help="logger warning level [WARN]"
     )
-    parser.set_defaults(command=None)
-    subparsers = parser.add_subparsers(title="subcommands")
 
-    # TODO: Remove common arguments? I read them all from config.
-    common = ArgumentParser(add_help=False)  # common subcommand arguments
-    common.add_argument("--app_username", help=argparse.SUPPRESS)
-    common.add_argument("--app_uid", default=APP_UID, help=argparse.SUPPRESS)
-    common.add_argument(
+    # Global arguments
+    parser.add_argument("--app_username", help=argparse.SUPPRESS)
+    parser.add_argument("--app_uid", default=APP_UID, help=argparse.SUPPRESS)
+    parser.add_argument(
         "--database_url", default=DEFAULT_DB_URL, help=argparse.SUPPRESS
     )
 
-    _info(subparsers, common)
-    _edit_config(subparsers, common)
-    _new_client(subparsers, common)
-    _set_client(subparsers, common)
-    _create_documentation(subparsers, common)
-    _get_clients(subparsers, common)
-    _flatten_pdfs(subparsers, common)
-    _mk_report(subparsers, common)
-    _taetigkeitsbericht(subparsers, common)
-    _delete_client(subparsers, common)
-    _setup_demo(subparsers, common)
-    _tui(subparsers, common)
+    parser.set_defaults(command=None)
+    subparsers = parser.add_subparsers(title="subcommands")
+
+    _info(subparsers)
+    _edit_config(subparsers)
+    _new_client(subparsers)
+    _set_client(subparsers)
+    _create_documentation(subparsers)
+    _get_clients(subparsers)
+    _flatten_pdfs(subparsers)
+    _mk_report(subparsers)
+    _taetigkeitsbericht(subparsers)
+    _delete_client(subparsers)
+    _setup_demo(subparsers)
+    _tui(subparsers)
 
     args = parser.parse_args(argv)
     if not args.command:
@@ -620,22 +632,20 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     return args
 
 
-def _info(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _info(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     """CLI adaptor for the info command.
 
     :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
     """
-    epilog = textwrap.dedent("""\
+    epilog = textwrap.dedent(
+        """\
         Example:
           # Show app version, paths and other info
           edupsyadmin info
-    """)
+    """
+    )
     parser = subparsers.add_parser(
         "info",
-        parents=[common],
         description="Show app version and what paths the app uses",
         help="Get useful information for debugging",
         epilog=epilog,
@@ -644,22 +654,20 @@ def _info(
     parser.set_defaults(command=command_info)
 
 
-def _edit_config(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _edit_config(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     """CLI adaptor for the editconfig command.
 
     :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
     """
-    epilog = textwrap.dedent("""\
+    epilog = textwrap.dedent(
+        """\
         Example:
           # Open the configuration file in a TUI
           edupsyadmin edit_config
-    """)
+    """
+    )
     parser = subparsers.add_parser(
         "edit_config",
-        parents=[common],
         description="Edit app configuration",
         help="Edit app configuration",
         epilog=epilog,
@@ -668,15 +676,13 @@ def _edit_config(
     parser.set_defaults(command=command_edit_config)
 
 
-def _new_client(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _new_client(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     """CLI adaptor for the new_client command.
 
     :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
     """
-    epilog = textwrap.dedent("""\
+    epilog = textwrap.dedent(
+        """\
         Examples:
           # Add a new client interactively using the TUI
           edupsyadmin new_client
@@ -686,10 +692,10 @@ def _new_client(
 
           # Add from CSV and keep the file
           edupsyadmin new_client --csv "./path/to/sample.csv" --name "ClientName" --school MySchool --keepfile
-    """)
+    """
+    )
     parser = subparsers.add_parser(
         "new_client",
-        parents=[common],
         help="Add a new client",
         description="Add a new client",
         epilog=epilog,
@@ -735,25 +741,23 @@ def _new_client(
     )
 
 
-def _set_client(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _set_client(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     """CLI adaptor for the set_client command.
 
     :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
     """
-    epilog = textwrap.dedent("""\
+    epilog = textwrap.dedent(
+        """\
         Examples:
           # Edit a client with ID 2 interactively in the TUI
           edupsyadmin set_client 2
 
           # Set 'nta_font' to '1' (true) and 'nta_zeitv_vieltext' to '20' for clients with ID 1 and 2
           edupsyadmin set_client 1 2 --key_value_pairs "nta_font=1" "nta_zeitv_vieltext=20"
-    """)
+    """
+    )
     parser = subparsers.add_parser(
         "set_client",
-        parents=[common],
         help="Change values for one or more clients",
         description="Change values for one or more clients",
         usage=(
@@ -778,22 +782,20 @@ def _set_client(
     )
 
 
-def _delete_client(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _delete_client(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     """CLI adaptor for the delete_client command.
 
     :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
     """
-    epilog = textwrap.dedent("""\
+    epilog = textwrap.dedent(
+        """\
         Example:
           # Delete client with ID 1
           edupsyadmin delete_client 1
-    """)
+    """
+    )
     parser = subparsers.add_parser(
         "delete_client",
-        parents=[common],
         help="Delete a client in the database",
         epilog=epilog,
         formatter_class=RawDescriptionHelpFormatter,
@@ -802,21 +804,19 @@ def _delete_client(
     parser.add_argument("client_id", type=int, help="id of the client to delete")
 
 
-def _setup_demo(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _setup_demo(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     """CLI adaptor for the setup_demo command.
     :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
     """
-    epilog = textwrap.dedent("""\
+    epilog = textwrap.dedent(
+        """\
         Example:
           # Create a sandboxed demo environment
           edupsyadmin setup_demo
-    """)
+    """
+    )
     parser = subparsers.add_parser(
         "setup_demo",
-        parents=[common],
         description="Create a sandboxed demo environment (demo-config.yml, demo-salt.txt, demo.db).",
         help="Create a sandboxed demo environment.",
         epilog=epilog,
@@ -825,15 +825,13 @@ def _setup_demo(
     parser.set_defaults(command=command_setup_demo)
 
 
-def _get_clients(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _get_clients(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     """CLI adaptor for the get_clients command.
 
     :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
     """
-    epilog = textwrap.dedent("""\
+    epilog = textwrap.dedent(
+        """\
         Examples:
           # Show an overview of all clients
           edupsyadmin get_clients
@@ -849,10 +847,10 @@ def _get_clients(
 
           # Show all clients, and display the columns keyword_taet_encr and notes_encr
           edupsyadmin get_clients --tui --columns keyword_taet_encr notes_encr
-    """)
+    """
+    )
     parser = subparsers.add_parser(
         "get_clients",
-        parents=[common],
         help="Show clients overview or single client",
         description="Show clients overview or single client",
         epilog=epilog,
@@ -879,16 +877,17 @@ def _get_clients(
     )
 
 
-def _create_documentation(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _create_documentation(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     """CLI adaptor for the create_documentation command.
 
     :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
     """
-    epilog = textwrap.dedent("""\
+    epilog = textwrap.dedent(
+        """\
         Examples:
+          # Open the TUI to interactively fill a form
+          edupsyadmin create_documentation --tui
+
           # Fill a PDF form for client with ID 1 using a form set named 'MyFormSet'
           edupsyadmin create_documentation 1 --form_set MyFormSet
 
@@ -897,17 +896,17 @@ def _create_documentation(
 
           # Fill a form for client with ID 3, injecting custom data
           edupsyadmin create_documentation 3 --form_paths "./path/to/form.pdf" --inject_data "key1=value1" "key2=value2"
-    """)
+    """
+    )
     parser = subparsers.add_parser(
         "create_documentation",
-        parents=[common],
         help="Fill a pdf form or a text file with a liquid template",
         description=(
             "Fill a pdf form or a text file with a liquid template. "
-            "Either --form_set or --form_paths must be provided."
+            "Use --tui for interactive mode, or provide client_id and form details for direct creation."
         ),
         usage=(
-            "edupsyadmin create_documentation [-h] client_id [client_id ...] "
+            "edupsyadmin create_documentation [--tui] [client_id ...] "
             "[--form_set FORM_SET] [--form_paths FORM_PATH ...] "
             "[--inject_data [INJECT_DATA ...]]"
         ),
@@ -915,7 +914,10 @@ def _create_documentation(
         formatter_class=RawDescriptionHelpFormatter,
     )
     parser.set_defaults(command=command_create_documentation)
-    parser.add_argument("client_id", type=int, nargs="+")
+    parser.add_argument(
+        "--tui", action="store_true", help="Open TUI for interactive form filling."
+    )
+    parser.add_argument("client_id", type=int, nargs="*")
     parser.add_argument(
         "--form_set",
         type=str,
@@ -935,15 +937,12 @@ def _create_documentation(
     )
 
 
-def _mk_report(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _mk_report(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     """CLI adaptor for the api.lgvt.mk_report command.
 
     :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
     """
-    parser = subparsers.add_parser("mk_report", parents=[common])
+    parser = subparsers.add_parser("mk_report")
     parser.set_defaults(command=command_mk_report)
     parser.add_argument("client_id", type=int)
     parser.add_argument("test_date", type=str, help="Testdatum (YYYY-mm-dd)")
@@ -956,21 +955,20 @@ def _mk_report(
     )
 
 
-def _flatten_pdfs(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _flatten_pdfs(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     default_library = lazy_import("edupsyadmin.api.flatten_pdf").DEFAULT_LIBRARY
-    epilog = textwrap.dedent("""\
+    epilog = textwrap.dedent(
+        """\
         Examples:
           # Flatten a single PDF form using the default library
           edupsyadmin flatten_pdfs "./path/to/filled_form.pdf"
 
           # Flatten multiple PDF forms in the current folder
           edupsyadmin flatten_pdfs *.pdf
-    """)
+    """
+    )
     parser = subparsers.add_parser(
         "flatten_pdfs",
-        parents=[common],
         help="Flatten pdf forms (experimental)",
         description="Flatten pdf forms (experimental)",
         epilog=epilog,
@@ -983,25 +981,23 @@ def _flatten_pdfs(
     parser.add_argument("form_paths", nargs="+")
 
 
-def _taetigkeitsbericht(
-    subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser
-) -> None:
+def _taetigkeitsbericht(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     """CLI adaptor for the api.taetigkeitsbericht_from_db.taetigkeitsbericht command.
 
     :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
     """
-    epilog = textwrap.dedent("""\
+    epilog = textwrap.dedent(
+        """\
         Example:
           # Generate a Taetigkeitsbericht PDF with 3 Anrechnugnsstunden
           edupsyadmin taetigkeitsbericht 3
 
           # Generate a report with custom output name and total hours
           edupsyadmin taetigkeitsbericht 10 --out_basename "MyReport" --wstd_total 28
-    """)
+    """
+    )
     parser = subparsers.add_parser(
         "taetigkeitsbericht",
-        parents=[common],
         help="Create a PDF output for the Taetigkeitsbericht (experimental)",
         epilog=epilog,
         formatter_class=RawDescriptionHelpFormatter,
@@ -1030,20 +1026,20 @@ def _taetigkeitsbericht(
     )
 
 
-def _tui(subparsers: _SubParsersAction[ArgumentParser], common: ArgumentParser) -> None:
+def _tui(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     """CLI adaptor for the tui command.
 
     :param subparsers: subcommand parsers
-    :param common: parser for common subcommand arguments
     """
-    epilog = textwrap.dedent("""\
+    epilog = textwrap.dedent(
+        """\
         Example:
           # Start the TUI
           edupsyadmin tui
-    """)
+    """
+    )
     parser = subparsers.add_parser(
         "tui",
-        parents=[common],
         description="Start the TUI",
         help="Start the TUI",
         epilog=epilog,

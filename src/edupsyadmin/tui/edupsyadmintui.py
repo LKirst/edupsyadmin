@@ -6,11 +6,13 @@ from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal
-from textual.message import Message  # Added import
+from textual.message import Message
 from textual.widgets import Footer, Header, LoadingIndicator
 
+from edupsyadmin.api.fill_form import fill_form
 from edupsyadmin.tui.clients_overview import ClientsOverview
 from edupsyadmin.tui.edit_client import EditClient
+from edupsyadmin.tui.fill_form_widget import FillForm, FillFormScreen
 
 if TYPE_CHECKING:
     from edupsyadmin.api.managers import ClientsManager
@@ -42,6 +44,7 @@ class EdupsyadminTui(App[None]):
         Binding(
             "ctrl+n", "new_client", description="Neue*n Klient*in anlegen", show=True
         ),
+        Binding("ctrl+f", "fill_forms", "Formulare ausfüllen", show=True),
         Binding("n", "sort_by_last_name", "Sortieren nach `last_name_encr`", show=True),
         Binding("s", "sort_by_school", "Sortieren nach `schule`", show=True),
         Binding("i", "sort_by_client_id", "Sortieren nach `client_id`", show=True),
@@ -99,6 +102,19 @@ class EdupsyadminTui(App[None]):
             self.post_message(self._ClientDataSaveResult())
         except Exception as e:
             self.post_message(self._ClientDataSaveResult(error=e))
+
+    @work(exclusive=True, thread=True)
+    def fill_forms_worker(self, client_id: int, form_paths: list[str]) -> None:
+        """Worker to fill forms."""
+        try:
+            from edupsyadmin.api.add_convenience_data import add_convenience_data
+
+            client_data = self.manager.get_decrypted_client(client_id)
+            client_data_with_convenience = add_convenience_data(client_data)
+            fill_form(client_data_with_convenience, form_paths)
+            self.post_message(self._FormsFilledResult())
+        except Exception as e:
+            self.post_message(self._FormsFilledResult(error=e))
 
     async def on_clients_overview_client_selected(
         self, message: ClientsOverview.ClientSelected
@@ -185,6 +201,35 @@ class EdupsyadminTui(App[None]):
         edit_client_widget.update_client(None, {})
         self.notify("Bearbeitung abgebrochen.", severity="information")
 
+    async def on_fill_form_start_fill(self, message: FillForm.StartFill) -> None:
+        """Handle the start fill message from the FillForm widget."""
+        if self.is_busy:
+            self.notify(BUSY_MSG, severity="warning")
+            return
+        self.is_busy = True
+        self.query_one("#main-loading-indicator").display = True
+        self.notify("Fülle Formulare aus...")
+        self.fill_forms_worker(message.client_id, message.form_paths)
+
+    async def on_fill_form_cancel(self, message: FillForm.Cancel) -> None:
+        """Handle the cancel message from the FillForm widget."""
+        self.pop_screen()
+
+    def on_edupsyadmin_tui__forms_filled_result(
+        self, message: _FormsFilledResult
+    ) -> None:
+        """Handle the result of filling forms."""
+        self.query_one("#main-loading-indicator").display = False
+        self.is_busy = False
+        self.pop_screen()
+        if message.error:
+            self.notify(
+                f"Fehler beim Ausfüllen der Formulare: {message.error}",
+                severity="error",
+            )
+        else:
+            self.notify("Formulare erfolgreich ausgefüllt.", severity="information")
+
     def action_new_client(self) -> None:
         """Action to create a new client."""
         if self.is_busy:
@@ -196,6 +241,19 @@ class EdupsyadminTui(App[None]):
 
         edit_client_widget = self.query_one(EditClient)
         edit_client_widget.update_client(client_id=None, data=None)
+
+    def action_fill_forms(self) -> None:
+        """Action to show the fill forms screen for the selected client."""
+        if self.is_busy:
+            self.notify(BUSY_MSG, severity="warning")
+            return
+
+        client_id = self.query_one(EditClient).client_id
+        if client_id is None:
+            self.notify("Bitte zuerst eine*n Klient*in auswählen.", severity="warning")
+            return
+
+        self.push_screen(FillFormScreen(self.manager, client_id))
 
     def action_reload(self) -> None:
         """Reloads the data in the table from the database."""
@@ -230,6 +288,11 @@ class EdupsyadminTui(App[None]):
             super().__init__()
 
     class _ClientDataSaveResult(Message):
+        def __init__(self, error: Exception | None = None) -> None:
+            self.error = error
+            super().__init__()
+
+    class _FormsFilledResult(Message):
         def __init__(self, error: Exception | None = None) -> None:
             self.error = error
             super().__init__()
