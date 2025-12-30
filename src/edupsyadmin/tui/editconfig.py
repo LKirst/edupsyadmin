@@ -251,7 +251,8 @@ class LgvtEditor(Vertical):
                     str(value) if value else "",
                     id=f"lgvt-{key}",
                     placeholder=key,
-                    validators=[PathIsFileValidator] if value else [],
+                    validators=[PathIsFileValidator],
+                    valid_empty=True,
                 )
                 yield inp
 
@@ -379,22 +380,20 @@ class ConfigEditorApp(App[None]):
         }
 
         # Core section
-        core_data = {}
         core_keys = [
             "logging",
             "app_uid",
             "app_username",
         ]
         for key in core_keys:
-            self.query_one(f"#core-{key}", Input)
-
-        new_config["core"] = core_data
+            new_config["core"][key] = self.query_one(f"#core-{key}", Input).value
 
         # Schoolpsy section
-        schoolpsy_data = {}
-        for key in self.config_dict.get("schoolpsy", {}):
-            schoolpsy_data[key] = self.query_one(f"#schoolpsy-{key}", Input).value
-        new_config["schoolpsy"] = schoolpsy_data
+        schoolpsy_keys = ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]
+        for key in schoolpsy_keys:
+            new_config["schoolpsy"][key] = self.query_one(
+                f"#schoolpsy-{key}", Input
+            ).value
 
         # Dynamic sections
         for editor in self.query(SchoolEditor):
