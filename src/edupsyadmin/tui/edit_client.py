@@ -32,21 +32,6 @@ REQUIRED_FIELDS = [
 ]
 
 # fields which depend on other fields and should not be set by the user
-HIDDEN_FIELDS = [
-    "class_int",
-    "estimated_graduation_date",
-    "document_shredding_date",
-    "datetime_created",
-    "datetime_lastmodified",
-    "notenschutz",
-    "nos_rs_ausn",
-    "nos_other",
-    "nachteilsausgleich",
-    "nta_zeitv",
-    "nta_other",
-    "nta_nos_end",
-]
-
 HIDDEN_FIELDS = {
     "class_int",
     "estimated_graduation_date",
@@ -66,7 +51,7 @@ DATE_FIELDS = {"birthday_encr", "lrst_last_test_date_encr"}
 DATE_REGEX = r"\d{4}-[0-1]\d-[0-3]\d"
 
 
-def _to_str_or_bool(value: Any) -> str | bool:
+def _to_str_or_bool(value: Any) -> str | bool | None:
     if value is None:
         return None
     if isinstance(value, date):
@@ -189,7 +174,9 @@ class EditClient(Container):
             )
         yield RichLog(classes="log", id="edit-client-log")
 
-    def _normalize_original_data(self, data: dict[str, Any]) -> dict[str, str | bool]:
+    def _normalize_original_data(
+        self, data: dict[str, Any]
+    ) -> dict[str, str | bool | None]:
         return {k: _to_str_or_bool(v) for k, v in data.items()}
 
     def _visible_db_columns(self):
@@ -220,7 +207,7 @@ class EditClient(Container):
         self,
         name: str,
         field_type: type,
-        default: str | bool,
+        default: str | bool | None,
         required: bool,
         tooltip: str | None,
     ):
@@ -328,7 +315,9 @@ class EditClient(Container):
         self.client_id = client_id
         data = data or _get_empty_client_dict()
 
-        self._original_data: dict[str, str | bool] = self._normalize_original_data(data)
+        self._original_data: dict[str, str | bool | None] = (
+            self._normalize_original_data(data)
+        )
         self._changed_data: dict[str, Any] = {}
 
         form = self.query_one("#edit-client-form", VerticalScroll)
@@ -380,9 +369,9 @@ class EditClient(Container):
         ):
             event.select.clear()  # value becomes None and prompt is shown again
 
-    async def action_save(self) -> None:
+    def _validate_inputs_for_save(self) -> bool:
+        """Check all inputs and log errors if validation fails."""
         log = self.query_one("#edit-client-log", RichLog)
-        log.clear()
         all_inputs = list(self.inputs.values()) + list(self.dates.values())
 
         # Check for empty required fields
@@ -400,7 +389,6 @@ class EditClient(Container):
             widget.is_valid for widget in all_inputs if isinstance(widget, Input)
         )
 
-        # If any validation fails, notify user and stop
         if required_fields_empty or not all_widgets_valid:
             # Trigger validation display on all inputs to show which ones are invalid
             for widget in all_inputs:
@@ -419,6 +407,14 @@ class EditClient(Container):
                 "Bitte alle Pflichtfelder (*) ausfüllen und auf "
                 "korrekte Formate achten."
             )
+            return False
+        return True
+
+    async def action_save(self) -> None:
+        log = self.query_one("#edit-client-log", RichLog)
+        log.clear()
+
+        if not self._validate_inputs_for_save():
             return
 
         # Proceed with saving if validation passed
