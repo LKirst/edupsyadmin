@@ -1,3 +1,18 @@
+## 7.12.0 (2026-01-02)
+
+### Feat
+
+- add create documentation widget for TUI
+
+### Fix
+
+- **api.setup_demo**: update the alias / function hint
+- **tui.editconfig**: tui was not saving all data entered for the config
+
+### Refactor
+
+- **tui.edit_client**: refactor for readability, remove redundancy and fix type hints
+
 ## 7.11.3 (2025-12-28)
 
 ### Fix
