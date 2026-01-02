@@ -1,4 +1,4 @@
-from typing import ClassVar  # Added import
+from typing import ClassVar
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
