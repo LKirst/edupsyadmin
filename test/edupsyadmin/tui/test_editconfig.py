@@ -1,5 +1,6 @@
 import keyring
 import pytest
+import yaml
 from textual.widgets import Input
 
 from edupsyadmin.tui.editconfig import (
@@ -85,3 +86,31 @@ def test_edit_new_school_container(mock_config_snapshots, snap_compare):
 
 
 # TODO: Test delete school
+
+
+@pytest.mark.asyncio
+async def test_app_saves_config_changes(mock_config):
+    """Test if the app saves changes to the configuration file."""
+    config_path = mock_config
+    app = ConfigEditorApp(config_path)
+
+    new_logging_level = "INFO"
+    new_schoolpsy_name = "Dr. New Name"
+
+    async with app.run_test() as pilot:
+        # Change values in the input fields
+        logging_input = app.query_exactly_one("#core-logging", Input)
+        logging_input.value = new_logging_level
+
+        schoolpsy_name_input = app.query_exactly_one("#schoolpsy-schoolpsy_name", Input)
+        schoolpsy_name_input.value = new_schoolpsy_name
+
+        await pilot.click("#save")
+
+    # Read the config file after the app has exited
+    with open(config_path) as f:
+        saved_config = yaml.safe_load(f)
+
+    # Assert that the changes were saved
+    assert saved_config["core"]["logging"] == new_logging_level
+    assert saved_config["schoolpsy"]["schoolpsy_name"] == new_schoolpsy_name

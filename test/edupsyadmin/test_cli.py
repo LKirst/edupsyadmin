@@ -110,11 +110,11 @@ def test_config_template(mock_keyring, tmp_path_factory):
         "DEBUG",
         "-c",
         config_path,
-        "info",
         "--app_uid",
         "example.com",
         "--database_url",
         database_url,
+        "info",
     ]
     assert main(args) == 0
     assert os.path.isfile(config_path), (
