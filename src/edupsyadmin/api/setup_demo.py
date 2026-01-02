@@ -135,18 +135,19 @@ def setup_demo() -> None:
         f'--salt_path "{abs_salt_path}" '
         f'--database_url "sqlite:///{abs_db_path}"\''
     )
-    powershell_alias = (
+    # A function is more common in PowerShell profiles and robustly passes arguments
+    powershell_function = (
         f"function edupsyadmin_demo {{ "
         f'edupsyadmin --config_path \\"{abs_config_path}\\" '
         f'--salt_path \\"{abs_salt_path}\\" '
-        f'--database_url \\"sqlite:///{abs_db_path}\\" @args '
+        f'--database_url \\"sqlite:///{abs_db_path}\\" $args '
         f"}}"
     )
 
-    print("\nTo quickly use the demo environment, consider setting up an alias:")
-    print("\n  For Bash/Zsh, add this to your .bashrc or .zshrc:")
+    print("\nTo quickly use the demo environment, consider setting up a shortcut:")
+    print("\n  For Bash/Zsh, add this alias to your .bashrc or .zshrc:")
     print(f"    {bash_alias}")
     print("    # Then, you can run: edupsyadmin_demo tui")
-    print("\n  For PowerShell, add this to your profile:")
-    print(f"    {powershell_alias}")
+    print("\n  For PowerShell, add this function to your profile:")
+    print(f"    {powershell_function}")
     print("    # Then, you can run: edupsyadmin_demo tui")
