@@ -1,3 +1,9 @@
+## 7.12.1 (2026-01-02)
+
+### Refactor
+
+- fix some typing issues
+
 ## 7.12.0 (2026-01-02)
 
 ### Feat
