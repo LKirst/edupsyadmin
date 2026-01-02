@@ -10,7 +10,7 @@ def display_client_details(client_data: dict[str, Any]) -> None:
     console = Console()
 
     # Helper to print a table for a group of fields
-    def print_group_table(data: dict, title: str, fields: list[str]) -> Table:
+    def print_group_table(data: dict, title: str, fields: list[str]) -> None:
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column(style="cyan")
         table.add_column()

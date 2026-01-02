@@ -1,5 +1,6 @@
 import os
 import shutil
+from collections.abc import Sequence
 from itertools import product
 from pathlib import Path
 from typing import Any
@@ -127,7 +128,7 @@ def write_form_md(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
 
 def fill_form(
     client_data: dict[str, Any],
-    form_paths: list[str | os.PathLike[str]],
+    form_paths: Sequence[str | os.PathLike[str]],
     out_dir: str | os.PathLike[str] = ".",
     use_fillpdf: bool = True,
 ) -> None:

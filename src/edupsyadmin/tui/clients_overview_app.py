@@ -1,7 +1,7 @@
 from typing import ClassVar
 
 from textual.app import App, ComposeResult
-from textual.binding import Binding
+from textual.binding import Binding, BindingType
 from textual.widgets import Footer, Header
 
 from edupsyadmin.api.managers import ClientsManager
@@ -11,7 +11,7 @@ from edupsyadmin.tui.clients_overview import ClientsOverview
 class ClientsOverviewApp(App):
     """A standalone Textual App to display the ClientsOverview widget."""
 
-    BINDINGS: ClassVar[list[Binding]] = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("ctrl+q", "quit", "Quit", show=True),
         Binding("n", "sort_by_last_name", "Sortieren nach `last_name_encr`", show=True),
         Binding("s", "sort_by_school", "Sortieren nach `schule`", show=True),

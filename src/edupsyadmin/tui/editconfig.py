@@ -58,7 +58,8 @@ class DeleteItemButton(Button):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         event.stop()
-        self.parent.remove()
+        if self.parent:
+            self.parent.remove()
 
 
 class SchoolEditor(Vertical):
@@ -223,7 +224,7 @@ class CsvImportEditor(Vertical):
         key = self.query_one("#item_key", Input).value
         if not key:
             return None, None
-        data = {"column_mapping": {}}
+        data: dict[str, Any] = {"column_mapping": {}}
         data["separator"] = self.query_one("#separator", Select).value
         mappings = {}
         for row in self.query(".mapping-row"):
@@ -370,7 +371,7 @@ class ConfigEditorApp(App[None]):
 
     def _rebuild_config_from_ui(self) -> dict[str, Any]:
         """Reconstructs the entire config from the current state of all UI widgets."""
-        new_config = {
+        new_config: dict[str, Any] = {
             "core": {},
             "schoolpsy": {},
             "school": {},
@@ -386,14 +387,14 @@ class ConfigEditorApp(App[None]):
             "app_username",
         ]
         for key in core_keys:
-            new_config["core"][key] = self.query_one(f"#core-{key}", Input).value
+            new_config["core"][key] = self.query_one(f"#core-{key}", Input).value or ""
 
         # Schoolpsy section
         schoolpsy_keys = ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]
         for key in schoolpsy_keys:
-            new_config["schoolpsy"][key] = self.query_one(
-                f"#schoolpsy-{key}", Input
-            ).value
+            new_config["schoolpsy"][key] = (
+                self.query_one(f"#schoolpsy-{key}", Input).value or ""
+            )
 
         # Dynamic sections
         for editor in self.query(SchoolEditor):
@@ -426,6 +427,7 @@ class ConfigEditorApp(App[None]):
         if event.button.id and event.button.id.startswith("add-"):
             section = event.button.id.split("-")[1]
 
+            editor: Vertical
             if section == "school":
                 default_data = {
                     "school_head_w_school": "",
@@ -443,9 +445,13 @@ class ConfigEditorApp(App[None]):
                     f"NewFormSet{len(self.query(FormSetEditor)) + 1}", []
                 )
             elif section == "csv_import":
-                default_data = {"separator": "", "column_mapping": {}}
+                default_data: dict[str, Any] = {
+                    "separator": "",
+                    "column_mapping": {},
+                }
                 editor = CsvImportEditor(
-                    f"NewCsvImport{len(self.query(CsvImportEditor)) + 1}", default_data
+                    f"NewCsvImport{len(self.query(CsvImportEditor)) + 1}",
+                    default_data,
                 )
             else:
                 return
@@ -473,7 +479,8 @@ class ConfigEditorApp(App[None]):
             else:
                 self.bell()  # Notify user of error
 
-        self.exit("Configuration saved.")
+        self.notify("Configuration saved.")
+        self.exit()
 
     async def action_quit(self) -> None:
         self.exit()

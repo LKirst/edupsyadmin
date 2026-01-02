@@ -211,6 +211,7 @@ class EditClient(Container):
         required: bool,
         tooltip: str | None,
     ):
+        widget: Checkbox | Select[Any] | Input
         # Booleans -> Checkbox
         if field_type is bool:
             widget = Checkbox(
@@ -315,10 +316,8 @@ class EditClient(Container):
         self.client_id = client_id
         data = data or _get_empty_client_dict()
 
-        self._original_data: dict[str, str | bool | None] = (
-            self._normalize_original_data(data)
-        )
-        self._changed_data: dict[str, Any] = {}
+        self._original_data = self._normalize_original_data(data)
+        self._changed_data = {}
 
         form = self.query_one("#edit-client-form", VerticalScroll)
 

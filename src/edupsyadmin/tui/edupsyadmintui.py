@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from textual import work
 from textual.app import App, ComposeResult
-from textual.binding import Binding
+from textual.binding import Binding, BindingType
 from textual.containers import Horizontal
 from textual.message import Message
 from textual.widgets import Footer, Header, LoadingIndicator
@@ -39,7 +39,7 @@ class EdupsyadminTui(App[None]):
         border: solid $accent;
     }
     """
-    BINDINGS: ClassVar[list[Binding]] = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("ctrl+q", "quit", "Beenden", show=True),
         Binding(
             "ctrl+n", "new_client", description="Neue*n Klient*in anlegen", show=True
