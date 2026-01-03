@@ -25,7 +25,7 @@ def mock_clients_manager(mock_config):
 
 def test_initial_layout(snap_compare, mock_clients_manager, tmp_path):
     """Test the initial layout of the fill form app."""
-    # 1. Create a mock directory structure
+    # Create a mock directory structure
     docs_dir = tmp_path / "documents"
     docs_dir.mkdir()
     (docs_dir / "form_a.pdf").touch()
@@ -36,17 +36,18 @@ def test_initial_layout(snap_compare, mock_clients_manager, tmp_path):
     (img_dir / "logo.png").touch()
 
     (tmp_path / "README.md").touch()
+    (tmp_path / "form_b.pdf").touch()
 
     app = FillFormApp(clients_manager=mock_clients_manager, client_id=CLIENT_ID)
 
     async def run_before(pilot):
-        # 2. Point the DirectoryTree to the mock directory
+        # Point the DirectoryTree to the mock directory
         dir_tree = pilot.app.query_one(MultiSelectDirectoryTree)
         dir_tree.path = str(tmp_path)
 
-        # 3. Update the path input to match
+        # Update the path input to match
         path_input = pilot.app.query_one("#path-input", Input)
-        path_input.value = str(tmp_path)
+        path_input.value = "TMP/DIR"
 
         await pilot.pause()
 

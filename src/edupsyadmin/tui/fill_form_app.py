@@ -31,7 +31,7 @@ class FillFormApp(App[None]):
         self.client_id = client_id
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Header()
         yield FillForm()
         yield Footer()
         yield LoadingIndicator()
