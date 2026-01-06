@@ -1,14 +1,27 @@
 Interaktive Benutzeroberfläche (TUI)
 =====================================
 
+``edupsyadmin`` bietet eine interaktive Benutzeroberfläche (TUI), um die
+Verwaltung von Klientendaten zu vereinfachen.
+
 Starten der TUI
 ---------------
 
-Um die interaktive Benutzeroberfläche zu starten, führe den folgenden Befehl aus:
+Um die interaktive Benutzeroberfläche zu starten, führe den folgenden Befehl
+aus:
 
 .. code-block:: console
 
     $ edupsyadmin tui
+
+Wie du siehst, ist die TUI in zwei Hauptbereiche unterteilt:
+
+- **Links**: Eine Übersichtstabelle aller Klienten in der Datenbank.
+- **Rechts**: Ein Formular zur Anzeige und Bearbeitung der Daten des
+  ausgewählten Klienten.
+
+.. image:: ../../test/edupsyadmin/tui/__snapshots__/test_edupsyadmintui/test_edupsyadmintui_initial_layout.svg
+   :alt: Übersicht der TUI
 
 Ansicht beim Start anpassen
 ---------------------------
@@ -36,38 +49,62 @@ Folgender Befehl zeigt zusätzlich die Spalte für ``notes_encr`` und
 
     $ edupsyadmin tui --columns notes_encr lrst_diagnosis_encr
 
-Übersicht
----------
-
-Nach dem Start erscheint eine Übersicht aller Klienten in der Datenbank auf der
-linken Seite. Die rechte Seite ist zunächst leer bis du eine Zeile in der
-Übersicht auswählst, oder einen neuen Klienten hinzufügst.
-
-Die Übersichtstabelle kann nach verschiedenen Spalten sortiert werden, um die
-Suche zu erleichtern.
-
-Klienten hinzufügen
--------------------
-
-Mit :kbd:`Strg-n` kann ein neuer Klient hinzugefügt werden. Rechts erscheint
-ein Formular zur Eingabe des Klienten.
-
-Klienten anzeigen (und bearbeiten)
-----------------------------------
-
-Du kannst in der Liste der Klienten links einen Klienten auswählen mit einem
-Klick auf eine Zeile in der Tabelle. Der Klient kann dann rechts bearbeitet
-werden.
-
 Navigation und Steuerung
 ------------------------
 
-Die TUI erlaubt die Bedienung mit der Maus, aber bestimmte Shortcuts
-beschleunigen die Bedienung:
+Die TUI erlaubt die Bedienung mit der Maus, aber die folgenden Tastenkürzel
+beschleunigen die Bedienung erheblich:
 
-- **Navigation**: Verwende die Pfeiltasten, um in Listen und Tabellen zu
-  navigieren. Mit :kbd:`Tab` springst du zum nächsten Eingabefeld oder Button.
+.. list-table:: Wichtige Tastenkürzel
+   :widths: 20 80
+   :header-rows: 1
 
-- **Beenden**: Die TUI kann mit :kbd:`Strg-q` beendet werden.
+   * - Taste(n)
+     - Aktion
+   * - :kbd:`Strg-q`
+     - Beendet die TUI.
+   * - :kbd:`Pfeiltasten`
+     - Navigation in der Klientenübersicht.
+   * - :kbd:`Tab`
+     - Springt zum nächsten Eingabefeld oder Button.
+   * - :kbd:`Strg+n`
+     - Öffnet ein leeres Formular, um eine*n neue*n Klient*in anzulegen.
+   * - :kbd:`Strg+s`
+     - Speichert die Änderungen am aktuell angezeigten Klienten.
+   * - :kbd:`Escape`
+     - Bricht die Bearbeitung ab und leert das Formular.
+   * - :kbd:`Strg+f`
+     - Öffnet den Dialog zum Ausfüllen von Formularen für den ausgewählten
+       Klienten.
+   * - :kbd:`Strg+r`
+     - Lädt die Klientenliste neu aus der Datenbank.
 
-- **Speichern**: :kbd:`Strg-s`
+Sortieren der Übersicht
+-----------------------
+
+Die Klientenübersicht kann zur besseren Orientierung nach verschiedenen Spalten
+sortiert werden:
+
+.. list-table:: Sortier-Tastenkürzel
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Taste(n)
+     - Sortiert nach
+   * - :kbd:`i`
+     - Klienten-ID (``client_id``)
+   * - :kbd:`n`
+     - Nachname (``last_name_encr``)
+   * - :kbd:`s`
+     - Schule (``school``) und dann Nachname
+   * - :kbd:`c`
+     - Klasse (``class_name``) und dann Nachname
+
+Nächste Schritte
+----------------
+
+Jetzt weißt du, wie die TUI aufgebaut ist. In den nächsten Kapiteln werden wir
+damit arbeiten:
+
+- :doc:`editingclients`
+- :doc:`creatingdocumentation`

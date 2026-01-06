@@ -50,10 +50,25 @@ Update der App
 
 Aktualisiere vor dem Update uv und python:
 
-.. code-block:: console
+.. tab-set::
+    :sync-group: update-os
 
-   $ winget upgrade uv
-   $ uv python upgrade
+    .. tab-item:: Windows
+        :sync: windows-os
+
+        .. code-block:: console
+
+           $ winget upgrade uv
+           $ uv python upgrade
+
+    .. tab-item:: macOS und Linux
+        :sync: macos-linux-os
+
+        .. code-block:: console
+
+           $ uv self update
+           $ uv python upgrade
+
 
 Nun aktualisiere edupsyadmin mit:
 

@@ -64,16 +64,20 @@ Tätigkeitsbericht verlangt.
    :caption: Einstiegstutorial
 
    tutorial/installation
+   tutorial/configuration
    tutorial/helpfunction
+   tutorial/encryption
    tutorial/tui
+   tutorial/editingclients
    tutorial/creatingdocumentation
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Tutorial für Fortgeschrittene
 
-   tutorial/addingclients
    tutorial/update
+   tutorial/cli
    tutorial/taetigkeitsbericht
 
 .. toctree::
@@ -85,6 +89,7 @@ Tätigkeitsbericht verlangt.
 
 .. toctree::
    :maxdepth: 1
+   :caption: FAQ
 
    faq
 

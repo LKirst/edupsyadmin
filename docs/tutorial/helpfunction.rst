@@ -3,10 +3,10 @@ Hilfe Funktion
 
 .. tip::
 
-    Ich halte es für hilfreich, diesen Abschnitt als erstes zu lesen. Wenn er dich
-    aber verwirrt, gehe erst zu den konreten Anwendungen und komme später zu
-    diesem Kapitel zurück. Dann wird deutlicher sein, wofür die Hilfe Funktion
-    nützlich ist.
+    Ich halte es für hilfreich, diesen Abschnitt als erstes zu lesen. Wenn
+    er dich aber verwirrt, gehe erst zu den konreten Anwendungen und komme
+    später zu diesem Kapitel zurück. Dann wird deutlicher sein, wofür die
+    Hilfe Funktion nützlich ist.
 
 Die ``--help`` Option ist eine nützliche Funktion, die dir dabei hilft, die
 verschiedenen Befehle und Optionen des edupsyadmin-Tools zu verstehen.

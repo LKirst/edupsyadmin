@@ -1,34 +1,68 @@
 Dokumentation erstellen
------------------------
+=======================
 
-Als Beispieldatei nehmen wir `sample_form_mantelbogen.pdf
-<https://github.com/LKirst/edupsyadmin/blob/main/test/edupsyadmin/data/sample_form_mantelbogen.pdf>`_.
-Fülle ein PDF-Formular für den Datenbankeintrag mit ``client_id=2``:
+Jetzt kommt der Schritt, bei dem ``edupsyadmin`` richtig Zeit spart! Die
+Anwendung kann die Daten, die du soeben eingegeben hast, nutzen, um
+PDF-Formulare oder andere Dokumente automatisch auszufüllen.
 
-.. code-block:: console
+Ablauf
+------
 
-    $ edupsyadmin create_documentation 2 --form_paths "./pfad/zu/sample_form_mantelbogen.pdf"
+#.  **Klient*in auswählen**: Wähle in der TUI deine*n eben erstellte*n
+    Klient*in aus der Liste aus. Die Details sollten rechts erscheinen.
+#.  **Dialog öffnen**: Drücke das Tastenkürzel :kbd:`Strg+f`. Es öffnet sich der
+    Dialog "Formulare ausfüllen".
 
-Fülle alle Dateien, die zum form_set ``tutorialset`` gehören (wie in der
-config.yml definiert), mit den Daten für ``client_id=2``:
+    .. image:: ../../test/edupsyadmin/tui/__snapshots__/test_fill_form_tui/test_initial_layout.svg
+       :alt: Dialog zum Ausfüllen von Formularen
 
-.. code-block:: console
+#.  **Formulare auswählen**: In diesem Dialog hast du zwei Möglichkeiten,
+    Formulare auszuwählen:
 
-    $ edupsyadmin create_documentation 2 --form_set tutorialset
+    - **Formular-Sätze (links)**: Wähle einen oder mehrere vordefinierte
+      "Formular-Sätze" aus. Diese Sätze werden in der
+      :doc:`Konfiguration <../tutorial/configuration>` festgelegt und fassen
+      häufig benötigte Formulare zusammen.
+    - **Dateiauswahl (rechts)**: Navigiere durch das Dateisystem und wähle
+      einzelne PDF- oder Markdown-Dateien aus. Du kannst den Startpfad oben im
+      Eingabefeld ändern.
 
-``create_documentation`` akzeptiert auch mehrere client_ids was das Arbeiten
-beschleunigen kann, wenn viele Fälle gleichzeitig dokumentiert werden müssen.
-Im folgenden Beispiel werden die Formulare des Formularsatzes ``lrst``
-(definiert in der Konfiguration) für zwei Klienten ausgefüllt:
+#.  **Ausfüllen starten**: Klicke auf den Button "Fill Form(s)" oder drücke die
+    entsprechende Taste, um den Vorgang zu starten. ``edupsyadmin`` nimmt sich
+    dann die ausgewählten Vorlagen und füllt sie mit den Daten des Klienten.
 
-.. code-block:: console
+Erstellen von Formularen
+------------------------
 
-    $ edupsyadmin create_documentation 1 2 --form_set lrst
+Damit ``edupsyadmin`` deine Formulare korrekt ausfüllen kann, müssen die
+Platzhalter in deinen Vorlagen einem bestimmten Muster folgen. Die Platzhalter
+entsprechen den Spaltennamen in der Datenbank.
 
-Falls nötig können mit ``--inject_data`` Variablen nur für das Ausfüllen
-geändert oder hinzugefügt werden. Ein Beispiel wäre, wenn ich ein anderes Datum
-für ``today_date_de`` einfüllen will als das heutige Datum:
+Es gibt zwei Möglichkeiten für Formulare: PDF-Formulare und
+Markdown-Liquid-Formulare
 
-.. code-block:: console
+Beispiel für ein PDF-Formular mit Libreoffice Writer erstellt und als PDF
+exportiert:
 
-    $ edupsyadmin create_documentation 1 --form_set lrst --inject_data "today_date_de=16.10.2025"
+#. Libreoffice Writer öffnen.
+
+#. Über Ansicht - Symbolleisten - Formular-Steuerelemente die
+   Formular-Steuerelemente anzeigen.
+
+#. Ein Textfeld hinzugen für den Vornamen mit dem Feldnamen ``first_name_encr``.
+
+#. Ein Textfeld hinzufügen für das Geburtsdatum: ``birthday_encr``.
+
+#. Über Datei - Expoertieren als - Als PDF exportieren ... die Datei als PDF
+   exportieren. In dem Fenster das sich öffnet, die Option aktivieren
+   "PDF-Formular erzeugen"
+
+Für Markdown-Vorlagen verwendest du Platzhalter im Text mit dem Namen der
+Variable in doppelten geschwungenen Klammern:
+
+.. code-block:: markdown
+
+   # Protokoll
+
+   **Name**: {{ last_name_encr }}, {{ first_name_encr }}
+   **Geboren am**: {{ birthday_encr }}

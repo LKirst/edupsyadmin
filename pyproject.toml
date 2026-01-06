@@ -61,6 +61,7 @@ dev = [
   "pytest-asyncio>=1.0.0",
   "pytest-textual-snapshot>=1.1.0",
   "pytest-benchmark>=5.2.0",
+  "sphinx-design>=0.6.1",
 ]
 
 [tool.commitizen]
@@ -113,3 +114,6 @@ omit = [
   "src/edupsyadmin/api/reports.py",
   "src/edupsyadmin/api/lgvt.py",
 ]
+
+[tool.rstcheck]
+ignore_directives = ["tab-set", "dropdown", "automodule", "autoclass"]
