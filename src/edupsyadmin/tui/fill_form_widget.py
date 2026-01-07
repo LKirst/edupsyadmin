@@ -41,7 +41,7 @@ class MultiSelectDirectoryTree(DirectoryTree):
         event.stop()
         # To distinguish between files and directories, we check the `allow_expand`
         # property of the node. Directories can be expanded, files cannot.
-        if event.node and not event.node.allow_expand:
+        if event.node and not event.node.allow_expand and event.node.data:
             # The data payload is an os.DirEntry, which has a .path attribute (str).
             # Convert it to a pathlib.Path object for consistent handling.
             selected_path = Path(event.node.data.path)

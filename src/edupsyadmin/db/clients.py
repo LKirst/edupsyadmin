@@ -1,5 +1,4 @@
 from datetime import date, datetime
-from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -16,14 +15,11 @@ from edupsyadmin.core.academic_year import (
     get_estimated_end_of_academic_year,
 )
 from edupsyadmin.core.config import config
-from edupsyadmin.core.encrypt import encr
+from edupsyadmin.core.encrypt import Encryption, encr
 from edupsyadmin.core.int_from_str import extract_number
 from edupsyadmin.core.logger import logger
 from edupsyadmin.core.taetigkeitsbericht_check_key import check_keyword
 from edupsyadmin.db import Base
-
-if TYPE_CHECKING:
-    from edupsyadmin.core.encrypt import Encryption
 
 LRST_DIAG = {"lrst", "iLst", "iRst"}
 LRST_TEST_BY = {"schpsy", "psychia", "psychoth", "spz", "andere"}
@@ -328,7 +324,7 @@ class Client(Base):
 
     def __init__(
         self,
-        encr: "Encryption",
+        encr: Encryption,
         school: str,
         gender_encr: str,
         class_name: str,
@@ -596,10 +592,8 @@ class Client(Base):
     def validate_unencrypted_dates(
         self, key: str, value: str | date | None
     ) -> date | None:
-        if isinstance(value, str) and value:
-            return date.fromisoformat(value)
-        if not value:
-            return None
+        if isinstance(value, str):
+            return date.fromisoformat(value) if value else None
         return value
 
     def __repr__(self) -> str:

@@ -503,7 +503,7 @@ def command_mk_report(
             test_date,
         )
     else:
-        logger.warn("Testauswertung bisher nur für CFT und LGVT implementiert")
+        logger.warning("Testauswertung bisher nur für CFT und LGVT implementiert")
 
 
 def command_flatten_pdfs(

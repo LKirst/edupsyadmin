@@ -58,8 +58,9 @@ class DeleteItemButton(Button):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         event.stop()
-        if self.parent:
-            self.parent.remove()
+        parent = self.parent
+        if isinstance(parent, Vertical):
+            parent.remove()
 
 
 class SchoolEditor(Vertical):
@@ -156,7 +157,9 @@ class FormSetEditor(Vertical):
         key = self.query_one("#item_key", Input).value
         if not key:
             return None, None
-        paths = [inp.value for inp in self.query(".path-input") if inp.value]
+        paths = [
+            inp.value for inp in self.query(".path-input").results(Input) if inp.value
+        ]
         return key, paths
 
 
