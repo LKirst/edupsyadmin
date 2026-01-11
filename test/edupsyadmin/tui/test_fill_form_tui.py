@@ -51,7 +51,7 @@ def test_initial_layout(snap_compare, mock_clients_manager, tmp_path):
 
         await pilot.pause()
 
-    assert snap_compare(app, run_before=run_before, terminal_size=(120, 60))
+    assert snap_compare(app, run_before=run_before, terminal_size=(70, 35))
 
 
 @pytest.mark.asyncio
