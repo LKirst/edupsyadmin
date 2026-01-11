@@ -1,3 +1,14 @@
+## 7.13.0 (2026-01-11)
+
+### Feat
+
+- **tui**: add functionality to delete client to the TUI
+
+### Fix
+
+- fix typing issues
+- make fill_form tui tests stable
+
 ## 7.12.1 (2026-01-02)
 
 ### Refactor
