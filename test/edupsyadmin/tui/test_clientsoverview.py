@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pandas as pd
+import pytest
 from textual.widgets import DataTable
 
 from edupsyadmin.tui.clients_overview_app import ClientsOverviewApp
@@ -52,3 +53,82 @@ def test_clients_overview(snap_compare) -> None:
         assert table.row_count == len(ROWS)
 
     assert snap_compare(app, run_before=run_before, terminal_size=(150, 30))
+
+
+@pytest.mark.asyncio
+async def test_delete_client_confirmed(mock_config):
+    """Test deleting a client after confirmation."""
+    mock_manager = MagicMock()
+
+    # Initial data
+    initial_df = pd.DataFrame(ROWS, columns=COLUMNS)
+
+    # Data after deleting the first client (ID 1)
+    df_after_delete = pd.DataFrame(ROWS[1:], columns=COLUMNS)
+
+    # Set up the mock to return different dataframes on subsequent calls
+    mock_manager.get_clients_overview.side_effect = [initial_df, df_after_delete]
+
+    app = ClientsOverviewApp(clients_manager=mock_manager)
+
+    async with app.run_test(size=(150, 30)) as pilot:
+        # Wait for the table to be populated
+        await pilot.pause()
+        table = pilot.app.query_one(DataTable)
+        while table.loading:
+            await pilot.pause()
+
+        assert table.row_count == len(ROWS)
+
+        # Press delete key
+        await pilot.press("delete")
+        await pilot.pause()
+
+        # Confirm the dialog
+        await pilot.press("enter")
+        await pilot.pause()
+
+        # Wait for the table to reload
+        while table.loading:
+            await pilot.pause()
+
+        # Check that the manager's delete method was called
+        # client_id of first row is 1
+        mock_manager.delete_client.assert_called_once_with(1)
+
+        # Check that the table has been updated
+        assert table.row_count == len(ROWS) - 1
+
+
+@pytest.mark.asyncio
+async def test_delete_client_cancelled(mock_config):
+    """Test cancelling the client deletion."""
+    mock_manager = MagicMock()
+    df = pd.DataFrame(ROWS, columns=COLUMNS)
+    mock_manager.get_clients_overview.return_value = df
+
+    app = ClientsOverviewApp(clients_manager=mock_manager)
+
+    async with app.run_test(size=(150, 30)) as pilot:
+        # Wait for the table to be populated
+        await pilot.pause()
+        table = pilot.app.query_one(DataTable)
+        while table.loading:
+            await pilot.pause()
+
+        assert table.row_count == len(ROWS)
+
+        # Press delete key
+        await pilot.press("delete")
+        await pilot.pause()
+
+        # Cancel the dialog
+        await pilot.press("tab")
+        await pilot.press("enter")
+        await pilot.pause()
+
+        # Check that the manager's delete method was NOT called
+        mock_manager.delete_client.assert_not_called()
+
+        # Check that the table still has the same number of rows
+        assert table.row_count == len(ROWS)

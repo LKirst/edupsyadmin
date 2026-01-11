@@ -45,6 +45,11 @@ So bearbeitest du einen Eintrag:
 Klienten löschen
 -----------------
 
+So löschst du eine*n Klient*in:
 
-**Das Löschen über die TUI wird bald möglich sein**. Bis dahin, verwende
-``edupsyadmin delete_client <CLIENT_ID>`` (s. :doc:`Tutorial für CLI <../tutorial/cli>`).
+#.  Wähle mit den Pfeiltasten oder der Maus eine*n Klient*in aus der Liste links
+    aus.
+#.  Drücke die Taste :kbd:`Entf`.
+#.  Ein Dialogfenster zur Bestätigung erscheint. Bestätige mit :kbd:`Enter`
+    (Standard ist "Yes") oder wähle mit der :kbd:`Tab`-Taste "No" und drücke
+    :kbd:`Enter`, um den Vorgang abzubrechen.

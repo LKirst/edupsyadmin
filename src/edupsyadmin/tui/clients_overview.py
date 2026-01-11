@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from textual import on, work
 from textual.app import ComposeResult
+from textual.binding import Binding, BindingType
 from textual.message import Message
 from textual.widgets import DataTable, Static
+
+from edupsyadmin.tui.dialogs import YesNoDialog
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -15,6 +18,10 @@ if TYPE_CHECKING:
 
 class ClientsOverview(Static):
     """A TUI to show clients in a DataTable."""
+
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("delete", "request_delete_client", "Löschen"),
+    ]
 
     class ClientSelected(Message):
         """Message to indicate a client has been selected."""
@@ -29,6 +36,9 @@ class ClientsOverview(Static):
         def __init__(self, df: pd.DataFrame) -> None:
             self.df = df
             super().__init__()
+
+    class _ClientDeleted(Message):
+        """Internal message to signal client was deleted."""
 
     def __init__(
         self,
@@ -73,6 +83,12 @@ class ClientsOverview(Static):
         )
         self.post_message(self._DfLoaded(df))
 
+    @work(exclusive=True, thread=True)
+    def delete_client(self, client_id: int) -> None:
+        """Delete client from database."""
+        self.manager.delete_client(client_id)
+        self.post_message(self._ClientDeleted())
+
     def on_clients_overview__df_loaded(self, message: _DfLoaded) -> None:
         """Callback for when the client dataframe is loaded."""
         table = self.query_one(DataTable)
@@ -92,12 +108,45 @@ class ClientsOverview(Static):
         table.loading = False
         self.notify("Tabelle neu geladen.")
 
+    def on_clients_overview__client_deleted(self, message: _ClientDeleted) -> None:
+        """Callback for when a client is deleted."""
+        self.notify("Client deleted.")
+        self.action_reload()
+
     def action_reload(self) -> None:
         """Reloads the data in the table from the database."""
         table = self.query_one(DataTable)
         table.loading = True
         table.clear()
         self.get_clients_df()
+
+    def action_request_delete_client(self) -> None:
+        """Action to request deleting a client."""
+        table = self.query_one(DataTable)
+        if table.cursor_row < 0:
+            self.notify("No client selected to delete.", severity="warning")
+            return
+
+        row_data = table.get_row_at(table.cursor_row)
+        client_id_str = row_data[0]
+        last_name = row_data[2]
+        first_name = row_data[3]
+
+        try:
+            client_id = int(client_id_str)
+        except (ValueError, TypeError):
+            self.notify(f"Invalid client_id: {client_id_str}", severity="error")
+            return
+
+        def check_delete(delete: bool | None) -> None:
+            """Called with the result of the dialog."""
+            if delete:
+                self.delete_client(client_id)
+
+        self.app.push_screen(
+            YesNoDialog(f"Delete client {first_name} {last_name} (ID: {client_id})?"),
+            check_delete,
+        )
 
     @on(DataTable.RowSelected, "#clients_overview_table")
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
