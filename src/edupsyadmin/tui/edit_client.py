@@ -15,6 +15,7 @@ from textual.widgets import (
     Select,
     Static,
 )
+from textual.widgets._select import NoSelection
 
 from edupsyadmin.core.config import config
 from edupsyadmin.core.python_type import get_python_type
@@ -428,6 +429,7 @@ class EditClient(Container):
                     value is None
                     or value == EMPTY_OPTION_VALUE
                     or value == Select.BLANK
+                    or isinstance(value, NoSelection)
                 ):
                     current[name] = None
                 else:

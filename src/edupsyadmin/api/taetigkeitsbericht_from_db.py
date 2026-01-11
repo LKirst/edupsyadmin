@@ -146,16 +146,19 @@ def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> pd.DataFrame:
         "Arbeitstage/Jahr nach Abzug von 30 Tagen Urlaub",
     ]
     wstds.loc["ww_year", :] = [
-        wstds.at["wd_year", "value"] / wstds.at["wd_week", "value"],
+        pd.to_numeric(wstds.at["wd_year", "value"])
+        / pd.to_numeric(wstds.at["wd_week", "value"]),
         "Arbeitswochen/Jahr",
     ]
     wstds.loc["zstd_week", :] = [40, "h/Woche"]
     wstds.loc["zstd_day", :] = [
-        wstds.at["zstd_week", "value"] / wstds.at["wd_week", "value"],
+        pd.to_numeric(wstds.at["zstd_week", "value"])
+        / pd.to_numeric(wstds.at["wd_week", "value"]),
         "h/Arbeitstag",
     ]
     wstds.loc["zstd_year", :] = [
-        wstds.at["zstd_day", "value"] * wstds.at["wd_year", "value"],
+        pd.to_numeric(wstds.at["zstd_day", "value"])
+        * pd.to_numeric(wstds.at["wd_year", "value"]),
         "h/Jahr",
     ]
     wstds.loc["wstd_total_target", :] = [
@@ -167,18 +170,19 @@ def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> pd.DataFrame:
         "n Wochenstunden Schulpsychologie (Anrechnungsstunden)",
     ]
     wstds.loc["zstd_spsy_1wstd_target", :] = [
-        wstds.at["zstd_year", "value"] / wstd_total,
+        pd.to_numeric(wstds.at["zstd_year", "value"]) / wstd_total,
         ("h Arbeit / Jahr, die einer Wochenstunde entsprächen"),
     ]
     wstds.loc["zstd_spsy_year_target", :] = [
-        wstds.at["zstd_spsy_1wstd_target", "value"] * wstd_spsy,
+        pd.to_numeric(wstds.at["zstd_spsy_1wstd_target", "value"]) * wstd_spsy,
         (
             "h Arbeit / Jahr, die den angegebenen Wochenstunden "
             "Schulpsychologie entsprächen"
         ),
     ]
     wstds.loc["zstd_spsy_week_target", :] = [
-        wstds.at["zstd_spsy_year_target", "value"] / wstds.at["ww_year", "value"],
+        pd.to_numeric(wstds.at["zstd_spsy_year_target", "value"])
+        / pd.to_numeric(wstds.at["ww_year", "value"]),
         (
             "h Arbeit in der Woche, die den angegebenen Wochenstunden "
             "Schulpsychologie entsprächen"
@@ -226,11 +230,12 @@ def summary_statistics_wstd(
     if zstd_spsy_year_actual is not None:
         summarystats_wstd.loc["zstd_spsy_year_actual", "value"] = zstd_spsy_year_actual
         summarystats_wstd.loc["zstd_spsy_week_actual", "value"] = (
-            zstd_spsy_year_actual / summarystats_wstd.at["ww_year", "value"]
+            zstd_spsy_year_actual
+            / pd.to_numeric(summarystats_wstd.at["ww_year", "value"])
         )
         summarystats_wstd.loc["perc_spsy_year_actual", "value"] = (
             zstd_spsy_year_actual
-            / summarystats_wstd.at["zstd_spsy_year_target", "value"]
+            / pd.to_numeric(summarystats_wstd.at["zstd_spsy_year_target", "value"])
         ) * 100
     return summarystats_wstd
 
@@ -238,7 +243,7 @@ def summary_statistics_wstd(
 def create_taetigkeitsbericht_report(
     basename_out: str,
     name: str,
-    summary_wstd: pd.Series[float],
+    summary_wstd: pd.DataFrame,
     summary_categories: pd.DataFrame | None = None,
     summary_h_sessions: pd.DataFrame | None = None,
 ) -> None:
@@ -280,7 +285,7 @@ def create_taetigkeitsbericht_report(
         report.image(wstd_img, x=15, y=20, w=report.WIDTH - 20)
         report.output(basename_out + "_report.pdf")
     else:
-        logger.warn(
+        logger.warning(
             "pdf libraries (dataframe_image and fpdf) are not installed "
             "to generate a pdf output."
         )
@@ -334,7 +339,7 @@ def taetigkeitsbericht(
     summarystats_h_sessions.to_csv(out_basename + "_h_sessions.csv")
     print(summarystats_h_sessions)
 
-    zstd_spsy_year_actual = summarystats_h_sessions.loc["all", "sum"]
+    zstd_spsy_year_actual = pd.to_numeric(summarystats_h_sessions.loc["all", "sum"])
 
     # Get student data from the config
     school_students_dict = {

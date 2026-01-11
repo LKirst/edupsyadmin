@@ -129,7 +129,7 @@ class ClientsManager:
 
         with self.Session() as session:
             result = session.execute(stmt, execution_options={"yield_per": 100})
-            return pd.DataFrame(result.fetchall(), columns=result.keys())
+            return pd.DataFrame(result.fetchall(), columns=list(result.keys()))
 
     def get_data_raw(self) -> pd.DataFrame:
         """

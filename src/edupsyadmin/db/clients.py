@@ -401,9 +401,10 @@ class Client(Base):
                 grade_current=self.class_int,
                 grade_target=config.school[self.school].end,
             )
-            self.document_shredding_date = get_date_destroy_records(
-                self.estimated_graduation_date
-            )
+            if self.estimated_graduation_date:
+                self.document_shredding_date = get_date_destroy_records(
+                    self.estimated_graduation_date
+                )
 
         self.lrst_diagnosis_encr = lrst_diagnosis_encr
         self.lrst_last_test_date_encr = lrst_last_test_date_encr
