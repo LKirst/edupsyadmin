@@ -1,10 +1,9 @@
 Kommandozeile
 =============
 
-Während die :doc:`interaktive Benutzeroberfläche (TUI) <tui>` für die tägliche
+Während die :doc:`interaktive Benutzeroberfläche (TUI) <tui>` für die
 Arbeit mit einzelnen Klienten optimiert ist, bietet die Kommandozeile (CLI)
-mächtige Werkzeuge für fortgeschrittene Anwender. Die CLI eignet sich
-hervorragend für die Automatisierung von wiederkehrenden Aufgaben und die
+Werkzeuge für die Automatisierung von wiederkehrenden Aufgaben und die
 Bearbeitung von Daten für mehrere Klienten gleichzeitig.
 
 Alle hier gezeigten Befehle können in Skripten verwendet werden, um
@@ -13,10 +12,8 @@ Arbeitsabläufe zu automatisieren.
 Klienten hinzufügen (``new_client``)
 ------------------------------------
 
-Während ``edupsyadmin new_client`` ohne weitere Argumente die TUI zum Bearbeiten
-startet, liegt die Stärke der Kommandozeile im Import von Daten. Stell dir vor,
-du hast eine CSV-Datei exportiert, z.B. aus WebUntis. Anstatt die Daten
-manuell einzugeben, können wir sie direkt importieren.
+Stell dir vor, du hast eine CSV-Datei exportiert, z.B. aus WebUntis. Anstatt
+die Daten manuell einzugeben, können wir sie direkt importieren.
 
 Eine Beispieldatei
 (`samplewebuntisfile.csv <../_static/samplewebuntisfile.csv>`_)
@@ -42,6 +39,9 @@ CSV-Datei und weise ihn der "TutorialSchule" zu.
 - ``--keepfile``: Standardmäßig wird die CSV-Datei nach dem Import gelöscht.
   Diese Option verhindert das.
 
+**Interaktives Anlegen (eines einzelnen Klienten):** Wenn du ``new_client``
+ohne Argumente aufrufst, öffnet sich die TUI, um einen neuen Klienten
+anzulegen.
 
 Klienten bearbeiten (``set_client``)
 ------------------------------------
@@ -115,12 +115,32 @@ Dokumentation erstellen (``create_documentation``)
 Auch hier kann die Kommandozeile die Arbeit beschleunigen, wenn Dokumente für
 viele Fälle gleichzeitig erstellt werden müssen.
 
-``--inject_data``: Falls nötig, können hiermit Daten nur für diesen einen
-Ausfüllvorgang überschrieben oder hinzugefügt werden.
+- ``client_id``: Eine oder mehrere IDs von Klienten, für die die Dokumentation
+  erstellt werden soll. Die Daten dieser Klienten werden aus der Datenbank
+  geladen und zum Ausfüllen der Formulare verwendet.
+
+- ``--form_set``: Der Name eines Formular-Sets, das in der Konfigurationsdatei
+  definiert ist. Ein Formular-Set ist eine Sammlung von Pfaden zu
+  PDF-Formularen oder Liquid-Vorlagen, die gemeinsam ausgefüllt werden sollen.
+
+- ``--form_paths``: Eine Liste von Pfaden zu den Formulardateien, die
+  ausgefüllt werden sollen. Dies können PDF-Formulare oder Textdateien sein,
+  die `Liquid-Vorlagen <https://jg-rp.github.io/liquid/syntax/>`_ enthalten.
+
+- ``--inject_data``: Eine Liste von Schlüssel-Wert-Paaren im Format
+  ``key=value``. Diese Option kann verwendet werden, um vorhandene Daten der
+  Klienten (temporär nur für diesen Ausfüllvorgang) zu überschreiben oder neue
+  Schlüssel-Wert-Paare hinzuzufügen, die in den Formularen verwendet werden
+  können.
+
+- ``--tui``: Öffnet die TUI (Text User Interface) für eine interaktive
+  Formularausfüllung. Wenn diese Option verwendet wird, sind die Argumente
+  ``client_id``, ``--form_set``, ``--form_paths`` und ``--inject_data`` nicht
+  relevant, da die Auswahl interaktiv erfolgt.
 
 .. code-block:: console
 
-    $ edupsyadmin create_documentation 1 --form_set lrst --inject_data "today_date_de=16.10.2025"
+    $ edupsyadmin create_documentation 1 2 --form_set lrst --inject_data "today_date_de=16.10.2025"
 
 Klienten löschen (``delete_client``)
 ------------------------------------
@@ -129,4 +149,4 @@ Löscht einen (oder mehrere) Klienten unwiderruflich aus der Datenbank.
 
 .. code-block:: console
 
-    $ edupsyadmin delete_client 1
+    $ edupsyadmin delete_client 1 2

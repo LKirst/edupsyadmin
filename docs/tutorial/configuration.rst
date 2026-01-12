@@ -1,12 +1,11 @@
 Konfiguration
 =============
 
-Nach der erfolgreichen Installation ist der nächste Schritt die Konfiguration
-von ``edupsyadmin``. Diese wird in einer bequemen grafischen Oberfläche
-vorgenommen.
+Nach der Installation ist der nächste Schritt die Konfiguration von
+``edupsyadmin``.
 
-Die Konfiguration wird in einer einfachen Textdatei (YAML-Format) gespeichert.
-Darin stehen wichtige Einstellungen wie deine Schulen oder Vorlagen-Sets.
+Die Konfiguration wird in einer Textdatei (YAML-Format) gespeichert. Darin
+stehen wichtige Einstellungen wie deine Schulen oder Vorlagen-Sets.
 Standardmäßig liegt diese Datei unter ``~/.config/edupsyadmin/config.yml``.
 
 Wir müssen diese Datei aber nicht von Hand bearbeiten. Starte einfach die
