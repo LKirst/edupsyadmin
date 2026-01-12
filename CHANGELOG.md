@@ -1,3 +1,9 @@
+## 7.13.1 (2026-01-12)
+
+### Fix
+
+- **tui.edit_client**: remove superfluous "__None__" for Select widgets
+
 ## 7.13.0 (2026-01-11)
 
 ### Feat
