@@ -97,7 +97,18 @@ class TestBasicSanityCheck:
         return
 
 
-# TODO: Test defaults for app_uid and database_url
+def test_defaults_are_used(mock_config):
+    """Test that default values for app_uid and database_url are used."""
+    from edupsyadmin.cli import APP_UID, DEFAULT_DB_URL
+
+    with patch("edupsyadmin.cli.command_info", autospec=True) as mock_command_info:
+        main(split(f"-c {mock_config} info"))
+
+        mock_command_info.assert_called_once()
+        call_kwargs = mock_command_info.call_args.kwargs
+
+        assert call_kwargs.get("app_uid") == APP_UID
+        assert call_kwargs.get("database_url") == DEFAULT_DB_URL
 
 
 def test_config_template(mock_keyring, tmp_path_factory):
@@ -325,7 +336,7 @@ def test_create_documentation(
         )
 
 
-def test_delete_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
+def test_delete_client(mock_keyring, mock_config, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
     salt_path = tmp_path / "salt.txt"
