@@ -21,8 +21,6 @@ from edupsyadmin.core.config import config
 from edupsyadmin.core.python_type import get_python_type
 from edupsyadmin.db.clients import LRST_DIAG, LRST_TEST_BY, Client
 
-EMPTY_OPTION_VALUE = "__None__"
-
 REQUIRED_FIELDS = [
     "school",
     "gender_encr",
@@ -223,20 +221,12 @@ class EditClient(Container):
 
         # Choice fields -> Select
         elif name in self.choice_fields:
-            base_options = self.choice_fields[name]
-            # For optional selects, add a "no selection" entry
-            options = (
-                [(EMPTY_OPTION_VALUE, "- Keine Auswahl -"), *base_options]
-                if not required
-                else base_options
-            )
+            options = self.choice_fields[name]
             # Determine the initial value before creating the widget
             initial_value: object = Select.BLANK
             if isinstance(default, str):
                 stripped_default = default.strip()
-                if stripped_default and any(
-                    stripped_default == v for v, _ in base_options
-                ):
+                if stripped_default and any(stripped_default == v for v, _ in options):
                     initial_value = stripped_default
 
             widget = Select(
@@ -359,16 +349,6 @@ class EditClient(Container):
         elif event.button.id == "cancel":
             await self.action_cancel()
 
-    def on_select_changed(self, event: Select.Changed) -> None:
-        # If the user picked the "Keine Auswahl" option on an optional Select, clear it.
-        name = event.select.id
-        if (
-            name in self.choice_fields
-            and name not in REQUIRED_FIELDS
-            and event.value == EMPTY_OPTION_VALUE
-        ):
-            event.select.clear()  # value becomes None and prompt is shown again
-
     def _validate_inputs_for_save(self) -> bool:
         """Check all inputs and log errors if validation fails."""
         log = self.query_one("#edit-client-log", RichLog)
@@ -423,11 +403,10 @@ class EditClient(Container):
         # Handle inputs and dates
         for name, widget in {**self.inputs, **self.dates}.items():
             if isinstance(widget, Select):
-                # For Select: None or EMPTY_OPTION_VALUE should become None
+                # TODO: Do I need to check for BLANK and NoSelection?
                 value = widget.value
                 if (
                     value is None
-                    or value == EMPTY_OPTION_VALUE
                     or value == Select.BLANK
                     or isinstance(value, NoSelection)
                 ):
