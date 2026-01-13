@@ -7,7 +7,7 @@ from textual.widgets import Checkbox, Input, Select
 from edupsyadmin.tui.edit_client import EditClient, _get_empty_client_dict
 from edupsyadmin.tui.edit_client_app import EditClientApp
 
-TERMINAL_SIZE = (70, 160)
+TERMINAL_SIZE = (70, 130)
 
 
 @pytest.fixture

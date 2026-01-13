@@ -94,7 +94,7 @@ class EditClient(Container):
         layout: horizontal;
         height: auto;
         align: center middle;
-        margin-bottom: 1;
+        margin-bottom: 0;
     }
     .label {
         width: 1fr;
@@ -108,7 +108,7 @@ class EditClient(Container):
     CheckboxRow {
         layout: horizontal;
         height: auto;
-        margin-bottom: 1;
+        margin-bottom: 0;
     }
     CheckboxRow > .spacer {
         width: 1fr;
