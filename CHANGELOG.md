@@ -1,3 +1,9 @@
+## 7.13.2 (2026-01-16)
+
+### Fix
+
+- **cli**: correctly handle list-based config_path
+
 ## 7.13.1 (2026-01-12)
 
 ### Fix
