@@ -132,18 +132,18 @@ def command_info(
     app_uid: str | os.PathLike[str],
     app_username: str,
     database_url: str,
-    config_path: str | os.PathLike[str],
+    config_path: list[str | os.PathLike[str]],
     salt_path: str | os.PathLike[str],
 ) -> None:
     info = lazy_import("edupsyadmin.info").info
-    info(app_uid, app_username, database_url, config_path, salt_path)
+    info(app_uid, app_username, database_url, config_path[0], salt_path)
 
 
 def command_edit_config(
-    config_path: str | os.PathLike[str],
+    config_path: list[str | os.PathLike[str]],
 ) -> None:
     config_editor_app_cls = lazy_import("edupsyadmin.tui.editconfig").ConfigEditorApp
-    config_editor_app_cls(config_path).run()
+    config_editor_app_cls(config_path[0]).run()
 
 
 def _enter_client_csv(
