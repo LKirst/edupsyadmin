@@ -95,11 +95,22 @@ class EdupsyadminTui(App[None]):
     def save_client_data(self, client_id: int | None, data: dict[str, Any]) -> None:
         """Save client data and post a message with the result."""
         try:
+            saved_client_id = client_id
             if client_id is not None:
                 self.manager.edit_client(client_ids=[client_id], new_data=data)
             else:
-                self.manager.add_client(**data)
-            self.post_message(self._ClientDataSaveResult())
+                saved_client_id = self.manager.add_client(**data)
+
+            if saved_client_id is not None:
+                full_client_data = self.manager.get_decrypted_client(saved_client_id)
+                self.post_message(
+                    self._ClientDataSaveResult(
+                        client_id=saved_client_id, client_data=full_client_data
+                    )
+                )
+            else:
+                self.post_message(self._ClientDataSaveResult())
+
         except Exception as e:
             self.post_message(self._ClientDataSaveResult(error=e))
 
@@ -190,7 +201,10 @@ class EdupsyadminTui(App[None]):
             overview_widget.action_reload()
 
             edit_client_widget = self.query_one(EditClient)
-            edit_client_widget.update_client(None, {})
+            if message.client_id is not None and message.client_data is not None:
+                edit_client_widget.update_client(message.client_id, message.client_data)
+            else:
+                edit_client_widget.update_client(None, {})
             self.notify("Daten erfolgreich gespeichert.", severity="information")
 
     async def on_edit_client_cancel_edit(self, message: EditClient.CancelEdit) -> None:
@@ -288,7 +302,14 @@ class EdupsyadminTui(App[None]):
             super().__init__()
 
     class _ClientDataSaveResult(Message):
-        def __init__(self, error: Exception | None = None) -> None:
+        def __init__(
+            self,
+            client_id: int | None = None,
+            client_data: dict[str, Any] | None = None,
+            error: Exception | None = None,
+        ) -> None:
+            self.client_id = client_id
+            self.client_data = client_data
             self.error = error
             super().__init__()
 

@@ -169,7 +169,37 @@ class EditClient(Container):
         with VerticalScroll(id="edit-client-form"):
             yield Static(
                 "Klient*in aus der Liste auswählen oder neue*n anlegen.",
-                id="placeholder",
+                id="edit-client-header",
+            )
+            # Build rows
+            for db_column in self._visible_db_columns():
+                name = db_column.name
+                field_type = get_python_type(db_column.type)
+                required = self._is_required(name)
+                label_text = f"{name}*" if required else name
+                default = ""
+
+                widget = self._build_field_widget(
+                    name=name,
+                    field_type=field_type,
+                    default=default,
+                    required=required,
+                    tooltip=db_column.doc,
+                )
+                self._register_widget(name, widget)
+
+                # Keep the original row layout choices
+                if isinstance(widget, Checkbox):
+                    yield CheckboxRow(widget)
+                else:
+                    yield InputRow(f"{label_text}:", widget)
+
+            # Actions
+            self.save_button = Button(label="Speichern", id="save", variant="success")
+            yield Horizontal(
+                self.save_button,
+                Button("Abbrechen", id="cancel", variant="error"),
+                classes="action-buttons",
             )
         yield RichLog(classes="log", id="edit-client-log")
 
@@ -282,66 +312,32 @@ class EditClient(Container):
         widget.tooltip = tooltip
         return widget
 
-    def _mount_actions(self, form: VerticalScroll) -> None:
-        self.save_button = Button(label="Speichern", id="save", variant="success")
-        form.mount(
-            Horizontal(
-                self.save_button,
-                Button("Abbrechen", id="cancel", variant="error"),
-                classes="action-buttons",
-            )
-        )
-
-    def _clear_form(self) -> None:
-        form = self.query_one("#edit-client-form", VerticalScroll)
-        form.query("*").remove()
-        self.query_one("#edit-client-log", RichLog).clear()
-        self.inputs.clear()
-        self.dates.clear()
-        self.checkboxes.clear()
-        self.save_button = None
-
     def update_client(self, client_id: int | None, data: dict[str, Any] | None) -> None:
-        self._clear_form()
-
         self.client_id = client_id
         data = data or _get_empty_client_dict()
 
         self._original_data = self._normalize_original_data(data)
         self._changed_data = {}
 
-        form = self.query_one("#edit-client-form", VerticalScroll)
-
+        header = self.query_one("#edit-client-header", Static)
         if self.client_id:
-            form.mount(Static(f"Daten für client_id: {self.client_id}"))
+            header.update(f"Daten für client_id: {self.client_id}")
         else:
-            form.mount(Static("Daten für einen neuen Klienten"))
+            header.update("Daten für einen neuen Klienten")
 
-        # Build rows
-        for db_column in self._visible_db_columns():
-            name = db_column.name
-            field_type = get_python_type(db_column.type)
-            required = self._is_required(name)
-            label_text = f"{name}*" if required else name
-            default = self._original_data.get(name, "")
-
-            widget = self._build_field_widget(
-                name=name,
-                field_type=field_type,
-                default=default,
-                required=required,
-                tooltip=db_column.doc,
-            )
-            self._register_widget(name, widget)
-
-            # Keep the original row layout choices
-            if isinstance(widget, Checkbox):
-                form.mount(CheckboxRow(widget))
+        # Update widget values
+        for name, widget in {**self.inputs, **self.dates}.items():
+            value = self._original_data.get(name)
+            if isinstance(widget, Select):
+                widget.value = value if value else Select.BLANK
             else:
-                form.mount(InputRow(f"{label_text}:", widget))
+                widget.value = str(value) if value is not None else ""
 
-        # Actions
-        self._mount_actions(form)
+        for name, widget in self.checkboxes.items():
+            value = self._original_data.get(name)
+            widget.value = bool(value)
+
+        self.query_one("#edit-client-log", RichLog).clear()
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "save":

@@ -92,6 +92,7 @@ class ClientsOverview(Static):
     def on_clients_overview__df_loaded(self, message: _DfLoaded) -> None:
         """Callback for when the client dataframe is loaded."""
         table = self.query_one(DataTable)
+        table.clear()
         df = message.df
         if not df.empty:
             if not table.columns:
@@ -117,7 +118,6 @@ class ClientsOverview(Static):
         """Reloads the data in the table from the database."""
         table = self.query_one(DataTable)
         table.loading = True
-        table.clear()
         self.get_clients_df()
 
     def action_request_delete_client(self) -> None:
