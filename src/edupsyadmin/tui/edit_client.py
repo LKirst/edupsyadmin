@@ -329,7 +329,10 @@ class EditClient(Container):
         for name, widget in {**self.inputs, **self.dates}.items():
             value = self._original_data.get(name)
             if isinstance(widget, Select):
-                widget.value = value if value else Select.BLANK
+                if value:
+                    widget.value = value
+                elif not self._is_required(name):
+                    widget.clear()
             else:
                 widget.value = str(value) if value is not None else ""
 
