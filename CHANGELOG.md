@@ -1,3 +1,13 @@
+## 7.13.3 (2026-01-18)
+
+### Fix
+
+- **tui.edit_client**: handle cancel edit correctly
+
+### Perf
+
+- **tui**: only reload values, not widgets
+
 ## 7.13.2 (2026-01-16)
 
 ### Fix
