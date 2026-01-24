@@ -150,3 +150,22 @@ Löscht einen (oder mehrere) Klienten unwiderruflich aus der Datenbank.
 .. code-block:: console
 
     $ edupsyadmin delete_client 1 2
+
+PDF-Formulare für den Druck vorbereiten (``flatten_pdfs``)
+----------------------------------------------------------
+
+Für das Drucken ist es manchmal notwendig, ausgefüllte PDF-Formulare so zu
+speichern, dass die Felder nicht mehr bearbeitet werden können. Diesen Vorgang
+nennt man "Flattening".
+
+**Voraussetzung**: Benötigt **Poppler**. Siehe :doc:`installation` für
+Installationsanweisungen.
+
+**Beispiel:** Bereite zwei Formulare für den Druck vor.
+
+.. code-block:: console
+
+   $ edupsyadmin flatten_pdfs ./formular1_ausgefuellt.pdf ./formular2_ausgefuellt.pdf
+
+Ein neues, für den Druck aufbereitetes PDF mit dem Präfix ``print_`` wird
+erstellt (z.B. ``print_formular1_ausgefuellt.pdf``).

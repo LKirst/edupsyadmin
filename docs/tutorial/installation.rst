@@ -167,6 +167,55 @@ Wenn eine Hilfe-Nachricht erscheint, ist die Installation gelungen.
     #. Öffne und schließe das Terminal, um dann mit ``edupsyadmin --help`` die
        Installation zu testen.
 
+
+Optionale Abhängigkeiten
+------------------------
+
+Einige Funktionen von ``edupsyadmin``, wie das Bearbeiten von PDFs,
+benötigen zusätzliche Programme, die nicht automatisch mitinstalliert werden.
+
+Poppler (für ``flatten_pdfs``)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Die Funktion ``flatten_pdfs`` mit der ``pdf2image`` Bibliothek benötigt
+**Poppler**.
+
+.. tab-set::
+    :sync-group: installation-os
+
+    .. tab-item:: Windows
+        :sync: windows-os
+
+        .. code-block:: console
+
+            $ winget install -e --id oschwartz10612.Poppler
+
+    .. tab-item:: macOS und Linux
+        :sync: macos-linux-os
+
+        **macOS**:
+
+        Um ``poppler`` zu installieren, wird der Paketmanager `Homebrew <https://brew.sh/>`__ benötigt.
+
+        *Installation von Homebrew (falls noch nicht vorhanden):*
+
+        Öffne das Terminal und führe den folgenden Befehl aus:
+
+        .. code-block:: console
+
+            $ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+        *Installation von Poppler mit Homebrew:*
+
+        .. code-block:: console
+
+            $ brew install poppler
+
+        **Linux**: Die meisten Distributionen haben poppler vorinstalliert.
+        Wenn poppler nicht installiert ist, installiere `poppler-utils` oder
+        `poppler-tools` je nach Distribution.
+
+
 Verschlüsselung
 ---------------
 

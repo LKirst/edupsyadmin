@@ -20,6 +20,28 @@ DEFAULT_LIBRARY = "pdf2image"
 
 
 def flatten_pdf(fn_in: str | Path, library: str = DEFAULT_LIBRARY) -> None:
+    """Flatten a PDF form, making form fields non-editable.
+
+    This function takes an input PDF file with editable form fields and
+    creates a "flattened" version where the fields are part of the content
+    and can no longer be edited. This is useful for archiving or sharing
+    completed forms.
+
+    Two libraries can be used for this process:
+    - 'pdf2image': Converts each page to an image and then combines them
+      back into a PDF. This perfectly preserves the visual appearance but
+      fails for tick-boxes and radio buttons. It also makes text unselectable.
+      This library requires 'poppler' to be installed on the system.
+    - 'fillpdf': Manipulates the PDF structure directly. It preserves
+      selectable text but may fail for multiline text fields.
+
+    A new file is created with the prefix "print_".
+
+    :param fn_in: Path to the input PDF file.
+    :param library: The library to use for flattening ('pdf2image' or 'fillpdf').
+                    Defaults to DEFAULT_LIBRARY.
+    :raises Exception: If the chosen library is not installed.
+    """
     fn_out = add_prefix(fn_in)
     if library == "pdf2image" and installed_pdf2image:
         images = convert_from_path(fn_in)
