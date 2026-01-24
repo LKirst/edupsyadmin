@@ -379,7 +379,7 @@ def test_edit_config_command(mock_config):
         mock_app_instance.run.return_value = None
 
         # Call the command function
-        command_edit_config(config_path=mock_config)
+        command_edit_config(config_path=[mock_config])
 
         # Assert that the app was initialized with the correct config path
         mock_lazy_import.return_value.ConfigEditorApp.assert_called_once_with(
