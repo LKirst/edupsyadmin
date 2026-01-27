@@ -66,7 +66,6 @@ class TestManagers:
         assert EXPECTED_KEYS.issubset(client.keys())
         assert client["first_name_encr"] == client_dict_set_by_user["first_name_encr"]
         assert client["last_name_encr"] == client_dict_set_by_user["last_name_encr"]
-        mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
     def test_add_client_set_id(self, mock_keyring, clients_manager):
         client_dict_with_id = {
@@ -123,8 +122,6 @@ class TestManagers:
         assert upd_cl["nta_ersgew"] is False
 
         assert upd_cl["datetime_lastmodified"] > client["datetime_lastmodified"]
-
-        mock_keyring.assert_called_with("example.com", "test_user_do_not_use")
 
         # add another client
         another_client_dict = {

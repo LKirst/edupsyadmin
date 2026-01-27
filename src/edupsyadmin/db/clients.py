@@ -15,7 +15,7 @@ from edupsyadmin.core.academic_year import (
     get_estimated_end_of_academic_year,
 )
 from edupsyadmin.core.config import config
-from edupsyadmin.core.encrypt import Encryption, encr
+from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.int_from_str import extract_number
 from edupsyadmin.core.logger import logger
 from edupsyadmin.core.taetigkeitsbericht_check_key import check_keyword
@@ -324,7 +324,6 @@ class Client(Base):
 
     def __init__(
         self,
-        encr: Encryption,
         school: str,
         gender_encr: str,
         class_name: str,

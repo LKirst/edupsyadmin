@@ -2,7 +2,6 @@ import argparse
 import importlib.resources
 import importlib.util
 import os
-import pathlib
 import shutil
 import sys
 import textwrap
@@ -10,6 +9,7 @@ import types
 from argparse import ArgumentParser, RawDescriptionHelpFormatter, _SubParsersAction
 from datetime import datetime
 from inspect import signature
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from platformdirs import user_config_dir, user_data_path
@@ -18,6 +18,10 @@ from sqlalchemy import inspect as sa_inspect
 from edupsyadmin.__version__ import __version__
 from edupsyadmin.api.managers import ClientNotFoundError
 from edupsyadmin.core.config import config
+from edupsyadmin.core.encrypt import (
+    encr,
+    get_key_from_keyring,
+)
 from edupsyadmin.core.logger import logger
 
 if TYPE_CHECKING:
@@ -38,6 +42,26 @@ DEFAULT_SALT_PATH = os.path.join(
     user_config_dir(appname="edupsyadmin", version=__version__, ensure_exists=True),
     "salt.txt",
 )
+
+
+def _setup_encryption(app_uid: str, app_username: str) -> None:
+    """Initialize the global encryption instance with a key from the keyring."""
+    logger.debug(
+        f"Loading encryption key for uid='{app_uid}', username='{app_username}'"
+    )
+
+    # Get key from keyring
+    key = get_key_from_keyring(app_uid, app_username)
+
+    if not key:
+        raise RuntimeError(
+            f"No encryption key found in keyring for uid='{app_uid}', username='{app_username}'. "
+            "Please set a password in the configuration editor first (edupsyadmin edit_config)."
+        )
+
+    # Set the key on the global encryption instance
+    encr.set_key(key)
+    logger.debug("Encryption initialized successfully")
 
 
 # Lazy import utility function
@@ -74,19 +98,19 @@ def main(argv: list[str] | None = None) -> int:
     logger.start(args.warn or "DEBUG")  # can't use default from config yet
 
     # config
-    # if the (first) config file doesn't exist, copy a sample config
-    if not os.path.exists(args.config_path[0]):
+    # if the config file doesn't exist, copy a sample config
+    if not os.path.exists(args.config_path):
         template_path = str(
             importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
         )
-        shutil.copy(template_path, args.config_path[0])
+        shutil.copy(template_path, args.config_path)
         logger.info(
             "Could not find the specified config file. "
-            f"Created a sample config at {args.config_path[0]}. "
+            f"Created a sample config at {args.config_path}. "
             "Fill it with your values."
         )
-    config.load(args.config_path[0])
-    config.core.config = args.config_path[0]
+    config.load(args.config_path)
+    config.core.config = args.config_path
     if args.warn:
         config.core.logging = args.warn
 
@@ -106,6 +130,10 @@ def main(argv: list[str] | None = None) -> int:
             raise exc
     else:
         logger.debug(f"using username passed as cli argument: '{args.app_username}'")
+
+    # Setup encryption for the global encr instance
+    if args.command not in (command_edit_config, command_info):
+        _setup_encryption(args.app_uid, args.app_username)
 
     # handle commandline args
     command = args.command
@@ -132,18 +160,105 @@ def command_info(
     app_uid: str | os.PathLike[str],
     app_username: str,
     database_url: str,
-    config_path: list[str | os.PathLike[str]],
+    config_path: str | os.PathLike[str],
     salt_path: str | os.PathLike[str],
 ) -> None:
     info = lazy_import("edupsyadmin.info").info
-    info(app_uid, app_username, database_url, config_path[0], salt_path)
+    info(app_uid, app_username, database_url, config_path, salt_path)
 
 
 def command_edit_config(
-    config_path: list[str | os.PathLike[str]],
+    config_path: str | os.PathLike[str], app_uid: str, app_username: str
 ) -> None:
     config_editor_app_cls = lazy_import("edupsyadmin.tui.editconfig").ConfigEditorApp
-    config_editor_app_cls(config_path[0]).run()
+    config_editor_app_cls(config_path, app_uid, app_username).run()
+
+
+def command_migrate_encryption(
+    database_url: str,
+    old_password: str,
+    app_uid: str,
+    app_username: str,
+    salt_path: str,
+) -> None:
+    """Migrate database from password-based to key-based encryption."""
+    import sys
+
+    from edupsyadmin.api.managers import ClientsManager
+    from edupsyadmin.api.migration import MigrationError, re_encrypt_database
+    from edupsyadmin.core.encrypt import (
+        OLD_KDF_ITERATIONS,
+        derive_key_from_password,
+        load_or_create_salt,
+    )
+
+    logger.info("Starting encryption migration process...")
+
+    # Derive keys
+    salt = load_or_create_salt(salt_path)
+    old_key = derive_key_from_password(old_password, salt, OLD_KDF_ITERATIONS)
+    new_key = get_key_from_keyring(app_uid, app_username)
+
+    if not new_key:
+        raise RuntimeError(
+            "New key not found in keyring. Run 'edupsyadmin edit_config' first."
+        )
+
+    # Confirm with user
+    print("\nWARNING: Database encryption migration")
+    print("=" * 50)
+    print("- Make sure you have a backup of your database!")
+    print("- Do not interrupt this process once started")
+    print("- May take several minutes for large databases")
+    print("=" * 50)
+
+    response = input("\nContinue? (yes/no): ").strip().lower()
+    if response not in ("yes", "y"):
+        logger.info("Migration cancelled by user.")
+        return
+
+    # Perform migration
+    try:
+        clients_manager = ClientsManager(database_url=database_url)
+        with clients_manager.Session() as session:
+            re_encrypt_database(session, old_key, new_key)
+
+        print("\nSUCCESS: Migration completed!")
+        print("You can now use your new password for all operations.")
+
+    except MigrationError as e:
+        logger.error(f"Migration failed: {e}")
+        print(f"\nERROR: {e}")
+        print("Database rolled back to previous state.")
+        sys.exit(1)
+    except Exception as e:
+        logger.critical(f"Unexpected error during migration: {e}")
+        print(f"\nCRITICAL ERROR: {e}")
+        print("Please restore from backup.")
+        sys.exit(1)
+
+
+def _migrate_encryption(subparsers: _SubParsersAction[ArgumentParser]) -> None:
+    epilog = textwrap.dedent(
+        """\
+        Example:
+          edupsyadmin migrate_encryption "my_old_password"
+
+        IMPORTANT: Make a backup before running this command!
+    """
+    )
+    parser = subparsers.add_parser(
+        "migrate_encryption",
+        help="Migrate database to new encryption system",
+        description=(
+            "Re-encrypt all sensitive data with a new key. "
+            "Run 'edupsyadmin edit_config' first to set your new password."
+        ),
+        epilog=epilog,
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    parser.set_defaults(command=command_migrate_encryption)
+    parser.add_argument("old_password", help="Your old password")
 
 
 def _enter_client_csv(
@@ -261,10 +376,7 @@ def _enter_client_csv(
 
 
 def command_new_client(
-    app_username: str,
-    app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike[str],
     csv: str | os.PathLike[str] | None,
     school: str | None,
     name: str | None,
@@ -274,9 +386,6 @@ def command_new_client(
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
     clients_manager = clients_manager_cls(
         database_url=database_url,
-        app_uid=app_uid,
-        app_username=app_username,
-        salt_path=salt_path,
     )
 
     if csv:
@@ -293,10 +402,7 @@ def command_new_client(
 
 
 def command_set_client(
-    app_username: str,
-    app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike[str],
     client_id: list[int],
     key_value_pairs: list[str] | None,
 ) -> None:
@@ -306,9 +412,6 @@ def command_set_client(
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
     clients_manager = clients_manager_cls(
         database_url=database_url,
-        app_uid=app_uid,
-        app_username=app_username,
-        salt_path=salt_path,
     )
 
     if key_value_pairs:
@@ -323,27 +426,18 @@ def command_set_client(
 
 
 def command_delete_client(
-    app_username: str,
-    app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike[str],
     client_id: int,
 ) -> None:
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
     clients_manager = clients_manager_cls(
         database_url=database_url,
-        app_uid=app_uid,
-        app_username=app_username,
-        salt_path=salt_path,
     )
     clients_manager.delete_client(client_id)
 
 
 def command_get_clients(
-    app_username: str,
-    app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike[str],
     nta_nos: bool,
     school: list[str] | None,
     columns: list[str] | None,
@@ -354,9 +448,6 @@ def command_get_clients(
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
     clients_manager = clients_manager_cls(
         database_url=database_url,
-        app_uid=app_uid,
-        app_username=app_username,
-        salt_path=salt_path,
     )
 
     if tui:
@@ -405,28 +496,23 @@ def command_get_clients(
             df.to_csv(out)
 
 
-def _normalize_path(path_str: str) -> str:
-    path = pathlib.Path(os.path.expanduser(path_str))
-    return str(path.resolve())
+def _normalize_path(path: str | os.PathLike[str]) -> Path:
+    if not path:
+        raise ValueError("Path cannot be empty")
+    return Path(path).expanduser().resolve()
 
 
 def command_create_documentation(
-    app_username: str,
-    app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike[str],
     client_id: list[int],
     form_set: str | None,
-    form_paths: list[str] | None,
+    form_paths: list[str | os.PathLike[str]] | None,
     inject_data: list[str] | None,
     tui: bool = False,
 ) -> None:
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
     clients_manager = clients_manager_cls(
         database_url=database_url,
-        app_uid=app_uid,
-        app_username=app_username,
-        salt_path=salt_path,
     )
     if tui:
         fill_form_app_cls = lazy_import("edupsyadmin.tui.fill_form_app").FillFormApp
@@ -458,9 +544,7 @@ def command_create_documentation(
     elif not form_paths and not tui:
         raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
 
-    form_paths_normalized: list[str | os.PathLike[str]] = [
-        _normalize_path(p) for p in form_paths
-    ]
+    form_paths_normalized: list[Path] = [_normalize_path(p) for p in form_paths]
     logger.debug(f"Trying to fill the files: {form_paths_normalized}")
     for cid in client_id:
         client_dict = clients_manager.get_decrypted_client(cid)
@@ -539,10 +623,7 @@ def command_taetigkeitsbericht(
 
 
 def command_tui(
-    app_username: str,
-    app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike[str],
     nta_nos: bool,
     school: list[str] | None,
     columns: list[str] | None,
@@ -553,9 +634,6 @@ def command_tui(
 
     clients_manager = clients_manager_cls(
         database_url=database_url,
-        app_uid=app_uid,
-        app_username=app_username,
-        salt_path=salt_path,
     )
 
     app = edupsyadmin_tui_cls(
@@ -576,9 +654,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     :param argv: argument list to parse
     """
     parser = ArgumentParser(formatter_class=RawDescriptionHelpFormatter)
-    # append allows multiple instances of the same object
-    # args.config_path will therefore be a list!
-    parser.add_argument("-c", "--config_path", action="append", help=argparse.SUPPRESS)
+    parser.add_argument("-c", "--config_path", default=None, help=argparse.SUPPRESS)
     parser.add_argument(
         "--salt_path", default=DEFAULT_SALT_PATH, help=argparse.SUPPRESS
     )
@@ -607,6 +683,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
 
     _info(subparsers)
     _edit_config(subparsers)
+    _migrate_encryption(subparsers)
     _new_client(subparsers)
     _set_client(subparsers)
     _create_documentation(subparsers)
@@ -626,7 +703,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     if not args.config_path:
         # Don't specify this as an argument default or else it will always be
         # included in the list.
-        args.config_path = [DEFAULT_CONFIG_PATH]
+        args.config_path = DEFAULT_CONFIG_PATH
     if not args.salt_path:
         args.salt_path = DEFAULT_SALT_PATH
     return args
@@ -924,7 +1001,7 @@ def _create_documentation(subparsers: _SubParsersAction[ArgumentParser]) -> None
         default=None,
         help="name of a set of file paths defined in the config file",
     )
-    parser.add_argument("--form_paths", nargs="*", help="form file paths")
+    parser.add_argument("--form_paths", nargs="*", type=Path, help="form file paths")
     parser.add_argument(
         "--inject_data",
         nargs="*",
@@ -978,7 +1055,7 @@ def _flatten_pdfs(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     parser.add_argument(
         "--library", type=str, default=default_library, choices=["pdf2image", "fillpdf"]
     )
-    parser.add_argument("form_paths", nargs="+")
+    parser.add_argument("form_paths", nargs="+", type=Path)
 
 
 def _taetigkeitsbericht(subparsers: _SubParsersAction[ArgumentParser]) -> None:

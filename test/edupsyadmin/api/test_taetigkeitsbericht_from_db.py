@@ -144,10 +144,7 @@ def test_taetigkeitsbericht(
     output_basename = tmp_path / "Taetigkeitsbericht_Out"
 
     taetigkeitsbericht(
-        app_username="user",
-        app_uid="uid",
         database_url="url",
-        salt_path="path",
         wstd_psy=5,
         out_basename=str(output_basename),
     )

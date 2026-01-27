@@ -292,10 +292,7 @@ def create_taetigkeitsbericht_report(
 
 
 def taetigkeitsbericht(
-    app_username: str,
-    app_uid: str,
     database_url: str,
-    salt_path: str | os.PathLike[str],
     wstd_psy: int,
     out_basename: str = "Taetigkeitsbericht_Out",
     wstd_total: int = 23,
@@ -320,10 +317,7 @@ def taetigkeitsbericht(
     # Query the data
     # TODO: Optimize the query (you don't need all data)
     clients_manager = ClientsManager(
-        app_username=app_username,
-        app_uid=app_uid,
         database_url=database_url,
-        salt_path=salt_path,
     )
     df = clients_manager.get_data_raw()
     df["h_sessions"] = df["min_sessions"] / 60.0

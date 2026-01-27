@@ -65,12 +65,7 @@ def setup_demo() -> None:
         logger.info("Demo user already exists in keyring. Using existing password.")
 
     # Instantiate ClientsManager to create demo.db and demo-salt.txt
-    clients_manager = ClientsManager(
-        database_url=demo_db_url,
-        app_uid=config.core.app_uid,
-        app_username=config.core.app_username,
-        salt_path=demo_salt_path,
-    )
+    clients_manager = ClientsManager(database_url=demo_db_url)
 
     # Define and add sample data
     sample_clients = [

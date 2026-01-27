@@ -1,5 +1,4 @@
 import logging  # just for interaction with the sqlalchemy logger
-import os
 from datetime import datetime
 from typing import Any
 
@@ -8,7 +7,6 @@ from sqlalchemy import create_engine, inspect, or_, select
 from sqlalchemy.orm import sessionmaker
 
 from edupsyadmin.core.config import config
-from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db import Base
 from edupsyadmin.db import clients as clients_db
@@ -24,9 +22,6 @@ class ClientsManager:
     def __init__(
         self,
         database_url: str,
-        app_uid: str,
-        app_username: str,
-        salt_path: str | os.PathLike[str],
     ):
         # set up logging for sqlalchemy
         logging.getLogger("sqlalchemy.engine").setLevel(config.core.logging)
@@ -37,9 +32,6 @@ class ClientsManager:
         self.engine = create_engine(database_url)
         self.Session = sessionmaker(bind=self.engine)
 
-        # set fernet for encryption
-        encr.set_fernet(app_username, salt_path, app_uid)
-
         # create the table if it doesn't exist
         Base.metadata.create_all(self.engine, tables=[clients_db.Client.__table__])  # type: ignore[list-item]
         logger.debug(f"created connection to database at {database_url}")
@@ -47,7 +39,7 @@ class ClientsManager:
     def add_client(self, **client_data: Any) -> int:
         logger.debug("trying to add client")
         with self.Session() as session:
-            new_client = clients_db.Client(encr, **client_data)
+            new_client = clients_db.Client(**client_data)
             session.add(new_client)
             session.commit()
             logger.info(f"added client: {new_client}")

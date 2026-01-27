@@ -1,6 +1,7 @@
 import keyring
 import pytest
 import yaml
+from conftest import TEST_UID, TEST_USERNAME
 from textual.widgets import Input
 
 from edupsyadmin.tui.editconfig import (
@@ -32,7 +33,7 @@ def mock_keyring(monkeypatch):
 @pytest.mark.asyncio
 async def test_app_loads_config(mock_config_snapshots):
     """Test if the app loads the configuration correctly."""
-    app = ConfigEditorApp(mock_config_snapshots)
+    app = ConfigEditorApp(mock_config_snapshots, TEST_UID, TEST_USERNAME)
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app.query_exactly_one("#core-logging", Input).value == "DEBUG"
@@ -44,12 +45,12 @@ async def test_app_loads_config(mock_config_snapshots):
 
 
 def test_initial_layout(mock_config_snapshots, snap_compare):
-    app = ConfigEditorApp(mock_config_snapshots)
+    app = ConfigEditorApp(mock_config_snapshots, TEST_UID, TEST_USERNAME)
     assert snap_compare(app, terminal_size=(80, 250))
 
 
 def test_add_new_school_container(mock_config_snapshots, snap_compare):
-    app = ConfigEditorApp(mock_config_snapshots)
+    app = ConfigEditorApp(mock_config_snapshots, TEST_UID, TEST_USERNAME)
 
     async def run_before(pilot):
         add_school_button = pilot.app.query_one("#add-school-button")
@@ -62,7 +63,7 @@ def test_add_new_school_container(mock_config_snapshots, snap_compare):
 
 
 def test_edit_new_school_container(mock_config_snapshots, snap_compare):
-    app = ConfigEditorApp(mock_config_snapshots)
+    app = ConfigEditorApp(mock_config_snapshots, TEST_UID, TEST_USERNAME)
 
     async def run_before(pilot):
         add_school_button = pilot.app.query_one("#add-school-button")
@@ -92,7 +93,7 @@ def test_edit_new_school_container(mock_config_snapshots, snap_compare):
 async def test_app_saves_config_changes(mock_config):
     """Test if the app saves changes to the configuration file."""
     config_path = mock_config
-    app = ConfigEditorApp(config_path)
+    app = ConfigEditorApp(config_path, TEST_UID, TEST_USERNAME)
 
     new_logging_level = "INFO"
     new_schoolpsy_name = "Dr. New Name"

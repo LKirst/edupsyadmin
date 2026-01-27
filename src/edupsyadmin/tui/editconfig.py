@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from typing import Any, ClassVar, Literal
 
-import keyring
 import yaml
 from textual import on
 from textual.app import App, ComposeResult
@@ -12,6 +11,12 @@ from textual.validation import Function, Regex
 from textual.widgets import Button, Footer, Header, Input, Select, Static
 
 from edupsyadmin.core.config import config
+from edupsyadmin.core.encrypt import (
+    DEFAULT_KDF_ITERATIONS,
+    derive_key_from_password,
+    load_or_create_salt,
+    set_key_in_keyring,
+)
 
 TOOLTIPS = {
     "logging": "Logging-Niveau für die Anwendung (DEBUG, INFO, WARN oder ERROR)",
@@ -277,11 +282,19 @@ class ConfigEditorApp(App[None]):
         Binding("ctrl+q", "quit", "Abbrechen", show=True),
     ]
 
-    def __init__(self, config_path: str | os.PathLike, **kwargs) -> None:
+    def __init__(
+        self, config_path: str | os.PathLike, app_uid: str, app_username: str, **kwargs
+    ) -> None:
         super().__init__(**kwargs)
         self.config_path = Path(config_path)
         config.load(self.config_path)
         self.config_dict = config.model_dump(exclude_defaults=False)
+        self.app_uid = app_uid
+        self.app_username = app_username
+
+        # Determine salt path based on config location
+        config_dir = self.config_path.parent
+        self.salt_path = config_dir / "salt.txt"
         self.title = "Konfiguration für edupsyadmin"
 
     def compose(self) -> ComposeResult:
@@ -294,6 +307,7 @@ class ConfigEditorApp(App[None]):
                 "logging",
                 "app_uid",
                 "app_username",
+                "kdf_iterations",
             ]
             for key in core_order:
                 if key in core_config:
@@ -309,12 +323,14 @@ class ConfigEditorApp(App[None]):
                             if key in ["kdf_iterations", "kdf_iterations_old"]
                             else "text"
                         )
+                        valid_empty = key == "kdf_iterations"
 
                         inp = Input(
                             display_value,
                             id=f"core-{key}",
                             placeholder=key,
                             type=inp_type,
+                            valid_empty=valid_empty,
                         )
                         inp.tooltip = TOOLTIPS.get(key, "")
                         yield inp
@@ -329,6 +345,13 @@ class ConfigEditorApp(App[None]):
                     ),
                     password=True,
                     id="password",
+                )
+            with Horizontal(classes="input-container"):
+                yield Static("Passwort bestätigen:", classes="label")
+                yield Input(
+                    placeholder="Passwort wiederholen",
+                    password=True,
+                    id="password_confirm",
                 )
 
             # Schoolpsy section
@@ -372,58 +395,55 @@ class ConfigEditorApp(App[None]):
         )
         yield Footer()
 
-    def _rebuild_config_from_ui(self) -> dict[str, Any]:
-        """Reconstructs the entire config from the current state of all UI widgets."""
-        new_config: dict[str, Any] = {
-            "core": {},
-            "schoolpsy": {},
-            "school": {},
-            "form_set": {},
-            "csv_import": {},
-            "lgvtcsv": {},
-        }
+    def _get_core_config_from_ui(self) -> dict[str, Any]:
+        """Rebuild core configuration from UI."""
+        config = {}
+        keys = ["logging", "app_uid", "app_username", "kdf_iterations"]
+        for key in keys:
+            value = self.query_one(f"#core-{key}", Input).value
+            if key == "kdf_iterations":
+                config[key] = int(value) if value else None
+            else:
+                config[key] = value or ""
+        return config
 
-        # Core section
-        core_keys = [
-            "logging",
-            "app_uid",
-            "app_username",
-        ]
-        for key in core_keys:
-            new_config["core"][key] = self.query_one(f"#core-{key}", Input).value or ""
+    def _get_schoolpsy_config_from_ui(self) -> dict[str, str]:
+        """Rebuild schoolpsy configuration from UI."""
+        config = {}
+        keys = ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]
+        for key in keys:
+            config[key] = self.query_one(f"#schoolpsy-{key}", Input).value or ""
+        return config
 
-        # Schoolpsy section
-        schoolpsy_keys = ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]
-        for key in schoolpsy_keys:
-            new_config["schoolpsy"][key] = (
-                self.query_one(f"#schoolpsy-{key}", Input).value or ""
-            )
+    def _get_dynamic_section_data(
+        self, editor_type: type[SchoolEditor | FormSetEditor | CsvImportEditor]
+    ) -> dict[str, Any]:
+        """Helper to get data from dynamic section editors."""
+        data = {}
+        for editor in self.query(editor_type):
+            key, editor_data = editor.get_data()
+            if key and editor_data is not None:
+                data[key] = editor_data
+        return data
 
-        # Dynamic sections
-        for editor in self.query(SchoolEditor):
-            key, data = editor.get_data()
-            if key and data is not None:
-                new_config["school"][key] = data
-
-        for editor in self.query(FormSetEditor):
-            key, data = editor.get_data()
-            if key and data is not None:
-                new_config["form_set"][key] = data
-
-        for editor in self.query(CsvImportEditor):
-            key, data = editor.get_data()
-            if key and data is not None:
-                new_config["csv_import"][key] = data
-
+    def _get_lgvt_config_from_ui(self) -> dict[str, str | None] | None:
+        """Rebuild LGVT CSV configuration from UI."""
         lgvt_editor = self.query_one(LgvtEditor)
         lgvt_data = lgvt_editor.get_data()
-        # Only include lgvtcsv if at least one value is set
         if any(lgvt_data.values()):
-            new_config["lgvtcsv"] = lgvt_data
-        else:
-            new_config["lgvtcsv"] = None
+            return lgvt_data
+        return None
 
-        return new_config
+    def _rebuild_config_from_ui(self) -> dict[str, Any]:
+        """Reconstructs the entire config from the current state of all UI widgets."""
+        return {
+            "core": self._get_core_config_from_ui(),
+            "schoolpsy": self._get_schoolpsy_config_from_ui(),
+            "school": self._get_dynamic_section_data(SchoolEditor),
+            "form_set": self._get_dynamic_section_data(FormSetEditor),
+            "csv_import": self._get_dynamic_section_data(CsvImportEditor),
+            "lgvtcsv": self._get_lgvt_config_from_ui(),
+        }
 
     @on(Button.Pressed)
     async def handle_button_press(self, event: Button.Pressed) -> None:
@@ -470,19 +490,68 @@ class ConfigEditorApp(App[None]):
 
     async def action_save(self) -> None:
         """Rebuilds the config from the UI and saves it."""
+        # Get password inputs
+        password_input = self.query_one("#password", Input)
+        password_confirm_input = self.query_one("#password_confirm", Input)
+        password = password_input.value
+        password_confirm = password_confirm_input.value
+
+        # If password is provided, validate and derive key
+        if password:
+            if len(password) < 8:
+                self.notify(
+                    "Passwort muss mindestens 8 Zeichen lang sein", severity="error"
+                )
+                self.bell()
+                return
+
+            if password != password_confirm:
+                self.notify("Passwörter stimmen nicht überein", severity="error")
+                self.bell()
+                return
+
+            try:
+                self.notify("Verschlüsselungsschlüssel wird generiert...")
+
+                salt = load_or_create_salt(self.salt_path)
+
+                # Get KDF iterations (either from UI or use default)
+                kdf_input = self.query_one("#core-kdf_iterations", Input)
+                iterations = (
+                    int(kdf_input.value) if kdf_input.value else DEFAULT_KDF_ITERATIONS
+                )
+
+                key = derive_key_from_password(password, salt, iterations)
+
+                # Store key in keyring
+                app_uid = self.query_one("#core-app_uid", Input).value
+                username = self.query_one("#core-app_username", Input).value
+
+                if not app_uid or not username:
+                    self.notify(
+                        "app_uid und app_username müssen gesetzt sein",
+                        severity="error",
+                    )
+                    self.bell()
+                    return
+
+                set_key_in_keyring(app_uid, username, key)
+                self.notify(
+                    "Verschlüsselungsschlüssel gespeichert", severity="information"
+                )
+
+            except Exception as e:
+                self.notify(
+                    f"Fehler beim Speichern des Schlüssels: {e}", severity="error"
+                )
+                self.bell()
+                return
+
+        # Save config
         self.config_dict = self._rebuild_config_from_ui()
         save_config(self.config_dict, self.config_path)
 
-        password_input = self.query_one("#password", Input)
-        if password_input.value:
-            app_uid = self.config_dict.get("core", {}).get("app_uid")
-            username = self.config_dict.get("core", {}).get("app_username")
-            if app_uid and username:
-                keyring.set_password(app_uid, username, password_input.value)
-            else:
-                self.bell()  # Notify user of error
-
-        self.notify("Configuration saved.")
+        self.notify("Konfiguration gespeichert", severity="information")
         self.exit()
 
     async def action_quit(self) -> None:

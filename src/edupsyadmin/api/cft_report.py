@@ -27,19 +27,13 @@ def safe_iq_to_t(iq_value: int | None) -> float | None:
 
 
 def create_report(
-    app_username: str,
-    app_uid: str,
     database_url: str,
-    salt_path: str,
     client_id: int,
     test_date: str,
     directory: str = ".",
 ) -> None:
     clients_manager = ClientsManager(
         database_url=database_url,
-        app_uid=app_uid,
-        app_username=app_username,
-        salt_path=salt_path,
     )
     client_dict = clients_manager.get_decrypted_client(client_id)
 

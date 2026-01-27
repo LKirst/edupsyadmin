@@ -111,10 +111,7 @@ def get_indeces(
 
 
 def mk_report(
-    app_username: str,
-    app_uid: str,
     database_url: str,
-    salt_path: str,
     client_id: int,
     test_date: str,
     version: str = "Rosenkohl",
@@ -124,12 +121,7 @@ def mk_report(
     fn_csv = getattr(config.lgvtcsv, version)
     t_day = datetime.strptime(test_date, "%Y-%m-%d").date()
 
-    clients_manager = ClientsManager(
-        database_url=database_url,
-        app_uid=app_uid,
-        app_username=app_username,
-        salt_path=salt_path,
-    )
+    clients_manager = ClientsManager(database_url=database_url)
     client_dict = clients_manager.get_decrypted_client(client_id)
 
     name = client_dict["first_name_encr"] + " " + client_dict["last_name_encr"]

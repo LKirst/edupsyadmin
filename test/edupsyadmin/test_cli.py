@@ -16,11 +16,13 @@ from sys import executable
 from unittest.mock import patch
 
 import pytest
+from cryptography.fernet import Fernet
 
 # I'm not importing ClientsManager direclty here because then I might mask
 # errors that come up when ClientsManager is not imported in cli.py
 from edupsyadmin.api import managers
 from edupsyadmin.cli import (
+    APP_UID,
     command_create_documentation,
     command_delete_client,
     command_edit_config,
@@ -29,12 +31,22 @@ from edupsyadmin.cli import (
     command_set_client,
     main,
 )
+from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import Logger
 
 TEST_USERNAME = "test_user_do_not_use"
 TEST_UID = "example.com"
 
 testing_logger = Logger("clitest_logger")
+
+
+@pytest.fixture(autouse=True)
+def setup_encryption_globally(mock_keyring):
+    if not encr.is_initialized:
+        dummy_key = Fernet.generate_key()
+        encr.set_key(dummy_key)
+    yield
+    # conftest.py resets encr
 
 
 @pytest.fixture
@@ -99,7 +111,7 @@ class TestBasicSanityCheck:
 
 def test_defaults_are_used(mock_config):
     """Test that default values for app_uid and database_url are used."""
-    from edupsyadmin.cli import APP_UID, DEFAULT_DB_URL
+    from edupsyadmin.cli import DEFAULT_DB_URL
 
     with patch("edupsyadmin.cli.command_info", autospec=True) as mock_command_info:
         main(split(f"-c {mock_config} info"))
@@ -136,13 +148,9 @@ def test_config_template(mock_keyring, tmp_path_factory):
 def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
-    salt_path = tmp_path / "salt.txt"
 
     command_new_client(
-        app_username=TEST_USERNAME,
-        app_uid=TEST_UID,
         database_url=database_url,
-        salt_path=salt_path,
         csv=str(mock_webuntis),
         name="MustermErika1",
         school="FirstSchool",
@@ -150,12 +158,7 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
         import_config=None,
     )
 
-    clients_manager = managers.ClientsManager(
-        database_url,
-        app_uid=TEST_UID,
-        app_username=TEST_USERNAME,
-        salt_path=salt_path,
-    )
+    clients_manager = managers.ClientsManager(database_url)
     client = clients_manager.get_decrypted_client(client_id=1)
     assert client["first_name_encr"] == "Erika"
     assert client["last_name_encr"] == "Mustermann"
@@ -164,15 +167,9 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
 def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
-    salt_path = tmp_path / "salt.txt"
 
     # Arrange
-    clients_manager = managers.ClientsManager(
-        database_url,
-        app_uid=TEST_UID,
-        app_username=TEST_USERNAME,
-        salt_path=salt_path,
-    )
+    clients_manager = managers.ClientsManager(database_url)
     clients_manager.add_client(
         school="FirstSchool",
         gender_encr="f",
@@ -184,10 +181,7 @@ def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_p
 
     # Act
     command_get_clients(
-        app_username=TEST_USERNAME,
-        app_uid=TEST_UID,
         database_url=database_url,
-        salt_path=salt_path,
         nta_nos=False,
         school=None,
         client_id=None,
@@ -205,15 +199,9 @@ def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_p
 def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
-    salt_path = tmp_path / "salt.txt"
 
     # Arrange
-    clients_manager = managers.ClientsManager(
-        database_url,
-        app_uid=TEST_UID,
-        app_username=TEST_USERNAME,
-        salt_path=salt_path,
-    )
+    clients_manager = managers.ClientsManager(database_url)
     clients_manager.add_client(
         school="FirstSchool",
         gender_encr="f",
@@ -233,10 +221,7 @@ def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tm
 
     # Act
     command_get_clients(
-        app_username=TEST_USERNAME,
-        app_uid=TEST_UID,
         database_url=database_url,
-        salt_path=salt_path,
         nta_nos=False,
         school=None,
         client_id=1,
@@ -255,15 +240,9 @@ def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tm
 def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
-    salt_path = tmp_path / "salt.txt"
 
     # Arrange
-    clients_manager = managers.ClientsManager(
-        database_url,
-        app_uid=TEST_UID,
-        app_username=TEST_USERNAME,
-        salt_path=salt_path,
-    )
+    clients_manager = managers.ClientsManager(database_url)
     clients_manager.add_client(
         school="FirstSchool",
         gender_encr="f",
@@ -275,10 +254,7 @@ def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
 
     # Act
     command_set_client(
-        app_username=TEST_USERNAME,
-        app_uid=TEST_UID,
         database_url=database_url,
-        salt_path=salt_path,
         client_id=[1],
         key_value_pairs=["street_encr=Veränderte Straße 5", "class_name=42ab"],
     )
@@ -298,15 +274,9 @@ def test_create_documentation(
 
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
-    salt_path = tmp_path / "salt.txt"
 
     # Arrange
-    clients_manager = managers.ClientsManager(
-        database_url,
-        app_uid=TEST_UID,
-        app_username=TEST_USERNAME,
-        salt_path=salt_path,
-    )
+    clients_manager = managers.ClientsManager(database_url)
     client_id = clients_manager.add_client(
         school="FirstSchool",
         gender_encr="f",
@@ -318,10 +288,7 @@ def test_create_documentation(
 
     # Act
     command_create_documentation(
-        app_username=TEST_USERNAME,
-        app_uid=TEST_UID,
         database_url=database_url,
-        salt_path=salt_path,
         client_id=[client_id],
         form_set="lrst",
         form_paths=None,
@@ -339,14 +306,10 @@ def test_create_documentation(
 def test_delete_client(mock_keyring, mock_config, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
-    salt_path = tmp_path / "salt.txt"
 
     # Arrange
     clients_manager = managers.ClientsManager(
         database_url,
-        app_uid=TEST_UID,
-        app_username=TEST_USERNAME,
-        salt_path=salt_path,
     )
     client_id = clients_manager.add_client(
         school="FirstSchool",
@@ -359,10 +322,7 @@ def test_delete_client(mock_keyring, mock_config, tmp_path):
 
     # Act
     command_delete_client(
-        app_username=TEST_USERNAME,
-        app_uid=TEST_UID,
         database_url=database_url,
-        salt_path=salt_path,
         client_id=client_id,
     )
 
@@ -379,11 +339,13 @@ def test_edit_config_command(mock_config):
         mock_app_instance.run.return_value = None
 
         # Call the command function
-        command_edit_config(config_path=[mock_config])
+        command_edit_config(
+            config_path=mock_config, app_uid=TEST_UID, app_username=TEST_USERNAME
+        )
 
         # Assert that the app was initialized with the correct config path
         mock_lazy_import.return_value.ConfigEditorApp.assert_called_once_with(
-            mock_config
+            mock_config, TEST_UID, TEST_USERNAME
         )
 
         # Assert that the app was run

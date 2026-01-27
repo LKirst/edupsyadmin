@@ -5,16 +5,18 @@ from collections.abc import Generator
 from datetime import date
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock
+from unittest.mock import MagicMock
 
 import keyring
 import pytest
 import yaml
+from cryptography.fernet import Fernet
 from sample_pdf_form import create_pdf_form
 from sample_webuntis_export import create_sample_webuntis_export
 
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.core.config import config
+from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import Logger, logger
 from edupsyadmin.db import Base
 
@@ -25,16 +27,11 @@ testing_logger = Logger("conftest_logger")
 
 
 @pytest.fixture(autouse=True)
-def _reset_config_instance():
-    """Reset the config singleton instance after each test.
-
-    This is crucial because the `config` object is a singleton and would
-    otherwise carry state between tests, leading to unpredictable behavior
-    depending on test execution order.
-
-    """
+def _reset_globals():
+    """Reset singletons after every test to prevent flaky tests."""
     yield
     config._instance = None
+    encr._fernet = None
 
 
 @pytest.fixture(autouse=True)
@@ -62,18 +59,24 @@ def monkeysession():
         yield mp
 
 
-@pytest.fixture(scope="session")
-def mock_keyring(monkeysession):
-    class MockCredential:
-        def __init__(self, password: str):
-            self.password = password
+@pytest.fixture(scope="function")
+def mock_keyring(monkeypatch):
+    storage = {}
+    mock_key = Fernet.generate_key().decode()
 
-    mock_get_credential = Mock(
-        side_effect=lambda service, username: MockCredential(password="mocked_password")
-    )
-    monkeysession.setattr(keyring, "get_credential", mock_get_credential)
+    def set_password(service, username, password):
+        storage[f"{service}:{username}"] = password
 
-    return mock_get_credential
+    def get_credential(service, username):
+        # cli.py nutzt get_credential().password
+        val = storage.get(f"{service}:{username}", mock_key)
+        cred = MagicMock()
+        cred.password = val
+        return cred
+
+    monkeypatch.setattr(keyring, "set_password", set_password)
+    monkeypatch.setattr(keyring, "get_credential", get_credential)
+    return keyring.get_credential
 
 
 @pytest.fixture(scope="function")
@@ -310,18 +313,16 @@ def client_dict_internal(request) -> dict[str, Any]:
 def clients_manager(tmp_path, mock_salt_path, mock_config, mock_keyring):
     """
     Create a clients_manager.
-    This fixture is dependent on `mock_config` to ensure the config file
-    is loaded before this fixture is used, providing `TEST_UID` and `TEST_USERNAME`.
+    Initialises the global encr instance.
     """
+
+    # initialize encr as in cli.py
+    dummy_key = Fernet.generate_key()
+    encr.set_key(dummy_key)
 
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
-    manager = ClientsManager(
-        database_url,
-        app_uid=TEST_UID,
-        app_username=TEST_USERNAME,
-        salt_path=mock_salt_path,
-    )
+    manager = ClientsManager(database_url)
 
     yield manager
 

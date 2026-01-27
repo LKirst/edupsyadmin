@@ -24,6 +24,7 @@ class CoreConfig(BaseModel):
     app_uid: str = "liebermann-schulpsychologie.github.io"
     app_username: str
     config: str | None = None  # This is added at runtime
+    kdf_iterations: int | None = None
 
 
 class SchoolpsyConfig(BaseModel):
