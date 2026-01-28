@@ -9,7 +9,7 @@ Bearbeitung von Daten für mehrere Klienten gleichzeitig.
 Alle hier gezeigten Befehle können in Skripten verwendet werden, um
 Arbeitsabläufe zu automatisieren.
 
-Klienten hinzufügen (``new_client``)
+Klienten hinzufügen (``new-client``)
 ------------------------------------
 
 Stell dir vor, du hast eine CSV-Datei exportiert, z.B. aus WebUntis. Anstatt
@@ -24,7 +24,7 @@ CSV-Datei und weise ihn der "TutorialSchule" zu.
 
 .. code-block:: console
 
-  $ edupsyadmin new_client --csv "./samplewebuntisfile.csv" \
+  $ edupsyadmin new-client --csv "./samplewebuntisfile.csv" \
       --name "MustermMax1" --school TutorialSchule
 
 
@@ -39,22 +39,22 @@ CSV-Datei und weise ihn der "TutorialSchule" zu.
 - ``--keepfile``: Standardmäßig wird die CSV-Datei nach dem Import gelöscht.
   Diese Option verhindert das.
 
-**Interaktives Anlegen (eines einzelnen Klienten):** Wenn du ``new_client``
+**Interaktives Anlegen (eines einzelnen Klienten):** Wenn du ``new-client``
 ohne Argumente aufrufst, öffnet sich die TUI, um einen neuen Klienten
 anzulegen.
 
-Klienten bearbeiten (``set_client``)
+Klienten bearbeiten (``set-client``)
 ------------------------------------
 
 Mit diesem Befehl können die Daten eines oder mehrerer Klienten geändert
 werden.
 
-**Interaktive Bearbeitung (einzelner Klient):** Wenn du ``set_client`` nur mit
+**Interaktive Bearbeitung (einzelner Klient):** Wenn du ``set-client`` nur mit
 einer ID aufrufst, öffnet sich die TUI, um diesen einen Klienten zu bearbeiten.
 
 .. code-block:: console
 
-    $ edupsyadmin set_client 2
+    $ edupsyadmin set-client 2
 
 **Bearbeitung per Kommandozeile (mehrere Klienten):** Stell dir vor, zum neuen
 Schuljahr führst du in einem kurzen Zeitraum viele LRSt-Testungen durch und
@@ -67,7 +67,7 @@ Nachteilsausgleich für die Schriftgröße und einen Zeitzuschlag von 25%.
 
 .. code-block:: console
 
-    $ edupsyadmin set_client 1 2 5 --key_value_pairs "nta_font=1" "nta_zeitv_vieltext=25"
+    $ edupsyadmin set-client 1 2 5 --key_value_pairs "nta_font=1" "nta_zeitv_vieltext=25"
 
 - ``client_id``: Eine oder mehrere IDs von Klienten, die bearbeitet werden
   sollen.
@@ -77,7 +77,7 @@ Nachteilsausgleich für die Schriftgröße und einen Zeitzuschlag von 25%.
 - Für Wahr/Falsch-Felder steht ``1`` für "wahr" und ``0`` für "falsch".
 
 
-Klienten anzeigen (``get_clients``)
+Klienten anzeigen (``get-clients``)
 -----------------------------------
 
 Dieser Befehl zeigt entweder eine Übersicht aller Klienten oder die
@@ -87,29 +87,29 @@ Detailansicht für einen einzelnen Klienten an.
 
     .. code-block:: console
 
-        $ edupsyadmin get_clients
+        $ edupsyadmin get-clients
 
 -   **Interaktive Übersicht**: Für eine sortier- und filterbare Tabelle,
     verwende die ``--tui`` Option.
 
     .. code-block:: console
 
-        $ edupsyadmin get_clients --tui
+        $ edupsyadmin get-clients --tui
 
 -   **Gefilterte Daten exportieren**:
 
     .. code-block:: console
 
-        $ edupsyadmin get_clients --nta_nos --school TutorialSchule --out "gefilterte_liste.csv"
+        $ edupsyadmin get-clients --nta_nos --school TutorialSchule --out "gefilterte_liste.csv"
 
 -   **Details für einen einzelnen Klienten**:
 
     .. code-block:: console
 
-        $ edupsyadmin get_clients --client_id 2
+        $ edupsyadmin get-clients --client_id 2
 
 
-Dokumentation erstellen (``create_documentation``)
+Dokumentation erstellen (``create-documentation``)
 --------------------------------------------------
 
 Auch hier kann die Kommandozeile die Arbeit beschleunigen, wenn Dokumente für
@@ -140,18 +140,18 @@ viele Fälle gleichzeitig erstellt werden müssen.
 
 .. code-block:: console
 
-    $ edupsyadmin create_documentation 1 2 --form_set lrst --inject_data "today_date_de=16.10.2025"
+    $ edupsyadmin create-documentation 1 2 --form_set lrst --inject_data "today_date_de=16.10.2025"
 
-Klienten löschen (``delete_client``)
+Klienten löschen (``delete-client``)
 ------------------------------------
 
 Löscht einen (oder mehrere) Klienten unwiderruflich aus der Datenbank.
 
 .. code-block:: console
 
-    $ edupsyadmin delete_client 1 2
+    $ edupsyadmin delete-client 1 2
 
-PDF-Formulare für den Druck vorbereiten (``flatten_pdfs``)
+PDF-Formulare für den Druck vorbereiten (``flatten-pdfs``)
 ----------------------------------------------------------
 
 Für das Drucken ist es manchmal notwendig, ausgefüllte PDF-Formulare so zu
@@ -165,7 +165,7 @@ Installationsanweisungen.
 
 .. code-block:: console
 
-   $ edupsyadmin flatten_pdfs ./formular1_ausgefuellt.pdf ./formular2_ausgefuellt.pdf
+   $ edupsyadmin flatten-pdfs ./formular1_ausgefuellt.pdf ./formular2_ausgefuellt.pdf
 
 Ein neues, für den Druck aufbereitetes PDF mit dem Präfix ``print_`` wird
 erstellt (z.B. ``print_formular1_ausgefuellt.pdf``).

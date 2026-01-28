@@ -29,7 +29,7 @@ anzeigen. Im Beispiel unten, sind die möglichen Unterbefehle markiert.
 
     $ edupsyadmin --help
     usage: edupsyadmin [-h] [-v] [-w WARN]
-                       {info,edit_config,new_client,set_client,create_documentation,get_clients,flatten_pdfs,mk_report,taetigkeitsbericht,delete_client} ...
+                       {info,edit-config,new-client,set-client,create-documentation,get-clients,flatten-pdfs,mk-report,taetigkeitsbericht,delete-client,setup-demo,tui} ...
 
     options:
       -h, --help            show this help message and exit
@@ -37,22 +37,25 @@ anzeigen. Im Beispiel unten, sind die möglichen Unterbefehle markiert.
       -w, --warn WARN       logger warning level [WARN]
 
     subcommands:
-      {info,edit_config,new_client,set_client,create_documentation,get_clients,flatten_pdfs,mk_report,taetigkeitsbericht,delete_client}
+      {info,edit-config,new-client,set-client,create-documentation,get-clients,flatten-pdfs,mk-report,taetigkeitsbericht,delete-client,setup-demo,tui}
         info                Get useful information for debugging
-        edit_config         Edit app configuration
-        new_client          Add a new client
-        set_client          Change values for one or more clients
-        create_documentation
+        edit-config         Edit app configuration
+        new-client          Add a new client
+        set-client          Change values for one or more clients
+        create-documentation
                             Fill a pdf form or a text file with a liquid template
-        get_clients         Show clients overview or single client
-        flatten_pdfs        Flatten pdf forms (experimental)
+        get-clients         Show clients overview or single client
+        flatten-pdfs        Flatten pdf forms (experimental)
+        mk-report
         taetigkeitsbericht  Create a PDF output for the Taetigkeitsbericht (experimental)
-        delete_client       Delete a client in the database
+        delete-client       Delete a client in the database
+        setup-demo          Create a sandboxed demo environment.
+        tui                 Start the TUI
 
 
 Die Hilfe zeigt uns, dass wir den edupsyadmin Befehl mit verschiedenen
 Unterbefehlen zusammen ausführen (z.B. ``edupsyadmin info``, ``edupsyadmin
-new_client``, ``edupsyadmin create_documentation``).
+new-client``, ``edupsyadmin create-documentation``).
 
 Beispiel 2: Hilfe für einen Unterbefehl anzeigen
 ------------------------------------------------
@@ -62,16 +65,16 @@ wie folgt:
 
 .. code-block:: console
 
-    $ edupsyadmin create_documentation --help
+    $ edupsyadmin create-documentation --help
 
-Dies wird dir die Optionen und Argumente für den ``create_documentation``
+Dies wird dir die Optionen und Argumente für den ``create-documentation``
 Unterbefehl anzeigen:
 
 .. code-block:: console
    :emphasize-lines: 2,6,9
 
-    $ edupsyadmin create_documentation --help
-    usage: edupsyadmin create_documentation [-h] client_id [client_id ...] [--form_set FORM_SET] [--form_paths FORM_PATH ...]
+    $ edupsyadmin create-documentation --help
+    usage: edupsyadmin create-documentation [-h] client_id [client_id ...] [--form_set FORM_SET] [--form_paths FORM_PATH ...]
 
     Fill a pdf form or a text file with a liquid template. Either --form_set or --form_paths must be provided.
 
@@ -88,9 +91,9 @@ Die Hilfe zeigt ``positional arguments``  und ``options``. Die positional
 arguments sind Argumente, die du dem Unterbefehl in einer bestimmten
 Reihenfolge übergeben musst. Die options sind hingegen optionale Parameter, mit
 denen du das Verhalten des Unterbefehls beeinflussen kannst. Insgesamt siehst
-du hier, dass der Unterbefehl "create_documentation" ein positional argument
+du hier, dass der Unterbefehl "create-documentation" ein positional argument
 (client_id) und mehrere optionale Optionen akzeptiert.
 Argumente oder Optionen, die bei ``usage:`` in eckigen Klammern stehen, sind
-optional. (Bei ``create_documentation`` gibt es noch die Besonderheit, dass
+optional. (Bei ``create-documentation`` gibt es noch die Besonderheit, dass
 entweder ein ``form_set`` oder mindestens ein ``form_path`` angegeben werden
 müssen.)

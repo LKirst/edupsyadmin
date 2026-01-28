@@ -8,6 +8,7 @@ environment or setuptools develop mode to test against the development version.
 
 """
 
+import argparse
 import os
 from pathlib import Path
 from shlex import split
@@ -18,19 +19,16 @@ from unittest.mock import patch
 import pytest
 from cryptography.fernet import Fernet
 
-# I'm not importing ClientsManager direclty here because then I might mask
-# errors that come up when ClientsManager is not imported in cli.py
 from edupsyadmin.api import managers
-from edupsyadmin.cli import (
-    APP_UID,
-    command_create_documentation,
-    command_delete_client,
-    command_edit_config,
-    command_get_clients,
-    command_new_client,
-    command_set_client,
-    main,
+from edupsyadmin.cli import APP_UID, main
+from edupsyadmin.cli.commands import (
+    create_documentation as create_documentation_command,
 )
+from edupsyadmin.cli.commands import delete_client as delete_client_command
+from edupsyadmin.cli.commands import edit_config as edit_config_command
+from edupsyadmin.cli.commands import get_clients as get_clients_command
+from edupsyadmin.cli.commands import new_client as new_client_command
+from edupsyadmin.cli.commands import set_client as set_client_command
 from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import Logger
 
@@ -69,14 +67,14 @@ def change_wd(tmp_path):
         "--help",
         "info",
         "info --help",
-        "new_client --help",
-        "set_client --help",
-        "create_documentation --help",
-        "get_clients --help",
-        "flatten_pdfs --help",
+        "new-client --help",
+        "set-client --help",
+        "create-documentation --help",
+        "get-clients --help",
+        "flatten-pdfs --help",
         "taetigkeitsbericht --help",
-        "delete_client --help",
-        "edit_config --help",
+        "delete-client --help",
+        "edit-config --help",
     )
 )
 def command(request):
@@ -113,14 +111,14 @@ def test_defaults_are_used(mock_config):
     """Test that default values for app_uid and database_url are used."""
     from edupsyadmin.cli import DEFAULT_DB_URL
 
-    with patch("edupsyadmin.cli.command_info", autospec=True) as mock_command_info:
+    with patch("edupsyadmin.cli.commands.info.execute") as mock_command_info:
         main(split(f"-c {mock_config} info"))
 
         mock_command_info.assert_called_once()
-        call_kwargs = mock_command_info.call_args.kwargs
+        call_args = mock_command_info.call_args.args[0]
 
-        assert call_kwargs.get("app_uid") == APP_UID
-        assert call_kwargs.get("database_url") == DEFAULT_DB_URL
+        assert call_args.app_uid == APP_UID
+        assert call_args.database_url == DEFAULT_DB_URL
 
 
 def test_config_template(mock_keyring, tmp_path_factory):
@@ -135,6 +133,8 @@ def test_config_template(mock_keyring, tmp_path_factory):
         config_path,
         "--app_uid",
         "example.com",
+        "--app_username",
+        "test",
         "--database_url",
         database_url,
         "info",
@@ -149,7 +149,7 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
 
-    command_new_client(
+    args = argparse.Namespace(
         database_url=database_url,
         csv=str(mock_webuntis),
         name="MustermErika1",
@@ -157,6 +157,7 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
         keepfile=False,
         import_config=None,
     )
+    new_client_command.execute(args)
 
     clients_manager = managers.ClientsManager(database_url)
     client = clients_manager.get_decrypted_client(client_id=1)
@@ -180,7 +181,7 @@ def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_p
     )
 
     # Act
-    command_get_clients(
+    args = argparse.Namespace(
         database_url=database_url,
         nta_nos=False,
         school=None,
@@ -189,6 +190,7 @@ def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_p
         tui=False,
         columns=None,
     )
+    get_clients_command.execute(args)
 
     # Assert
     stdout, _ = capsys.readouterr()
@@ -220,7 +222,7 @@ def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tm
     )
 
     # Act
-    command_get_clients(
+    args = argparse.Namespace(
         database_url=database_url,
         nta_nos=False,
         school=None,
@@ -229,6 +231,7 @@ def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tm
         tui=False,
         columns=None,
     )
+    get_clients_command.execute(args)
 
     # Assert
     stdout, _ = capsys.readouterr()
@@ -253,11 +256,12 @@ def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
     )
 
     # Act
-    command_set_client(
+    args = argparse.Namespace(
         database_url=database_url,
         client_id=[1],
         key_value_pairs=["street_encr=Veränderte Straße 5", "class_name=42ab"],
     )
+    set_client_command.execute(args)
 
     # Assert
     client = clients_manager.get_decrypted_client(client_id=1)
@@ -287,13 +291,15 @@ def test_create_documentation(
     )
 
     # Act
-    command_create_documentation(
+    args = argparse.Namespace(
         database_url=database_url,
         client_id=[client_id],
         form_set="lrst",
         form_paths=None,
         inject_data=None,
+        tui=False,
     )
+    create_documentation_command.execute(args)
 
     # Assert
     output_paths = [f"{client_id}_{Path(path).name}" for path in pdf_forms]
@@ -321,10 +327,8 @@ def test_delete_client(mock_keyring, mock_config, tmp_path):
     )
 
     # Act
-    command_delete_client(
-        database_url=database_url,
-        client_id=client_id,
-    )
+    args = argparse.Namespace(database_url=database_url, client_id=client_id)
+    delete_client_command.execute(args)
 
     # Assert
     with pytest.raises(Exception):
@@ -333,15 +337,16 @@ def test_delete_client(mock_keyring, mock_config, tmp_path):
 
 def test_edit_config_command(mock_config):
     """Test that the edit_config command starts the TUI."""
-    with patch("edupsyadmin.cli.lazy_import") as mock_lazy_import:
+    with patch("edupsyadmin.cli.commands.edit_config.lazy_import") as mock_lazy_import:
         # Prevent the app from actually running
         mock_app_instance = mock_lazy_import.return_value.ConfigEditorApp.return_value
         mock_app_instance.run.return_value = None
 
         # Call the command function
-        command_edit_config(
+        args = argparse.Namespace(
             config_path=mock_config, app_uid=TEST_UID, app_username=TEST_USERNAME
         )
+        edit_config_command.execute(args)
 
         # Assert that the app was initialized with the correct config path
         mock_lazy_import.return_value.ConfigEditorApp.assert_called_once_with(
@@ -355,13 +360,15 @@ def test_edit_config_command(mock_config):
 # TODO: Do the same for `get_clients --tui` and `edit_client --tui`
 def test_create_documentation_tui(mock_config):
     """Test that `create_documentation --tui` starts the FillFormApp."""
-    with patch("edupsyadmin.cli.lazy_import") as mock_lazy_import:
+    with patch(
+        "edupsyadmin.cli.commands.create_documentation.lazy_import"
+    ) as mock_lazy_import:
         # Prevent the app from actually running
         mock_app_instance = mock_lazy_import.return_value.FillFormApp.return_value
         mock_app_instance.run.return_value = None
 
         # Call the main function with the mock config and the TUI flag
-        main(split(f"-c {mock_config} create_documentation --tui"))
+        main(split(f"-c {mock_config} create-documentation --tui"))
 
         # Assert that the app was initialized
         mock_lazy_import.return_value.FillFormApp.assert_called_once()

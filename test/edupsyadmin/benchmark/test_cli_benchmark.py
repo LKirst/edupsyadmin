@@ -1,7 +1,9 @@
+import argparse
+
 import pytest
 
 from edupsyadmin.api.managers import ClientsManager
-from edupsyadmin.cli import command_get_clients
+from edupsyadmin.cli.commands import get_clients as get_clients_command
 
 # Using constants from test_cli.py for consistency
 TEST_USERNAME = "test_user_do_not_use"
@@ -19,10 +21,7 @@ def test_get_clients_benchmark(
 
     # Arrange: Set up a database with a significant number of clients
     clients_manager = ClientsManager(
-        database_url,
-        app_uid=TEST_UID,
-        app_username=TEST_USERNAME,
-        salt_path=salt_path,
+        database_url=database_url,
     )
     for i in range(num_clients):  # Add clients for the benchmark
         clients_manager.add_client(
@@ -36,7 +35,7 @@ def test_get_clients_benchmark(
 
     def run_command():
         # Act: Run the command that is being benchmarked
-        command_get_clients(
+        args = argparse.Namespace(
             app_username=TEST_USERNAME,
             app_uid=TEST_UID,
             database_url=database_url,
@@ -48,6 +47,7 @@ def test_get_clients_benchmark(
             tui=False,
             columns=None,
         )
+        get_clients_command.execute(args)
 
     # Assert: benchmark the execution of the command
     benchmark(run_command)

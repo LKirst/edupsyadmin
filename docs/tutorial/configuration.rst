@@ -13,7 +13,7 @@ Konfigurations-TUI mit diesem Befehl:
 
 .. code-block:: console
 
-   $ edupsyadmin edit_config
+   $ edupsyadmin edit-config
 
 Die Oberfläche, die du jetzt siehst, sollte so aussehen:
 
