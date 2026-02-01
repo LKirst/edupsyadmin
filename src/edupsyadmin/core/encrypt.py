@@ -6,6 +6,7 @@ import keyring
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from keyring.errors import PasswordDeleteError
 
 from edupsyadmin.core.logger import logger
 
@@ -99,7 +100,7 @@ def set_key_in_keyring(uid: str, username: str, key: bytes) -> None:
     try:
         keyring.delete_password(uid, username)
         logger.debug(f"Deleted existing key for '{username}'.")
-    except keyring.errors.PasswordDeleteError:
+    except PasswordDeleteError:
         # This error occurs if no password exists to delete. It's safe to ignore.
         logger.debug(f"No existing key for '{username}' to delete.")
     except Exception as e:

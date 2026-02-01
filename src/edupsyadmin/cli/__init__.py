@@ -5,6 +5,7 @@ import os
 import shutil
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from pathlib import Path
+from typing import Any
 
 from platformdirs import user_config_dir, user_data_path
 
@@ -75,16 +76,22 @@ def _setup_subparsers(subparsers: argparse._SubParsersAction) -> None:
 
         command_name = file.stem.replace("_", "-")
 
-        parser_args = {
-            "formatter_class": RawDescriptionHelpFormatter,
-            "description": getattr(command_module, "COMMAND_DESCRIPTION", None),
-            "help": getattr(command_module, "COMMAND_HELP", None),
-            "epilog": getattr(command_module, "COMMAND_EPILOG", None),
-        }
-        # Filter out None values so we don't override argparse defaults
-        parser_args = {k: v for k, v in parser_args.items() if v is not None}
+        description: str | None = getattr(command_module, "COMMAND_DESCRIPTION", None)
+        help_text: str | None = getattr(command_module, "COMMAND_HELP", None)
+        epilog: str | None = getattr(command_module, "COMMAND_EPILOG", None)
 
-        parser = subparsers.add_parser(command_name, **parser_args)
+        parser_kwargs: dict[str, Any] = {
+            "formatter_class": RawDescriptionHelpFormatter,
+        }
+
+        if description is not None:
+            parser_kwargs["description"] = description
+        if help_text is not None:
+            parser_kwargs["help"] = help_text
+        if epilog is not None:
+            parser_kwargs["epilog"] = epilog
+
+        parser = subparsers.add_parser(command_name, **parser_kwargs)
         command_module.add_arguments(parser)
 
 
