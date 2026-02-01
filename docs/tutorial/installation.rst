@@ -197,18 +197,9 @@ Die Funktion ``flatten_pdfs`` mit der ``pdf2image`` Bibliothek benötigt
 
         Um ``poppler`` zu installieren, wird der Paketmanager `Homebrew <https://brew.sh/>`__ benötigt.
 
-        *Installation von Homebrew (falls noch nicht vorhanden):*
-
-        Öffne das Terminal und führe den folgenden Befehl aus:
-
         .. code-block:: console
 
             $ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-        *Installation von Poppler mit Homebrew:*
-
-        .. code-block:: console
-
             $ brew install poppler
 
         **Linux**: Die meisten Distributionen haben poppler vorinstalliert.
