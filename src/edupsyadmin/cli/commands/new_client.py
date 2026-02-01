@@ -3,6 +3,7 @@ import textwrap
 from argparse import ArgumentParser, Namespace
 from datetime import datetime
 from inspect import signature
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from sqlalchemy import inspect as sa_inspect
@@ -203,7 +204,7 @@ def execute(args: Namespace) -> None:
             clients_manager, args.csv, args.school, args.name, args.import_config
         )
         if not args.keepfile:
-            os.remove(args.csv)
+            Path(args.csv).unlink()
     else:
         edit_client_app_cls = lazy_import(
             "edupsyadmin.tui.edit_client_app"

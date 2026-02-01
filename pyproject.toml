@@ -75,6 +75,8 @@ version_files = ["src/edupsyadmin/__version__.py"]
 [tool.ruff.lint]
 select = [
   # Core correctness / style
+  "A",
+  "B",
   "F",
   "E",
   "W",
@@ -89,12 +91,13 @@ select = [
   "RET",  # flake8-return – keep return statements consistent and meaningful
   "ARG",  # flake8-unused-arguments – flag unused, shadowed or *args/**kwargs
   "TID",  # flake8-tidy-imports – ban unused or overly-relative imports
+  "PTH",  # flake8-use-pathlib - find use of function that could be replaced by pathlib
   "RUF",  # Ruff-native extras – small bug-catchers & style nits not in other sets "UP",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "src/edupsyadmin/db/clients.py" = ["ARG002"]
-"src/edupsyadmin/tui/*" = ["ARG"]
+"src/edupsyadmin/tui/*" = ["ARG", "A002"]
 "test/*" = ["ARG"]
 "src/edupsyadmin/cli.py" = ["E501"]
 

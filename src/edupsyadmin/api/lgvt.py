@@ -12,16 +12,16 @@ from edupsyadmin.core.convert_measures import percentile_to_t
 
 
 def askyn(prompt: str) -> int:
-    yes = {"yes", "ye", "y"}
-    no = {"no", "n"}
-    quit = {"quit", "q"}
+    s_yes = {"yes", "ye", "y"}
+    s_no = {"no", "n"}
+    s_quit = {"quit", "q"}
 
     answ = input(prompt).lower()
-    if answ in yes:
+    if answ in s_yes:
         return 1
-    if answ in no:
+    if answ in s_no:
         return 0
-    if answ in quit:
+    if answ in s_quit:
         return -1
     raise OSError("Only y, n or q are allowed.")
 
@@ -129,7 +129,7 @@ def mk_report(
 
     results = get_indeces(fn_csv, name, schoolyear, t_day, version)
 
-    with open(out_path, "w", encoding="utf-8") as f:
+    with out_path.open("w", encoding="utf-8") as f:
         for line in results:
             f.write(line)
             f.write("\n")

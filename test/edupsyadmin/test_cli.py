@@ -56,7 +56,7 @@ def mock_client(clients_manager, sample_client_dict):
 
 @pytest.fixture
 def change_wd(tmp_path):
-    original_directory = os.getcwd()
+    original_directory = Path.cwd()
     os.chdir(tmp_path)
     yield
     os.chdir(original_directory)

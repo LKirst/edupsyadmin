@@ -47,7 +47,7 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
 
     writer = PdfWriter()
 
-    with open(fn, "rb") as pdf_file:
+    with fn.open("rb") as pdf_file:
         reader = PdfReader(pdf_file, strict=False)
 
         for page in reader.pages:
@@ -73,7 +73,7 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
                         )
     if out_fn.exists():
         raise FileExistsError
-    with open(out_fn, "wb") as output_stream:
+    with out_fn.open("wb") as output_stream:
         writer.write(output_stream)
 
 
@@ -110,7 +110,7 @@ def write_form_md(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
     :param data: the data to fill the liquid template with
     :raises [TODO:name]: [TODO:description]
     """
-    with open(fn, encoding="utf8") as text_file:
+    with fn.open("r", encoding="utf8") as text_file:
         txt = text_file.read()
         try:
             template = Template(txt)
@@ -122,7 +122,7 @@ def write_form_md(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
         except exceptions.LiquidError as e:
             logger.error(e)
             msg = ""
-    with open(out_fn, "w", encoding="utf8") as out_file:
+    with out_fn.open("w", encoding="utf8") as out_file:
         out_file.writelines(msg)
 
 

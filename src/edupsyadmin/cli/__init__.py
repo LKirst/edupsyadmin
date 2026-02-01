@@ -1,7 +1,6 @@
 import argparse
 import importlib
 import importlib.resources
-import os
 import shutil
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from pathlib import Path
@@ -21,15 +20,12 @@ APP_UID = "liebermann-schulpsychologie.github.io"
 USER_DATA_DIR = user_data_path(
     appname="edupsyadmin", version=__version__, ensure_exists=True
 )
-DEFAULT_DB_URL = "sqlite:///" + os.path.join(USER_DATA_DIR, "edupsyadmin.db")
-DEFAULT_CONFIG_PATH = os.path.join(
-    user_config_dir(appname="edupsyadmin", version=__version__, ensure_exists=True),
-    "config.yml",
+DEFAULT_DB_URL = "sqlite:///" + str(USER_DATA_DIR / "edupsyadmin.db")
+DEFAULT_CONFIG_DIR = Path(
+    user_config_dir(appname="edupsyadmin", version=__version__, ensure_exists=True)
 )
-DEFAULT_SALT_PATH = os.path.join(
-    user_config_dir(appname="edupsyadmin", version=__version__, ensure_exists=True),
-    "salt.txt",
-)
+DEFAULT_CONFIG_PATH = DEFAULT_CONFIG_DIR / "config.yml"
+DEFAULT_SALT_PATH = DEFAULT_CONFIG_DIR / "salt.txt"
 
 
 def _setup_encryption(app_uid: str, app_username: str) -> None:
@@ -159,7 +155,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # config
     # if the config file doesn't exist, copy a sample config
-    if not os.path.exists(args.config_path):
+    if not Path(args.config_path).exists():
         template_path = str(
             importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
         )

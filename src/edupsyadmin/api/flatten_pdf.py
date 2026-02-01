@@ -48,11 +48,11 @@ def flatten_pdf(fn_in: str | Path, library: str = DEFAULT_LIBRARY) -> None:
         im1 = images[0]
         images.pop(0)
         im1.save(fn_out, "PDF", resolution=100.0, save_all=True, append_images=images)
-        warnings.warn("pdf2image fails for tick-boxes and radio buttons.")
+        warnings.warn("pdf2image fails for tick-boxes and radio buttons.", stacklevel=2)
         # TODO: find solution for radio buttons
     elif library == "fillpdf" and installed_fillpdf:
         fillpdfs.flatten_pdf(fn_in, fn_out, as_images=False)
-        warnings.warn("fillpdf fails for multiline text fields.")
+        warnings.warn("fillpdf fails for multiline text fields.", stacklevel=2)
         # TODO: find solution for multiline text fields
     else:
         raise Exception("The library you want to use is not installed.")

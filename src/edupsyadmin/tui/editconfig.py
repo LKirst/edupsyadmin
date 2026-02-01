@@ -48,13 +48,13 @@ PathIsFileValidator = Function(
 
 def load_config(file_path: Path) -> dict[str, Any]:
     """Load the YAML configuration file."""
-    with open(file_path, encoding="utf-8") as f:
+    with file_path.open("r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
 def save_config(config_dict: dict[str, Any], file_path: Path) -> None:
     """Save the configuration dictionary back to the YAML file."""
-    with open(file_path, "w", encoding="utf-8") as f:
+    with file_path.open("w", encoding="utf-8") as f:
         yaml.safe_dump(config_dict, f, default_flow_style=False, allow_unicode=True)
 
 

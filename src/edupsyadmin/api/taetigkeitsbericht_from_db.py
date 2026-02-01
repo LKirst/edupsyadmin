@@ -1,5 +1,6 @@
 import os
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
 
@@ -248,8 +249,7 @@ def create_taetigkeitsbericht_report(
     summary_h_sessions: pd.DataFrame | None = None,
 ) -> None:
     if pdflibs_imported:
-        if not os.path.exists("resources"):
-            os.makedirs("resources")
+        Path("resources").mkdir(parents=True, exist_ok=True)
         wstd_img = "resources/summary_wstd.png"
         dfi.export(summary_wstd, wstd_img, table_conversion="matplotlib")
         if summary_h_sessions is not None:

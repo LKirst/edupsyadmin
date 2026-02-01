@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import yaml
@@ -18,18 +17,16 @@ from edupsyadmin.core.logger import logger
 
 def setup_demo() -> None:
     """Create a sandboxed demo environment."""
-    demo_config_path = "demo-config.yml"
-    demo_salt_path = "demo-salt.txt"
+    demo_config_path = Path("demo-config.yml")
+    demo_salt_path = Path("demo-salt.txt")
     demo_db_url = "sqlite:///demo.db"
-    demo_db_path = "demo.db"
+    demo_db_path = Path("demo.db")
     demo_username = "demouser"
     demo_app_uid = "liebermann-schulpsychologie.github.io.demo"
 
     # remove old demo files to have a clean slate
-    if os.path.exists(demo_db_path):
-        os.remove(demo_db_path)
-    if os.path.exists(demo_salt_path):
-        os.remove(demo_salt_path)
+    demo_db_path.unlink(missing_ok=True)
+    demo_salt_path.unlink(missing_ok=True)
 
     # Create demo-config.yml
     demo_config = {
@@ -56,7 +53,7 @@ def setup_demo() -> None:
         "form_set": {},
         "csv_import": {},
     }
-    with open(demo_config_path, "w", encoding="utf-8") as f:
+    with demo_config_path.open("w", encoding="utf-8") as f:
         yaml.dump(demo_config, f)
 
     # Load the new demo config

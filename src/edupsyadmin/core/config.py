@@ -7,6 +7,7 @@ values.
 """
 
 from os import PathLike
+from pathlib import Path
 from typing import Any
 
 import yaml
@@ -84,7 +85,7 @@ class Settings:
 
         The file is read and validated against the Pydantic models.
         """
-        with open(path, encoding="UTF-8") as stream:
+        with Path(path).open("r", encoding="UTF-8") as stream:
             logger.debug(f"reading config data from '{path}'")
             data = yaml.safe_load(stream)
 
