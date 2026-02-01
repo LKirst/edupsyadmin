@@ -1,11 +1,18 @@
 import os
 from pathlib import Path
 
-import keyring
 import yaml
 
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.core.config import config
+from edupsyadmin.core.encrypt import (
+    DEFAULT_KDF_ITERATIONS,
+    derive_key_from_password,
+    encr,
+    get_key_from_keyring,
+    load_or_create_salt,
+    set_key_in_keyring,
+)
 from edupsyadmin.core.logger import logger
 
 
@@ -16,7 +23,7 @@ def setup_demo() -> None:
     demo_db_url = "sqlite:///demo.db"
     demo_db_path = "demo.db"
     demo_username = "demouser"
-    demo_app_uid = "liebermann-schulpsychologie.github.io"
+    demo_app_uid = "liebermann-schulpsychologie.github.io.demo"
 
     # remove old demo files to have a clean slate
     if os.path.exists(demo_db_path):
@@ -55,14 +62,32 @@ def setup_demo() -> None:
     # Load the new demo config
     config.load(demo_config_path)
 
-    # Set a password for the demo user
-    if not keyring.get_password(demo_app_uid, demo_username):
-        keyring.set_password(
-            config.core.app_uid, config.core.app_username, "edupsyadmin-demo-password"
-        )
-        logger.info("Password for demo user set in keyring.")
+    # Define demo password
+    demo_password = "edupsyadmin-demo-password"
+
+    # Set an encryption key for the demo user
+    # Check if a key already exists
+    if not get_key_from_keyring(config.core.app_uid, config.core.app_username):
+        logger.info("No encryption key found for demo user. Generating a new one.")
+        # Load or create salt for key derivation
+        salt = load_or_create_salt(demo_salt_path)
+        # Derive key from password and salt
+        key = derive_key_from_password(demo_password, salt, DEFAULT_KDF_ITERATIONS)
+        # Store the derived key in the keyring
+        set_key_in_keyring(config.core.app_uid, config.core.app_username, key)
+        logger.info("Encryption key for demo user set in keyring.")
     else:
-        logger.info("Demo user already exists in keyring. Using existing password.")
+        logger.info(
+            "Demo user already has an encryption key in keyring. Using existing key."
+        )
+
+    # Initialize encryption for this session
+    key = get_key_from_keyring(config.core.app_uid, config.core.app_username)
+    if not key:
+        # This should not happen if the above logic is correct
+        raise RuntimeError("Failed to get demo key from keyring after setting it.")
+    encr.set_key(key)
+    logger.info("Encryption initialized for demo session.")
 
     # Instantiate ClientsManager to create demo.db and demo-salt.txt
     clients_manager = ClientsManager(database_url=demo_db_url)

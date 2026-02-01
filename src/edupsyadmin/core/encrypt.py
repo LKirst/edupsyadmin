@@ -60,6 +60,17 @@ def derive_key_from_password(password: str, salt: bytes, iterations: int) -> byt
     return base64.urlsafe_b64encode(kdf.derive(password.encode()))
 
 
+def check_key_validity(key: bytes | None) -> bool:
+    """Checks if a given key is a valid Fernet key."""
+    if key is None:
+        return False
+    try:
+        Fernet(key)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
 def set_password_in_keyring(uid: str, username: str, password: str) -> None:
     """Stores a password in the keyring."""
     logger.debug(f"Storing password for '{username}' in keyring.")
@@ -77,8 +88,28 @@ def get_key_from_keyring(uid: str, username: str) -> bytes | None:
 
 
 def set_key_in_keyring(uid: str, username: str, key: bytes) -> None:
-    """Stores the base64-encoded encryption key in the keyring."""
+    """
+    Stores the base64-encoded encryption key in the keyring.
+
+    This function first attempts to delete any existing key for the given
+    uid/username pair to prevent duplicate entries on backends that don't
+    support overwriting.
+    """
     logger.debug(f"Storing key for '{username}' in keyring.")
+    try:
+        keyring.delete_password(uid, username)
+        logger.debug(f"Deleted existing key for '{username}'.")
+    except keyring.errors.PasswordDeleteError:
+        # This error occurs if no password exists to delete. It's safe to ignore.
+        logger.debug(f"No existing key for '{username}' to delete.")
+    except Exception as e:
+        # Some backends might raise a different error if the password
+        # does not exist. We can treat this as a non-critical event
+        # and log it at a lower level.
+        logger.debug(
+            f"Non-critical error while trying to delete key for '{username}': {e!r}"
+        )
+
     set_password_in_keyring(uid, username, key.decode())
 
 

@@ -11,6 +11,7 @@ import keyring
 import pytest
 import yaml
 from cryptography.fernet import Fernet
+from keyring.backends.null import Keyring as NullKeyring
 from sample_pdf_form import create_pdf_form
 from sample_webuntis_export import create_sample_webuntis_export
 
@@ -59,24 +60,38 @@ def monkeysession():
         yield mp
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(autouse=True, scope="function")
 def mock_keyring(monkeypatch):
-    storage = {}
-    mock_key = Fernet.generate_key().decode()
-
-    def set_password(service, username, password):
-        storage[f"{service}:{username}"] = password
+    """A mock keyring that stores secrets in a dictionary."""
+    store = {}
 
     def get_credential(service, username):
-        # cli.py nutzt get_credential().password
-        val = storage.get(f"{service}:{username}", mock_key)
+        password = store.get(f"{service}:{username}")
+        if password is None:
+            return None
         cred = MagicMock()
-        cred.password = val
+        cred.password = password
         return cred
 
-    monkeypatch.setattr(keyring, "set_password", set_password)
+    def set_password(service, username, password):
+        store[f"{service}:{username}"] = password
+
+    def delete_password(service, username):
+        key = f"{service}:{username}"
+        if key in store:
+            del store[key]
+        else:
+            raise keyring.errors.PasswordDeleteError("Password not found")
+
+    # Mock the main functions used by the app
     monkeypatch.setattr(keyring, "get_credential", get_credential)
-    return keyring.get_credential
+    monkeypatch.setattr(keyring, "set_password", set_password)
+    monkeypatch.setattr(keyring, "delete_password", delete_password)
+
+    # Also mock get_keyring() to prevent it from finding a real backend
+    # and to avoid the "no backends found" warning.
+    null_keyring = NullKeyring()
+    monkeypatch.setattr(keyring, "get_keyring", lambda: null_keyring)
 
 
 @pytest.fixture(scope="function")
@@ -310,7 +325,7 @@ def client_dict_internal(request) -> dict[str, Any]:
 
 
 @pytest.fixture
-def clients_manager(tmp_path, mock_salt_path, mock_config, mock_keyring):
+def clients_manager(tmp_path, mock_salt_path, mock_config):
     """
     Create a clients_manager.
     Initialises the global encr instance.

@@ -6,7 +6,7 @@ from edupsyadmin.core.encrypt import Encryption
 
 
 @pytest.mark.parametrize("iterations", [480_000, 800_000, 1_200_000])
-def test_key_derivation_benchmark(benchmark, tmp_path, mock_keyring, iterations):
+def test_key_derivation_benchmark(benchmark, tmp_path, iterations):
     """Benchmark the set_fernet method with varying iterations."""
     encr = Encryption()
     salt_path = tmp_path / "salt.txt"

@@ -59,7 +59,7 @@ EXPECTED_KEYS = {
 
 
 class TestManagers:
-    def test_add_client(self, mock_keyring, clients_manager, client_dict_set_by_user):
+    def test_add_client(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
         client = clients_manager.get_decrypted_client(client_id=client_id)
@@ -67,7 +67,7 @@ class TestManagers:
         assert client["first_name_encr"] == client_dict_set_by_user["first_name_encr"]
         assert client["last_name_encr"] == client_dict_set_by_user["last_name_encr"]
 
-    def test_add_client_set_id(self, mock_keyring, clients_manager):
+    def test_add_client_set_id(self, clients_manager):
         client_dict_with_id = {
             "client_id": 99,
             "school": "FirstSchool",
@@ -81,7 +81,7 @@ class TestManagers:
         client_id = clients_manager.add_client(**client_dict_with_id)
         assert client_id == 99
 
-    def test_add_client_set_id_str(self, mock_keyring, clients_manager):
+    def test_add_client_set_id_str(self, clients_manager):
         client_dict_with_id = {
             "client_id": "98",
             "school": "FirstSchool",
@@ -95,7 +95,7 @@ class TestManagers:
         client_id = clients_manager.add_client(**client_dict_with_id)
         assert client_id == 98
 
-    def test_edit_client(self, mock_keyring, clients_manager, client_dict_set_by_user):
+    def test_edit_client(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
         client = clients_manager.get_decrypted_client(client_id=client_id)
         updated_data = {

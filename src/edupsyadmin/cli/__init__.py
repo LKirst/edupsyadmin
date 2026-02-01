@@ -48,9 +48,16 @@ def _setup_encryption(app_uid: str, app_username: str) -> None:
             "(edupsyadmin edit_config)."
         )
 
-    # Set the key on the global encryption instance
-    encr.set_key(key)
-    logger.debug("Encryption initialized successfully")
+    try:
+        # Set the key on the global encryption instance
+        encr.set_key(key)
+        logger.debug("Encryption initialized successfully")
+    except ValueError as e:
+        raise RuntimeError(
+            "Invalid encryption key found in keyring. "
+            f"Please reset your password using 'edupsyadmin edit-config'. "
+            f"Details: {e}"
+        ) from e
 
 
 def _setup_subparsers(subparsers: argparse._SubParsersAction) -> None:
@@ -106,7 +113,7 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
 
     # Global arguments
     parser.add_argument("--app_username", default=None, help=argparse.SUPPRESS)
-    parser.add_argument("--app_uid", default=APP_UID, help=argparse.SUPPRESS)
+    parser.add_argument("--app_uid", default=None, help=argparse.SUPPRESS)
     parser.add_argument(
         "--database_url", default=DEFAULT_DB_URL, help=argparse.SUPPRESS
     )
@@ -183,6 +190,19 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
     else:
         logger.debug(f"Using username passed as cli argument: '{args.app_username}'")
+
+    if not args.app_uid:  # Not passed on CLI
+        logger.debug("Trying to get app_uid from config.")
+        try:
+            args.app_uid = config.core.app_uid
+            logger.debug(f"Using app_uid from config: '{args.app_uid}'")
+        except (KeyError, AttributeError):
+            args.app_uid = APP_UID  # Fallback to hardcoded default
+            logger.debug(
+                f"app_uid not found in config, using default: '{args.app_uid}'"
+            )
+    else:  # Passed on CLI
+        logger.debug(f"Using app_uid passed as cli argument: '{args.app_uid}'")
 
     # These commands do not require encryption to be set up
     no_encryption_commands = ["info", "edit-config", "setup-demo", "migrate-encryption"]

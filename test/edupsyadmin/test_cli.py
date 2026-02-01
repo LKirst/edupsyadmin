@@ -39,7 +39,7 @@ testing_logger = Logger("clitest_logger")
 
 
 @pytest.fixture(autouse=True)
-def setup_encryption_globally(mock_keyring):
+def setup_encryption_globally():
     if not encr.is_initialized:
         dummy_key = Fernet.generate_key()
         encr.set_key(dummy_key)
@@ -48,7 +48,7 @@ def setup_encryption_globally(mock_keyring):
 
 
 @pytest.fixture
-def mock_client(mock_keyring, clients_manager, sample_client_dict):
+def mock_client(clients_manager, sample_client_dict):
     """Fixture to set up a client for testing."""
     client_id = clients_manager.add_client(**sample_client_dict)
     return client_id, clients_manager.database_url
@@ -121,7 +121,7 @@ def test_defaults_are_used(mock_config):
         assert call_args.database_url == DEFAULT_DB_URL
 
 
-def test_config_template(mock_keyring, tmp_path_factory):
+def test_config_template(tmp_path_factory):
     tmp_dir = tmp_path_factory.mktemp("tmp", numbered=True)
     database_path = tmp_dir / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
@@ -145,7 +145,7 @@ def test_config_template(mock_keyring, tmp_path_factory):
     )
 
 
-def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
+def test_new_client(mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
 
@@ -165,7 +165,7 @@ def test_new_client(mock_keyring, mock_config, mock_webuntis, tmp_path):
     assert client["last_name_encr"] == "Mustermann"
 
 
-def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
+def test_get_clients_all(capsys, mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
 
@@ -198,7 +198,7 @@ def test_get_clients_all(capsys, mock_keyring, mock_config, mock_webuntis, tmp_p
     assert "Erika" in stdout
 
 
-def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
+def test_get_clients_single(capsys, mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
 
@@ -240,7 +240,7 @@ def test_get_clients_single(capsys, mock_keyring, mock_config, mock_webuntis, tm
     assert "Max" not in stdout
 
 
-def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
+def test_set_client(capsys, mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
 
@@ -271,7 +271,7 @@ def test_set_client(capsys, mock_keyring, mock_config, mock_webuntis, tmp_path):
 
 # TODO: test inject_data
 def test_create_documentation(
-    tmp_path, mock_webuntis, mock_keyring, mock_config, pdf_forms, change_wd
+    tmp_path, mock_webuntis, mock_config, pdf_forms, change_wd
 ):
     testing_logger.start(level="DEBUG")
     testing_logger.debug(f"config path: {mock_config}")
@@ -309,7 +309,7 @@ def test_create_documentation(
         )
 
 
-def test_delete_client(mock_keyring, mock_config, tmp_path):
+def test_delete_client(mock_config, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
 
@@ -360,6 +360,15 @@ def test_edit_config_command(mock_config):
 # TODO: Do the same for `get_clients --tui` and `edit_client --tui`
 def test_create_documentation_tui(mock_config):
     """Test that `create_documentation --tui` starts the FillFormApp."""
+    from edupsyadmin.core.config import config
+    from edupsyadmin.core.encrypt import set_key_in_keyring
+
+    # Arrange: Set a key in the keyring so _setup_encryption passes
+    config.load(mock_config)
+    username = config.core.app_username
+    key = Fernet.generate_key()
+    set_key_in_keyring(APP_UID, username, key)
+
     with patch(
         "edupsyadmin.cli.commands.create_documentation.lazy_import"
     ) as mock_lazy_import:

@@ -2,7 +2,6 @@
 
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 from cryptography.fernet import Fernet
@@ -36,35 +35,6 @@ def reset_global_encr():
 
     # Teardown (reset) after test ends
     encr._fernet = None
-
-
-@pytest.fixture
-def mock_keyring():
-    """
-    Mocks the keyring module completely.
-    Uses an in-memory dictionary to simulate storage.
-    """
-    storage = {}
-
-    def mock_set_password(service, username, password):
-        storage[f"{service}:{username}"] = password
-
-    def mock_get_credential(service, username):
-        key = f"{service}:{username}"
-        if key in storage:
-            # keyring.get_credential returns an object with a .password attribute
-            cred = MagicMock()
-            cred.password = storage[key]
-            return cred
-        return None
-
-    # Patch the keyring module where it is IMPORTED (in edupsyadmin.core.encrypt)
-    with patch("edupsyadmin.core.encrypt.keyring") as mock_kr:
-        mock_kr.set_password.side_effect = mock_set_password
-        mock_kr.get_credential.side_effect = mock_get_credential
-        # Mock backend name for logging calls
-        mock_kr.get_keyring.return_value.__class__.__name__ = "MockMemoryKeyring"
-        yield mock_kr
 
 
 @pytest.fixture
@@ -157,7 +127,7 @@ class TestKeyHelpers:
         loaded_salt = load_or_create_salt(temp_salt_file)
         assert loaded_salt == existing_salt
 
-    def test_keyring_store_and_retrieve(self, mock_keyring, generated_key):
+    def test_keyring_store_and_retrieve(self, generated_key):
         # Store key
         set_key_in_keyring(TEST_UID, TEST_USER, generated_key)
 
@@ -168,7 +138,7 @@ class TestKeyHelpers:
         assert retrieved_key == generated_key
         assert isinstance(retrieved_key, bytes)
 
-    def test_keyring_missing_key(self, mock_keyring):
+    def test_keyring_missing_key(self):
         # Should return None, not raise error
         assert get_key_from_keyring("wrong_uid", "wrong_user") is None
 
@@ -189,7 +159,7 @@ class TestKeyHelpers:
         assert key1 != key_diff
 
 
-def test_full_workflow(mock_keyring, temp_salt_file):
+def test_full_workflow(temp_salt_file):
     """
     Simulates the flow:
     1. User runs edit_config (generates password -> key)

@@ -1,4 +1,3 @@
-import keyring
 import pytest
 import yaml
 from conftest import TEST_UID, TEST_USERNAME
@@ -8,26 +7,6 @@ from edupsyadmin.tui.editconfig import (
     ConfigEditorApp,
     SchoolEditor,
 )
-
-
-# Mock keyring
-@pytest.fixture(autouse=True)
-def mock_keyring(monkeypatch):
-    store = {}
-
-    def get_password(service, username):
-        return store.get(f"{service}:{username}")
-
-    def set_password(service, username, password):
-        store[f"{service}:{username}"] = password
-
-    def delete_password(service, username):
-        key = f"{service}:{username}"
-        store.pop(key, None)
-
-    monkeypatch.setattr(keyring, "get_password", get_password)
-    monkeypatch.setattr(keyring, "set_password", set_password)
-    monkeypatch.setattr(keyring, "delete_password", delete_password)
 
 
 @pytest.mark.asyncio

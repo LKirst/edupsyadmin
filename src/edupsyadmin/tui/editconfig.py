@@ -13,10 +13,13 @@ from textual.widgets import Button, Footer, Header, Input, Select, Static
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import (
     DEFAULT_KDF_ITERATIONS,
+    check_key_validity,
     derive_key_from_password,
+    get_key_from_keyring,
     load_or_create_salt,
     set_key_in_keyring,
 )
+from edupsyadmin.tui.dialogs import YesNoDialog
 
 TOOLTIPS = {
     "logging": "Logging-Niveau für die Anwendung (DEBUG, INFO, WARN oder ERROR)",
@@ -488,69 +491,114 @@ class ConfigEditorApp(App[None]):
         elif event.button.id == "cancel":
             await self.action_quit()
 
+    async def _handle_new_password_flow(
+        self,
+        password: str,
+        password_confirm: str,
+        app_uid: str,
+        username: str,
+        existing_key: bytes | None,
+        is_existing_key_valid: bool,
+    ) -> bool:
+        """Handle the logic for when a new password is provided."""
+        if len(password) < 8:
+            self.notify(
+                "Passwort muss mindestens 8 Zeichen lang sein", severity="error"
+            )
+            self.bell()
+            return False
+
+        if password != password_confirm:
+            self.notify("Passwörter stimmen nicht überein", severity="error")
+            self.bell()
+            return False
+
+        if existing_key is not None:
+            if is_existing_key_valid:
+                confirmed = await self.app.push_screen(
+                    YesNoDialog(
+                        "Ein gültiger Schlüssel existiert bereits. Überschreiben?"
+                    )
+                )
+                if not confirmed:
+                    self.notify(
+                        "Speichern abgebrochen. Der Schlüssel wurde nicht geändert.",
+                        severity="warning",
+                    )
+                    return False
+            else:
+                self.notify(
+                    "Ein ungültiger Schlüssel wird überschrieben.", severity="error"
+                )
+                self.bell()
+
+        try:
+            self.notify("Verschlüsselungsschlüssel wird generiert...")
+            salt = load_or_create_salt(self.salt_path)
+            kdf_input = self.query_one("#core-kdf_iterations", Input)
+            iterations = (
+                int(kdf_input.value) if kdf_input.value else DEFAULT_KDF_ITERATIONS
+            )
+            key = derive_key_from_password(password, salt, iterations)
+            set_key_in_keyring(app_uid, username, key)
+            self.notify("Verschlüsselungsschlüssel gespeichert", severity="information")
+        except Exception as e:
+            self.notify(f"Fehler beim Speichern des Schlüssels: {e}", severity="error")
+            self.bell()
+            return False
+
+        return True
+
     async def action_save(self) -> None:
         """Rebuilds the config from the UI and saves it."""
-        # Get password inputs
         password_input = self.query_one("#password", Input)
-        password_confirm_input = self.query_one("#password_confirm", Input)
         password = password_input.value
-        password_confirm = password_confirm_input.value
+        password_confirm = self.query_one("#password_confirm", Input).value
+        app_uid = self.query_one("#core-app_uid", Input).value
+        username = self.query_one("#core-app_username", Input).value
 
-        # If password is provided, validate and derive key
+        if not app_uid or not username:
+            self.notify(
+                "app_uid und app_username müssen gesetzt sein", severity="error"
+            )
+            self.bell()
+            return
+
+        existing_key = get_key_from_keyring(app_uid, username)
+        is_existing_key_valid = check_key_validity(existing_key)
+
         if password:
-            if len(password) < 8:
+            should_continue = await self._handle_new_password_flow(
+                password,
+                password_confirm,
+                app_uid,
+                username,
+                existing_key,
+                is_existing_key_valid,
+            )
+            if not should_continue:
+                return
+        else:
+            if existing_key is None:
                 self.notify(
-                    "Passwort muss mindestens 8 Zeichen lang sein", severity="error"
+                    "Kein Verschlüsselungsschlüssel gesetzt.", severity="warning"
+                )
+            elif is_existing_key_valid:
+                self.notify(
+                    "Es wird der bestehende, gültige Schlüssel verwendet.",
+                    severity="information",
+                )
+            else:
+                self.notify(
+                    "Achtung: Es ist ein ungültiger Schlüssel vorhanden. "
+                    "Bitte Passwort erneut eingeben, um einen neuen "
+                    "Schlüssel zu generieren.",
+                    severity="error",
                 )
                 self.bell()
-                return
 
-            if password != password_confirm:
-                self.notify("Passwörter stimmen nicht überein", severity="error")
-                self.bell()
-                return
-
-            try:
-                self.notify("Verschlüsselungsschlüssel wird generiert...")
-
-                salt = load_or_create_salt(self.salt_path)
-
-                # Get KDF iterations (either from UI or use default)
-                kdf_input = self.query_one("#core-kdf_iterations", Input)
-                iterations = (
-                    int(kdf_input.value) if kdf_input.value else DEFAULT_KDF_ITERATIONS
-                )
-
-                key = derive_key_from_password(password, salt, iterations)
-
-                # Store key in keyring
-                app_uid = self.query_one("#core-app_uid", Input).value
-                username = self.query_one("#core-app_username", Input).value
-
-                if not app_uid or not username:
-                    self.notify(
-                        "app_uid und app_username müssen gesetzt sein",
-                        severity="error",
-                    )
-                    self.bell()
-                    return
-
-                set_key_in_keyring(app_uid, username, key)
-                self.notify(
-                    "Verschlüsselungsschlüssel gespeichert", severity="information"
-                )
-
-            except Exception as e:
-                self.notify(
-                    f"Fehler beim Speichern des Schlüssels: {e}", severity="error"
-                )
-                self.bell()
-                return
-
-        # Save config
         self.config_dict = self._rebuild_config_from_ui()
         save_config(self.config_dict, self.config_path)
-
         self.notify("Konfiguration gespeichert", severity="information")
         self.exit()
 

@@ -11,9 +11,7 @@ TEST_UID = "example.com"
 
 
 @pytest.mark.parametrize("num_clients", [10, 100, 1000])
-def test_get_clients_benchmark(
-    benchmark, mock_keyring, mock_config, tmp_path, num_clients
-):
+def test_get_clients_benchmark(benchmark, mock_config, tmp_path, num_clients):
     """Benchmark the get_clients command."""
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
