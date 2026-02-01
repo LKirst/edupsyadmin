@@ -1,19 +1,35 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
+import pandas as pd
+from rich.text import Text
 from textual import on, work
 from textual.app import ComposeResult
 from textual.binding import Binding, BindingType
 from textual.message import Message
 from textual.widgets import DataTable, Static
 
+from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.tui.dialogs import YesNoDialog
 
-if TYPE_CHECKING:
-    import pandas as pd
 
-    from edupsyadmin.api.managers import ClientsManager
+def _format_cell(value: object) -> Text:
+    """Format a cell value with colors:
+    - NaN → grey
+    - True → green
+    - False → red
+    """
+    if pd.isna(value):
+        return Text("—", style="dim")
+
+    if value is True:
+        return Text("True", style="bold green")
+
+    if value is False:
+        return Text("False", style="bold red")
+
+    return Text(str(value))
 
 
 class ClientsOverview(Static):
@@ -90,20 +106,32 @@ class ClientsOverview(Static):
         self.post_message(self._ClientDeleted())
 
     def on_clients_overview__df_loaded(self, message: _DfLoaded) -> None:
-        """Callback for when the client dataframe is loaded."""
         table = self.query_one(DataTable)
         table.clear()
+
         df = message.df
+        # Columns that should NOT be formatted (keep as plain values)
+        skip_formatting = {"client_id"}
+
         if not df.empty:
             if not table.columns:
                 for col in df.columns:
                     table.add_column(col, key=col)
-            table.add_rows(df.values.tolist())
 
-            # Re-apply last applied sort if any
+            formatted_rows = []
+            for row in df.itertuples(index=False, name=None):
+                formatted_row = [
+                    value if df.columns[i] in skip_formatting else _format_cell(value)
+                    for i, value in enumerate(row)
+                ]
+                formatted_rows.append(formatted_row)
+
+            table.add_rows(formatted_rows)
+
             if self._last_applied_sort[0]:
                 table.sort(
-                    *self._last_applied_sort[0], reverse=self._last_applied_sort[1]
+                    *self._last_applied_sort[0],
+                    reverse=self._last_applied_sort[1],
                 )
 
         table.loading = False
