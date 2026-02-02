@@ -112,7 +112,7 @@ def test_defaults_are_used(mock_config):
     from edupsyadmin.cli import DEFAULT_DB_URL
 
     with patch("edupsyadmin.cli.commands.info.execute") as mock_command_info:
-        main(split(f"-c {mock_config} info"))
+        main(["-c", str(mock_config), "info"])
 
         mock_command_info.assert_called_once()
         call_args = mock_command_info.call_args.args[0]
@@ -377,7 +377,7 @@ def test_create_documentation_tui(mock_config):
         mock_app_instance.run.return_value = None
 
         # Call the main function with the mock config and the TUI flag
-        main(split(f"-c {mock_config} create-documentation 1 --tui"))
+        main(["-c", str(mock_config), "create-documentation", "1", "--tui"])
 
         # Assert that the app was initialized
         mock_lazy_import.return_value.FillFormApp.assert_called_once()
