@@ -9,7 +9,7 @@ from fpdf import FPDF
 
 class Report(FPDF):
     def __init__(
-        self, heading: str, reporttext: str, plot: str | os.PathLike[str]
+        self, heading: str, reporttext: list[str], plot: str | os.PathLike[str]
     ) -> None:
         super().__init__()
         self.reporttext = reporttext

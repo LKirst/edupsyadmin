@@ -108,7 +108,7 @@ def create_report(
 
     # create the pdf
     heading = f"CFT 20-R (Testdatum: {testdate}; Code: {client_id})"
-    report = Report(heading, "\n".join(text), fn_plot)
+    report = Report(heading, text, fn_plot)
     report.print_page()
     report.output(directory / Path(f"{client_id}_Auswertung.pdf"))
 
