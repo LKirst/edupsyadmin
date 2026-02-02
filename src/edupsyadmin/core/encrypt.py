@@ -1,6 +1,7 @@
 import base64
 import os
 from pathlib import Path
+from typing import Final
 
 import keyring
 from cryptography.fernet import Fernet
@@ -10,8 +11,8 @@ from keyring.errors import PasswordDeleteError
 
 from edupsyadmin.core.logger import logger
 
-DEFAULT_KDF_ITERATIONS = 600000
-OLD_KDF_ITERATIONS = 480000  # Needed for migration
+DEFAULT_KDF_ITERATIONS: Final[int] = 600000
+OLD_KDF_ITERATIONS: Final[int] = 480000  # Needed for migration
 
 
 class Encryption:
@@ -114,18 +115,17 @@ def set_key_in_keyring(uid: str, username: str, key: bytes) -> None:
     set_password_in_keyring(uid, username, key.decode())
 
 
-def load_or_create_salt(salt_path: str | os.PathLike[str]) -> bytes:
+def load_or_create_salt(salt_path: Path) -> bytes:
     """Loads a salt from a file or creates a new one if it doesn't exist."""
     # TODO: store the salt in the db, not in a separate file
-    path_obj = Path(salt_path)
-    if path_obj.is_file():
+    if salt_path.is_file():
         logger.debug(f"Using existing salt from `{salt_path}`")
-        return path_obj.read_bytes()
+        return salt_path.read_bytes()
     logger.debug(f"Creating new salt and writing to `{salt_path}`")
     salt = os.urandom(16)
 
-    path_obj.touch(mode=0o600)
-    path_obj.write_bytes(salt)
+    salt_path.touch(mode=0o600)
+    salt_path.write_bytes(salt)
     return salt
 
 
