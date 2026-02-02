@@ -33,7 +33,9 @@ def mock_clients_manager():
     manager = MagicMock()
     df = pd.DataFrame(ROWS, columns=COLUMNS)
     manager.get_clients_overview.return_value = df
-    manager.get_decrypted_client.return_value = dict(zip(COLUMNS, ROWS[0]))
+    manager.get_decrypted_client.return_value = dict(
+        zip(COLUMNS, ROWS[0], strict=False)
+    )
     return manager
 
 
@@ -54,7 +56,7 @@ def test_edupsyadmintui_initial_layout(snap_compare, mock_config, mock_clients_m
 @pytest.mark.asyncio
 async def test_select_client_populates_edit_form(mock_config, mock_clients_manager):
     """Test that selecting a client in the overview populates the edit form."""
-    client_to_select = dict(zip(COLUMNS, ROWS[1]))
+    client_to_select = dict(zip(COLUMNS, ROWS[1], strict=False))
     mock_clients_manager.get_decrypted_client.return_value = client_to_select
 
     app = EdupsyadminTui(manager=mock_clients_manager)
@@ -104,7 +106,7 @@ async def test_fill_form_worker_uses_convenience_data(
     form_paths = ["/fake/form.pdf"]
     async with app.run_test() as pilot:
         # Post the message that the FillForm widget would send to start the worker
-        app.post_message(FillForm.StartFill(client_id, form_paths))
+        app.post_message(FillForm.StartFill([client_id], form_paths))
         await pilot.pause()  # Allow worker to run
 
     # Assert

@@ -223,7 +223,7 @@ class EdupsyadminTui(App[None]):
         self.is_busy = True
         self.query_one("#main-loading-indicator").display = True
         self.notify("Fülle Formulare aus...")
-        self.fill_forms_worker(message.client_id, message.form_paths)
+        self.fill_forms_worker(message.client_ids, message.form_paths)
 
     async def on_fill_form_cancel(self, message: FillForm.Cancel) -> None:
         """Handle the cancel message from the FillForm widget."""

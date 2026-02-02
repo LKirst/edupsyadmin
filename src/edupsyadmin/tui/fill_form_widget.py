@@ -107,8 +107,8 @@ class FillForm(Widget):
     class StartFill(Message):
         """Message to start filling forms."""
 
-        def __init__(self, client_id: int, form_paths: list[str]) -> None:
-            self.client_id = client_id
+        def __init__(self, client_ids: list[int], form_paths: list[str]) -> None:
+            self.client_ids = client_ids
             self.form_paths = form_paths
             super().__init__()
 
@@ -117,7 +117,7 @@ class FillForm(Widget):
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.client_id: int | None = None
+        self.client_ids: list[int] = []
 
     def compose(self) -> ComposeResult:
         with VerticalScroll():
@@ -163,6 +163,7 @@ class FillForm(Widget):
             current_path = Path(tree.path).resolve()
             event.input.value = str(current_path)
 
+    # TODO: improve confusing function name
     def update_client(self, client_id: int, client_data: dict[str, Any]) -> None:
         """Update the widget with data for a specific client."""
         self.client_id = client_id
@@ -174,10 +175,35 @@ class FillForm(Widget):
             f"(ID: {self.client_id})"
         )
 
+    # TODO: improve confusing function name
+    # TODO: remove redundancy
+    def update_clients(self, clients_data: dict[int, dict[str, Any]]) -> None:
+        """Update the widget with data for multiple clients."""
+        self.client_ids = list(clients_data.keys())
+        info = self.query_one("#client-info", Static)
+
+        if len(clients_data) == 1:
+            # Single client - show name
+            client_id = self.client_ids[0]
+            client_data = clients_data[client_id]
+            first_name = client_data.get("first_name_encr", "")
+            last_name = client_data.get("last_name_encr", "")
+            info.update(
+                f"Fülle Formulare für Klient*in: {first_name} {last_name} "
+                f"(ID: {client_id})"
+            )
+        else:
+            # Multiple clients - show count and IDs
+            ids_str = ", ".join(str(cid) for cid in self.client_ids)
+            info.update(
+                f"Fülle Formulare für {len(self.client_ids)} Klient*innen "
+                f"(IDs: {ids_str})"
+            )
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
         if event.button.id == "fill-button":
-            if self.client_id is None:
+            if not self.client_ids:
                 self.notify("No client selected.", severity="error")
                 return
 
@@ -203,7 +229,7 @@ class FillForm(Widget):
             # Deduplicate paths
             form_paths = sorted(dict.fromkeys(form_paths))
 
-            self.post_message(self.StartFill(self.client_id, form_paths))
+            self.post_message(self.StartFill(self.client_ids, form_paths))
 
         elif event.button.id == "cancel-button":
             self.post_message(self.Cancel())
@@ -215,14 +241,14 @@ class FillFormScreen(Screen):
     def __init__(
         self,
         clients_manager: ClientsManager,
-        client_id: int,
+        client_ids: list[int],
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
     ) -> None:
         super().__init__(name=name, id=id, classes=classes)
         self.clients_manager = clients_manager
-        self.client_id = client_id
+        self.client_id = client_ids
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -231,5 +257,10 @@ class FillFormScreen(Screen):
 
     def on_mount(self) -> None:
         """Load the client data and update the FillForm widget."""
-        client_data = self.clients_manager.get_decrypted_client(self.client_id)
-        self.query_one(FillForm).update_client(self.client_id, client_data)
+        clients_data = {}
+        for client_id in self.client_ids:
+            clients_data[client_id] = self.clients_manager.get_decrypted_client(
+                client_id
+            )
+
+        self.query_one(FillForm).update_clients(clients_data)

@@ -377,7 +377,7 @@ def test_create_documentation_tui(mock_config):
         mock_app_instance.run.return_value = None
 
         # Call the main function with the mock config and the TUI flag
-        main(split(f"-c {mock_config} create-documentation --tui"))
+        main(split(f"-c {mock_config} create-documentation 1 --tui"))
 
         # Assert that the app was initialized
         mock_lazy_import.return_value.FillFormApp.assert_called_once()

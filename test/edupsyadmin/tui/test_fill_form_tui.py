@@ -38,7 +38,7 @@ def test_initial_layout(snap_compare, mock_clients_manager, tmp_path):
     (tmp_path / "README.md").touch()
     (tmp_path / "form_b.pdf").touch()
 
-    app = FillFormApp(clients_manager=mock_clients_manager, client_id=CLIENT_ID)
+    app = FillFormApp(clients_manager=mock_clients_manager, client_ids=[CLIENT_ID])
 
     async def run_before(pilot):
         # Point the DirectoryTree to the mock directory
@@ -57,7 +57,7 @@ def test_initial_layout(snap_compare, mock_clients_manager, tmp_path):
 @pytest.mark.asyncio
 async def test_path_input_valid(mock_clients_manager, tmp_path):
     """Test entering a valid path in the path input updates the DirectoryTree."""
-    app = FillFormApp(clients_manager=mock_clients_manager, client_id=CLIENT_ID)
+    app = FillFormApp(clients_manager=mock_clients_manager, client_ids=[CLIENT_ID])
     async with app.run_test() as pilot:
         fill_form_widget = pilot.app.query_one(FillForm)
         path_input = fill_form_widget.query_one("#path-input", Input)
@@ -66,8 +66,8 @@ async def test_path_input_valid(mock_clients_manager, tmp_path):
         )
 
         # Initially, the path input should show the current working directory
-        assert path_input.value == str(Path(".").resolve())
-        assert dir_tree.path == Path(".")
+        assert path_input.value == str(Path().resolve())
+        assert dir_tree.path == Path()
 
         # Simulate selecting a file before changing path
         mock_file_path = tmp_path / "mock_file.pdf"
@@ -98,7 +98,7 @@ async def test_path_input_valid(mock_clients_manager, tmp_path):
 @pytest.mark.asyncio
 async def test_path_input_invalid(mock_clients_manager, tmp_path):
     """Test invalid path input: notification and reset."""
-    app = FillFormApp(clients_manager=mock_clients_manager, client_id=CLIENT_ID)
+    app = FillFormApp(clients_manager=mock_clients_manager, client_ids=[CLIENT_ID])
     async with app.run_test() as pilot:
         fill_form_widget = pilot.app.query_one(FillForm)
         path_input = fill_form_widget.query_one("#path-input", Input)
@@ -132,7 +132,7 @@ async def test_path_input_invalid(mock_clients_manager, tmp_path):
 @pytest.mark.asyncio
 async def test_fill_button_no_forms_notification(mock_clients_manager):
     """Test that a notification is shown if no forms are selected."""
-    app = FillFormApp(clients_manager=mock_clients_manager, client_id=CLIENT_ID)
+    app = FillFormApp(clients_manager=mock_clients_manager, client_ids=[CLIENT_ID])
     with patch.object(FillForm, "notify") as mock_notify:
         async with app.run_test() as pilot:
             await pilot.click("#fill-button")
@@ -153,7 +153,7 @@ async def test_fill_button_emits_start_fill_message(
     form_path = tmp_path / "form1.pdf"
     form_path.touch()
 
-    app = FillFormApp(clients_manager=mock_clients_manager, client_id=CLIENT_ID)
+    app = FillFormApp(clients_manager=mock_clients_manager, client_ids=[CLIENT_ID])
     messages = []
     app.post_message = messages.append
 
@@ -177,7 +177,7 @@ async def test_fill_button_emits_start_fill_message(
     start_fill_messages = [m for m in messages if isinstance(m, FillForm.StartFill)]
     assert len(start_fill_messages) == 1
     message = start_fill_messages[0]
-    assert message.client_id == CLIENT_ID
+    assert message.client_ids == [CLIENT_ID]
     assert set(message.form_paths) == {
         "/path/to/set_form.pdf",
         str(form_path),
@@ -187,7 +187,7 @@ async def test_fill_button_emits_start_fill_message(
 @pytest.mark.asyncio
 async def test_cancel_button_emits_cancel_message(mock_clients_manager):
     """Test that the 'Cancel' button emits the Cancel message."""
-    app = FillFormApp(clients_manager=mock_clients_manager, client_id=CLIENT_ID)
+    app = FillFormApp(clients_manager=mock_clients_manager, client_ids=[CLIENT_ID])
     messages = []
     app.post_message = messages.append
 
@@ -203,7 +203,7 @@ async def test_cancel_button_emits_cancel_message(mock_clients_manager):
 async def test_select_directory_and_file_nodes(mock_clients_manager, tmp_path):
     """Test that selecting a directory doesn't crash, and selecting a file works."""
     # Arrange
-    app = FillFormApp(clients_manager=mock_clients_manager, client_id=CLIENT_ID)
+    app = FillFormApp(clients_manager=mock_clients_manager, client_ids=[CLIENT_ID])
     (tmp_path / "my_test_dir").mkdir()
     test_file_path = tmp_path / "my_test_file.pdf"
     test_file_path.touch()

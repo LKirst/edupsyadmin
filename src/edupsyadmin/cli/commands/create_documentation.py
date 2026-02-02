@@ -15,8 +15,8 @@ COMMAND_DESCRIPTION = (
 COMMAND_HELP = "Fill a pdf form or a text file with a liquid template"
 COMMAND_EPILOG = textwrap.dedent(
     r"""         Examples:
-          # Open the TUI to interactively fill a form
-          edupsyadmin create_documentation --tui
+          # Open the TUI to interactively fill a form for client with ID 1
+          edupsyadmin create_documentation 1 --tui
 
           # Fill a PDF form for client with ID 1 using a form set named 'MyFormSet'
           edupsyadmin create_documentation 1 --form_set MyFormSet
@@ -43,7 +43,7 @@ def add_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--tui", action="store_true", help="Open TUI for interactive form filling."
     )
-    parser.add_argument("client_id", type=int, nargs="*", default=[])
+    parser.add_argument("client_id", type=int, nargs="+")
     parser.add_argument(
         "--form_set",
         type=str,
@@ -73,13 +73,10 @@ def execute(args: Namespace) -> None:
     )
     if args.tui:
         fill_form_app_cls = lazy_import("edupsyadmin.tui.fill_form_app").FillFormApp
-        fill_form_app_cls(clients_manager=clients_manager).run()
+        fill_form_app_cls(
+            clients_manager=clients_manager, client_ids=args.client_id
+        ).run()
         return
-
-    if not args.client_id:
-        raise ValueError(
-            "At least one 'client_id' must be provided when not using --tui."
-        )
 
     add_convenience_data = lazy_import(
         "edupsyadmin.api.add_convenience_data"
