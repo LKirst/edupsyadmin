@@ -99,7 +99,7 @@ def mock_config(
     tmp_path_factory: pytest.TempPathFactory, pdf_forms, request
 ) -> Generator[str]:
     template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
-    conf_path = str(tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml")
+    conf_path = tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml"
     shutil.copy(template_path, conf_path)
     testing_logger.debug(
         f"mock_config fixture (test: {request.node.name}) - conf_path: {conf_path}"
@@ -137,7 +137,7 @@ def mock_config_snapshots(
     machine because the pdf paths are absolute.
     """
     template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
-    conf_path = str(tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml")
+    conf_path = tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml"
     shutil.copy(template_path, conf_path)
     config.load(conf_path)
 

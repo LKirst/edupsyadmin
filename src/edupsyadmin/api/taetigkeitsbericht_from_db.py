@@ -1,4 +1,3 @@
-import os
 from datetime import date
 from pathlib import Path
 
@@ -44,13 +43,22 @@ if pdflibs_imported:
 def get_subcategories(
     categorykey: str, extrcategories: list[str] | None = None
 ) -> list[str]:
+    """
+    Extract all hierarchical subcategories from a dot-separated category key.
+
+    :param categorykey: Dot-separated category string
+    :param extrcategories: Accumulated list of categories (used in recursion)
+    :return: List of categories
+    """
     if extrcategories is None:
         extrcategories = []
     extrcategories.append(categorykey)
-    root, subcategory_suffix = os.path.splitext(categorykey)
-    if not subcategory_suffix:
+
+    if "." not in categorykey:
         return extrcategories
-    return get_subcategories(root, extrcategories)
+
+    parent_category = categorykey.rsplit(".", 1)[0]
+    return get_subcategories(parent_category, extrcategories)
 
 
 def add_categories_to_df(

@@ -6,7 +6,6 @@ values.
 
 """
 
-from os import PathLike
 from pathlib import Path
 from typing import Any
 
@@ -79,13 +78,13 @@ class Settings:
 
     _instance: AppConfig | None = None
 
-    def load(self, path: str | PathLike[str]) -> None:
+    def load(self, path: Path) -> None:
         """
         Load data from a YAML configuration file.
 
         The file is read and validated against the Pydantic models.
         """
-        with Path(path).open("r", encoding="UTF-8") as stream:
+        with path.open("r", encoding="UTF-8") as stream:
             logger.debug(f"reading config data from '{path}'")
             data = yaml.safe_load(stream)
 

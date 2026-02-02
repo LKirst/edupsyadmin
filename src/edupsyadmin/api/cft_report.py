@@ -1,6 +1,5 @@
-#!/usr/bin/env python
-import os
 from datetime import datetime
+from pathlib import Path
 
 from edupsyadmin.api.managers import ClientsManager
 
@@ -104,14 +103,14 @@ def create_report(
     # create a normal distribution plot and save it as a png
     iq_values = [iq_part1_min, iq_part1_max, iq_part2, iq_total_min, iq_total_max]
     z_values = [iq_to_z(iq) for iq in iq_values if iq is not None]
-    fn_plot = "normal_distribution_plot.png"
+    fn_plot = Path("normal_distribution_plot.png")
     normal_distribution_plot(z_values, fn_plot)
 
     # create the pdf
     heading = f"CFT 20-R (Testdatum: {testdate}; Code: {client_id})"
     report = Report(heading, "\n".join(text), fn_plot)
     report.print_page()
-    report.output(os.path.join(directory, f"{client_id}_Auswertung.pdf"))
+    report.output(directory / Path(f"{client_id}_Auswertung.pdf"))
 
     # remove the plot png
-    os.remove(fn_plot)
+    fn_plot.unlink()

@@ -65,7 +65,7 @@ def test_successful_load_minimal(tmp_path):
     conf_path = tmp_path / "config.yml"
     conf_path.write_text(valid_config_content)
 
-    config.load(str(conf_path))
+    config.load(conf_path)
 
     # Check that the loaded config is an instance of our Pydantic model
     assert isinstance(config._instance, AppConfig)
@@ -94,7 +94,7 @@ def test_load_invalid_config_missing_field(tmp_path):
     conf_path.write_text(invalid_config_missing_field)
 
     with pytest.raises(ValidationError) as excinfo:
-        config.load(str(conf_path))
+        config.load(conf_path)
 
     # Check that the error message is helpful
     assert "core.app_username" in str(excinfo.value)
@@ -107,7 +107,7 @@ def test_load_invalid_config_wrong_type(tmp_path):
     conf_path.write_text(invalid_config_wrong_type)
 
     with pytest.raises(ValidationError) as excinfo:
-        config.load(str(conf_path))
+        config.load(conf_path)
 
     # Check that the error message points to the right field
     assert "school.TestSchool.nstudents" in str(excinfo.value)

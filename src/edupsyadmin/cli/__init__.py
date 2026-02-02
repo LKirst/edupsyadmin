@@ -97,10 +97,10 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     :param argv: argument list to parse
     """
     parser = ArgumentParser(formatter_class=RawDescriptionHelpFormatter)
-    parser.add_argument("-c", "--config_path", default=None, help=argparse.SUPPRESS)
     parser.add_argument(
-        "--salt_path", default=DEFAULT_SALT_PATH, help=argparse.SUPPRESS
+        "-c", "--config_path", type=Path, default=None, help=argparse.SUPPRESS
     )
+    parser.add_argument("--salt_path", type=Path, default=None, help=argparse.SUPPRESS)
     parser.add_argument(
         "-v",
         "--version",
@@ -133,12 +133,17 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
         parser.print_help()
         raise SystemExit(1)
 
+    # don't specify this as an argument default or else it will always be
+    # included in the list.
     if not args.config_path:
-        # Don't specify this as an argument default or else it will always be
-        # included in the list.
         args.config_path = DEFAULT_CONFIG_PATH
+    else:
+        args.config_path = Path(args.config_path)
     if not args.salt_path:
         args.salt_path = DEFAULT_SALT_PATH
+    else:
+        args.salt_path = Path(args.salt_path)
+
     return args
 
 
@@ -155,7 +160,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # config
     # if the config file doesn't exist, copy a sample config
-    if not Path(args.config_path).exists():
+    if not args.config_path.exists():
         template_path = str(
             importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
         )

@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Any, ClassVar, Literal
 
@@ -286,10 +285,10 @@ class ConfigEditorApp(App[None]):
     ]
 
     def __init__(
-        self, config_path: str | os.PathLike, app_uid: str, app_username: str, **kwargs
+        self, config_path: Path, app_uid: str, app_username: str, **kwargs
     ) -> None:
         super().__init__(**kwargs)
-        self.config_path = Path(config_path)
+        self.config_path = config_path
         config.load(self.config_path)
         self.config_dict = config.model_dump(exclude_defaults=False)
         self.app_uid = app_uid

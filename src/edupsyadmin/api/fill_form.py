@@ -148,7 +148,7 @@ def fill_form(
         logger.info(f"Using the template {fp}")
         if not fp.is_file():
             raise FileNotFoundError(
-                f"The template file does not exist: {fp}; cwd is: {os.getcwd()}"
+                f"The template file does not exist: {fp}; cwd is: {Path.cwd()}"
             )
         out_fp = Path(out_dir, f"{client_data['client_id']}_{fp.name}")
         logger.info(f"Writing to {out_fp.resolve()}")
