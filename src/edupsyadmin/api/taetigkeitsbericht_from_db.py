@@ -22,7 +22,7 @@ pd.set_option("display.precision", 1)
 if pdflibs_imported:
 
     class Report(FPDF):
-        def __init__(self, name: str):
+        def __init__(self, name: str) -> None:
             super().__init__()
             self.WIDTH = 210
             self.HEIGHT = 297

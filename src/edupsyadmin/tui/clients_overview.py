@@ -14,7 +14,7 @@ from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.tui.dialogs import YesNoDialog
 
 
-def _format_cell(value: object) -> Text:
+def _format_cell(value: str | bool | float | int) -> Text:
     """Format a cell value with colors:
     - NaN → grey
     - True → green

@@ -13,7 +13,7 @@ from edupsyadmin.db import clients as clients_db
 
 
 class ClientNotFoundError(Exception):
-    def __init__(self, client_id: int):
+    def __init__(self, client_id: int) -> None:
         self.client_id = client_id
         super().__init__(f"Client with ID {client_id} not found.")
 
@@ -22,7 +22,7 @@ class ClientsManager:
     def __init__(
         self,
         database_url: str,
-    ):
+    ) -> None:
         # set up logging for sqlalchemy
         logging.getLogger("sqlalchemy.engine").setLevel(config.core.logging)
 

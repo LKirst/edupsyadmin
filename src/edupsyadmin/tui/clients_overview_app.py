@@ -27,7 +27,7 @@ class ClientsOverviewApp(App):
         schools: list[str] | None = None,
         columns: list[str] | None = None,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self.clients_manager = clients_manager
         self.nta_nos = nta_nos

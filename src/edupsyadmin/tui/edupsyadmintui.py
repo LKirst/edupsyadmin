@@ -58,7 +58,7 @@ class EdupsyadminTui(App[None]):
         nta_nos: bool = False,
         schools: list[str] | None = None,
         columns: list[str] | None = None,
-    ):
+    ) -> None:
         super().__init__()
         self.manager = manager
         self.is_busy = False

@@ -8,7 +8,9 @@ from fpdf import FPDF
 
 
 class Report(FPDF):
-    def __init__(self, heading: str, reporttext: str, plot: str | os.PathLike[str]):
+    def __init__(
+        self, heading: str, reporttext: str, plot: str | os.PathLike[str]
+    ) -> None:
         super().__init__()
         self.reporttext = reporttext
         self.plot = plot

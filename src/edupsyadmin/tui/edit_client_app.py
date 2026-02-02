@@ -22,7 +22,7 @@ class EditClientApp(App):
         clients_manager: ClientsManager,
         client_id: int | None = None,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self.clients_manager = clients_manager
         self.client_id = client_id

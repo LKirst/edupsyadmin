@@ -50,7 +50,7 @@ DATE_FIELDS = {"birthday_encr", "lrst_last_test_date_encr"}
 DATE_REGEX = r"\d{4}-[0-1]\d-[0-3]\d"
 
 
-def _to_str_or_bool(value: Any) -> str | bool | None:
+def _to_str_or_bool(value: None | date | bool | str | int | float) -> str | bool | None:
     if value is None:
         return None
     if isinstance(value, date):
@@ -150,7 +150,7 @@ class EditClient(Container):
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
-    ):
+    ) -> None:
         super().__init__(name=name, id=id, classes=classes)
         self.client_id: int | None = None
         self._original_data: dict[str, str | bool | None] = {}
@@ -216,7 +216,7 @@ class EditClient(Container):
     def _is_required(self, name: str) -> bool:
         return name in REQUIRED_FIELDS
 
-    def _register_widget(self, name: str, widget) -> None:
+    def _register_widget(self, name: str, widget: Checkbox | Input | Select) -> None:
         if isinstance(widget, Checkbox):
             self.checkboxes[name] = widget
         elif isinstance(widget, Input):
@@ -239,7 +239,7 @@ class EditClient(Container):
         default: str | bool | None,
         required: bool,
         tooltip: str | None,
-    ):
+    ) -> Checkbox | Select | Input:
         widget: Checkbox | Select[Any] | Input
         # Booleans -> Checkbox
         if field_type is bool:

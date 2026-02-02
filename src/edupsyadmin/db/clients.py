@@ -32,12 +32,12 @@ class EncryptedString(TypeDecorator):
     impl = String
     cache_ok = True  # SQLAlchemy 2.0 requirement
 
-    def process_bind_param(self, value, dialect):
+    def process_bind_param(self, value: str | None, dialect) -> str | None:
         if value is None:
             return None
         return encr.encrypt(value)
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value: str | None, dialect) -> str | None:
         if value is None:
             return None
         return encr.decrypt(value)
