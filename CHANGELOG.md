@@ -1,3 +1,27 @@
+## 8.0.0a0 (2026-02-02)
+
+### BREAKING CHANGE
+
+- Switching subcommands to kebab-case
+- Encryption now uses pre-derived keys stored in keyring instead of deriving keys on-the-fly from passwords. CLI now accepts only a single config file. Migration command added to re-encrypt existing databases.
+
+### Feat
+
+- **encryption**: implement key rotation using MultiFernet and add rotate-key command
+
+### Fix
+
+- correct demo seup and respect config UID
+
+### Refactor
+
+- **pyproject.toml**: remove unneeded ruff ignore
+- use pathlib where applicable
+- use pathlib and rename variable shadowing a python builtin
+- fix typing issues
+- **cli**: modularise command structure and switch subcommands to kebab-case
+- migrate to key-based encryption and simplify API
+
 ## 7.13.3 (2026-01-18)
 
 ### Fix

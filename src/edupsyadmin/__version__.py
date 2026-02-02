@@ -18,4 +18,4 @@ and backwards compatibility is not guaranteed for minor versions.
 
 __all__ = ["__version__"]
 
-__version__ = "7.13.3"
+__version__ = "8.0.0a0"
