@@ -76,6 +76,7 @@ async def test_app_saves_config_changes(mock_config):
 
     new_logging_level = "INFO"
     new_schoolpsy_name = "Dr. New Name"
+    test_password = "test_password_12345"
 
     async with app.run_test() as pilot:
         # Change values in the input fields
@@ -85,10 +86,17 @@ async def test_app_saves_config_changes(mock_config):
         schoolpsy_name_input = app.query_exactly_one("#schoolpsy-schoolpsy_name", Input)
         schoolpsy_name_input.value = new_schoolpsy_name
 
+        # Set password so the save doesn't abort
+        password_input = app.query_exactly_one("#password", Input)
+        password_input.value = test_password
+
+        password_confirm_input = app.query_exactly_one("#password_confirm", Input)
+        password_confirm_input.value = test_password
+
         await pilot.click("#save")
 
     # Read the config file after the app has exited
-    with open(config_path) as f:
+    with config_path.open("w") as f:
         saved_config = yaml.safe_load(f)
 
     # Assert that the changes were saved
