@@ -14,9 +14,9 @@ from edupsyadmin.core.encrypt import (
     DEFAULT_KDF_ITERATIONS,
     check_key_validity,
     derive_key_from_password,
-    get_key_from_keyring,
+    get_keys_from_keyring,
     load_or_create_salt,
-    set_key_in_keyring,
+    set_keys_in_keyring,
 )
 from edupsyadmin.tui.dialogs import YesNoDialog
 
@@ -496,10 +496,11 @@ class ConfigEditorApp(App[None]):
         password_confirm: str,
         app_uid: str,
         username: str,
-        existing_key: bytes | None,
-        is_existing_key_valid: bool,
+        existing_keys: list[bytes],
     ) -> bool:
-        """Handle the logic for when a new password is provided."""
+        """
+        Handle the logic for when a new password is provided, performing key rotation.
+        """
         if len(password) < 8:
             self.notify(
                 "Passwort muss mindestens 8 Zeichen lang sein", severity="error"
@@ -512,35 +513,50 @@ class ConfigEditorApp(App[None]):
             self.bell()
             return False
 
-        if existing_key is not None:
-            if is_existing_key_valid:
+        # If keys exist, this is a key rotation. Confirm with the user.
+        if existing_keys:
+            are_existing_keys_valid = all(check_key_validity(k) for k in existing_keys)
+            if are_existing_keys_valid:
                 confirmed = await self.app.push_screen(
                     YesNoDialog(
-                        "Ein gültiger Schlüssel existiert bereits. Überschreiben?"
+                        "Ein gültiger Schlüssel existiert bereits. "
+                        "Möchten Sie einen neuen Schlüssel hinzufügen und rotieren?"
                     )
                 )
                 if not confirmed:
                     self.notify(
-                        "Speichern abgebrochen. Der Schlüssel wurde nicht geändert.",
+                        "Speichern abgebrochen. Die Schlüssel wurden nicht geändert.",
                         severity="warning",
                     )
                     return False
             else:
                 self.notify(
-                    "Ein ungültiger Schlüssel wird überschrieben.", severity="error"
+                    "Ein oder mehrere existierende Schlüssel sind ungültig "
+                    "und werden durch den neuen ersetzt.",
+                    severity="error",
                 )
+                existing_keys.clear()  # Clear invalid keys
                 self.bell()
 
         try:
-            self.notify("Verschlüsselungsschlüssel wird generiert...")
+            self.notify("Neuer Verschlüsselungsschlüssel wird generiert...")
             salt = load_or_create_salt(self.salt_path)
             kdf_input = self.query_one("#core-kdf_iterations", Input)
             iterations = (
                 int(kdf_input.value) if kdf_input.value else DEFAULT_KDF_ITERATIONS
             )
-            key = derive_key_from_password(password, salt, iterations)
-            set_key_in_keyring(app_uid, username, key)
-            self.notify("Verschlüsselungsschlüssel gespeichert", severity="information")
+            new_key = derive_key_from_password(password, salt, iterations)
+
+            # Prepend the new key for rotation
+            updated_keys = [new_key, *existing_keys]
+            # Optional: Limit the number of old keys to keep
+            # updated_keys = updated_keys[:5]
+
+            set_keys_in_keyring(app_uid, username, updated_keys)
+            self.notify(
+                "Neuer Verschlüsselungsschlüssel hinzugefügt und gespeichert.",
+                severity="information",
+            )
         except Exception as e:
             self.notify(f"Fehler beim Speichern des Schlüssels: {e}", severity="error")
             self.bell()
@@ -563,8 +579,7 @@ class ConfigEditorApp(App[None]):
             self.bell()
             return
 
-        existing_key = get_key_from_keyring(app_uid, username)
-        is_existing_key_valid = check_key_validity(existing_key)
+        existing_keys = get_keys_from_keyring(app_uid, username)
 
         if password:
             should_continue = await self._handle_new_password_flow(
@@ -572,26 +587,34 @@ class ConfigEditorApp(App[None]):
                 password_confirm,
                 app_uid,
                 username,
-                existing_key,
-                is_existing_key_valid,
+                existing_keys,
             )
             if not should_continue:
                 return
         else:
-            if existing_key is None:
+            if not existing_keys:
                 self.notify(
-                    "Kein Verschlüsselungsschlüssel gesetzt.", severity="warning"
+                    "Achtung: Kein Verschlüsselungsschlüssel gesetzt. "
+                    "Bitte legen Sie ein Passwort fest.",
+                    severity="error",
                 )
-            elif is_existing_key_valid:
+                self.bell()
+                return  # Prevent saving without any keys
+            if all(check_key_validity(k) for k in existing_keys):
                 self.notify(
-                    "Es wird der bestehende, gültige Schlüssel verwendet.",
+                    (
+                        "Die bestehenden, gültigen Verschlüsselungsschlüssel werden "
+                        "verwendet."
+                    ),
                     severity="information",
                 )
             else:
                 self.notify(
-                    "Achtung: Es ist ein ungültiger Schlüssel vorhanden. "
-                    "Bitte Passwort erneut eingeben, um einen neuen "
-                    "Schlüssel zu generieren.",
+                    (
+                        "Achtung: Einer oder mehrere der vorhandenen Schlüssel sind "
+                        "ungültig. Bitte Passwort erneut eingeben, um einen neuen, "
+                        "gültigen Schlüssel zu erstellen."
+                    ),
                     severity="error",
                 )
                 self.bell()

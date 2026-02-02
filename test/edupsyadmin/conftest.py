@@ -1,5 +1,4 @@
 import importlib.resources
-import os
 import shutil
 from collections.abc import Generator
 from datetime import date
@@ -62,7 +61,10 @@ def monkeysession():
 
 @pytest.fixture(autouse=True, scope="function")
 def mock_keyring(monkeypatch):
-    """A mock keyring that stores secrets in a dictionary."""
+    """
+    A mock keyring that stores secrets in a dictionary, adapted to handle
+    JSON-encoded key lists for MultiFernet.
+    """
     store = {}
 
     def get_credential(service, username):
@@ -100,32 +102,27 @@ def mock_config(
 ) -> Generator[str]:
     template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
     conf_path = tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml"
-    shutil.copy(template_path, conf_path)
-    testing_logger.debug(
-        f"mock_config fixture (test: {request.node.name}) - conf_path: {conf_path}"
+
+    # Load the template content
+    template_content = yaml.safe_load(template_path.read_text(encoding="UTF-8"))
+
+    # Modify the content as needed for the test fixture
+    template_content["core"]["app_username"] = (
+        f"user_read_from_file-{request.node.name}"
     )
+    template_content["form_set"]["lrst"] = [str(path) for path in pdf_forms]
+
+    # Write this modified content directly to the temporary config file
+    with conf_path.open("w", encoding="UTF-8") as f:
+        yaml.dump(template_content, f)
+
+    # Now, load this prepared config into the global config instance for
+    # other fixtures/tests
     config.load(conf_path)
-
-    # set or override some config values
-    config.core.config = conf_path
-    config.core.app_username = f"user_read_from_file-{request.node.name}"
-    config.core.logging = "DEBUG"
-    config.form_set["lrst"] = [str(path) for path in pdf_forms]
-
-    # write the changed config to file
-    with open(config.core.config, "w", encoding="UTF-8") as f:
-        # convert to dict for pyyaml, excluding the runtime 'config' path
-        dictyaml = config.model_dump(exclude={"core": {"config"}})
-        yaml.dump(dictyaml, f)
-
-    # set different username than written to file to test which one is used
-    config.core.app_username = f"user_set_in_fixture-{request.node.name}"
-
-    # app uid is not set in the config, so don't write it to file
-    config.core.app_uid = "example.com"
+    config.core.app_uid = "example.com"  # Set app_uid as it's not in sampleconfig.yml
 
     yield conf_path
-    os.remove(conf_path)
+    conf_path.unlink()
 
 
 @pytest.fixture(scope="function")
@@ -148,7 +145,7 @@ def mock_config_snapshots(
     del config.school["SecondSchool"]  # keep it simple for snapshots
 
     # write the changed config to file
-    with open(config.core.config, "w", encoding="UTF-8") as f:
+    with conf_path.open("w", encoding="UTF-8") as f:
         # convert to dict for pyyaml, excluding the runtime 'config' path
         dictyaml = config.model_dump(exclude={"core": {"config"}})
         yaml.dump(dictyaml, f)
@@ -160,7 +157,7 @@ def mock_config_snapshots(
     config.core.app_uid = "example.com"
 
     yield conf_path
-    os.remove(conf_path)
+    conf_path.unlink()
 
 
 @pytest.fixture
@@ -333,7 +330,7 @@ def clients_manager(tmp_path, mock_salt_path, mock_config):
 
     # initialize encr as in cli.py
     dummy_key = Fernet.generate_key()
-    encr.set_key(dummy_key)
+    encr.set_keys([dummy_key])
 
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
@@ -356,7 +353,7 @@ def pdf_forms(tmp_path_factory: pytest.TempPathFactory) -> list[Path]:
         Path("test/edupsyadmin/data/sample_form_anschreiben.pdf").resolve(),
         Path("test/edupsyadmin/data/sample_form_stellungnahme.pdf").resolve(),
     ]
-    testing_logger.debug(f"cwd: {os.getcwd()}")
+    testing_logger.debug(f"cwd: {Path.cwd()}")
     pdf_form_paths = []
 
     reportlab_form_filename = "sample_form_reportlab.pdf"

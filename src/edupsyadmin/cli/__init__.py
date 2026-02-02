@@ -11,7 +11,7 @@ from platformdirs import user_config_dir, user_data_path
 from edupsyadmin.__version__ import __version__
 from edupsyadmin.api.managers import ClientNotFoundError
 from edupsyadmin.core.config import config
-from edupsyadmin.core.encrypt import encr, get_key_from_keyring
+from edupsyadmin.core.encrypt import encr, get_keys_from_keyring
 from edupsyadmin.core.logger import logger
 
 __all__ = ("main",)
@@ -29,29 +29,29 @@ DEFAULT_SALT_PATH = DEFAULT_CONFIG_DIR / "salt.txt"
 
 
 def _setup_encryption(app_uid: str, app_username: str) -> None:
-    """Initialize the global encryption instance with a key from the keyring."""
+    """Initialize the global encryption instance with keys from the keyring."""
     logger.debug(
-        f"Loading encryption key for uid='{app_uid}', username='{app_username}'"
+        f"Loading encryption keys for uid='{app_uid}', username='{app_username}'"
     )
 
-    # Get key from keyring
-    key = get_key_from_keyring(app_uid, app_username)
+    # Get keys from keyring
+    keys = get_keys_from_keyring(app_uid, app_username)
 
-    if not key:
+    if not keys:
         raise RuntimeError(
-            "No encryption key found in keyring for "
+            "No encryption keys found in keyring for "
             f"uid='{app_uid}', username='{app_username}'. "
             "Please set a password in the configuration editor first "
-            "(edupsyadmin edit_config)."
+            "(edupsyadmin edit-config)."
         )
 
     try:
-        # Set the key on the global encryption instance
-        encr.set_key(key)
+        # Set the keys on the global encryption instance
+        encr.set_keys(keys)
         logger.debug("Encryption initialized successfully")
     except ValueError as e:
         raise RuntimeError(
-            "Invalid encryption key found in keyring. "
+            "Invalid encryption key found in keyring. One or more keys may be invalid. "
             f"Please reset your password using 'edupsyadmin edit-config'. "
             f"Details: {e}"
         ) from e

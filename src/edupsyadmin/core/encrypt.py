@@ -1,10 +1,11 @@
 import base64
+import json
 import os
 from pathlib import Path
 from typing import Final
 
 import keyring
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, MultiFernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from keyring.errors import PasswordDeleteError
@@ -16,18 +17,16 @@ OLD_KDF_ITERATIONS: Final[int] = 480000  # Needed for migration
 
 
 class Encryption:
-    """Handles encryption and decryption of data."""
+    """Handles encryption and decryption of data using MultiFernet for key rotation."""
 
-    _fernet: Fernet | None = None
+    _fernet: MultiFernet | None = None
 
-    def __init__(self, key: bytes | None = None) -> None:
-        if key:
-            self.set_key(key)
-
-    def set_key(self, key: bytes) -> None:
-        """Initializes the Fernet instance with a given key."""
-        logger.debug("Setting new Fernet key.")
-        self._fernet = Fernet(key)
+    def set_keys(self, keys: list[bytes]) -> None:
+        """Initializes the MultiFernet instance with a given list of keys."""
+        if not keys:
+            raise ValueError("Key list cannot be empty.")
+        logger.debug(f"Setting new MultiFernet with {len(keys)} key(s).")
+        self._fernet = MultiFernet([Fernet(key) for key in keys])
 
     @property
     def is_initialized(self) -> bool:
@@ -35,16 +34,16 @@ class Encryption:
         return self._fernet is not None
 
     def encrypt(self, data: str) -> str:
-        """Encrypts a string."""
+        """Encrypts a string using the primary key."""
         if self._fernet is None:
-            raise RuntimeError("Encryption key not set.")
+            raise RuntimeError("Encryption keys not set.")
         token = self._fernet.encrypt(data.encode("utf-8"))
         return token.decode("utf-8")
 
     def decrypt(self, token: str) -> str:
-        """Decrypts a token string."""
+        """Decrypts a token string, trying all available keys."""
         if self._fernet is None:
-            raise RuntimeError("Encryption key not set.")
+            raise RuntimeError("Encryption keys not set.")
         token_bytes = token.encode("utf-8")
         return self._fernet.decrypt(token_bytes).decode("utf-8")
 
@@ -73,31 +72,47 @@ def check_key_validity(key: bytes | None) -> bool:
         return False
 
 
-def set_password_in_keyring(uid: str, username: str, password: str) -> None:
-    """Stores a password in the keyring."""
-    logger.debug(f"Storing password for '{username}' in keyring.")
-    keyring.set_password(uid, username, password)
+def get_keys_from_keyring(uid: str, username: str) -> list[bytes]:
+    """
+    Retrieves a list of base64-encoded encryption keys from the keyring.
 
-
-def get_key_from_keyring(uid: str, username: str) -> bytes | None:
-    """Retrieves the base64-encoded encryption key from the keyring 'password' field."""
-    logger.debug(f"Retrieving key for '{username}' from keyring.")
+    Handles both the new JSON list format and the legacy single-key format
+    for backward compatibility.
+    """
+    logger.debug(f"Retrieving keys for '{username}' from keyring.")
     backend = keyring.get_keyring()
     logger.debug(f"Using keyring backend: '{backend.__class__.__name__}'")
-    cred = keyring.get_credential(uid, username) or None
-    key_str = cred.password if cred else None
-    return key_str.encode() if key_str else None
+    cred = keyring.get_credential(uid, username)
+    key_data = cred.password if cred else None
+
+    if not key_data:
+        return []
+
+    try:
+        # New format: JSON list of base64-encoded keys
+        key_list_str = json.loads(key_data)
+        if isinstance(key_list_str, list):
+            return [k.encode("utf-8") for k in key_list_str]
+    except (json.JSONDecodeError, AttributeError):
+        # Fallback for old format: single base64-encoded key
+        logger.debug(
+            "Could not decode as JSON, falling back to legacy single-key format."
+        )
+        return [key_data.encode("utf-8")]
+
+    # Handle case where JSON is valid but not a list
+    return [key_data.encode("utf-8")]
 
 
-def set_key_in_keyring(uid: str, username: str, key: bytes) -> None:
+def set_keys_in_keyring(uid: str, username: str, keys: list[bytes]) -> None:
     """
-    Stores the base64-encoded encryption key in the keyring.
+    Stores a list of base64-encoded encryption keys in the keyring as a JSON list.
 
     This function first attempts to delete any existing key for the given
     uid/username pair to prevent duplicate entries on backends that don't
     support overwriting.
     """
-    logger.debug(f"Storing key for '{username}' in keyring.")
+    logger.debug(f"Storing {len(keys)} key(s) for '{username}' in keyring.")
     try:
         keyring.delete_password(uid, username)
         logger.debug(f"Deleted existing key for '{username}'.")
@@ -112,7 +127,8 @@ def set_key_in_keyring(uid: str, username: str, key: bytes) -> None:
             f"Non-critical error while trying to delete key for '{username}': {e!r}"
         )
 
-    set_password_in_keyring(uid, username, key.decode())
+    key_list_str = [k.decode("utf-8") for k in keys]
+    keyring.set_password(uid, username, json.dumps(key_list_str))
 
 
 def load_or_create_salt(salt_path: Path) -> bytes:

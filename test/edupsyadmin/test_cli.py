@@ -42,7 +42,7 @@ testing_logger = Logger("clitest_logger")
 def setup_encryption_globally():
     if not encr.is_initialized:
         dummy_key = Fernet.generate_key()
-        encr.set_key(dummy_key)
+        encr.set_keys([dummy_key])
     yield
     # conftest.py resets encr
 
@@ -140,7 +140,7 @@ def test_config_template(tmp_path_factory):
         "info",
     ]
     assert main(args) == 0
-    assert os.path.isfile(config_path), (
+    assert Path(config_path).is_file(), (
         f"Config file was not initialized: {config_path}"
     )
 
@@ -304,8 +304,8 @@ def test_create_documentation(
     # Assert
     output_paths = [f"{client_id}_{Path(path).name}" for path in pdf_forms]
     for path in output_paths:
-        assert os.path.exists(path), (
-            f"Output file {path} was not created in {os.getcwd()}"
+        assert Path(path).exists(), (
+            f"Output file {path} was not created in {Path.cwd()}"
         )
 
 
@@ -361,13 +361,13 @@ def test_edit_config_command(mock_config):
 def test_create_documentation_tui(mock_config):
     """Test that `create_documentation --tui` starts the FillFormApp."""
     from edupsyadmin.core.config import config
-    from edupsyadmin.core.encrypt import set_key_in_keyring
+    from edupsyadmin.core.encrypt import set_keys_in_keyring
 
     # Arrange: Set a key in the keyring so _setup_encryption passes
     config.load(mock_config)
     username = config.core.app_username
     key = Fernet.generate_key()
-    set_key_in_keyring(APP_UID, username, key)
+    set_keys_in_keyring(APP_UID, username, [key])
 
     with patch(
         "edupsyadmin.cli.commands.create_documentation.lazy_import"
