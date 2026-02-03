@@ -566,7 +566,7 @@ class Client(Base):
         except ValueError:
             raise ValueError(
                 f"Invalid date format for {key}: '{value}'. Use YYYY-MM-DD."
-            )
+            ) from ValueError
 
     @validates("lrst_last_test_by_encr")
     def validate_lrst_last_test_by_encr(self, key: str, value: str | None) -> str:
@@ -610,7 +610,9 @@ def str_to_bool(value: str | bool | int) -> bool:
         try:
             boolvalue = bool(int(value))
         except ValueError:
-            raise ValueError(f"The value {value} cannot be converted to a boolean.")
+            raise ValueError(
+                f"The value {value} cannot be converted to a boolean."
+            ) from ValueError
     else:
         boolvalue = value
     return boolvalue
