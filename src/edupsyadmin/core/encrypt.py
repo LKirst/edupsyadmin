@@ -1,4 +1,5 @@
 import base64
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -72,14 +73,13 @@ def check_key_validity(key: bytes | None) -> bool:
         return False
 
 
-def get_keys_from_keyring(uid: str, username: str) -> list[bytes]:
+def _get_legacy_keys(uid: str, username: str) -> list[bytes]:
     """
     Retrieves a list of base64-encoded encryption keys from the keyring.
 
-    Handles both the new JSON list format and the legacy single-key format
-    for backward compatibility.
+    This uses the legacy format.
     """
-    logger.debug(f"Retrieving keys for '{username}' from keyring.")
+    logger.debug(f"Retrieving keys for '{username}' from keyring (legacy format).")
     backend = keyring.get_keyring()
     logger.debug(f"Using keyring backend: '{backend.__class__.__name__}'")
     cred = keyring.get_credential(uid, username)
@@ -104,31 +104,63 @@ def get_keys_from_keyring(uid: str, username: str) -> list[bytes]:
     return [key_data.encode("utf-8")]
 
 
+def get_keys_from_keyring(uid: str, username: str) -> list[bytes]:
+    """
+    Retrieves a list of base64-encoded encryption keys from the keyring.
+
+    This functions supports versioned keys (new format) and falls back to
+    legacy formats (JSON list or single string) if versioned keys are not found.
+    """
+    try:
+        count_str = keyring.get_password(f"{uid}_key_count", username)
+        if not count_str:
+            # Fallback to legacy format
+            return _get_legacy_keys(uid, username)
+
+        count = int(count_str)
+        keys = []
+        for idx in range(count):
+            key_str = keyring.get_password(f"{uid}_key_{idx}", username)
+            if key_str:
+                keys.append(key_str.encode("utf-8"))
+
+        return keys
+    except Exception as e:
+        logger.error(f"Error retrieving keys: {e}")
+        return []
+
+
 def set_keys_in_keyring(uid: str, username: str, keys: list[bytes]) -> None:
     """
-    Stores a list of base64-encoded encryption keys in the keyring as a JSON list.
+    Stores a list of base64-encoded encryption keys in the keyring.
 
-    This function first attempts to delete any existing key for the given
-    uid/username pair to prevent duplicate entries on backends that don't
-    support overwriting.
+    Keys are stored with version numbers for better reliability.
+    Legacy keys are removed to avoid confusion.
     """
     logger.debug(f"Storing {len(keys)} key(s) for '{username}' in keyring.")
-    try:
-        keyring.delete_password(uid, username)
-        logger.debug(f"Deleted existing key for '{username}'.")
-    except PasswordDeleteError:
-        # This error occurs if no password exists to delete. It's safe to ignore.
-        logger.debug(f"No existing key for '{username}' to delete.")
-    except Exception as e:
-        # Some backends might raise a different error if the password
-        # does not exist. We can treat this as a non-critical event
-        # and log it at a lower level.
-        logger.debug(
-            f"Non-critical error while trying to delete key for '{username}': {e!r}"
-        )
 
-    key_list_str = [k.decode("utf-8") for k in keys]
-    keyring.set_password(uid, username, json.dumps(key_list_str))
+    # 1. Clean up legacy keys
+    with contextlib.suppress(PasswordDeleteError):
+        keyring.delete_password(uid, username)
+        logger.debug(f"Deleted existing legacy key for '{username}'.")
+
+    # 2. Clean up old versioned keys (if we are reducing the number of keys)
+    with contextlib.suppress(Exception):  # Ignore errors during cleanup
+        old_count_str = keyring.get_password(f"{uid}_key_count", username)
+        if old_count_str:
+            old_count = int(old_count_str)
+            if old_count > len(keys):
+                for idx in range(len(keys), old_count):
+                    with contextlib.suppress(Exception):
+                        keyring.delete_password(f"{uid}_key_{idx}", username)
+
+    # 3. Store new keys
+    # Store count first
+    keyring.set_password(f"{uid}_key_count", username, str(len(keys)))
+
+    # Store each key individually
+    for idx, key in enumerate(keys):
+        keyring.set_password(f"{uid}_key_{idx}", username, key.decode("utf-8"))
 
 
 def load_or_create_salt(salt_path: Path) -> bytes:

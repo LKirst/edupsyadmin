@@ -75,6 +75,9 @@ def mock_keyring(monkeypatch):
         cred.password = password
         return cred
 
+    def get_password(service, username):
+        return store.get(f"{service}:{username}")
+
     def set_password(service, username, password):
         store[f"{service}:{username}"] = password
 
@@ -87,6 +90,7 @@ def mock_keyring(monkeypatch):
 
     # Mock the main functions used by the app
     monkeypatch.setattr(keyring, "get_credential", get_credential)
+    monkeypatch.setattr(keyring, "get_password", get_password)
     monkeypatch.setattr(keyring, "set_password", set_password)
     monkeypatch.setattr(keyring, "delete_password", delete_password)
 
