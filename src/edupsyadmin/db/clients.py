@@ -576,9 +576,6 @@ class Client(Base):
                 f"Invalid value for {key}: '{value}'. "
                 f"Allowed values are: {', '.join(LRST_TEST_BY)}"
             )
-
-        if self.lrst_diagnosis_encr and not value:
-            raise ValueError(f"{key} is required when lrst_diagnosis_encr is set.")
         return value
 
     @validates("birthday_encr")
