@@ -96,7 +96,7 @@ async def test_app_saves_config_changes(mock_config):
         await pilot.click("#save")
 
     # Read the config file after the app has exited
-    with config_path.open("w") as f:
+    with config_path.open("r") as f:
         saved_config = yaml.safe_load(f)
 
     # Assert that the changes were saved
