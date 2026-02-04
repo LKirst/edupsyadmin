@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from edupsyadmin.api.add_convenience_data import add_convenience_data
-from edupsyadmin.core.academic_year import get_this_academic_year_string
+from edupsyadmin.utils.academic_year import get_this_academic_year_string
 
 
 def _is_valid_german_date(date_str: str | None) -> bool:

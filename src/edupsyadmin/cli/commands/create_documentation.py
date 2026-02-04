@@ -1,4 +1,3 @@
-import os
 import textwrap
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
@@ -6,6 +5,7 @@ from pathlib import Path
 from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
+from edupsyadmin.utils.path_utils import normalize_path
 
 COMMAND_DESCRIPTION = (
     "Fill a pdf form or a text file with a liquid template. "
@@ -29,12 +29,6 @@ COMMAND_EPILOG = textwrap.dedent(
             --inject_data "key1=value1" "key2=value2"
           """
 )
-
-
-def _normalize_path(path: str | os.PathLike[str]) -> Path:
-    if not path:
-        raise ValueError("Path cannot be empty")
-    return Path(path).expanduser().resolve()
 
 
 def add_arguments(parser: ArgumentParser) -> None:
@@ -97,7 +91,7 @@ def execute(args: Namespace) -> None:
     elif not form_paths and not args.tui:
         raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
 
-    form_paths_normalized: list[Path] = [_normalize_path(p) for p in form_paths]
+    form_paths_normalized: list[Path] = [normalize_path(p) for p in form_paths]
     logger.debug(f"Trying to fill the files: {form_paths_normalized}")
     for cid in args.client_id:
         client_dict = clients_manager.get_decrypted_client(cid)

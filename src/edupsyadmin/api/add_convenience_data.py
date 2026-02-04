@@ -4,13 +4,13 @@ from typing import Any
 
 from dateutil.parser import parse
 
-from edupsyadmin.core.academic_year import (
+from edupsyadmin.core.config import config
+from edupsyadmin.core.logger import logger
+from edupsyadmin.utils.academic_year import (
     get_academic_year_string,
     get_estimated_end_of_academic_year,
     get_this_academic_year_string,
 )
-from edupsyadmin.core.config import config
-from edupsyadmin.core.logger import logger
 
 
 def _get_subjects(school: str) -> str:

@@ -5,8 +5,8 @@ from edupsyadmin.api.managers import ClientsManager
 
 # TODO: Remove FPDF dependency?
 from edupsyadmin.api.reports import Report, normal_distribution_plot
-from edupsyadmin.core.convert_measures import iq_to_t, iq_to_z
-from edupsyadmin.core.datediff import mydatediff
+from edupsyadmin.utils.convert_measures import iq_to_t, iq_to_z
+from edupsyadmin.utils.datediff import mydatediff
 
 
 def input_int_or_none(prompt: str) -> int | None:

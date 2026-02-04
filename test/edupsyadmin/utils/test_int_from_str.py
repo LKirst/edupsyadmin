@@ -1,6 +1,6 @@
 import pytest
 
-from edupsyadmin.core.int_from_str import extract_number
+from edupsyadmin.utils.int_from_str import extract_number
 
 
 @pytest.mark.parametrize(

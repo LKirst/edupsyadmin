@@ -1,6 +1,6 @@
 import pytest
 
-from edupsyadmin.core.taetigkeitsbericht_check_key import (
+from edupsyadmin.utils.taetigkeitsbericht_check_key import (
     check_keyword,
     get_taet_categories,
 )
@@ -19,7 +19,7 @@ def mock_get_categories(monkeypatch):
     """Mock get_taet_categories to return a fixed set of keywords."""
     test_keywords = {"key1", "key2", "key3.a"}
     monkeypatch.setattr(
-        "edupsyadmin.core.taetigkeitsbericht_check_key.get_taet_categories",
+        "edupsyadmin.utils.taetigkeitsbericht_check_key.get_taet_categories",
         lambda: test_keywords,
     )
     return test_keywords

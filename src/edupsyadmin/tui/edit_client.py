@@ -18,8 +18,8 @@ from textual.widgets import (
 from textual.widgets._select import NoSelection
 
 from edupsyadmin.core.config import config
-from edupsyadmin.core.python_type import get_python_type
 from edupsyadmin.db.clients import LRST_DIAG, LRST_TEST_BY, Client
+from edupsyadmin.utils.python_type import get_python_type
 
 REQUIRED_FIELDS = [
     "school",

@@ -1,7 +1,7 @@
 import unittest
 from datetime import date
 
-from edupsyadmin.core.academic_year import (
+from edupsyadmin.utils.academic_year import (
     DEFAULT_LAST_DAY,
     DEFAULT_LAST_MONTH,
     get_academic_year_string,

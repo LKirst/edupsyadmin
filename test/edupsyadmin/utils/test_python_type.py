@@ -12,8 +12,8 @@ from sqlalchemy import (
     String,
 )
 
-from edupsyadmin.core.python_type import get_python_type
 from edupsyadmin.db.clients import EncryptedString
+from edupsyadmin.utils.python_type import get_python_type
 
 
 def test_get_python_type_basic():

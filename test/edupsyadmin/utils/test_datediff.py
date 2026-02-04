@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-from edupsyadmin.core.datediff import mydatediff
+from edupsyadmin.utils.datediff import mydatediff
 
 
 class DatediffTest(unittest.TestCase):
