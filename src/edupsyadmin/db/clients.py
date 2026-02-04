@@ -477,7 +477,7 @@ class Client(Base):
         value = value or ""
         if value and value not in LRST_DIAG:
             raise ValueError(
-                f"Invalid value for lrst_diagnosis: '{value}'. "
+                f"Invalid value for lrst_diagnosis. "
                 f"Allowed values are: {', '.join(LRST_DIAG)}"
             )
         return value
@@ -564,16 +564,14 @@ class Client(Base):
             datetime.strptime(value, "%Y-%m-%d")
             return value
         except ValueError as e:
-            raise ValueError(
-                f"Invalid date format for {key}: '{value}'. Use YYYY-MM-DD."
-            ) from e
+            raise ValueError(f"Invalid date format for {key}. Use YYYY-MM-DD.") from e
 
     @validates("lrst_last_test_by_encr")
     def validate_lrst_last_test_by_encr(self, key: str, value: str | None) -> str:
         value = value or ""
         if value and value not in LRST_TEST_BY:
             raise ValueError(
-                f"Invalid value for {key}: '{value}'. "
+                f"Invalid value for {key}. "
                 f"Allowed values are: {', '.join(LRST_TEST_BY)}"
             )
         return value
@@ -611,7 +609,7 @@ def str_to_bool(value: str | bool | int) -> bool:
             boolvalue = bool(int(value))
         except ValueError as e:
             raise ValueError(
-                f"The value {value} cannot be converted to a boolean."
+                "The provided value cannot be converted to a boolean."
             ) from e
     else:
         boolvalue = value

@@ -78,7 +78,14 @@ def re_encrypt_database(
                         f"Client {client_id} disappeared during migration"
                     )
                 for field_name, value in data.items():
-                    setattr(client, field_name, value)
+                    try:
+                        setattr(client, field_name, value)
+                    except ValueError as e:
+                        error_msg = (
+                            f"Validation failed for client_id={client_id}, "
+                            f"field='{field_name}'. Details: {e}"
+                        )
+                        raise MigrationError(error_msg) from e
 
             # Commit this batch
             db_session.commit()
@@ -136,10 +143,18 @@ def re_encrypt_all_data(db_session: Session, batch_size: int = 100) -> None:
                 # (with any key) and re-encryption (with the primary key).
                 encrypted_fields = _get_encrypted_field_names()
                 for field_name in encrypted_fields:
-                    # Reading the attribute triggers decryption by MultiFernet
-                    current_value = getattr(client, field_name)
-                    # Setting the attribute triggers re-encryption by the ORM
-                    setattr(client, field_name, current_value)
+                    try:
+                        # Reading the attribute triggers decryption by MultiFernet
+                        current_value = getattr(client, field_name)
+                        # Setting the attribute triggers re-encryption by the ORM
+                        setattr(client, field_name, current_value)
+                    except ValueError as e:
+                        error_msg = (
+                            "Validation failed during re-encryption for "
+                            f"client_id={client.client_id}, field='{field_name}'. "
+                            f"Details: {e}"
+                        )
+                        raise MigrationError(error_msg) from e
 
             db_session.commit()
             processed_count += len(batch)
