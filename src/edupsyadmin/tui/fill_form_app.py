@@ -55,7 +55,8 @@ class FillFormApp(App[None]):
 
         if failed_ids:
             self.notify(
-                f"Warning: Could not find clients with IDs: {', '.join(map(str, failed_ids))}",
+                f"Warning: Could not find clients with IDs: "
+                f"{', '.join(map(str, failed_ids))}",
                 severity="warning",
             )
 
