@@ -119,10 +119,12 @@ class EdupsyadminTui(App[None]):
         """Worker to fill forms."""
         try:
             from edupsyadmin.api.add_convenience_data import add_convenience_data
+            from edupsyadmin.utils.path_utils import normalize_path
 
             client_data = self.manager.get_decrypted_client(client_id)
             client_data_with_convenience = add_convenience_data(client_data)
-            fill_form(client_data_with_convenience, form_paths)
+            form_paths_normalized = [normalize_path(p) for p in form_paths]
+            fill_form(client_data_with_convenience, form_paths_normalized)
             self.post_message(self._FormsFilledResult())
         except Exception as e:
             self.post_message(self._FormsFilledResult(error=e))

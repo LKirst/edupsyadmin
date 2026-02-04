@@ -72,17 +72,19 @@ class FillFormApp(App[None]):
         """Worker to fill forms for multiple clients."""
         from edupsyadmin.api.add_convenience_data import add_convenience_data
         from edupsyadmin.api.fill_form import fill_form
+        from edupsyadmin.utils.path_utils import normalize_path
 
         success_count = 0
         failed_clients = []
         error_messages = []
 
         try:
+            form_paths_normalized = [normalize_path(p) for p in form_paths]
             for client_id in client_ids:
                 try:
                     client_data = self.clients_manager.get_decrypted_client(client_id)
                     client_data_with_convenience = add_convenience_data(client_data)
-                    fill_form(client_data_with_convenience, form_paths)
+                    fill_form(client_data_with_convenience, form_paths_normalized)
                     success_count += 1
                 except ClientNotFoundError:
                     failed_clients.append(client_id)
