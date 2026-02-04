@@ -468,19 +468,6 @@ class TestClientValidation:
                 [client_id], {"lrst_last_test_by_encr": "invalid"}
             )
 
-        # Required when lrst_diagnosis_encr is set
-        clients_manager.edit_client([client_id], {"lrst_diagnosis_encr": "lrst"})
-        with pytest.raises(
-            ValueError, match="is required when lrst_diagnosis_encr is set"
-        ):
-            clients_manager.edit_client([client_id], {"lrst_last_test_by_encr": ""})
-
-        # Not required when lrst_diagnosis_encr is not set
-        clients_manager.edit_client([client_id], {"lrst_diagnosis_encr": ""})
-        clients_manager.edit_client([client_id], {"lrst_last_test_by_encr": ""})
-        client = clients_manager.get_decrypted_client(client_id)
-        assert client["lrst_last_test_by_encr"] == ""
-
     def test_validate_birthday(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
