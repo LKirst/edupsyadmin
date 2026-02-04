@@ -87,13 +87,13 @@ def execute(args: Namespace) -> None:
     if args.form_set:
         try:
             form_paths.extend(config.form_set[args.form_set])
-        except KeyError:
+        except KeyError as e:
             available_sets = ", ".join(config.form_set.keys())
             raise KeyError(
                 "Es ist in der Konfigurationsdatei kein Form Set mit dem "
                 f"Namen '{args.form_set}' angelegt. Verfügbare Sets sind: "
                 f"{available_sets}"
-            )
+            ) from e
     elif not form_paths and not args.tui:
         raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
 

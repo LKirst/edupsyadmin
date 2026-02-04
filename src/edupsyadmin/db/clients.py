@@ -563,10 +563,10 @@ class Client(Base):
         try:
             datetime.strptime(value, "%Y-%m-%d")
             return value
-        except ValueError:
+        except ValueError as e:
             raise ValueError(
                 f"Invalid date format for {key}: '{value}'. Use YYYY-MM-DD."
-            ) from ValueError
+            ) from e
 
     @validates("lrst_last_test_by_encr")
     def validate_lrst_last_test_by_encr(self, key: str, value: str | None) -> str:
@@ -609,10 +609,10 @@ def str_to_bool(value: str | bool | int) -> bool:
     if not isinstance(value, bool):
         try:
             boolvalue = bool(int(value))
-        except ValueError:
+        except ValueError as e:
             raise ValueError(
                 f"The value {value} cannot be converted to a boolean."
-            ) from ValueError
+            ) from e
     else:
         boolvalue = value
     return boolvalue
