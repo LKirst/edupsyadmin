@@ -4,6 +4,7 @@ from collections.abc import Iterator
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import logger
@@ -11,14 +12,11 @@ from edupsyadmin.db.clients import Client
 
 
 class MigrationError(Exception):
-    """Raised when migration encounters an error.
-
-    :param message: Description of the migration error.
-    """
+    """Raised when migration encounters an error."""
 
     def __init__(self, message: str) -> None:
+        super().__init__(message)
         self.message = message
-        super().__init__(self.message)
 
 
 def re_encrypt_database(
@@ -28,81 +26,55 @@ def re_encrypt_database(
     batch_size: int = 50,
 ) -> None:
     """
-    Re-encrypts all encrypted fields in the database from an old encryption
-    key to a new one.
+    Re-encrypt all encrypted fields from old_key to new_key.
 
-    This works by:
-    1. Loading clients in batches and decrypting with the old key.
-    2. Swapping the global encryption key to the new one.
-    3. Flushing the data back to the database, which triggers re-encryption
-       with the new key.
-    4. Verifying the migration was successful.
-
-    :param db_session: The SQLAlchemy session to use for database operations.
-    :param old_key: The OLD encryption key.
-    :param new_key: The NEW encryption key.
-    :param batch_size: Number of clients to process at once (default: 50).
-    :raises MigrationError: If migration fails or verification fails.
+    Strategy:
+    - Initialize encr once with [new_key, old_key]; MultiFernet decrypts with any,
+      encrypts with the first (new_key).
+    - For each encrypted field, read (decrypt) and assign back (re-encrypt with
+      new_key).
+    - Force UPDATEs via flag_modified to ensure the ciphertext is rewritten.
     """
     logger.info("Starting database re-encryption. This may take a while...")
 
+    # Initialize once: new primary first, then old for backward decryption
+    encr.set_keys([new_key, old_key])
+
     try:
-        # Count total clients for progress reporting
         total_clients = db_session.query(Client).count()
         if total_clients == 0:
             logger.info("No clients found in database. Nothing to migrate.")
             return
 
         logger.info(f"Found {total_clients} clients to migrate.")
-
-        # Step 1: Decrypt and re-encrypt in batches
         logger.info("Step 1/2: Re-encrypting all client data...")
 
         processed = 0
+        encrypted_fields = _get_encrypted_field_names()
+
         for batch in _get_client_batches(db_session, batch_size):
-            # Decrypt with OLD key
-            encr.set_keys([old_key])
-            # Load all encrypted attributes while we have the old key
-            decrypted_data = []
             for client in batch:
-                client_data = _extract_encrypted_fields(client)
-                decrypted_data.append((client.client_id, client_data))
-
-            # Clear the session cache
-            # This clears the identity map to avoid stale instances and
-            # reduce memory before switching keys
-            db_session.expunge_all()
-
-            # Re-encrypt with NEW key
-            encr.set_keys([new_key])
-
-            # Re-encrypt by setting attributes (triggers encryption)
-            for client_id, data in decrypted_data:
-                client = db_session.get(Client, client_id)
-                if client is None:
-                    raise MigrationError(
-                        f"Client {client_id} disappeared during migration"
-                    )
-                for field_name, value in data.items():
+                for field_name in encrypted_fields:
                     try:
-                        setattr(client, field_name, value)
+                        # Read -> decrypts using MultiFernet (old or new)
+                        current_value = getattr(client, field_name)
+                        # Write -> encrypts with primary (new_key)
+                        setattr(client, field_name, current_value)
+                        # Ensure UPDATE even if plaintext unchanged
+                        flag_modified(client, field_name)
                     except ValueError as e:
-                        error_msg = (
-                            f"Validation failed for client_id={client_id}, "
+                        raise MigrationError(
+                            f"Validation failed for client_id={client.client_id}, "
                             f"field='{field_name}'. Details: {e}"
-                        )
-                        raise MigrationError(error_msg) from e
+                        ) from e
 
-            # Commit this batch
             db_session.commit()
-
-            # Clear cache again before next batch
             db_session.expunge_all()
 
             processed += len(batch)
             logger.info(f"Progress: {processed}/{total_clients} clients migrated")
 
-        # Step 2: Verify migration
+        # Step 2: Verify with only the new key
         logger.info("Step 2/2: Verifying migration...")
         encr.set_keys([new_key])
         _verify_migration(db_session, total_clients)
@@ -117,14 +89,11 @@ def re_encrypt_database(
 
 def re_encrypt_all_data(db_session: Session, batch_size: int = 100) -> None:
     """
-    Re-encrypts all data in the database with the primary (newest) key.
+    Re-encrypt all data with the current primary key.
 
-    This function relies on the global `encr` object being initialized with
-    a `MultiFernet` instance containing all necessary (old and new) keys.
-
-    :param db_session: The SQLAlchemy session for database operations.
-    :param batch_size: The number of clients to process in each batch.
-    :raises MigrationError: If the re-encryption process fails.
+    Assumes the global `encr` has already been initialized with MultiFernet
+    (primary first, then any older keys) by CLI setup. This preserves the
+    rotate_key command behavior.
     """
     if not encr.is_initialized:
         raise MigrationError("Encryption is not initialized.")
@@ -142,24 +111,24 @@ def re_encrypt_all_data(db_session: Session, batch_size: int = 100) -> None:
         logger.info(f"Found {total_clients} clients to process.")
 
         processed_count = 0
+        encrypted_fields = _get_encrypted_field_names()
+
         for batch in _get_client_batches(db_session, batch_size):
             for client in batch:
-                # Extracting and setting the fields triggers the decryption
-                # (with any key) and re-encryption (with the primary key).
-                encrypted_fields = _get_encrypted_field_names()
                 for field_name in encrypted_fields:
                     try:
-                        # Reading the attribute triggers decryption by MultiFernet
-                        current_value = getattr(client, field_name)
-                        # Setting the attribute triggers re-encryption by the ORM
-                        setattr(client, field_name, current_value)
+                        current_value = getattr(client, field_name)  # decrypt
+                        setattr(
+                            client, field_name, current_value
+                        )  # re-encrypt with primary
+                        # Ensure UPDATE even if plaintext unchanged
+                        flag_modified(client, field_name)
                     except ValueError as e:
-                        error_msg = (
+                        raise MigrationError(
                             "Validation failed during re-encryption for "
                             f"client_id={client.client_id}, field='{field_name}'. "
                             f"Details: {e}"
-                        )
-                        raise MigrationError(error_msg) from e
+                        ) from e
 
             db_session.commit()
             processed_count += len(batch)
@@ -168,8 +137,6 @@ def re_encrypt_all_data(db_session: Session, batch_size: int = 100) -> None:
             )
 
         logger.info("Verifying re-encryption...")
-        # The global `encr` instance should still have all keys, so verification
-        # will pass, but all data is now encrypted with the primary key.
         _verify_migration(db_session, total_clients)
 
         logger.info("Data re-encryption completed successfully.")
@@ -181,13 +148,6 @@ def re_encrypt_all_data(db_session: Session, batch_size: int = 100) -> None:
 
 
 def _get_client_batches(db_session: Session, batch_size: int) -> Iterator[list[Client]]:
-    """
-    Yield batches of clients from the database.
-
-    :param db_session: The SQLAlchemy session.
-    :param batch_size: Number of clients per batch.
-    :yield: Lists of Client objects.
-    """
     offset = 0
     while True:
         stmt = select(Client).offset(offset).limit(batch_size)
@@ -199,7 +159,6 @@ def _get_client_batches(db_session: Session, batch_size: int) -> Iterator[list[C
 
 
 def _get_encrypted_field_names() -> list[str]:
-    """Returns a list of all encrypted field names for a Client."""
     return [
         "first_name_encr",
         "last_name_encr",
@@ -219,32 +178,8 @@ def _get_encrypted_field_names() -> list[str]:
     ]
 
 
-def _extract_encrypted_fields(client: Client) -> dict[str, str]:
-    """
-    Extract all encrypted field values from a client.
-
-    :param client: The Client object to extract from.
-    :return: Dictionary mapping field names to decrypted values.
-    """
-    data = {}
-    for field in _get_encrypted_field_names():
-        # Access the attribute to trigger decryption
-        value = getattr(client, field)
-        data[field] = value
-
-    return data
-
-
 def _verify_migration(db_session: Session, expected_count: int) -> None:
-    """
-    Verify that all clients can be decrypted with the current encryption setup.
-
-    :param db_session: The SQLAlchemy session.
-    :param expected_count: Expected number of clients.
-    :raises MigrationError: If verification fails.
-    """
     try:
-        # Try to load and decrypt all clients
         stmt = select(Client)
         clients = list(db_session.scalars(stmt))
 
@@ -254,15 +189,12 @@ def _verify_migration(db_session: Session, expected_count: int) -> None:
                 f"found {len(clients)}"
             )
 
-        # Try to access encrypted fields on a sample of clients
         sample_size = min(10, len(clients))
         for client in clients[:sample_size]:
-            # This will raise an exception if decryption fails
             _ = client.first_name_encr
             _ = client.last_name_encr
             _ = client.birthday_encr
 
         logger.info(f"Verification successful: all {len(clients)} clients accessible")
-
     except Exception as e:
         raise MigrationError(f"Verification failed: {e}") from e
