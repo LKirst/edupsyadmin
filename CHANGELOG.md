@@ -1,3 +1,28 @@
+## 8.0.0 (2026-02-05)
+
+### Feat
+
+- make error messages during migration more informative but don't print out sensitive information
+- **encryption**: implement versioned keyring storage for keys
+- **cli.commands.migrate_encryption**: use getpass for old password and verify old password
+
+### Fix
+
+- **api.migration**: resolve missing keys error and enforce re-encryption
+- **encrypt**: prevent key loss during keyring update race condition
+- **tui**: normalize form paths
+- use 'raise exception from e' clause
+- **db.clients**: making validation less strict for lrst_diagnosis_encr for migration
+- **api**: no longer iterate over string as if it was a list
+- require client_id(s) with create_documentation
+
+### Refactor
+
+- **api.migration**: lower batch size to 50 and improve per-batch key/session handling
+- **migrate_encryption**: make GC explicit
+- **core**: separate core and utils code
+- **db.clients**: raise error from underlying error in except
+
 ## 8.0.0a0 (2026-02-02)
 
 ### BREAKING CHANGE
