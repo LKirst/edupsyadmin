@@ -1,4 +1,5 @@
 import sys
+import gc
 import textwrap
 from argparse import ArgumentParser, Namespace
 from getpass import getpass
@@ -52,8 +53,8 @@ def execute(args: Namespace) -> None:
     salt = load_or_create_salt(args.salt_path)
     old_key = derive_key_from_password(old_password, salt, OLD_KDF_ITERATIONS)
 
-    # Clear password from memory
-    old_password = None
+    del old_password  # clear the reference
+    gc.collect()  # encourage immediate GC (not guaranteed)
 
     # Get new keys from keyring (now returns a list)
     new_keys = get_keys_from_keyring(args.app_uid, args.app_username)
