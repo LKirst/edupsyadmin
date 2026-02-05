@@ -25,7 +25,7 @@ def re_encrypt_database(
     db_session: Session,
     old_key: bytes,
     new_key: bytes,
-    batch_size: int = 100,
+    batch_size: int = 50,
 ) -> None:
     """
     Re-encrypts all encrypted fields in the database from an old encryption
@@ -41,7 +41,7 @@ def re_encrypt_database(
     :param db_session: The SQLAlchemy session to use for database operations.
     :param old_key: The OLD encryption key.
     :param new_key: The NEW encryption key.
-    :param batch_size: Number of clients to process at once (default: 100).
+    :param batch_size: Number of clients to process at once (default: 50).
     :raises MigrationError: If migration fails or verification fails.
     """
     logger.info("Starting database re-encryption. This may take a while...")
@@ -57,17 +57,23 @@ def re_encrypt_database(
 
         # Step 1: Decrypt and re-encrypt in batches
         logger.info("Step 1/2: Re-encrypting all client data...")
-        encr.set_keys([old_key])
 
         processed = 0
         for batch in _get_client_batches(db_session, batch_size):
+            # Decrypt with OLD key
+            encr.set_keys([old_key])
             # Load all encrypted attributes while we have the old key
             decrypted_data = []
             for client in batch:
                 client_data = _extract_encrypted_fields(client)
                 decrypted_data.append((client.client_id, client_data))
 
-            # Switch to new key
+            # Clear the session cache
+            # This clears the identity map to avoid stale instances and
+            # reduce memory before switching keys
+            db_session.expunge_all()
+
+            # Re-encrypt with NEW key
             encr.set_keys([new_key])
 
             # Re-encrypt by setting attributes (triggers encryption)
@@ -90,9 +96,8 @@ def re_encrypt_database(
             # Commit this batch
             db_session.commit()
 
-            # Switch back to old key for next batch
-            if processed + len(batch) < total_clients:
-                encr.set_keys([old_key])
+            # Clear cache again before next batch
+            db_session.expunge_all()
 
             processed += len(batch)
             logger.info(f"Progress: {processed}/{total_clients} clients migrated")
