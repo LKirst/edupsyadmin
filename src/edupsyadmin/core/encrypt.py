@@ -1,5 +1,4 @@
 import base64
-import contextlib
 import json
 import os
 from pathlib import Path
@@ -136,31 +135,57 @@ def set_keys_in_keyring(uid: str, username: str, keys: list[bytes]) -> None:
 
     Keys are stored with version numbers for better reliability.
     Legacy keys are removed to avoid confusion.
+
+    :param uid: Application unique identifier
+    :param username: Username for keyring storage
+    :param keys: List of encryption keys to store
     """
     logger.debug(f"Storing {len(keys)} key(s) for '{username}' in keyring.")
 
-    # 1. Clean up legacy keys
-    with contextlib.suppress(PasswordDeleteError):
-        keyring.delete_password(uid, username)
-        logger.debug(f"Deleted existing legacy key for '{username}'.")
-
-    # 2. Clean up old versioned keys (if we are reducing the number of keys)
-    with contextlib.suppress(Exception):  # Ignore errors during cleanup
-        old_count_str = keyring.get_password(f"{uid}_key_count", username)
-        if old_count_str:
-            old_count = int(old_count_str)
-            if old_count > len(keys):
-                for idx in range(len(keys), old_count):
-                    with contextlib.suppress(Exception):
-                        keyring.delete_password(f"{uid}_key_{idx}", username)
-
-    # 3. Store new keys
-    # Store count first
+    # 1. Store new keys FIRST (before any deletion)
+    # This ensures we never have a state with no keys at all
     keyring.set_password(f"{uid}_key_count", username, str(len(keys)))
 
-    # Store each key individually
     for idx, key in enumerate(keys):
         keyring.set_password(f"{uid}_key_{idx}", username, key.decode("utf-8"))
+
+    logger.debug(f"Successfully stored {len(keys)} new key(s).")
+
+    # 2. Clean up old versioned keys (if we are reducing the number of keys)
+    # This happens AFTER new keys are safely stored
+    try:
+        # Try to find if there are any keys beyond our current count
+        # We'll try up to a reasonable maximum (e.g., 10 keys)
+        max_keys_to_check = 10
+        for idx in range(len(keys), max_keys_to_check):
+            try:
+                old_key = keyring.get_password(f"{uid}_key_{idx}", username)
+                if old_key:
+                    keyring.delete_password(f"{uid}_key_{idx}", username)
+                    logger.debug(f"Deleted orphaned key at index {idx}")
+                else:
+                    # No more keys found, we can stop
+                    break
+            except Exception as e:
+                logger.debug(f"No key found at index {idx} or error deleting: {e}")
+                # Continue trying to clean up remaining keys
+                continue
+
+    except Exception as e:
+        # Non-critical: cleanup failure shouldn't break the operation
+        # since new keys are already stored
+        logger.warning(f"Error during cleanup of old keys: {e}")
+
+    # 3. Clean up legacy keys (non-versioned format)
+    # This is also done AFTER new keys are stored
+    try:
+        keyring.delete_password(uid, username)
+        logger.debug(f"Deleted legacy key for '{username}'.")
+    except PasswordDeleteError:
+        # Key didn't exist, which is fine
+        logger.debug(f"No legacy key found for '{username}' (already cleaned up).")
+    except Exception as e:
+        logger.warning(f"Error deleting legacy key: {e}")
 
 
 def load_or_create_salt(salt_path: Path) -> bytes:
