@@ -9,37 +9,6 @@ from textual.widgets import Button, Label
 class YesNoDialog(ModalScreen[bool]):
     """A modal dialog to ask a yes/no question."""
 
-    DEFAULT_CSS = """
-    YesNoDialog {
-        align: center middle;
-    }
-
-    YesNoDialog > Grid {
-        grid-size: 2;
-        grid-gutter: 1 2;
-        width: auto;
-        height: auto;
-        padding: 0 1;
-        border: thick $primary;
-        background: $surface;
-    }
-
-    #question {
-        column-span: 2;
-        width: 100%;
-        padding: 1 2;
-        text-align: center;
-    }
-
-    #yes {
-        width: 100%;
-    }
-
-    #no {
-        width: 100%;
-    }
-    """
-
     def __init__(
         self,
         question: str,
