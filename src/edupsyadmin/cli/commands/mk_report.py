@@ -28,7 +28,7 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 
 def execute(args: Namespace) -> None:
-    """Execute the mk_report command."""
+    """Execute the mk-report command."""
     if args.test_type == "LGVT":
         mk_report = lazy_import("edupsyadmin.api.lgvt").mk_report
         mk_report(

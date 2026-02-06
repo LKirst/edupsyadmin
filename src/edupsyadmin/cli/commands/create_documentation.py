@@ -16,23 +16,23 @@ COMMAND_HELP = "Fill a pdf form or a text file with a liquid template"
 COMMAND_EPILOG = textwrap.dedent(
     r"""         Examples:
           # Open the TUI to interactively fill a form for client with ID 1
-          edupsyadmin create_documentation 1 --tui
+          edupsyadmin create-documentation 1 --tui
 
           # Fill a PDF form for client with ID 1 using a form set named 'MyFormSet'
-          edupsyadmin create_documentation 1 --form_set MyFormSet
+          edupsyadmin create-documentation 1 --form_set MyFormSet
 
           # Fill a text file for client with ID 2 using a specific form path
-          edupsyadmin create_documentation 2 --form_paths "./path/to/template.txt"
+          edupsyadmin create-documentation 2 --form_paths "./path/to/template.txt"
 
           # Fill a form for client with ID 3, injecting custom data
-          edupsyadmin create_documentation 3 --form_paths "./path/to/form.pdf" \
+          edupsyadmin create-documentation 3 --form_paths "./path/to/form.pdf" \
             --inject_data "key1=value1" "key2=value2"
           """
 )
 
 
 def add_arguments(parser: ArgumentParser) -> None:
-    """CLI adaptor for the create_documentation command."""
+    """CLI adaptor for the create-documentation command."""
     parser.set_defaults(command=execute)
     parser.add_argument(
         "--tui", action="store_true", help="Open TUI for interactive form filling."
@@ -60,7 +60,7 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 
 def execute(args: Namespace) -> None:
-    """Execute the create_documentation command."""
+    """Execute the create-documentation command."""
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
     clients_manager = clients_manager_cls(
         database_url=args.database_url,

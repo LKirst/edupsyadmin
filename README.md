@@ -10,7 +10,7 @@ You can install the CLI using pip or
 
 Install with uv:
 
-    $ uv tool install edupsyadmin
+    uv tool install edupsyadmin
 
 You may get a warning that the `bin` directory is not on your environment path.
 If that is the case, copy the path from the warning and add it directory to
@@ -18,7 +18,7 @@ your **environment path** permanently or just for the current session.
 
 Run the application:
 
-    $ edupsyadmin --help
+    edupsyadmin --help
 
 ## Getting started
 
@@ -41,7 +41,7 @@ want to install a backend that requires separate unlocking:
 First, you have to update the config file with your data using the config
 editor TUI:
 
-`edupsyadmin edit_config`
+    edupsyadmin edit-config
 
 ## The database
 
@@ -53,24 +53,24 @@ edupsyadmin](https://edupsyadmin.readthedocs.io/en/latest/clients_model.html#)
 
 Get information about the path to the config file and the path to the database:
 
-    $ edupsyadmin info
+    edupsyadmin info
 
 Add a client interactively:
 
-    $ edupsyadmin new_client
+    edupsyadmin new-client
 
 Add a client to the database from a Webuntis csv export:
 
-    $ edupsyadmin new_client --csv ./path/to/your/file.csv --name "short_name_of_client"
+    edupsyadmin new-client --csv ./path/to/your/file.csv --name "short_name_of_client"
 
 Change values for the database entry with `client_id=42` interactively:
 
-    $ edupsyadmin set_client 42
+    edupsyadmin set-client 42
 
 Change values for the database entry with `client_id=42` from the commandline:
 
 ```
-$ edupsyadmin set_client 42 \
+$ edupsyadmin set-client 42 \
   --key_value_pairs \
   "nta_font=1" \
   "nta_zeitv_vieltext=20" \
@@ -80,31 +80,31 @@ $ edupsyadmin set_client 42 \
 
 See an overview of all clients in the database:
 
-    $ edupsyadmin get_clients
+    edupsyadmin get-clients
 
 Fill a PDF form for the database entry with `client_id=42`:
 
-    $ edupsyadmin create_documentation 42 --form_paths ./path/to/your/file.pdf
+    edupsyadmin create-documentation 42 --form_paths ./path/to/your/file.pdf
 
 Fill all files that belong to the form_set `lrst` (as defined in the
 config.yml) with the data for `client_id=42`:
 
-    $ edupsyadmin create_documentation 42 --form_set lrst
+    edupsyadmin create-documentation 42 --form_set lrst
 
 ## Development
 
 Create the development enviroment:
 
-    $ uv v
-    $ uv pip install -e .
+    uv v
+    uv pip install -e .
 
 Run the test suite:
 
-    $ .venv/bin/python -m pytest -v -n auto --cov=src test/
+    .venv/bin/python -m pytest -v -n auto --cov=src test/
 
 Build documentation:
 
-    $ .venv/bin/python -m sphinx -M html docs docs/_build
+    .venv/bin/python -m sphinx -M html docs docs/_build
 
 ## License
 

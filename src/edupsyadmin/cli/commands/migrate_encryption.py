@@ -1,5 +1,5 @@
-import sys
 import gc
+import sys
 import textwrap
 from argparse import ArgumentParser, Namespace
 from getpass import getpass
@@ -8,13 +8,13 @@ from edupsyadmin.core.logger import logger
 
 COMMAND_DESCRIPTION = (
     "Re-encrypt all sensitive data with a new key. "
-    "Run 'edupsyadmin edit_config' first to set your new password."
+    "Run 'edupsyadmin edit-config' first to set your new password."
 )
 COMMAND_HELP = "Migrate database to new encryption system"
 COMMAND_EPILOG = textwrap.dedent(
     """
     Example:
-      edupsyadmin migrate_encryption
+      edupsyadmin migrate-encryption
 
     IMPORTANT: Make a backup before running this command!
 """
@@ -22,7 +22,7 @@ COMMAND_EPILOG = textwrap.dedent(
 
 
 def add_arguments(parser: ArgumentParser) -> None:
-    """CLI adaptor for the migrate_encryption command."""
+    """CLI adaptor for the migrate-encryption command."""
     parser.set_defaults(command=execute)
 
 
@@ -61,7 +61,7 @@ def execute(args: Namespace) -> None:
 
     if not new_keys:
         raise RuntimeError(
-            "New keys not found in keyring. Run 'edupsyadmin edit_config' "
+            "New keys not found in keyring. Run 'edupsyadmin edit-config' "
             "first, but before you do make sure you know your old password "
             "because that will be overwritten, and you need it for the migration."
         )

@@ -9,18 +9,18 @@ COMMAND_EPILOG = textwrap.dedent(
     """
     Examples:
       # Edit a client with ID 2 interactively in the TUI
-      edupsyadmin set_client 2
+      edupsyadmin set-client 2
 
       # Set 'nta_font' to '1' (true) and 'nta_zeitv_vieltext' to '20' for
       # clients with ID 1 and 2
-      edupsyadmin set_client 1 2 --key_value_pairs "nta_font=1" \
+      edupsyadmin set-client 1 2 --key_value_pairs "nta_font=1" \
         "nta_zeitv_vieltext=20"
 """
 )
 
 
 def add_arguments(parser: ArgumentParser) -> None:
-    """CLI adaptor for the set_client command."""
+    """CLI adaptor for the set-client command."""
     parser.set_defaults(command=execute)
     parser.add_argument("client_id", type=int, nargs="+")
     parser.add_argument(

@@ -8,25 +8,25 @@ COMMAND_HELP = "Show clients overview or single client"
 COMMAND_EPILOG = textwrap.dedent(
     r"""        Examples:
           # Show an overview of all clients
-          edupsyadmin get_clients
+          edupsyadmin get-clients
 
           # Show an overview in an interactive TUI
-          edupsyadmin get_clients --tui
+          edupsyadmin get-clients --tui
 
           # Show clients from 'TutorialSchule' who have 'NTA' or 'NOS'
-          edupsyadmin get_clients --nta_nos --school TutorialSchule
+          edupsyadmin get-clients --nta_nos --school TutorialSchule
 
           # Show all details for client with ID 2
-          edupsyadmin get_clients --client_id 2
+          edupsyadmin get-clients --client_id 2
 
           # Show all clients, and display the columns keyword_taet_encr and notes_encr
-          edupsyadmin get_clients --tui --columns keyword_taet_encr notes_encr
+          edupsyadmin get-clients --tui --columns keyword_taet_encr notes_encr
           """
 )
 
 
 def add_arguments(parser: ArgumentParser) -> None:
-    """CLI adaptor for the get_clients command."""
+    """CLI adaptor for the get-clients command."""
     parser.set_defaults(command=execute)
     parser.add_argument(
         "--nta_nos",
@@ -49,7 +49,7 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 
 def execute(args: Namespace) -> None:
-    """Execute the get_clients command."""
+    """Execute the get-clients command."""
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
     clients_manager = clients_manager_cls(
         database_url=args.database_url,

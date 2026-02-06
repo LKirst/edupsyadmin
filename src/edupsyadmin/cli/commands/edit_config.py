@@ -9,7 +9,7 @@ COMMAND_EPILOG = textwrap.dedent(
     """
     Example:
       # Open the configuration file in a TUI
-      edupsyadmin edit_config
+      edupsyadmin edit-config
 """
 )
 
@@ -23,6 +23,6 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 
 def execute(args: Namespace) -> None:
-    """Execute the edit_config command."""
+    """Execute the edit-config command."""
     config_editor_app_cls = lazy_import("edupsyadmin.tui.editconfig").ConfigEditorApp
     config_editor_app_cls(args.config_path, args.app_uid, args.app_username).run()

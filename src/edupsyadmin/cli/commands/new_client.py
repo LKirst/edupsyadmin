@@ -21,14 +21,14 @@ COMMAND_EPILOG = textwrap.dedent(
     """
     Examples:
       # Add a new client interactively using the TUI
-      edupsyadmin new_client
+      edupsyadmin new-client
 
       # Add a new client from a CSV file
-      edupsyadmin new_client --csv "./path/to/sample.csv" \
+      edupsyadmin new-client --csv "./path/to/sample.csv" \
         --name "ClientName" --school MySchool
 
       # Add from CSV and keep the file
-      edupsyadmin new_client --csv "./path/to/sample.csv" \
+      edupsyadmin new-client --csv "./path/to/sample.csv" \
         --name "ClientName" --school MySchool --keepfile
 """
 )
@@ -149,7 +149,7 @@ def _enter_client_csv(
 
 
 def add_arguments(parser: ArgumentParser) -> None:
-    """CLI adaptor for the new_client command."""
+    """CLI adaptor for the new-client command."""
     parser.set_defaults(command=execute)
     parser.add_argument(
         "--csv",
@@ -191,7 +191,7 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 
 def execute(args: Namespace) -> None:
-    """Execute the new_client command."""
+    """Execute the new-client command."""
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
     clients_manager = clients_manager_cls(
         database_url=args.database_url,

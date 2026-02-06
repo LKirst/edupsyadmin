@@ -174,10 +174,10 @@ Optionale Abhängigkeiten
 Einige Funktionen von ``edupsyadmin``, wie das Bearbeiten von PDFs,
 benötigen zusätzliche Programme, die nicht automatisch mitinstalliert werden.
 
-Poppler (für ``flatten_pdfs``)
+Poppler (für ``flatten-pdfs``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Die Funktion ``flatten_pdfs`` mit der ``pdf2image`` Bibliothek benötigt
+Die Funktion ``flatten-pdfs`` mit der ``pdf2image`` Bibliothek benötigt
 **Poppler**.
 
 .. tab-set::

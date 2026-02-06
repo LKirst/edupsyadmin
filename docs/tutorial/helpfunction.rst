@@ -93,16 +93,16 @@ Unterbefehl anzeigen:
 
     Examples:
     # Open the TUI to interactively fill a form
-    edupsyadmin create_documentation --tui
+    edupsyadmin create-documentation --tui
 
     # Fill a PDF form for client with ID 1 using a form set named 'MyFormSet'
-    edupsyadmin create_documentation 1 --form_set MyFormSet
+    edupsyadmin create-documentation 1 --form_set MyFormSet
 
     # Fill a text file for client with ID 2 using a specific form path
-    edupsyadmin create_documentation 2 --form_paths "./path/to/template.txt"
+    edupsyadmin create-documentation 2 --form_paths "./path/to/template.txt"
 
     # Fill a form for client with ID 3, injecting custom data
-    edupsyadmin create_documentation 3 --form_paths "./path/to/form.pdf" \
+    edupsyadmin create-documentation 3 --form_paths "./path/to/form.pdf" \
       --inject_data "key1=value1" "key2=value2"
 
 Die Hilfe zeigt ``positional arguments``  und ``options``. Die positional

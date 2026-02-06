@@ -31,10 +31,10 @@ in deinem Dateisystem gehen.
 Damit ``edupsyadmin`` nicht die aktuellen Dateien, sondern das Backup
 verwendet, musst du auf die Dateien (Salt, Datenbank und Konfigurationsdatei)
 verweisen in jedem Befehl. Hier ist zum Beispiel der Befehl, um die Klienten
-in der Datenbank anzuzeigen (``get_clients``):
+in der Datenbank anzuzeigen (``get-clients``):
 
 .. code-block:: console
 
-    $ edupsyadmin --config_path "./config.yml" get_clients \
+    $ edupsyadmin --config_path "./config.yml" get-clients \
         --salt_path "./salt.txt" \
         --database_url "sqlite:///edupsyadmin.db"
