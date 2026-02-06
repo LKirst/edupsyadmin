@@ -29,13 +29,11 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 def execute(args: Namespace) -> None:
     """Execute the mk-report command."""
+    logger.debug(f"args.test_type: {args.test_type}")
     if args.test_type == "LGVT":
         mk_report = lazy_import("edupsyadmin.api.lgvt").mk_report
         mk_report(
-            args.app_username,
-            args.app_uid,
             args.database_url,
-            args.salt_path,
             args.client_id,
             args.test_date,
             version=args.version,
@@ -43,10 +41,7 @@ def execute(args: Namespace) -> None:
     elif args.test_type == "CFT":
         create_report = lazy_import("edupsyadmin.api.cft_report").create_report
         create_report(
-            args.app_username,
-            args.app_uid,
             args.database_url,
-            args.salt_path,
             args.client_id,
             args.test_date,
         )
