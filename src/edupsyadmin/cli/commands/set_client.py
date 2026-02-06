@@ -1,7 +1,7 @@
 import textwrap
 from argparse import ArgumentParser, Namespace
 
-from edupsyadmin.cli.utils import lazy_import
+from edupsyadmin.cli.utils import lazy_import, parse_key_value_pairs
 
 COMMAND_DESCRIPTION = "Change values for one or more clients"
 COMMAND_HELP = "Change values for one or more clients"
@@ -46,7 +46,9 @@ def execute(args: Namespace) -> None:
     )
 
     if args.key_value_pairs:
-        key_value_pairs_dict = dict(pair.split("=", 1) for pair in args.key_value_pairs)
+        key_value_pairs_dict = parse_key_value_pairs(
+            args.key_value_pairs, option_name="--key_value_pairs"
+        )
         clients_manager.edit_client(
             client_ids=args.client_id, new_data=key_value_pairs_dict
         )

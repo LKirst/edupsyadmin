@@ -2,7 +2,7 @@ import textwrap
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
-from edupsyadmin.cli.utils import lazy_import
+from edupsyadmin.cli.utils import lazy_import, parse_key_value_pairs
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 from edupsyadmin.utils.path_utils import normalize_path
@@ -97,6 +97,8 @@ def execute(args: Namespace) -> None:
         client_dict = clients_manager.get_decrypted_client(cid)
         client_dict_w_convdat = add_convenience_data(client_dict)
         if args.inject_data:
-            inject_dict = dict(pair.split("=", 1) for pair in args.inject_data)
+            inject_dict = parse_key_value_pairs(
+                args.inject_data, option_name="--inject_data"
+            )
             client_dict_w_convdat = client_dict_w_convdat | inject_dict
         fill_form(client_dict_w_convdat, form_paths_normalized)

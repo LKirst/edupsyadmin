@@ -1,6 +1,7 @@
 import importlib.util
 import sys
 import types
+from collections.abc import Iterable
 
 
 # Lazy import utility function
@@ -23,3 +24,49 @@ def lazy_import(name: str) -> types.ModuleType:
     sys.modules[name] = module
     loader.exec_module(module)
     return module
+
+
+class KeyValueParseError(ValueError):
+    pass
+
+
+def parse_key_value_pairs(pairs: Iterable[str], option_name: str) -> dict[str, str]:
+    """
+    Parse an iterable of 'key=value' strings into a dict.
+
+    Rules:
+    - Exactly one '=' per pair
+    - Key must be non-empty after stripping
+    - Value may be empty; spaces allowed
+    - No further type coercion or normalization
+
+    Raises:
+    - ValueError with a concise message listing the malformed entries
+    """
+    result: dict[str, str] = {}
+    bad: list[str] = []
+
+    for raw in pairs:
+        s = str(raw)
+        # Must contain exactly one '='
+        if s.count("=") != 1:
+            bad.append(s)
+            continue
+
+        key, value = s.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+
+        if not key:
+            bad.append(s)
+            continue
+
+        result[key] = value
+
+    if bad:
+        raise ValueError(
+            f"Malformed {option_name} entries: {', '.join(bad)}. "
+            "Use exactly one '=' with a non-empty key (e.g., key=value)."
+        )
+
+    return result
