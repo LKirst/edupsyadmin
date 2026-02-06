@@ -1,3 +1,4 @@
+import importlib.resources
 from pathlib import Path
 
 import yaml
@@ -8,9 +9,9 @@ from edupsyadmin.core.encrypt import (
     DEFAULT_KDF_ITERATIONS,
     derive_key_from_password,
     encr,
-    get_key_from_keyring,
+    get_keys_from_keyring,
     load_or_create_salt,
-    set_key_in_keyring,
+    set_keys_in_keyring,
 )
 from edupsyadmin.core.logger import logger
 
@@ -28,31 +29,15 @@ def setup_demo() -> None:
     demo_db_path.unlink(missing_ok=True)
     demo_salt_path.unlink(missing_ok=True)
 
-    # Create demo-config.yml
-    demo_config = {
-        "core": {
-            "logging": "INFO",
-            "app_uid": demo_app_uid,
-            "app_username": demo_username,
-        },
-        "schoolpsy": {
-            "schoolpsy_name": "DemoVornameSP DemoNachnameSP",
-            "schoolpsy_street": "Demostr. 1",
-            "schoolpsy_city": "12345 Demostadt",
-        },
-        "school": {
-            "DemoSchule": {
-                "school_head_w_school": "Schulleitung der Demoschule",
-                "school_name": "Staatliche Demoschule für Demozwecke",
-                "school_street": "Demoweg 2",
-                "school_city": "12345 Demostadt",
-                "end": 12,
-                "nstudents": 500,
-            }
-        },
-        "form_set": {},
-        "csv_import": {},
-    }
+    # Load default config and customize for demo
+    template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
+    with template_path.open("r", encoding="utf-8") as f:
+        demo_config = yaml.safe_load(f)
+
+    # Customize for demo
+    demo_config["core"]["app_uid"] = demo_app_uid
+    demo_config["core"]["app_username"] = demo_username
+
     with demo_config_path.open("w", encoding="utf-8") as f:
         yaml.dump(demo_config, f)
 
@@ -64,26 +49,26 @@ def setup_demo() -> None:
 
     # Set an encryption key for the demo user
     # Check if a key already exists
-    if not get_key_from_keyring(config.core.app_uid, config.core.app_username):
+    keys = get_keys_from_keyring(config.core.app_uid, config.core.app_username)
+    if not keys:
         logger.info("No encryption key found for demo user. Generating a new one.")
         # Load or create salt for key derivation
         salt = load_or_create_salt(demo_salt_path)
         # Derive key from password and salt
         key = derive_key_from_password(demo_password, salt, DEFAULT_KDF_ITERATIONS)
-        # Store the derived key in the keyring
-        set_key_in_keyring(config.core.app_uid, config.core.app_username, key)
+        # Store the derived key in the keyring as a list
+        set_keys_in_keyring(config.core.app_uid, config.core.app_username, [key])
         logger.info("Encryption key for demo user set in keyring.")
+        keys = [key]  # Update keys variable for subsequent use
     else:
         logger.info(
             "Demo user already has an encryption key in keyring. Using existing key."
         )
 
     # Initialize encryption for this session
-    key = get_key_from_keyring(config.core.app_uid, config.core.app_username)
-    if not key:
-        # This should not happen if the above logic is correct
+    if not keys:
         raise RuntimeError("Failed to get demo key from keyring after setting it.")
-    encr.set_key(key)
+    encr.set_keys(keys)
     logger.info("Encryption initialized for demo session.")
 
     # Instantiate ClientsManager to create demo.db and demo-salt.txt

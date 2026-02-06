@@ -1,3 +1,14 @@
+## 8.0.1 (2026-02-06)
+
+### Fix
+
+- **db.clients**: improve error handling for casting to int
+- **cli.commands.mk_report**: remove unused arguments
+
+### Refactor
+
+- **cli**: make the parsing of key-value strings from the cli more robust
+
 ## 8.0.0 (2026-02-05)
 
 ### Feat
