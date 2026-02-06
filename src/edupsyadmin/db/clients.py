@@ -507,10 +507,10 @@ class Client(Base):
 
     @validates("min_sessions", "n_sessions")
     def validate_sessions(self, key: str, value: str | int) -> int:
-        if isinstance(value, str):
+        try:
             value = int(value)
-        if not isinstance(value, int):
-            raise ValueError(f"{key} must be an integer")
+        except ValueError:
+            raise ValueError(f"Feld '{key}' muss eine ganze Zahl sein.") from None
         return value
 
     @validates("nta_zeitv_vieltext", "nta_zeitv_wenigtext")
@@ -518,7 +518,15 @@ class Client(Base):
         self, key: str, value: str | int | None
     ) -> int | None:
         if isinstance(value, str):
-            value = int(value) if value else None
+            if value:
+                try:
+                    value = int(value)
+                except ValueError:
+                    raise ValueError(
+                        f"Feld '{key}' muss eine ganze Zahl sein."
+                    ) from None
+            else:
+                value = None
         self.nta_zeitv = (value is not None) and (value > 0)
         self._update_nachteilsausgleich()
         return value
@@ -547,7 +555,15 @@ class Client(Base):
         self, key: str, value: str | int | None
     ) -> int | None:
         if isinstance(value, str):
-            value = int(value) if value else None
+            if value:
+                try:
+                    value = int(value)
+                except ValueError:
+                    raise ValueError(
+                        f"Feld '{key}' muss eine ganze Zahl sein."
+                    ) from None
+            else:
+                value = None
         self.nta_nos_end = value is not None
         return value
 
