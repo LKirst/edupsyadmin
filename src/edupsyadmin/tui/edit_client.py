@@ -436,12 +436,19 @@ class EditClient(Container):
         self.post_message(self.CancelEdit())
 
 
+# TODO: make defaults configurable
 def _get_empty_client_dict() -> dict[str, str | bool]:
+    defaults = {
+        "min_sessions": 45,
+        "n_session": 1,
+    }
     empty_client_dict: dict[str, str | bool] = {}
     for db_column in Client.__table__.columns:
         field_type = get_python_type(db_column.type)
         name = db_column.name
 
+        if name in defaults:
+            empty_client_dict[name] = defaults[name]
         if field_type is bool:
             empty_client_dict[name] = False
         else:
