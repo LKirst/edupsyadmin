@@ -1,3 +1,10 @@
+## 8.0.3 (2026-02-09)
+
+### Fix
+
+- **tui.edit_client**: set defaults in _get_empty_client_dict
+- **tui.clients_overview**: keep first_name and last_name in string format for sorting
+
 ## 8.0.2 (2026-02-06)
 
 ### Fix
