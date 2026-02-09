@@ -14,7 +14,7 @@ from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.tui.dialogs import YesNoDialog
 
 
-def _format_cell(value: str | bool | float | int) -> Text:
+def _format_cell(value: str | bool | float | int) -> Text | str | bool | float | int:
     """Format a cell value with colors:
     - NaN → grey
     - True → green
@@ -29,7 +29,7 @@ def _format_cell(value: str | bool | float | int) -> Text:
     if value is False:
         return Text("False", style="bold red")
 
-    return Text(str(value))
+    return value
 
 
 class ClientsOverview(Static):
