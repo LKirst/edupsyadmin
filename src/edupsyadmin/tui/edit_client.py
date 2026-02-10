@@ -90,6 +90,11 @@ class CheckboxRow(Horizontal):
 
 class EditClient(Container):
     DEFAULT_CSS = """
+    #edit-client-header {
+        height: 3;
+        content-align: center middle;
+        text-align: center;
+    }
     InputRow {
         layout: horizontal;
         height: auto;
@@ -166,11 +171,11 @@ class EditClient(Container):
         }
 
     def compose(self) -> ComposeResult:
+        yield Static(
+            "Klient*in aus der Liste auswählen oder neue*n anlegen.",
+            id="edit-client-header",
+        )
         with VerticalScroll(id="edit-client-form"):
-            yield Static(
-                "Klient*in aus der Liste auswählen oder neue*n anlegen.",
-                id="edit-client-header",
-            )
             # Build rows
             for db_column in self._visible_db_columns():
                 name = db_column.name
