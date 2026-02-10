@@ -269,7 +269,7 @@ class EdupsyadminTui(App[None]):
             self.notify("Bitte zuerst eine*n Klient*in auswählen.", severity="warning")
             return
 
-        self.push_screen(FillFormScreen(self.manager, client_id))
+        self.push_screen(FillFormScreen(self.manager, [client_id]))
 
     def action_reload(self) -> None:
         """Reloads the data in the table from the database."""

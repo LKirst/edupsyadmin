@@ -248,7 +248,7 @@ class FillFormScreen(Screen):
     ) -> None:
         super().__init__(name=name, id=id, classes=classes)
         self.clients_manager = clients_manager
-        self.client_id = client_ids
+        self.client_ids = client_ids
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)

@@ -437,12 +437,12 @@ class EditClient(Container):
 
 
 # TODO: make defaults configurable
-def _get_empty_client_dict() -> dict[str, str | bool]:
+def _get_empty_client_dict() -> dict[str, str | bool | int]:
     defaults = {
         "min_sessions": 45,
         "n_session": 1,
     }
-    empty_client_dict: dict[str, str | bool] = {}
+    empty_client_dict: dict[str, str | bool | int] = {}
     for db_column in Client.__table__.columns:
         field_type = get_python_type(db_column.type)
         name = db_column.name
