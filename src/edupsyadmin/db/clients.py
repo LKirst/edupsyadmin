@@ -6,6 +6,7 @@ from sqlalchemy import (
     DateTime,
     Integer,
     String,
+    event,
 )
 from sqlalchemy.orm import Mapped, mapped_column, validates
 from sqlalchemy.types import TypeDecorator
@@ -85,7 +86,7 @@ class Client(Base):
     )
 
     # Unencrypted variables
-    client_id: Mapped[int] = mapped_column(
+    client_id: Mapped[int | None] = mapped_column(
         Integer, primary_key=True, doc="ID des Klienten"
     )
     school: Mapped[str] = mapped_column(
@@ -339,36 +340,38 @@ class Client(Base):
         email_encr: str = "",
         notes_encr: str = "",
         entry_date: date | str | None = None,
-        nos_rs: bool | str = False,
+        nos_rs: bool | str | int | None = None,
         nos_rs_ausn_faecher: str | None = None,
-        nos_les: bool | str = False,
+        nos_les: bool | str | int | None = None,
         nos_other_details: str | None = None,
         nta_zeitv_vieltext: int | str | None = None,
         nta_zeitv_wenigtext: int | str | None = None,
-        nta_font: bool | str = False,
-        nta_aufg: bool | str = False,
-        nta_struktur: bool | str = False,
-        nta_arbeitsm: bool | str = False,
-        nta_ersgew: bool | str = False,
-        nta_vorlesen: bool | str = False,
+        nta_font: bool | str | int | None = None,
+        nta_aufg: bool | str | int | None = None,
+        nta_struktur: bool | str | int | None = None,
+        nta_arbeitsm: bool | str | int | None = None,
+        nta_ersgew: bool | str | int | None = None,
+        nta_vorlesen: bool | str | int | None = None,
         nta_other_details: str | None = None,
         nta_nos_notes: str | None = None,
         nta_nos_end_grade: int | str | None = None,
         lrst_diagnosis_encr: str = "",
-        lrst_last_test_date_encr: date | str = "",
-        lrst_last_test_by_encr: str = "",
+        lrst_last_test_date_encr: date | str | None = None,
         keyword_taet_encr: str = "",
-        min_sessions: int | str = 45,
-        n_sessions: int | str = 1,
+        lrst_last_test_by_encr: str = "",
+        min_sessions: int | str | None = None,
+        n_sessions: int | str | None = None,
     ) -> None:
-        if client_id and isinstance(client_id, str):
-            self.client_id = int(client_id)
-        elif client_id:
-            self.client_id = client_id
-
+        self.client_id = to_int_or_none(client_id)
         self.first_name_encr = first_name_encr
         self.last_name_encr = last_name_encr
-        self.birthday_encr = birthday_encr
+        self.gender_encr = (
+            gender_encr
+            if gender_encr not in ["w", "d"]
+            else ("f" if gender_encr == "w" else "x")
+        )
+        _birthday_dt = to_date_or_none(birthday_encr)
+        self.birthday_encr = _birthday_dt.isoformat() if _birthday_dt else ""
         self.street_encr = street_encr
         self.city_encr = city_encr
         self.parent_encr = parent_encr
@@ -376,101 +379,117 @@ class Client(Base):
         self.telephone2_encr = telephone2_encr
         self.email_encr = email_encr
         self.notes_encr = notes_encr
-
-        if gender_encr == "w":  # convert German 'w' to 'f'
-            gender_encr = "f"
-        elif gender_encr == "d":  # convert German 'd' to 'x'
-            gender_encr = "x"
-        self.gender_encr = gender_encr
-
         self.school = school
-        self.entry_date = entry_date
+        self.entry_date = to_date_or_none(entry_date)
         self.class_name = class_name
-
-        try:
-            self.class_int = extract_number(class_name)
-        except TypeError:
-            self.class_int = None
-
-        if self.class_int is None:
-            logger.error("could not extract integer from class name")
-        else:
-            # convert grade_target to int to handle configs with a string value
-            self.estimated_graduation_date = get_estimated_end_of_academic_year(
-                grade_current=self.class_int,
-                grade_target=config.school[self.school].end,
-            )
-            if self.estimated_graduation_date:
-                self.document_shredding_date = get_date_destroy_records(
-                    self.estimated_graduation_date
-                )
-
         self.lrst_diagnosis_encr = lrst_diagnosis_encr
-        self.lrst_last_test_date_encr = lrst_last_test_date_encr
+        _lrst_date_dt = to_date_or_none(lrst_last_test_date_encr)
+        self.lrst_last_test_date_encr = (
+            _lrst_date_dt.isoformat() if _lrst_date_dt else ""
+        )
         self.lrst_last_test_by_encr = lrst_last_test_by_encr
-
         self.keyword_taet_encr = keyword_taet_encr
 
         # Notenschutz
-        self.nos_rs = nos_rs
+        self.nos_rs = to_bool_or_none(nos_rs) or False
         self.nos_rs_ausn_faecher = nos_rs_ausn_faecher
-        self.nos_les = nos_les
+        self.nos_les = to_bool_or_none(nos_les) or False
         self.nos_other_details = nos_other_details
 
         # Nachteilsausgleich
-        self.nta_zeitv_vieltext = nta_zeitv_vieltext
-        self.nta_zeitv_wenigtext = nta_zeitv_wenigtext
-        self.nta_font = nta_font
-        self.nta_aufg = nta_aufg
-        self.nta_struktur = nta_struktur
-        self.nta_arbeitsm = nta_arbeitsm
-        self.nta_ersgew = nta_ersgew
-        self.nta_vorlesen = nta_vorlesen
+        self.nta_zeitv_vieltext = to_int_or_none(nta_zeitv_vieltext)
+        self.nta_zeitv_wenigtext = to_int_or_none(nta_zeitv_wenigtext)
+        self.nta_font = to_bool_or_none(nta_font) or False
+        self.nta_aufg = to_bool_or_none(nta_aufg) or False
+        self.nta_struktur = to_bool_or_none(nta_struktur) or False
+        self.nta_arbeitsm = to_bool_or_none(nta_arbeitsm) or False
+        self.nta_ersgew = to_bool_or_none(nta_ersgew) or False
+        self.nta_vorlesen = to_bool_or_none(nta_vorlesen) or False
         self.nta_other_details = nta_other_details
         self.nta_nos_notes = nta_nos_notes
-        self.nta_nos_end_grade = nta_nos_end_grade
+        self.nta_nos_end_grade = to_int_or_none(nta_nos_end_grade)
 
-        self.min_sessions = min_sessions
-        self.n_sessions = n_sessions
+        self.min_sessions = to_int_or_none(min_sessions) or 45
+        self.n_sessions = to_int_or_none(n_sessions) or 1
+
+        # Placeholder for derived fields and timestamps - will be handled by events
+        self.class_int = None
+        self.estimated_graduation_date = None
+        self.document_shredding_date = None
+        self.notenschutz = False
+        self.nos_rs_ausn = False
+        self.nos_other = False
+        self.nachteilsausgleich = False
+        self.nta_zeitv = False
+        self.nta_other = False
+        self.nta_nos_end = False
 
         self.datetime_created = datetime.now()
-        self.datetime_lastmodified = self.datetime_created
+        self.datetime_lastmodified = datetime.now()
 
-    def _update_nachteilsausgleich(
-        self, key: str | None = None, value: bool = False
-    ) -> None:
-        """
-        If this method is used inside a validate method, you can pass key and value
-        to account for the change that will take place after the value has been
-        validated.
-        """
-        nta_dict = {
-            "nta_zeitv": self.nta_zeitv,
-            "nta_font": self.nta_font,
-            "nta_aufg": self.nta_aufg,
-            "nta_arbeitsm": self.nta_arbeitsm,
-            "nta_ersgew": self.nta_ersgew,
-            "nta_vorlesen": self.nta_vorlesen,
-            "nta_other": self.nta_other,
-        }
-        if key:
-            nta_dict[key] = value
-        self.nachteilsausgleich = any(nta_dict.values())
+        self._recalculate_derived_fields()  # Call the new method at the end of init
 
-    def _update_notenschutz(self, key: str | None = None, value: bool = False) -> None:
+    def _recalculate_derived_fields(self) -> None:
         """
-        If this method is used inside a validate method, you can pass key and value
-        to account for the change that will take place after the value has been
-        validated.
+        Calculates and updates all derived fields based on current attribute values.
+        This method should be called after initial assignment or any attribute change.
         """
-        nos_dict = {
-            "nos_les": self.nos_les,
-            "nos_rs": self.nos_rs,
-            "nos_other": self.nos_other,
-        }
-        if key:
-            nos_dict[key] = value
-        self.notenschutz = any(nos_dict.values())
+        # Handle gender conversion (if not already done by __init__)
+
+        # Calculate class_int
+        if self.class_name:
+            try:
+                self.class_int = extract_number(self.class_name)
+            except TypeError:
+                self.class_int = None
+        else:
+            self.class_int = None
+
+        # Calculate estimated_graduation_date and document_shredding_date
+        self.estimated_graduation_date = None
+        self.document_shredding_date = None
+        if self.class_int is not None and self.school in config.school:
+            try:
+                self.estimated_graduation_date = get_estimated_end_of_academic_year(
+                    grade_current=self.class_int,
+                    grade_target=config.school[self.school].end,
+                )
+                if self.estimated_graduation_date:
+                    self.document_shredding_date = get_date_destroy_records(
+                        self.estimated_graduation_date
+                    )
+            except Exception as e:
+                logger.warning(
+                    f"Could not calculate estimated_graduation_date or "
+                    f"document_shredding_date for client {self.client_id}: {e}"
+                )
+
+        # Notenschutz flags
+        self.nos_rs_ausn = bool(
+            self.nos_rs_ausn_faecher and self.nos_rs_ausn_faecher.strip()
+        )
+        self.nos_other = bool(self.nos_other_details and self.nos_other_details.strip())
+        self.notenschutz = self.nos_rs or self.nos_les or self.nos_other
+
+        # Nachteilsausgleich flags
+        self.nta_zeitv = bool(
+            (self.nta_zeitv_vieltext is not None and self.nta_zeitv_vieltext > 0)
+            or (self.nta_zeitv_wenigtext is not None and self.nta_zeitv_wenigtext > 0)
+        )
+        self.nta_other = bool(self.nta_other_details and self.nta_other_details.strip())
+        self.nachteilsausgleich = (
+            self.nta_font
+            or self.nta_aufg
+            or self.nta_struktur
+            or self.nta_arbeitsm
+            or self.nta_ersgew
+            or self.nta_vorlesen
+            or self.nta_zeitv
+            or self.nta_other
+        )
+        self.nta_nos_end = bool(self.nta_nos_end_grade is not None)
+
+        self.datetime_lastmodified = datetime.now()
 
     @validates("lrst_diagnosis_encr")
     def validate_lrst_diagnosis(self, key: str, value: str | None) -> str:
@@ -488,48 +507,28 @@ class Client(Base):
 
     @validates("nos_rs_ausn_faecher")
     def validate_nos_rs_ausn_faecher(self, key: str, value: str | None) -> str | None:
-        # set nos_rs_ausn to True if the value of nos_rs_ausn_faecher is
-        # neither None nor an empty string
-        self.nos_rs_ausn = (value is not None) and bool(value.strip())
         return value
 
     @validates("nos_rs", "nos_les")
     def validate_nos_bool(self, key: str, value: bool | str | int) -> bool:
-        boolvalue = str_to_bool(value)
-        self._update_notenschutz(key, boolvalue)
-        return boolvalue
+        return to_bool_or_none(value) or False
 
     @validates("nos_other_details")
     def validate_nos_other_details(self, key: str, value: str) -> str:
-        self.nos_other = (value is not None) and value != ""
-        self._update_notenschutz()
         return value
 
     @validates("min_sessions", "n_sessions")
     def validate_sessions(self, key: str, value: str | int) -> int:
-        try:
-            value = int(value)
-        except ValueError:
-            raise ValueError(f"Feld '{key}' muss eine ganze Zahl sein.") from None
-        return value
+        val = to_int_or_none(value)
+        if val is None:
+            raise ValueError(f"Feld '{key}' muss eine ganze Zahl sein.")
+        return val
 
     @validates("nta_zeitv_vieltext", "nta_zeitv_wenigtext")
     def validate_nta_zeitv_percentage(
         self, key: str, value: str | int | None
     ) -> int | None:
-        if isinstance(value, str):
-            if value:
-                try:
-                    value = int(value)
-                except ValueError:
-                    raise ValueError(
-                        f"Feld '{key}' muss eine ganze Zahl sein."
-                    ) from None
-            else:
-                value = None
-        self.nta_zeitv = (value is not None) and (value > 0)
-        self._update_nachteilsausgleich()
-        return value
+        return to_int_or_none(value)
 
     @validates(
         "nta_font",
@@ -540,47 +539,24 @@ class Client(Base):
         "nta_struktur",
     )
     def validate_nta_bool(self, key: str, value: bool | str | int) -> bool:
-        boolvalue = str_to_bool(value)
-        self._update_nachteilsausgleich(key, boolvalue)
-        return boolvalue
+        return to_bool_or_none(value) or False
 
     @validates("nta_other_details")
     def validate_nta_other_details(self, key: str, value: str) -> str:
-        self.nta_other = (value is not None) and value != ""
-        self._update_nachteilsausgleich()
         return value
 
     @validates("nta_nos_end_grade")
     def validate_nta_nos_end_grade(
         self, key: str, value: str | int | None
     ) -> int | None:
-        if isinstance(value, str):
-            if value:
-                try:
-                    value = int(value)
-                except ValueError:
-                    raise ValueError(
-                        f"Feld '{key}' muss eine ganze Zahl sein."
-                    ) from None
-            else:
-                value = None
-        self.nta_nos_end = value is not None
-        return value
+        return to_int_or_none(value)
 
     @validates("lrst_last_test_date_encr")
     def validate_lrst_last_test_date_encr(
         self, key: str, value: str | date | None
     ) -> str:
-        if not value:
-            return ""
-        if isinstance(value, date):
-            return value.isoformat()
-        value = str(value)
-        try:
-            datetime.strptime(value, "%Y-%m-%d")
-            return value
-        except ValueError as e:
-            raise ValueError(f"Invalid date format for {key}. Use YYYY-MM-DD.") from e
+        dt = to_date_or_none(value)
+        return dt.isoformat() if dt else ""
 
     @validates("lrst_last_test_by_encr")
     def validate_lrst_last_test_by_encr(self, key: str, value: str | None) -> str:
@@ -593,19 +569,13 @@ class Client(Base):
         return value
 
     @validates("birthday_encr")
-    def validate_birthday(self, key: str, value: str | date) -> str:
-        if isinstance(value, date):
-            return value.isoformat()
-        parsed = datetime.strptime(value, "%Y-%m-%d").date()
-        return parsed.isoformat()
+    def validate_birthday(self, key: str, value: str | date | None) -> str:
+        dt = to_date_or_none(value)
+        return dt.isoformat() if dt else ""
 
     @validates("entry_date")
-    def validate_unencrypted_dates(
-        self, key: str, value: str | date | None
-    ) -> date | None:
-        if isinstance(value, str):
-            return date.fromisoformat(value) if value else None
-        return value
+    def validate_entry_date(self, key: str, value: str | date | None) -> date | None:
+        return to_date_or_none(value)
 
     def __repr__(self) -> str:
         return (
@@ -616,17 +586,85 @@ class Client(Base):
         )
 
 
-def str_to_bool(value: str | bool | int) -> bool:
+@event.listens_for(Client, "before_insert")
+@event.listens_for(Client, "before_update")
+def receive_before_insert_update(_mapper, _connection, target: Client) -> None:
     """
-    Convert a string of an int or an int to a boolean
+    Listen for before_insert and before_update events to recalculate derived fields.
     """
-    if not isinstance(value, bool):
+    target._recalculate_derived_fields()
+
+
+def to_bool_or_none(value: str | bool | int | None) -> bool | None:
+    """
+    Convert a string, int, or None to a boolean or None.
+    - '1', 1, True -> True
+    - '0', 0, False -> False
+    - None, '' -> None
+    - Any other string raises ValueError.
+    """
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        if value == 1:
+            return True
+        if value == 0:
+            return False
+        raise ValueError(
+            f"Integer value {value} cannot be converted to a boolean (expected 0 or 1)."
+        )
+    if isinstance(value, str):
+        lower_value = value.lower().strip()
+        if lower_value == "true" or lower_value == "1":
+            return True
+        if lower_value == "false" or lower_value == "0":
+            return False
+        raise ValueError(
+            f"String value '{value}' cannot be converted to a boolean "
+            f"(expected 'true', 'false', '0', or '1')."
+        )
+    raise TypeError(f"Value of type {type(value)} cannot be converted to a boolean.")
+
+
+def to_int_or_none(value: str | int | None) -> int | None:
+    """
+    Convert a string or int to an int or None.
+    - '123', 123 -> 123
+    - None, '' -> None
+    - Any other string raises ValueError.
+    """
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
         try:
-            boolvalue = bool(int(value))
+            return int(value)
         except ValueError as e:
             raise ValueError(
-                "The provided value cannot be converted to a boolean."
+                f"String value '{value}' cannot be converted to an integer."
             ) from e
-    else:
-        boolvalue = value
-    return boolvalue
+    raise TypeError(f"Value of type {type(value)} cannot be converted to an integer.")
+
+
+def to_date_or_none(value: str | date | None) -> date | None:
+    """
+    Convert a string (YYYY-MM-DD) or date object to a date object or None.
+    - '2023-01-01', date(2023, 1, 1) -> date(2023, 1, 1)
+    - None, '' -> None
+    - Invalid string format raises ValueError.
+    """
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.strptime(value, "%Y-%m-%d").date()
+        except ValueError as e:
+            raise ValueError(
+                f"Invalid date format for '{value}'. Use YYYY-MM-DD."
+            ) from e
+    raise TypeError(f"Value of type {type(value)} cannot be converted to a date.")

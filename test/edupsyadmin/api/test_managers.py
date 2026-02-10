@@ -353,6 +353,8 @@ class TestClientValidation:
         ]
         reset_data: dict[str, str | Any] = dict.fromkeys(nta_bool_fields, False)
         reset_data["nta_other_details"] = ""  # makes sure nta_other is False
+        reset_data["nta_zeitv_vieltext"] = None
+        reset_data["nta_zeitv_wenigtext"] = None
         clients_manager.edit_client([client_id], reset_data)
         client = clients_manager.get_decrypted_client(client_id)
         assert client["nachteilsausgleich"] is False
@@ -386,6 +388,8 @@ class TestClientValidation:
         ]
         reset_data: dict[str, str | Any] = dict.fromkeys(nta_bool_fields, False)
         reset_data["nta_other_details"] = ""  # makes sure nta_other is False
+        reset_data["nta_zeitv_vieltext"] = None
+        reset_data["nta_zeitv_wenigtext"] = None
         clients_manager.edit_client([client_id], reset_data)
         client = clients_manager.get_decrypted_client(client_id)
         assert client["nachteilsausgleich"] is False
@@ -483,7 +487,9 @@ class TestClientValidation:
         assert client["birthday_encr"] == "2001-02-03"
 
         # Invalid date string
-        with pytest.raises(ValueError, match="does not match format"):
+        with pytest.raises(
+            ValueError, match=r"Invalid date format for '2000-20-20'. Use YYYY-MM-DD."
+        ):
             clients_manager.edit_client([client_id], {"birthday_encr": "2000-20-20"})
 
     def test_validate_unencrypted_dates(self, clients_manager, client_dict_set_by_user):
