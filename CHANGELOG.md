@@ -1,3 +1,13 @@
+## 8.0.4 (2026-02-10)
+
+### Fix
+
+- **tui**: fix type issues
+
+### Refactor
+
+- **db.clients**: enhance Client model maintainability and type safety
+
 ## 8.0.3 (2026-02-09)
 
 ### Fix

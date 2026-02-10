@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "edupsyadmin"
-version = "8.0.3"
+version = "8.0.4"
 authors = [{ name = "Lukas Liebermann" }]
 description = "edupsyadmin provides tools to help school psychologists with their documentation"
 readme = "README.md"
