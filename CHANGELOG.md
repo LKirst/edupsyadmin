@@ -1,3 +1,9 @@
+## 8.0.5 (2026-02-12)
+
+### Fix
+
+- **db.clients**: set datetime_lastmodified correctly by separating before_insert from before_update
+
 ## 8.0.4 (2026-02-10)
 
 ### Fix
