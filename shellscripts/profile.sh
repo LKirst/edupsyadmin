@@ -13,7 +13,7 @@ outfile="$profiling_directory/$(date +'%Y-%m-%d_%H-%M-%S')_profile_output.prof"
 echo "Output file: $outfile"
 
 # Run the Python script with cProfile and save the output to the file
-python -m cProfile -o "$outfile" src/edupsyadmin/cli.py info
+python -m cProfile -o "$outfile" src/edupsyadmin/cli/__init__.py info
 
 # Visualize the profiling output using snakeviz
 snakeviz "$outfile"
