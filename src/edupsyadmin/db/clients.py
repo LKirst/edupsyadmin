@@ -86,7 +86,7 @@ class Client(Base):
     )
 
     # Unencrypted variables
-    client_id: Mapped[int | None] = mapped_column(
+    client_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, doc="ID des Klienten"
     )
     school: Mapped[str] = mapped_column(
@@ -356,13 +356,15 @@ class Client(Base):
         nta_nos_notes: str | None = None,
         nta_nos_end_grade: int | str | None = None,
         lrst_diagnosis_encr: str = "",
-        lrst_last_test_date_encr: date | str | None = None,
+        lrst_last_test_date_encr: date | str = "",
         keyword_taet_encr: str = "",
         lrst_last_test_by_encr: str = "",
         min_sessions: int | str | None = None,
         n_sessions: int | str | None = None,
     ) -> None:
-        self.client_id = to_int_or_none(client_id)
+        client_id_int_or_none = to_int_or_none(client_id)
+        if client_id_int_or_none is not None:
+            self.client_id = client_id
         self.first_name_encr = first_name_encr
         self.last_name_encr = last_name_encr
         self.gender_encr = (
