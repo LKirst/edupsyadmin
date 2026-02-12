@@ -491,8 +491,6 @@ class Client(Base):
         )
         self.nta_nos_end = bool(self.nta_nos_end_grade is not None)
 
-        self.datetime_lastmodified = datetime.now()
-
     @validates("lrst_diagnosis_encr")
     def validate_lrst_diagnosis(self, key: str, value: str | None) -> str:
         value = value or ""
@@ -589,11 +587,17 @@ class Client(Base):
 
 
 @event.listens_for(Client, "before_insert")
+def receive_before_insert(_mapper, _connection, target: Client) -> None:
+    """Set timestamps and calculate derived fields on insert."""
+    target.datetime_created = datetime.now()
+    target.datetime_lastmodified = datetime.now()
+    target._recalculate_derived_fields()
+
+
 @event.listens_for(Client, "before_update")
-def receive_before_insert_update(_mapper, _connection, target: Client) -> None:
-    """
-    Listen for before_insert and before_update events to recalculate derived fields.
-    """
+def receive_before_update(_mapper, _connection, target: Client) -> None:
+    """Update timestamp and recalculate derived fields on update."""
+    target.datetime_lastmodified = datetime.now()
     target._recalculate_derived_fields()
 
 
