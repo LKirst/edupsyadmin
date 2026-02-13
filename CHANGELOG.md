@@ -1,3 +1,9 @@
+## 8.0.6 (2026-02-13)
+
+### Fix
+
+- **shellscripts**: update shellscripts
+
 ## 8.0.5 (2026-02-12)
 
 ### Fix
