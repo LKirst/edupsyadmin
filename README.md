@@ -75,7 +75,7 @@ $ edupsyadmin set-client 42 \
   "nta_font=1" \
   "nta_zeitv_vieltext=20" \
   "nos_rs=0" \
-  "lrst_diagnosis=iLst"
+  "lrst_diagnosis_encr=iLst"
 ```
 
 See an overview of all clients in the database:
