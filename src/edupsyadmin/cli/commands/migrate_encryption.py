@@ -7,10 +7,10 @@ from getpass import getpass
 from edupsyadmin.core.logger import logger
 
 COMMAND_DESCRIPTION = (
-    "Re-encrypt all sensitive data with a new key. "
+    "Re-encrypt all sensitive data with a new key. (edupsyadmin v7 > v8.0)"
     "Run 'edupsyadmin edit-config' first to set your new password."
 )
-COMMAND_HELP = "Migrate database to new encryption system"
+COMMAND_HELP = "Migrate database to new encryption system (edupsyadmin v7 > v8.0)"
 COMMAND_EPILOG = textwrap.dedent(
     """
     Example:
