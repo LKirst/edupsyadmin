@@ -2,23 +2,19 @@
 
 import pytest
 
-from edupsyadmin.core.encrypt import Encryption
+from edupsyadmin.core.encrypt import derive_key_from_password
 
 
 @pytest.mark.parametrize("iterations", [480_000, 800_000, 1_200_000])
-def test_key_derivation_benchmark(benchmark, tmp_path, iterations):
-    """Benchmark the set_fernet method with varying iterations."""
-    encr = Encryption()
-    salt_path = tmp_path / "salt.txt"
+def test_key_derivation_benchmark(benchmark, iterations):
+    """Benchmark the derive_key_from_password function with varying iterations."""
+    password = "test_password"
+    salt = b"\x00" * 16  # Constant salt for the benchmark
 
     def run_derivation():
-        # Reset fernet before each call, as the method will return early
-        # if it's already set, which would skew the benchmark results.
-        encr.fernet = None
-        encr.set_fernet(
-            username="test_user_do_not_use",
-            salt_path=salt_path,
-            uid="example.com",
+        derive_key_from_password(
+            password=password,
+            salt=salt,
             iterations=iterations,
         )
 

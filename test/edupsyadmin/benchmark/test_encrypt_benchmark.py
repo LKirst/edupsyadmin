@@ -1,6 +1,7 @@
 """Benchmark the encryption functions."""
 
 import pytest
+from cryptography.fernet import Fernet
 
 from edupsyadmin.core.encrypt import Encryption
 
@@ -8,15 +9,12 @@ SECRET_MESSAGE = "This is a secret message"
 
 
 @pytest.fixture
-def encryption_service(tmp_path):
+def encryption_service():
     """Set up encryption service."""
     encr = Encryption()
-    salt_path = tmp_path / "salt.txt"
-    encr.set_fernet(
-        "test_user_do_not_use",
-        salt_path=salt_path,
-        uid="example.com",
-    )
+    # Generate a random Fernet key for benchmarking
+    key = Fernet.generate_key()
+    encr.set_keys([key])
     return encr
 
 
