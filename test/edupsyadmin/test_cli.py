@@ -49,13 +49,6 @@ def setup_encryption_globally():
 
 
 @pytest.fixture
-def mock_client(clients_manager, sample_client_dict):
-    """Fixture to set up a client for testing."""
-    client_id = clients_manager.add_client(**sample_client_dict)
-    return client_id, clients_manager.database_url
-
-
-@pytest.fixture
 def change_wd(tmp_path):
     original_directory = Path.cwd()
     os.chdir(tmp_path)
