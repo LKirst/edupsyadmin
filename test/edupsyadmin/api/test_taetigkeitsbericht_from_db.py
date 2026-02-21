@@ -132,7 +132,7 @@ def test_taetigkeitsbericht(
     mock_create_report, mock_clients_manager, mock_config, tmp_path
 ):
     mock_manager_instance = mock_clients_manager.return_value
-    mock_manager_instance.get_data_raw.return_value = pd.DataFrame(
+    mock_manager_instance.get_all_clients_df.return_value = pd.DataFrame(
         {
             "school": ["FirstSchool", "FirstSchool", "SecondSchool"],
             "keyword_taet_encr": ["cat1", "cat2", "cat2"],

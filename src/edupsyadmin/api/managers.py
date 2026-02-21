@@ -123,9 +123,10 @@ class ClientsManager:
             result = session.execute(stmt, execution_options={"yield_per": 100})
             return pd.DataFrame(result.fetchall(), columns=list(result.keys()))
 
-    def get_data_raw(self) -> pd.DataFrame:
+    def get_all_clients_df(self) -> pd.DataFrame:
         """
-        Get the entire database.
+        Get the entire database as a pandas DataFrame.
+        Note: This returns DECRYPTED data.
         """
         logger.debug("trying to query the entire database")
         stmt = select(clients_db.Client)

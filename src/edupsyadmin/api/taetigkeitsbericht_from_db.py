@@ -327,7 +327,7 @@ def taetigkeitsbericht(
     clients_manager = ClientsManager(
         database_url=database_url,
     )
-    df = clients_manager.get_data_raw()
+    df = clients_manager.get_all_clients_df()
     df["h_sessions"] = df["min_sessions"] / 60.0
 
     df, summary_categories = add_categories_to_df(df, "keyword_taet_encr")
