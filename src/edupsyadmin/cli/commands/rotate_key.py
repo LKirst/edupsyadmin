@@ -67,9 +67,20 @@ def execute(args: Namespace) -> None:
             .lower()
         )
         if cleanup_response in ("yes", "y"):
-            from edupsyadmin.core.encrypt import delete_legacy_key_from_keyring
+            from edupsyadmin.core.encrypt import (
+                delete_legacy_key_from_keyring,
+                get_keys_from_keyring,
+                set_keys_in_keyring,
+            )
 
             delete_legacy_key_from_keyring(args.app_uid, args.app_username)
+
+            # Also clean up versioned keys: only keep the newest primary key
+            keys = get_keys_from_keyring(args.app_uid, args.app_username)
+            if keys:
+                # The first key is the primary (newest) one
+                set_keys_in_keyring(args.app_uid, args.app_username, [keys[0]])
+
             print("Old keys have been removed from your keyring.")
 
     except MigrationError as e:

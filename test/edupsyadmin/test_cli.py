@@ -76,6 +76,7 @@ def change_wd(tmp_path):
         "taetigkeitsbericht --help",
         "delete-client --help",
         "edit-config --help",
+        "rotate-key --help",
     )
 )
 def command(request):
@@ -403,6 +404,90 @@ def test_create_documentation_tui(mock_config, tmp_path):
 
         # Assert that the app was run
         mock_app_instance.run.assert_called_once()
+
+
+class TestRotateKey:
+    def test_rotate_key_success(self, mock_config, tmp_path):
+        """Test that rotate-key command successfully re-encrypts the database."""
+        from edupsyadmin.cli.commands import rotate_key
+        from edupsyadmin.core.config import config
+        from edupsyadmin.core.encrypt import set_keys_in_keyring
+
+        database_path = tmp_path / "test_rotate.sqlite"
+        database_url = f"sqlite:///{database_path}"
+
+        # 1. Setup: Load config and set an old key in keyring
+        config.load(mock_config)
+        username = config.core.app_username
+        old_key = Fernet.generate_key()
+        set_keys_in_keyring(APP_UID, username, [old_key])
+
+        # Initialize global encr with the old key to add data
+        encr.set_keys([old_key])
+
+        # 2. Add some encrypted data
+        clients_manager = managers.ClientsManager(database_url)
+        client_id = clients_manager.add_client(
+            school="FirstSchool",
+            gender_encr="f",
+            class_name="11TKKG",
+            first_name_encr="RotateMe",
+            last_name_encr="Now",
+            birthday_encr="2000-01-01",
+        )
+
+        # 3. Simulate key rotation in keyring (as if user changed password)
+        new_key = Fernet.generate_key()
+        # In reality, the CLI would load [new_key, old_key] into encr
+        rotated_keys = [new_key, old_key]
+        set_keys_in_keyring(APP_UID, username, rotated_keys)
+        encr.set_keys(rotated_keys)
+
+        # 4. Run the rotate-key command
+        # Mock input for confirmation ("yes") and cleanup ("yes")
+        with patch("builtins.input", side_effect=["yes", "yes"]):
+            args = argparse.Namespace(
+                database_url=database_url,
+                app_uid=APP_UID,
+                app_username=username,
+            )
+            rotate_key.execute(args)
+
+        # 5. Verify: Data should be decryptable with ONLY the new key now
+        encr.set_keys([new_key])
+        # Need a new manager to ensure we aren't using any cached state
+        new_manager = managers.ClientsManager(database_url)
+        client = new_manager.get_decrypted_client(client_id)
+        assert client["first_name_encr"] == "RotateMe"
+
+        # Check keyring: should ONLY have the new key now
+        # (if cleanup worked as expected)
+        from edupsyadmin.core.encrypt import get_keys_from_keyring
+
+        keys_in_keyring = get_keys_from_keyring(APP_UID, username)
+        # IF IT CURRENTLY FAILS, it means it's not cleaning up versioned keys
+        assert keys_in_keyring == [new_key]
+
+    def test_rotate_key_cancelled(self, mock_config, tmp_path):
+        """Test that rotate-key command does nothing if cancelled."""
+        from edupsyadmin.cli.commands import rotate_key
+
+        database_path = tmp_path / "test_cancelled.sqlite"
+        database_url = f"sqlite:///{database_path}"
+
+        with (
+            patch("builtins.input", return_value="no"),
+            patch(
+                "edupsyadmin.cli.commands.rotate_key.re_encrypt_all_data"
+            ) as mock_re_encrypt,
+        ):
+            args = argparse.Namespace(
+                database_url=database_url,
+                app_uid=APP_UID,
+                app_username="test_user",
+            )
+            rotate_key.execute(args)
+            mock_re_encrypt.assert_not_called()
 
 
 # Make the script executable.
