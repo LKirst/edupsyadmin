@@ -58,6 +58,20 @@ def execute(args: Namespace) -> None:
 
         print("\nSUCCESS: All data has been re-encrypted with the primary key.")
 
+        cleanup_response = (
+            input(
+                "\nDo you want to delete old, unused encryption keys from your "
+                "keyring? (yes/no): "
+            )
+            .strip()
+            .lower()
+        )
+        if cleanup_response in ("yes", "y"):
+            from edupsyadmin.core.encrypt import delete_legacy_key_from_keyring
+
+            delete_legacy_key_from_keyring(args.app_uid, args.app_username)
+            print("Old keys have been removed from your keyring.")
+
     except MigrationError as e:
         logger.error(f"Re-encryption failed: {e}")
         print(f"\nERROR: {e}")

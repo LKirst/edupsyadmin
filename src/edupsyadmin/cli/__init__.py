@@ -6,26 +6,20 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from pathlib import Path
 from typing import Any
 
-from platformdirs import user_config_dir, user_data_path
-
 from edupsyadmin.__version__ import __version__
 from edupsyadmin.api.managers import ClientNotFoundError
+from edupsyadmin.api.migration import MigrationError, upgrade_db
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import encr, get_keys_from_keyring
 from edupsyadmin.core.logger import logger
+from edupsyadmin.core.paths import (
+    APP_UID,
+    DEFAULT_CONFIG_PATH,
+    DEFAULT_DB_URL,
+    DEFAULT_SALT_PATH,
+)
 
 __all__ = ("main",)
-
-APP_UID = "liebermann-schulpsychologie.github.io"
-USER_DATA_DIR = user_data_path(
-    appname="edupsyadmin", version=__version__, ensure_exists=True
-)
-DEFAULT_DB_URL = "sqlite:///" + str(USER_DATA_DIR / "edupsyadmin.db")
-DEFAULT_CONFIG_DIR = Path(
-    user_config_dir(appname="edupsyadmin", version=__version__, ensure_exists=True)
-)
-DEFAULT_CONFIG_PATH = DEFAULT_CONFIG_DIR / "config.yml"
-DEFAULT_SALT_PATH = DEFAULT_CONFIG_DIR / "salt.txt"
 
 
 def _setup_encryption(app_uid: str, app_username: str) -> None:
@@ -147,16 +141,9 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     return args
 
 
-def main(argv: list[str] | None = None) -> int:
-    """Execute the application CLI.
-
-    :param argv: argument list to parse (sys.argv by default)
-    :return: exit status
-    """
-    args = _args(argv)
-
-    # start logging
-    logger.start(args.warn or "DEBUG")  # can't use default from config yet
+def _handle_config_and_logging(args: argparse.Namespace) -> None:
+    """Handle initial logging setup and config file loading."""
+    logger.start(args.warn or "DEBUG")
 
     # config
     # if the config file doesn't exist, copy a sample config
@@ -179,6 +166,9 @@ def main(argv: list[str] | None = None) -> int:
     logger.stop()  # clear handlers to prevent duplicate records
     logger.start(config.core.logging)
 
+
+def _determine_app_username(args: argparse.Namespace) -> int:
+    """Determine the app_username, possibly from config or defaulting."""
     if not args.app_username:
         logger.debug("Trying to get app_username from config.")
         try:
@@ -198,8 +188,12 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
     else:
         logger.debug(f"Using username passed as cli argument: '{args.app_username}'")
+    return 0
 
-    if not args.app_uid:  # Not passed on CLI
+
+def _determine_app_uid(args: argparse.Namespace) -> None:
+    """Determine the app_uid, possibly from config or defaulting."""
+    if not args.app_uid:
         logger.debug("Trying to get app_uid from config.")
         try:
             args.app_uid = config.core.app_uid
@@ -212,19 +206,59 @@ def main(argv: list[str] | None = None) -> int:
     else:  # Passed on CLI
         logger.debug(f"Using app_uid passed as cli argument: '{args.app_uid}'")
 
-    # These commands do not require encryption to be set up
+
+def _run_db_migrations(args: argparse.Namespace) -> int:
+    """Run database migrations if the command requires database access."""
+    no_db_commands = ["info", "edit-config"]
+    if args.command_name not in no_db_commands:
+        try:
+            upgrade_db(args.database_url)
+        except MigrationError as err:
+            logger.critical(err)
+            return 1
+    return 0
+
+
+def _setup_app_encryption(args: argparse.Namespace) -> None:
+    """Set up encryption for commands that require it."""
     no_encryption_commands = ["info", "edit-config", "setup-demo", "migrate-encryption"]
     if args.command_name not in no_encryption_commands:
         _setup_encryption(args.app_uid, args.app_username)
 
-    # handle commandline args
+
+def main(argv: list[str] | None = None) -> int:
+    """Execute the application CLI.
+
+    :param argv: argument list to parse (sys.argv by default)
+    :return: exit status
+    """
+    args = _args(argv)
+
+    _handle_config_and_logging(args)
+
+    if (result := _determine_app_username(args)) != 0:
+        return result
+
+    _determine_app_uid(args)
+
+    if (result := _run_db_migrations(args)) != 0:
+        return result
+
+    _setup_app_encryption(args)
+
     command = args.command
     logger.debug(f"Executing command: {args.command_name}")
     logger.debug(f"Commandline arguments: {vars(args)}")
 
     try:
         command(args)
-    except (RuntimeError, ClientNotFoundError, ValueError, KeyError) as err:
+    except (
+        RuntimeError,
+        ClientNotFoundError,
+        ValueError,
+        KeyError,
+        MigrationError,
+    ) as err:
         logger.critical(err)
         return 1
     logger.debug("successful completion")

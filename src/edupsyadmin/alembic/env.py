@@ -1,11 +1,8 @@
-import os
 from logging.config import fileConfig
 
-from platformdirs import user_data_path
+from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from alembic import context
-from edupsyadmin import __version__
 from edupsyadmin.db import Base
 
 # this is the Alembic Config object, which provides
@@ -41,12 +38,12 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    # I cannot set the url in the ini file because the path includes the app version
-    # url = config.get_main_option("sqlalchemy.url")
-    USER_DATA_DIR = user_data_path(
-        appname="edupsyadmin", version=__version__, ensure_exists=True
-    )
-    url = "sqlite:///" + os.path.join(USER_DATA_DIR, "edupsyadmin.db")
+    url = config.get_main_option("sqlalchemy.url")
+    if not url:
+        from edupsyadmin.core.paths import DEFAULT_DB_URL
+
+        x_args = context.get_x_argument(as_dictionary=True)
+        url = x_args.get("db_url") or DEFAULT_DB_URL
 
     context.configure(
         url=url,
@@ -66,18 +63,18 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    # I cannot set the url in the ini file because the path includes the app version
-    # connectable = engine_from_config(
-    #     config.get_section(config.config_ini_section, {}),
-    #     prefix="sqlalchemy.",
-    #     poolclass=pool.NullPool,
-    # )
-    USER_DATA_DIR = user_data_path(
-        appname="edupsyadmin", version=__version__, ensure_exists=True
-    )
-    url = "sqlite:///" + os.path.join(USER_DATA_DIR, "edupsyadmin.db")
+    section = config.get_section(config.config_ini_section, {})
+
+    # If the URL is not in the config file, try to get it from the command line
+    # (passed via -x db_url=...) or fallback to the default database URL.
+    if not section.get("sqlalchemy.url"):
+        from edupsyadmin.core.paths import DEFAULT_DB_URL
+
+        x_args = context.get_x_argument(as_dictionary=True)
+        section["sqlalchemy.url"] = x_args.get("db_url") or DEFAULT_DB_URL
+
     connectable = engine_from_config(
-        {"sqlalchemy.url": url},
+        section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

@@ -77,7 +77,10 @@ def execute(args: Namespace) -> None:
     ).add_convenience_data
     fill_form = lazy_import("edupsyadmin.api.fill_form").fill_form
 
-    form_paths = args.form_paths if args.form_paths is not None else []
+    form_paths: list[Path] = []
+    if args.form_paths:
+        form_paths.extend(args.form_paths)
+
     if args.form_set:
         try:
             form_paths.extend(config.form_set[args.form_set])

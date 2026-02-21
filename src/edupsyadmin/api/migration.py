@@ -1,8 +1,12 @@
 """Database encryption migration utilities."""
 
 from collections.abc import Iterator
+from importlib import resources
 
-from sqlalchemy import select
+import sqlalchemy as sa
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -17,6 +21,65 @@ class MigrationError(Exception):
     def __init__(self, message: str) -> None:
         super().__init__(message)
         self.message = message
+
+
+def upgrade_db(database_url: str) -> None:
+    """
+    Upgrade the database to the latest version using Alembic.
+
+    This function handles three scenarios:
+    1. A new, empty database: Runs all migrations to create the schema.
+    2. A legacy, pre-Alembic database: "Stamps" the database with the latest
+       revision and then runs any new migrations.
+    3. An already versioned-database: Runs any pending migrations.
+    """
+    logger.info("Checking for database migrations...")
+    try:
+        # Use importlib.resources to access packaged data
+        pkg_path = resources.files("edupsyadmin")
+        alembic_ini_path = pkg_path.joinpath("alembic.ini")
+
+        if not alembic_ini_path.is_file():
+            raise MigrationError(f"Alembic config not found at {alembic_ini_path}")
+
+        alembic_script_location = pkg_path.joinpath("alembic")
+
+        alembic_cfg = Config(str(alembic_ini_path))
+        alembic_cfg.set_main_option("script_location", str(alembic_script_location))
+        alembic_cfg.set_main_option("sqlalchemy.url", database_url)
+
+        # Connect to the database to check its state
+        engine = create_engine(database_url)
+        with engine.connect() as connection:
+            inspector = inspect(connection)
+            table_names = inspector.get_table_names()
+
+            # Check if the db is legacy
+            # (has tables but no alembic version OR empty version)
+            is_legacy = "clients" in table_names and (
+                "alembic_version" not in table_names
+                or connection.scalar(
+                    select(sa.func.count()).select_from(text("alembic_version"))
+                )
+                == 0
+            )
+
+            if is_legacy:
+                logger.info(
+                    "Legacy database detected. Stamping with the latest "
+                    "Alembic revision."
+                )
+                command.stamp(alembic_cfg, "head")
+                logger.info("Database stamped successfully.")
+
+        # For all cases, run upgrade. This is idempotent for stamped databases.
+        command.upgrade(alembic_cfg, "head")
+        logger.info("Database is up to date.")
+
+    except Exception as e:
+        # Catching a broad exception because alembic can raise various errors
+        logger.error(f"Database migration failed: {e}")
+        raise MigrationError(f"Database migration failed: {e}") from e
 
 
 def re_encrypt_database(

@@ -134,7 +134,8 @@ def set_keys_in_keyring(uid: str, username: str, keys: list[bytes]) -> None:
     Stores a list of base64-encoded encryption keys in the keyring.
 
     Keys are stored with version numbers for better reliability.
-    Legacy keys are removed to avoid confusion.
+    Legacy keys are no longer removed to avoid issues where keyring backends
+    might partially match service names.
 
     :param uid: Application unique identifier
     :param username: Username for keyring storage
@@ -176,17 +177,6 @@ def set_keys_in_keyring(uid: str, username: str, keys: list[bytes]) -> None:
         # since new keys are already stored
         logger.warning(f"Error during cleanup of old keys: {e}")
 
-    # 3. Clean up legacy keys (non-versioned format)
-    # This is also done AFTER new keys are stored
-    try:
-        keyring.delete_password(uid, username)
-        logger.debug(f"Deleted legacy key for '{username}'.")
-    except PasswordDeleteError:
-        # Key didn't exist, which is fine
-        logger.debug(f"No legacy key found for '{username}' (already cleaned up).")
-    except Exception as e:
-        logger.warning(f"Error deleting legacy key: {e}")
-
 
 def load_or_create_salt(salt_path: Path) -> bytes:
     """Loads a salt from a file or creates a new one if it doesn't exist."""
@@ -204,3 +194,20 @@ def load_or_create_salt(salt_path: Path) -> bytes:
 
 # global encryption instance
 encr = Encryption()
+
+
+def delete_legacy_key_from_keyring(uid: str, username: str) -> None:
+    """
+    Deletes the legacy, non-versioned key for a given uid and username.
+
+    This function is intended for cleanup after migration to versioned keys.
+    It should be used with caution.
+    """
+    logger.debug(f"Attempting to delete legacy key for '{username}' with uid '{uid}'.")
+    try:
+        keyring.delete_password(uid, username)
+        logger.info(f"Successfully deleted legacy key for '{username}'.")
+    except PasswordDeleteError:
+        logger.info(f"No legacy key found for '{username}' to delete.")
+    except Exception as e:
+        logger.warning(f"An error occurred while deleting legacy key: {e}")

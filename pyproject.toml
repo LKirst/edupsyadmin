@@ -12,6 +12,7 @@ requires-python = ">=3.14"
 homepage = "https://github.com/LKirst/edupsyadmin.git"
 license = { text = "MIT" }
 dependencies = [
+  "alembic>=1.14.1",
   "cryptography>=43.0.3",
   "fillpdf>=0.7.3",
   "keyring>=25.5.0",
@@ -55,7 +56,6 @@ dev = [
   "types-defusedxml>=0.7.0.20240218",
   "types-greenlet>=3.1.0.20241221",
   "sphinx-rtd-theme>=3.0.2",
-  "alembic>=1.14.1",
   "snakeviz>=2.2.2",
   "textual-dev>=1.7.0",
   "pytest-asyncio>=1.0.0",
@@ -63,6 +63,9 @@ dev = [
   "pytest-benchmark>=5.2.0",
   "sphinx-design>=0.6.1",
 ]
+
+[tool.hatch.build.targets.wheel]
+shared-data = { "src/edupsyadmin/alembic" = "edupsyadmin/alembic", "src/edupsyadmin/alembic.ini" = "edupsyadmin/alembic.ini" }
 
 [tool.commitizen]
 name = "cz_conventional_commits"

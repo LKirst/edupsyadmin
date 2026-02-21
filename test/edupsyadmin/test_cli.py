@@ -20,6 +20,7 @@ import pytest
 from cryptography.fernet import Fernet
 
 from edupsyadmin.api import managers
+from edupsyadmin.api.managers import ClientNotFoundError
 from edupsyadmin.cli import APP_UID, main
 from edupsyadmin.cli.commands import (
     create_documentation as create_documentation_command,
@@ -331,7 +332,7 @@ def test_delete_client(mock_config, tmp_path):
     delete_client_command.execute(args)
 
     # Assert
-    with pytest.raises(Exception):
+    with pytest.raises(ClientNotFoundError):
         clients_manager.get_decrypted_client(client_id=client_id)
 
 
@@ -358,10 +359,13 @@ def test_edit_config_command(mock_config):
 
 
 # TODO: Do the same for `get_clients --tui` and `edit_client --tui`
-def test_create_documentation_tui(mock_config):
+def test_create_documentation_tui(mock_config, tmp_path):
     """Test that `create_documentation --tui` starts the FillFormApp."""
     from edupsyadmin.core.config import config
     from edupsyadmin.core.encrypt import set_keys_in_keyring
+
+    database_path = tmp_path / "test_tui.sqlite"
+    database_url = f"sqlite:///{database_path}"
 
     # Arrange: Set a key in the keyring so _setup_encryption passes
     config.load(mock_config)
@@ -377,7 +381,17 @@ def test_create_documentation_tui(mock_config):
         mock_app_instance.run.return_value = None
 
         # Call the main function with the mock config and the TUI flag
-        main(["-c", str(mock_config), "create-documentation", "1", "--tui"])
+        main(
+            [
+                "-c",
+                str(mock_config),
+                "--database_url",
+                database_url,
+                "create-documentation",
+                "1",
+                "--tui",
+            ]
+        )
 
         # Assert that the app was initialized
         mock_lazy_import.return_value.FillFormApp.assert_called_once()
