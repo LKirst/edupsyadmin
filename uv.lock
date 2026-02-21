@@ -8,7 +8,7 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "2026-02-20T05:59:06.297970485Z"
+exclude-newer = "2026-02-20T09:57:43.659262394Z"
 exclude-newer-span = "P1D"
 
 [[package]]
@@ -526,7 +526,7 @@ wheels = [
 
 [[package]]
 name = "edupsyadmin"
-version = "8.0.6"
+version = "8.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "alembic" },

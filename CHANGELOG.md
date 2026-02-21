@@ -1,3 +1,13 @@
+## 8.1.1 (2026-02-21)
+
+### Fix
+
+- **api.managers**: move creating tables out of ClientManager.__init__ and rely on alembic
+
+### Refactor
+
+- **api**: rename get_data_raw to get_all_clients_df
+
 ## 8.1.0 (2026-02-21)
 
 ### Feat
