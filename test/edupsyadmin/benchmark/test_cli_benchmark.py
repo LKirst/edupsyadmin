@@ -3,6 +3,7 @@ import argparse
 import pytest
 
 from edupsyadmin.api.managers import ClientsManager
+from edupsyadmin.api.migration import upgrade_db
 from edupsyadmin.cli.commands import get_clients as get_clients_command
 
 # Using constants from test_cli.py for consistency
@@ -18,6 +19,7 @@ def test_get_clients_benchmark(benchmark, mock_config, tmp_path, num_clients):
     salt_path = tmp_path / "salt.txt"
 
     # Arrange: Set up a database with a significant number of clients
+    upgrade_db(database_url)
     clients_manager = ClientsManager(
         database_url=database_url,
     )

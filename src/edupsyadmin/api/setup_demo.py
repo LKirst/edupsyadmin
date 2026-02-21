@@ -4,6 +4,7 @@ from pathlib import Path
 import yaml
 
 from edupsyadmin.api.managers import ClientsManager
+from edupsyadmin.api.migration import upgrade_db
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import (
     DEFAULT_KDF_ITERATIONS,
@@ -70,6 +71,9 @@ def setup_demo() -> None:
         raise RuntimeError("Failed to get demo key from keyring after setting it.")
     encr.set_keys(keys)
     logger.info("Encryption initialized for demo session.")
+
+    # Run migrations for the demo database
+    upgrade_db(demo_db_url)
 
     # Instantiate ClientsManager to create demo.db and demo-salt.txt
     clients_manager = ClientsManager(database_url=demo_db_url)

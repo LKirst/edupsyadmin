@@ -8,7 +8,6 @@ from sqlalchemy.orm import sessionmaker
 
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
-from edupsyadmin.db import Base
 from edupsyadmin.db import clients as clients_db
 
 
@@ -32,8 +31,6 @@ class ClientsManager:
         self.engine = create_engine(database_url)
         self.Session = sessionmaker(bind=self.engine)
 
-        # create the table if it doesn't exist
-        Base.metadata.create_all(self.engine, tables=[clients_db.Client.__table__])  # type: ignore[list-item]
         logger.debug(f"created connection to database at {database_url}")
 
     def add_client(self, **client_data: Any) -> int:

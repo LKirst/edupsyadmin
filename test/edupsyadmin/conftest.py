@@ -15,6 +15,7 @@ from sample_pdf_form import create_pdf_form
 from sample_webuntis_export import create_sample_webuntis_export
 
 from edupsyadmin.api.managers import ClientsManager
+from edupsyadmin.api.migration import upgrade_db
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import Logger, logger
@@ -338,6 +339,8 @@ def clients_manager(tmp_path, mock_salt_path, mock_config):
 
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
+
+    upgrade_db(database_url)
     manager = ClientsManager(database_url)
 
     yield manager

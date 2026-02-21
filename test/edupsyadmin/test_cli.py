@@ -21,6 +21,7 @@ from cryptography.fernet import Fernet
 
 from edupsyadmin.api import managers
 from edupsyadmin.api.managers import ClientNotFoundError
+from edupsyadmin.api.migration import upgrade_db
 from edupsyadmin.cli import APP_UID, main
 from edupsyadmin.cli.commands import (
     create_documentation as create_documentation_command,
@@ -144,6 +145,7 @@ def test_new_client(mock_config, mock_webuntis, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
 
+    upgrade_db(database_url)
     args = argparse.Namespace(
         database_url=database_url,
         csv=str(mock_webuntis),
@@ -165,6 +167,7 @@ def test_get_clients_all(capsys, mock_config, mock_webuntis, tmp_path):
     database_url = f"sqlite:///{database_path}"
 
     # Arrange
+    upgrade_db(database_url)
     clients_manager = managers.ClientsManager(database_url)
     clients_manager.add_client(
         school="FirstSchool",
@@ -198,6 +201,7 @@ def test_get_clients_single(capsys, mock_config, mock_webuntis, tmp_path):
     database_url = f"sqlite:///{database_path}"
 
     # Arrange
+    upgrade_db(database_url)
     clients_manager = managers.ClientsManager(database_url)
     clients_manager.add_client(
         school="FirstSchool",
@@ -240,6 +244,7 @@ def test_set_client(capsys, mock_config, mock_webuntis, tmp_path):
     database_url = f"sqlite:///{database_path}"
 
     # Arrange
+    upgrade_db(database_url)
     clients_manager = managers.ClientsManager(database_url)
     clients_manager.add_client(
         school="FirstSchool",
@@ -275,6 +280,7 @@ def test_create_documentation(
     database_url = f"sqlite:///{database_path}"
 
     # Arrange
+    upgrade_db(database_url)
     clients_manager = managers.ClientsManager(database_url)
     client_id = clients_manager.add_client(
         school="FirstSchool",
@@ -309,6 +315,7 @@ def test_delete_client(mock_config, tmp_path):
     database_url = f"sqlite:///{database_path}"
 
     # Arrange
+    upgrade_db(database_url)
     clients_manager = managers.ClientsManager(
         database_url,
     )
@@ -419,6 +426,7 @@ class TestRotateKey:
         encr.set_keys([old_key])
 
         # 2. Add some encrypted data
+        upgrade_db(database_url)
         clients_manager = managers.ClientsManager(database_url)
         client_id = clients_manager.add_client(
             school="FirstSchool",
