@@ -1,3 +1,13 @@
+## 8.1.0 (2026-02-21)
+
+### Feat
+
+- implement automated migrations with a clean initial script
+
+### Fix
+
+- add key roatation tests and fix versioned key cleanup
+
 ## 8.0.6 (2026-02-13)
 
 ### Fix
