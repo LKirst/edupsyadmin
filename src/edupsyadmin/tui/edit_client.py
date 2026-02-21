@@ -258,7 +258,7 @@ class EditClient(Container):
         elif name in self.choice_fields:
             options = self.choice_fields[name]
             # Determine the initial value before creating the widget
-            initial_value: object = Select.BLANK
+            initial_value: object = Select.NULL
             if isinstance(default, str):
                 stripped_default = default.strip()
                 if stripped_default and any(stripped_default == v for v, _ in options):
@@ -407,11 +407,11 @@ class EditClient(Container):
         # Handle inputs and dates
         for name, widget in {**self.inputs, **self.dates}.items():
             if isinstance(widget, Select):
-                # TODO: Do I need to check for BLANK and NoSelection?
+                # TODO: Do I need to check for NoSelection?
                 value = widget.value
                 if (
                     value is None
-                    or value == Select.BLANK
+                    or value == Select.NULL
                     or isinstance(value, NoSelection)
                 ):
                     current[name] = None
