@@ -209,7 +209,7 @@ def _determine_app_uid(args: argparse.Namespace) -> None:
 
 def _run_db_migrations(args: argparse.Namespace) -> int:
     """Run database migrations if the command requires database access."""
-    no_db_commands = ["info", "edit-config"]
+    no_db_commands = ["info", "edit-config", "flatten-pdfs"]
     if args.command_name not in no_db_commands:
         try:
             upgrade_db(args.database_url)
