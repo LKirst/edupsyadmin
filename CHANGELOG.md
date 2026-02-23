@@ -1,3 +1,9 @@
+## 8.1.3 (2026-02-23)
+
+### Fix
+
+- **tui**: prevent flickering because logs interfere with the TUI
+
 ## 8.1.2 (2026-02-23)
 
 ### Fix
