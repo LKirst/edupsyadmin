@@ -1,3 +1,9 @@
+## 8.1.2 (2026-02-23)
+
+### Fix
+
+- **pyproject.toml**: require textual > 8.0.0
+
 ## 8.1.1 (2026-02-21)
 
 ### Fix
