@@ -1,3 +1,5 @@
+import logging
+import sys
 import textwrap
 from argparse import ArgumentParser, Namespace
 
@@ -28,8 +30,26 @@ def add_arguments(parser: ArgumentParser) -> None:
     parser.add_argument("--columns", default=None, nargs="*", help="columns to show")
 
 
+def _suppress_console_logging() -> None:
+    """Remove all console handlers to prevent TUI flickering."""
+    # Get all relevant loggers
+    root_logger = logging.getLogger()
+    sqlalchemy_logger = logging.getLogger("sqlalchemy.engine")
+
+    # Remove all console handlers (stdout/stderr)
+    for logger_obj in [root_logger, sqlalchemy_logger]:
+        for handler in logger_obj.handlers[:]:
+            if isinstance(handler, logging.StreamHandler) and (
+                handler.stream in (sys.stdout, sys.stderr)
+            ):
+                logger_obj.removeHandler(handler)
+
+
 def execute(args: Namespace) -> None:
     """Entry point for the TUI."""
+    # Suppress console logging BEFORE creating managers or starting TUI
+    _suppress_console_logging()
+
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
     edupsyadmin_tui_cls = lazy_import("edupsyadmin.tui.edupsyadmintui").EdupsyadminTui
 

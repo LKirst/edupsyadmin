@@ -28,7 +28,7 @@ class ClientsManager:
         # connect to database
         logger.debug(f"trying to connect to database at {database_url}")
         self.database_url = database_url
-        self.engine = create_engine(database_url)
+        self.engine = create_engine(database_url, echo=False)
         self.Session = sessionmaker(bind=self.engine)
 
         logger.debug(f"created connection to database at {database_url}")
