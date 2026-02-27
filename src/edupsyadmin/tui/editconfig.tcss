@@ -97,3 +97,8 @@ QuitScreen {
     width: 1fr;
     content-align: center middle;
 }
+
+LoadingIndicator {
+    overlay: screen;
+    background: $surface 50%;
+}

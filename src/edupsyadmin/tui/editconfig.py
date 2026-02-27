@@ -2,12 +2,14 @@ from pathlib import Path
 from typing import Any, ClassVar, Literal
 
 import yaml
-from textual import on
+from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
 from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.message import Message
 from textual.validation import Function, Regex
 from textual.widgets import Button, Footer, Header, Input, Select, Static
+from textual.worker import get_current_worker
 
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import (
@@ -275,6 +277,24 @@ class LgvtEditor(Vertical):
         return data
 
 
+class GotKeys(Message):
+    def __init__(self, keys: list[bytes]) -> None:
+        self.keys = keys
+        super().__init__()
+
+
+class KeyDerivationResult(Message):
+    def __init__(self, success: bool, message: str) -> None:
+        self.success = success
+        self.message = message
+        super().__init__()
+
+
+class ConfigSaved(Message):
+    def __init__(self) -> None:
+        super().__init__()
+
+
 class ConfigEditorApp(App[None]):
     """A Textual app to edit edupsyadmin YAML configuration files."""
 
@@ -490,6 +510,60 @@ class ConfigEditorApp(App[None]):
         elif event.button.id == "cancel":
             await self.action_quit()
 
+    @on(GotKeys)
+    async def on_got_keys(self, message: GotKeys) -> None:
+        """Handles the GotKeys message to continue the save process."""
+        self.loading = False
+        existing_keys = message.keys
+
+        password = self.query_one("#password", Input).value
+        password_confirm = self.query_one("#password_confirm", Input).value
+        app_uid = self.query_one("#core-app_uid", Input).value
+        username = self.query_one("#core-app_username", Input).value
+
+        if password:
+            # Call _handle_new_password_flow which fires _key_derivation_worker
+            # The rest of the saving logic will continue in on_key_derivation_result
+            await self._handle_new_password_flow(
+                password,
+                password_confirm,
+                app_uid,
+                username,
+                existing_keys,
+            )
+            return
+        if not existing_keys:
+            self.notify(
+                "Achtung: Kein Verschlüsselungsschlüssel gesetzt. "
+                "Bitte legen Sie ein Passwort fest.",
+                severity="error",
+            )
+            self.bell()
+            return  # Prevent saving without any keys
+        if all(check_key_validity(k) for k in existing_keys):
+            self.notify(
+                (
+                    "Die bestehenden, gültigen Verschlüsselungsschlüssel werden "
+                    "verwendet."
+                ),
+                severity="information",
+            )
+            # If no password and existing keys are valid, proceed to save config
+            self.loading = True  # Start loading for save_config
+            self.config_dict = self._rebuild_config_from_ui()
+            self._save_config_worker(self.config_dict, self.config_path)
+        else:
+            self.notify(
+                (
+                    "Achtung: Einer oder mehrere der vorhandenen Schlüssel sind "
+                    "ungültig. Bitte Passwort erneut eingeben, um einen neuen, "
+                    "gültigen Schlüssel zu erstellen."
+                ),
+                severity="error",
+            )
+            self.bell()
+            return
+
     async def _handle_new_password_flow(
         self,
         password: str,
@@ -497,7 +571,7 @@ class ConfigEditorApp(App[None]):
         app_uid: str,
         username: str,
         existing_keys: list[bytes],
-    ) -> bool:
+    ) -> None:
         """
         Handle the logic for when a new password is provided, performing key rotation.
         """
@@ -506,12 +580,12 @@ class ConfigEditorApp(App[None]):
                 "Passwort muss mindestens 8 Zeichen lang sein", severity="error"
             )
             self.bell()
-            return False
+            return
 
         if password != password_confirm:
             self.notify("Passwörter stimmen nicht überein", severity="error")
             self.bell()
-            return False
+            return
 
         # If keys exist, this is a key rotation. Confirm with the user.
         if existing_keys:
@@ -528,7 +602,7 @@ class ConfigEditorApp(App[None]):
                         "Speichern abgebrochen. Die Schlüssel wurden nicht geändert.",
                         severity="warning",
                     )
-                    return False
+                    return
             else:
                 self.notify(
                     "Ein oder mehrere existierende Schlüssel sind ungültig "
@@ -538,37 +612,24 @@ class ConfigEditorApp(App[None]):
                 existing_keys.clear()  # Clear invalid keys
                 self.bell()
 
-        try:
-            self.notify("Neuer Verschlüsselungsschlüssel wird generiert...")
-            salt = load_or_create_salt(self.salt_path)
-            kdf_input = self.query_one("#core-kdf_iterations", Input)
-            iterations = (
-                int(kdf_input.value) if kdf_input.value else DEFAULT_KDF_ITERATIONS
-            )
-            new_key = derive_key_from_password(password, salt, iterations)
+        self.loading = True  # Start loading indicator
+        self.notify("Neuer Verschlüsselungsschlüssel wird generiert...")
 
-            # Prepend the new key for rotation
-            updated_keys = [new_key, *existing_keys]
-            # Optional: Limit the number of old keys to keep
-            # updated_keys = updated_keys[:5]
+        # Get kdf_iterations_value from UI before starting worker
+        kdf_iterations_value = self.query_one("#core-kdf_iterations", Input).value
 
-            set_keys_in_keyring(app_uid, username, updated_keys)
-            self.notify(
-                "Neuer Verschlüsselungsschlüssel hinzugefügt und gespeichert.",
-                severity="information",
-            )
-        except Exception as e:
-            self.notify(f"Fehler beim Speichern des Schlüssels: {e}", severity="error")
-            self.bell()
-            return False
-
-        return True
+        # Await the worker to complete the blocking operation
+        self._key_derivation_worker(
+            password,
+            self.salt_path,
+            app_uid,
+            username,
+            existing_keys,
+            kdf_iterations_value,
+        )
 
     async def action_save(self) -> None:
         """Rebuilds the config from the UI and saves it."""
-        password_input = self.query_one("#password", Input)
-        password = password_input.value
-        password_confirm = self.query_one("#password_confirm", Input).value
         app_uid = self.query_one("#core-app_uid", Input).value
         username = self.query_one("#core-app_username", Input).value
 
@@ -579,48 +640,101 @@ class ConfigEditorApp(App[None]):
             self.bell()
             return
 
-        existing_keys = get_keys_from_keyring(app_uid, username)
+        self.loading = True  # Start loading for get_keys
+        self._get_keys_worker(app_uid, username)
 
-        if password:
-            should_continue = await self._handle_new_password_flow(
-                password,
-                password_confirm,
-                app_uid,
-                username,
-                existing_keys,
+    @work(thread=True, exclusive=True, group="key_generation")
+    def _key_derivation_worker(
+        self,
+        password: str,
+        salt_path: Path,
+        app_uid: str,
+        username: str,
+        existing_keys: list[bytes],
+        kdf_iterations_value: str,
+    ) -> None:
+        worker = get_current_worker()  # Get worker for cancellation checks
+
+        try:
+            salt = load_or_create_salt(salt_path)
+            iterations = (
+                int(kdf_iterations_value)
+                if kdf_iterations_value
+                else DEFAULT_KDF_ITERATIONS
             )
-            if not should_continue:
-                return
-        else:
-            if not existing_keys:
-                self.notify(
-                    "Achtung: Kein Verschlüsselungsschlüssel gesetzt. "
-                    "Bitte legen Sie ein Passwort fest.",
-                    severity="error",
-                )
-                self.bell()
-                return  # Prevent saving without any keys
-            if all(check_key_validity(k) for k in existing_keys):
-                self.notify(
-                    (
-                        "Die bestehenden, gültigen Verschlüsselungsschlüssel werden "
-                        "verwendet."
-                    ),
-                    severity="information",
-                )
-            else:
-                self.notify(
-                    (
-                        "Achtung: Einer oder mehrere der vorhandenen Schlüssel sind "
-                        "ungültig. Bitte Passwort erneut eingeben, um einen neuen, "
-                        "gültigen Schlüssel zu erstellen."
-                    ),
-                    severity="error",
-                )
-                self.bell()
 
-        self.config_dict = self._rebuild_config_from_ui()
-        save_config(self.config_dict, self.config_path)
+            if worker.is_cancelled:
+                self.post_message(
+                    KeyDerivationResult(False, "Key generation cancelled.")
+                )
+                return
+
+            new_key = derive_key_from_password(password, salt, iterations)
+
+            if worker.is_cancelled:
+                self.post_message(
+                    KeyDerivationResult(False, "Key generation cancelled.")
+                )
+                return
+
+            updated_keys = [new_key, *existing_keys]
+            set_keys_in_keyring(app_uid, username, updated_keys)
+
+            self.post_message(
+                KeyDerivationResult(
+                    True, "Neuer Verschlüsselungsschlüssel hinzugefügt und gespeichert."
+                )
+            )
+        except Exception as e:
+            self.post_message(
+                KeyDerivationResult(False, f"Fehler beim Speichern des Schlüssels: {e}")
+            )
+
+    @work(thread=True)
+    def _get_keys_worker(self, app_uid: str, username: str) -> None:
+        try:
+            existing_keys = get_keys_from_keyring(app_uid, username)
+            self.post_message(GotKeys(existing_keys))
+        except Exception as e:
+            self.log(f"Error getting keys: {e}")
+            self.call_from_thread(
+                self.notify, f"Fehler beim Laden der Schlüssel: {e}", severity="error"
+            )
+            self.call_from_thread(self.bell)
+            self.call_from_thread(self.exit)
+
+    @work(thread=True)
+    def _save_config_worker(self, config_dict: dict[str, Any], file_path: Path) -> None:
+        try:
+            save_config(config_dict, file_path)
+            self.post_message(ConfigSaved())
+        except Exception as e:
+            self.log(f"Error saving config: {e}")
+            self.call_from_thread(
+                self.notify,
+                f"Fehler beim Speichern der Konfiguration: {e}",
+                severity="error",
+            )
+            self.call_from_thread(self.bell)
+            self.call_from_thread(self.exit)
+
+    @on(KeyDerivationResult)
+    async def on_key_derivation_result(self, message: KeyDerivationResult) -> None:
+        """Handles the KeyDerivationResult message."""
+        self.loading = False
+        if message.success:
+            self.notify(message.message, severity="information")
+            self.loading = True  # Start loading for save_config
+            self.config_dict = self._rebuild_config_from_ui()
+            self._save_config_worker(self.config_dict, self.config_path)
+        else:
+            self.notify(message.message, severity="error")
+            self.bell()
+
+    @on(ConfigSaved)
+    async def on_config_saved(self, message: ConfigSaved) -> None:
+        """Handles the ConfigSaved message."""
+        self.loading = False
         self.notify("Konfiguration gespeichert", severity="information")
         self.exit()
 

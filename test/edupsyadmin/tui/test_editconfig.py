@@ -86,6 +86,10 @@ async def test_app_saves_config_changes(mock_config):
         schoolpsy_name_input = app.query_exactly_one("#schoolpsy-schoolpsy_name", Input)
         schoolpsy_name_input.value = new_schoolpsy_name
 
+        # Set kdf_iterations to 1 to speed up the test
+        kdf_iterations_input = app.query_exactly_one("#core-kdf_iterations", Input)
+        kdf_iterations_input.value = "1"
+
         # Set password so the save doesn't abort
         password_input = app.query_exactly_one("#password", Input)
         password_input.value = test_password
@@ -94,6 +98,13 @@ async def test_app_saves_config_changes(mock_config):
         password_confirm_input.value = test_password
 
         await pilot.click("#save")
+        # Wait for the app to exit (it exits after saving)
+        import asyncio
+
+        for _ in range(100):
+            if not app._running:
+                break
+            await asyncio.sleep(0.05)
 
     # Read the config file after the app has exited
     with config_path.open("r") as f:
