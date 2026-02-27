@@ -1,3 +1,13 @@
+## 8.1.4 (2026-02-27)
+
+### Fix
+
+- **tui.editconfig**: move config saving and key derivation to background workers
+
+### Perf
+
+- **cli**: add flatten-pdfs to commands that don't require db migration
+
 ## 8.1.3 (2026-02-23)
 
 ### Fix
