@@ -3,6 +3,19 @@
 edupsyadmin provides tools to help school psychologists with their
 documentation
 
+## Key Features
+
+- **Secure & Encrypted:** Sensitive client data is stored in an encrypted
+SQLite database using `cryptography` and `keyring` for secure credential
+management.
+- **Modern TUI & CLI:** Choose between an intuitive Terminal User Interface
+(TUI) for interactive workflows or a powerful Command Line Interface (CLI) for
+automation.
+- **Automated Documentation:** Automatically fill PDF forms and generate
+reports using stored client data.
+- **Data Interoperability:** Import student data from common school management
+software via CSV exports.
+
 ## Basic Setup
 
 You can install the CLI using pip or
@@ -10,7 +23,9 @@ You can install the CLI using pip or
 
 Install with uv:
 
-    uv tool install edupsyadmin
+```text
+uv tool install edupsyadmin
+```
 
 You may get a warning that the `bin` directory is not on your environment path.
 If that is the case, copy the path from the warning and add it directory to
@@ -18,11 +33,37 @@ your **environment path** permanently or just for the current session.
 
 Run the application:
 
-    edupsyadmin --help
+```text
+edupsyadmin --help
+```
+
+## Quick Start
+
+The fastest way to get started is by using the interactive **edupsyadmin TUI**:
+
+![Edupsyadmin TUI](test/edupsyadmin/tui/__snapshots__/test_edupsyadmintui/test_edupsyadmintui_initial_layout.svg)
+
+### 1. Configure the app
+
+First, you have to update the config file with your data using the config
+editor TUI:
+
+```text
+edupsyadmin edit-config
+```
+
+### 2. Launch the main interface
+
+Once configured, you can view, add, and edit clients, as well as fill PDF forms
+directly from the main TUI:
+
+```text
+edupsyadmin tui
+```
 
 ## Getting started
 
-### keyring backend
+### Keyring backend
 
 edupsyadmin uses `keyring` to store the encryption credentials. `keyring` has
 several backends.
@@ -36,13 +77,6 @@ Those default keyring backends unlock when you login to your machine. You may
 want to install a backend that requires separate unlocking:
 <https://keyring.readthedocs.io/en/latest/#third-party-backends>
 
-### Modify the config file
-
-First, you have to update the config file with your data using the config
-editor TUI:
-
-    edupsyadmin edit-config
-
 ## The database
 
 The information you enter, is stored in an SQLite database with the fields
@@ -53,23 +87,31 @@ edupsyadmin](https://edupsyadmin.readthedocs.io/en/latest/clients_model.html#)
 
 Get information about the path to the config file and the path to the database:
 
-    edupsyadmin info
+```text
+edupsyadmin info
+```
 
 Add a client interactively:
 
-    edupsyadmin new-client
+```text
+edupsyadmin new-client
+```
 
 Add a client to the database from a Webuntis csv export:
 
-    edupsyadmin new-client --csv ./path/to/your/file.csv --name "short_name_of_client"
+```text
+edupsyadmin new-client --csv ./path/to/your/file.csv --name "short_name_of_client"
+```
 
 Change values for the database entry with `client_id=42` interactively:
 
-    edupsyadmin set-client 42
-
-Change values for the database entry with `client_id=42` from the commandline:
-
+```text
+edupsyadmin set-client 42
 ```
+
+Change values for the database entry with `client_id=42` from the command line:
+
+```text
 $ edupsyadmin set-client 42 \
   --key_value_pairs \
   "nta_font=1" \
@@ -78,33 +120,63 @@ $ edupsyadmin set-client 42 \
   "lrst_diagnosis_encr=iLst"
 ```
 
+Delete the database entry with `client_id=42`:
+
+```text
+edupsyadmin delete-client 42
+```
+
 See an overview of all clients in the database:
 
-    edupsyadmin get-clients
+```text
+edupsyadmin get-clients
+```
 
 Fill a PDF form for the database entry with `client_id=42`:
 
-    edupsyadmin create-documentation 42 --form_paths ./path/to/your/file.pdf
+```text
+edupsyadmin create-documentation 42 --form_paths ./path/to/your/file.pdf
+```
 
 Fill all files that belong to the form_set `lrst` (as defined in the
-config.yml) with the data for `client_id=42`:
+config.yml) for the database entry with `client_id=42`:
 
-    edupsyadmin create-documentation 42 --form_set lrst
+```text
+edupsyadmin create-documentation 42 --form_set lrst
+```
+
+Generate a "Tätigkeitsbericht" PDF with 3 Anrechnungsstunden (experimental):
+
+```text
+edupsyadmin taetigkeitsbericht 3
+```
+
+Flatten filled PDF forms (experimental):
+
+```text
+edupsyadmin flatten-pdfs ./path/to/filled_form.pdf
+```
 
 ## Development
 
-Create the development enviroment:
+Create the development environment:
 
-    uv v
-    uv pip install -e .
+```text
+uv v
+uv pip install -e .
+```
 
 Run the test suite:
 
-    .venv/bin/python -m pytest -v -n auto --cov=src test/
+```text
+.venv/bin/python -m pytest -v -n auto --cov=src test/
+```
 
 Build documentation:
 
-    .venv/bin/python -m sphinx -M html docs docs/_build
+```text
+.venv/bin/python -m sphinx -M html docs docs/_build
+```
 
 ## License
 
