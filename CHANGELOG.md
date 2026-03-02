@@ -1,3 +1,10 @@
+## 8.1.5 (2026-03-02)
+
+### Refactor
+
+- **api**: improve session management, metadata caching, and ORM consistency
+- **cli**: deprecate migrate-encryption command
+
 ## 8.1.4 (2026-02-27)
 
 ### Fix
