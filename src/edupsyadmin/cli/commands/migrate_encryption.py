@@ -7,16 +7,21 @@ from getpass import getpass
 from edupsyadmin.core.logger import logger
 
 COMMAND_DESCRIPTION = (
-    "Re-encrypt all sensitive data with a new key. (edupsyadmin v7 > v8.0)"
+    "[DEPRECATED] Re-encrypt all sensitive data with a new key. "
+    "(edupsyadmin v7 > v8.0) "
+    "This command is deprecated and will be removed in version 9.0.0. "
     "Run 'edupsyadmin edit-config' first to set your new password."
 )
-COMMAND_HELP = "Migrate database to new encryption system (edupsyadmin v7 > v8.0)"
+COMMAND_HELP = (
+    "[DEPRECATED] Migrate database to new encryption system (edupsyadmin v7 > v8.0)"
+)
 COMMAND_EPILOG = textwrap.dedent(
     """
     Example:
       edupsyadmin migrate-encryption
 
     IMPORTANT: Make a backup before running this command!
+    NOTE: This command is deprecated and will be removed in version 9.0.0.
 """
 )
 
@@ -39,6 +44,14 @@ def execute(args: Namespace) -> None:
         get_keys_from_keyring,
         load_or_create_salt,
     )
+
+    logger.warning(
+        "The 'migrate-encryption' command is deprecated and will be removed in v9.0.0."
+    )
+    print("\n" + "!" * 80)
+    print("WARNING: This command is DEPRECATED and will be removed in version 9.0.0.")
+    print("It is only intended for migrating databases from edupsyadmin v7 to v8.")
+    print("!" * 80 + "\n")
 
     logger.info("Starting encryption migration process...")
 

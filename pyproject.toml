@@ -62,6 +62,7 @@ dev = [
   "pytest-textual-snapshot>=1.1.0",
   "pytest-benchmark>=5.2.0",
   "sphinx-design>=0.6.1",
+  "pre-commit>=4.5.1",
 ]
 
 [tool.hatch.build.targets.wheel]

@@ -45,6 +45,12 @@ mit ``edupsyadmin version``, ``database_url``, ``config_path`` und
 die ``database_url`` notieren, damit du das Backup später findest, wenn du es
 löschen willst.
 
+.. warning::
+
+    Der Befehl ``edupsyadmin migrate-encryption`` wird mit Version 9.0.0
+    entfernt. Wenn du noch eine Datenbank aus Version 7 nutzt, führe die
+    Migration auf das neue Verschlüsselungssystem zeitnah durch.
+
 Update der App
 --------------
 

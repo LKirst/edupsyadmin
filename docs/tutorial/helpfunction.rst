@@ -45,7 +45,7 @@ anzeigen. Im Beispiel unten, sind die möglichen Unterbefehle markiert.
         flatten-pdfs        Flatten pdf forms (experimental)
         get-clients         Show clients overview or single client
         info                Get useful information for debugging
-        migrate-encryption  Migrate database to new encryption system
+        migrate-encryption  [DEPRECATED] Migrate database to new encryption system
         mk-report           Create a report for a given test type. (experimental)
         new-client          Add a new client
         set-client          Change values for one or more clients
