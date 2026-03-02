@@ -56,6 +56,10 @@ class ClientsOverview(Static):
     class _ClientDeleted(Message):
         """Internal message to signal client was deleted."""
 
+        def __init__(self, error: Exception | None = None) -> None:
+            self.error = error
+            super().__init__()
+
     def __init__(
         self,
         manager: ClientsManager,
@@ -102,8 +106,11 @@ class ClientsOverview(Static):
     @work(exclusive=True, thread=True)
     def delete_client(self, client_id: int) -> None:
         """Delete client from database."""
-        self.manager.delete_client(client_id)
-        self.post_message(self._ClientDeleted())
+        try:
+            self.manager.delete_client(client_id)
+            self.post_message(self._ClientDeleted())
+        except Exception as e:
+            self.post_message(self._ClientDeleted(error=e))
 
     def on_clients_overview__df_loaded(self, message: _DfLoaded) -> None:
         table = self.query_one(DataTable)
@@ -139,8 +146,11 @@ class ClientsOverview(Static):
 
     def on_clients_overview__client_deleted(self, message: _ClientDeleted) -> None:
         """Callback for when a client is deleted."""
-        self.notify("Client deleted.")
-        self.action_reload()
+        if message.error:
+            self.notify(f"Fehler beim Löschen: {message.error}", severity="error")
+        else:
+            self.notify("Klient*in erfolgreich gelöscht.")
+            self.action_reload()
 
     def action_reload(self) -> None:
         """Reloads the data in the table from the database."""
@@ -162,7 +172,7 @@ class ClientsOverview(Static):
 
         try:
             client_id = int(client_id_str)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             self.notify(f"Invalid client_id: {client_id_str}", severity="error")
             return
 
@@ -191,7 +201,7 @@ class ClientsOverview(Static):
             try:
                 client_id = int(client_id_str)
                 self.post_message(self.ClientSelected(client_id))
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 self.notify(f"Ungültige client_id: {client_id_str}")
 
     def _sort_table_by(self, *column_keys: str) -> None:

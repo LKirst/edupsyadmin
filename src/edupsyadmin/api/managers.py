@@ -31,14 +31,22 @@ class ClientsManager:
         self.engine = create_engine(database_url, echo=False)
         self.Session = sessionmaker(bind=self.engine)
 
+        # Cache mapper and column metadata
+        self._mapper = inspect(clients_db.Client)
+        self._colmap = {
+            col.key: getattr(clients_db.Client, col.key) for col in self._mapper.columns
+        }
+        self._valid_keys = {c.key for c in self._mapper.column_attrs}
+
         logger.debug(f"created connection to database at {database_url}")
 
     def add_client(self, **client_data: Any) -> int:
         logger.debug("trying to add client")
         with self.Session() as session:
-            new_client = clients_db.Client(**client_data)
-            session.add(new_client)
-            session.commit()
+            with session.begin():
+                new_client = clients_db.Client(**client_data)
+                session.add(new_client)
+            # Accessing client_id after commit (end of begin block)
             logger.info(f"added client: {new_client}")
             return new_client.client_id
 
@@ -48,9 +56,8 @@ class ClientsManager:
             client = session.get(clients_db.Client, client_id)
             if client is None:
                 raise ClientNotFoundError(client_id)
-            # Create a clean dictionary using the ORM mapper
-            mapper = inspect(client.__class__)
-            return {c.key: getattr(client, c.key) for c in mapper.column_attrs}
+            # Create a clean dictionary using the cached mapper
+            return {c.key: getattr(client, c.key) for c in self._mapper.column_attrs}
 
     def get_clients_overview(
         self,
@@ -78,18 +85,12 @@ class ClientsManager:
             "keyword_taet_encr",
         ]
 
-        # Map ORM/DB keys to column expressions
-        mapper = inspect(clients_db.Client)
-        colmap = {
-            col.key: getattr(clients_db.Client, col.key) for col in mapper.columns
-        }
-
         extras = default_extras if columns is None else columns
 
         # Validate extras against available columns
-        invalid = set(extras) - set(colmap.keys())
+        invalid = set(extras) - set(self._colmap.keys())
         if invalid:
-            allowed = ", ".join(sorted(colmap.keys()))
+            allowed = ", ".join(sorted(self._colmap.keys()))
             raise ValueError(
                 f"Invalid column names: {', '.join(sorted(invalid))}. "
                 f"Allowed: {allowed}"
@@ -99,7 +100,7 @@ class ClientsManager:
         final_columns = list(dict.fromkeys(required_columns + extras))
 
         # Build SELECT
-        selected_cols = [colmap[name].label(name) for name in final_columns]
+        selected_cols = [self._colmap[name].label(name) for name in final_columns]
         stmt = select(*selected_cols)
 
         # Optional filters
@@ -122,23 +123,27 @@ class ClientsManager:
 
     def get_all_clients_df(self) -> pd.DataFrame:
         """
-        Get the entire database as a pandas DataFrame.
-        Note: This returns DECRYPTED data.
+        Get the entire database as a pandas DataFrame via ORM to ensure decryption.
         """
-        logger.debug("trying to query the entire database")
-        stmt = select(clients_db.Client)
-        return pd.read_sql_query(stmt, self.engine)
+        logger.debug("querying entire database via ORM")
+        with self.Session() as session:
+            stmt = select(clients_db.Client)
+            clients = session.scalars(stmt).all()
+            data = [
+                {c.key: getattr(client, c.key) for c in self._mapper.column_attrs}
+                for client in clients
+            ]
+            return pd.DataFrame(data)
 
     def edit_client(self, client_ids: list[int], new_data: dict[str, Any]) -> None:
         logger.debug(f"editing clients (ids = {client_ids})")
 
         # Validate keys
-        valid_keys = {c.key for c in inspect(clients_db.Client).column_attrs}
-        invalid_keys = set(new_data.keys()) - valid_keys
+        invalid_keys = set(new_data.keys()) - self._valid_keys
         if invalid_keys:
             raise ValueError(f"Invalid keys found: {', '.join(invalid_keys)}")
 
-        with self.Session() as session:
+        with self.Session() as session, session.begin():
             stmt = select(clients_db.Client).where(
                 clients_db.Client.client_id.in_(client_ids)
             )
@@ -160,12 +165,10 @@ class ClientsManager:
                     setattr(client, key, value)
                 client.datetime_lastmodified = datetime.now()
 
-            session.commit()
-
     def delete_client(self, client_id: int) -> None:
-        logger.debug("deleting client")
-        with self.Session() as session:
+        logger.debug(f"deleting client {client_id}")
+        with self.Session() as session, session.begin():
             client = session.get(clients_db.Client, client_id)
-            if client:
-                session.delete(client)
-                session.commit()
+            if not client:
+                raise ClientNotFoundError(client_id)
+            session.delete(client)
