@@ -126,3 +126,6 @@ ignore_directives = ["tab-set", "dropdown", "automodule", "autoclass"]
 
 [tool.uv]
 exclude-newer = "3d"
+
+[tool.rumdl]
+exclude = ["CHANGELOG.md"]
