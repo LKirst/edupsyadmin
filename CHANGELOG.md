@@ -1,3 +1,9 @@
+## 8.2.0 (2026-03-08)
+
+### Feat
+
+- **db.clients**: add variable case_active to database
+
 ## 8.1.5 (2026-03-02)
 
 ### Refactor
