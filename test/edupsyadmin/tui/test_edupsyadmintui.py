@@ -50,7 +50,7 @@ def test_edupsyadmintui_initial_layout(snap_compare, mock_config, mock_clients_m
         while table.loading:
             await pilot.pause(0.01)
 
-    assert snap_compare(app, run_before=run_before)
+    assert snap_compare(app, run_before=run_before, terminal_size=(100, 40))
 
 
 @pytest.mark.asyncio

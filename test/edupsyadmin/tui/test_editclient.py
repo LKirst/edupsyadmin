@@ -1,13 +1,14 @@
 from datetime import date
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-from textual.widgets import Checkbox, Input, Select
+from textual.widgets import Checkbox, Input
 
 from edupsyadmin.tui.edit_client import EditClient, _get_empty_client_dict
 from edupsyadmin.tui.edit_client_app import EditClientApp
 
-TERMINAL_SIZE = (70, 130)
+TERMINAL_SIZE = (70, 140)
 
 
 @pytest.fixture
@@ -20,7 +21,7 @@ def mock_clients_manager(client_dict_set_by_user, mock_config):
             client_data["birthday_encr"] = date.fromisoformat(
                 client_data["birthday_encr"]
             )
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             client_data["birthday_encr"] = None
     manager.get_decrypted_client.return_value = client_data
     return manager
@@ -100,6 +101,23 @@ async def test_set_bool(mock_config):
         assert bool_widget.value is True
 
 
+def _update_widget_value(edit_client: EditClient, key: str, value: Any) -> type | None:
+    """Helper to update a widget value and return its type."""
+    if key in edit_client.checkboxes:
+        widget = edit_client.checkboxes[key]
+        widget.value = value == "1"
+        return type(widget)
+    if key in edit_client.inputs:
+        widget = edit_client.inputs[key]
+        widget.value = str(value)
+        return type(widget)
+    if key in edit_client.dates:
+        widget = edit_client.dates[key]
+        widget.value = str(value)
+        return type(widget)
+    return None
+
+
 @pytest.mark.asyncio
 async def test_save_new_client_triggers_add(client_dict_all_str, mock_config):
     """Test that saving a new client triggers the `add_client` method on the manager."""
@@ -121,17 +139,15 @@ async def test_save_new_client_triggers_add(client_dict_all_str, mock_config):
         for key, value in typed_values.items():
             if not value:
                 continue
-            widget = edit_client.query_one(f"#{key}")
-            widget_types[key] = type(widget)
-            if isinstance(widget, Checkbox):
-                widget.value = value == "1"
-            elif isinstance(widget, Input | Select):
-                widget.value = value
+            w_type = _update_widget_value(edit_client, key, value)
+            if w_type:
+                widget_types[key] = w_type
 
         await edit_client.action_save()
         await pilot.pause()
 
     mock_manager.add_client.assert_called_once()
+
     called_kwargs = mock_manager.add_client.call_args.kwargs
 
     # The data sent to add_client should only be the data that differs
@@ -174,11 +190,16 @@ async def test_edit_client_triggers_edit(
 
         edit_client = pilot.app.query_one(EditClient)
         for key, value in change_values.items():
-            widget = edit_client.query_one(f"#{key}")
-            if isinstance(widget, Input | Select):
-                widget.value = str(value)
-            elif isinstance(widget, Checkbox):
-                widget.value = value
+            if key in edit_client.checkboxes:
+                edit_client.checkboxes[key].value = bool(value)
+            elif key in edit_client.inputs:
+                widget = edit_client.inputs[key]
+                if isinstance(widget, Input):
+                    widget.value = str(value)
+                else:  # Select[str]
+                    widget.value = str(value)
+            elif key in edit_client.dates:
+                edit_client.dates[key].value = str(value)
 
         await edit_client.action_save()
         await pilot.pause()

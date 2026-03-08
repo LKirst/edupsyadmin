@@ -10,6 +10,7 @@ from textual.validation import Regex
 from textual.widgets import (
     Button,
     Checkbox,
+    Collapsible,
     Input,
     RichLog,
     Select,
@@ -22,11 +23,11 @@ from edupsyadmin.db.clients import LRST_DIAG, LRST_TEST_BY, Client
 from edupsyadmin.utils.python_type import get_python_type
 
 REQUIRED_FIELDS = [
+    "first_name_encr",
+    "last_name_encr",
     "school",
     "gender_encr",
     "class_name",
-    "first_name_encr",
-    "last_name_encr",
     "birthday_encr",
 ]
 
@@ -47,6 +48,19 @@ HIDDEN_FIELDS = {
 }
 
 DATE_FIELDS = {"birthday_encr", "lrst_last_test_date_encr"}
+ADDRESS_FIELDS = [
+    "street_encr",
+    "city_encr",
+    "parent_encr",
+    "telephone1_encr",
+    "telephone2_encr",
+    "email_encr",
+]
+LRST_FIELDS = [
+    "lrst_diagnosis_encr",
+    "lrst_last_test_date_encr",
+    "lrst_last_test_by_encr",
+]
 DATE_REGEX = r"\d{4}-[0-1]\d-[0-3]\d"
 
 
@@ -135,6 +149,9 @@ class EditClient(Container):
         width: 1fr;
         margin: 0 1;
     }
+    Collapsible {
+        margin: 1 0;
+    }
     """
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("ctrl+s", "save", "Speichern", show=True),
@@ -160,7 +177,7 @@ class EditClient(Container):
         self.client_id: int | None = None
         self._original_data: dict[str, str | bool | None] = {}
         self._changed_data: dict[str, str | bool | None] = {}
-        self.inputs: dict[str, Input | Select] = {}
+        self.inputs: dict[str, Input | Select[str]] = {}
         self.dates: dict[str, Input] = {}
         self.checkboxes: dict[str, Checkbox] = {}
         self.save_button: Button | None = None
@@ -170,34 +187,92 @@ class EditClient(Container):
             "lrst_last_test_by_encr": [(v, v) for v in LRST_TEST_BY],
         }
 
+    def _compose_field_row(self, db_column: Any) -> ComposeResult:
+        """Helper to build and register a field row."""
+        name = db_column.name
+        field_type = get_python_type(db_column.type)
+        required = self._is_required(name)
+        label_text = f"{name}*" if required else name
+        default = ""
+
+        widget = self._build_field_widget(
+            name=name,
+            field_type=field_type,
+            default=default,
+            required=required,
+            tooltip=db_column.doc,
+        )
+        self._register_widget(name, widget)
+
+        # Keep the original row layout choices
+        if isinstance(widget, Checkbox):
+            yield CheckboxRow(widget)
+        else:
+            yield InputRow(f"{label_text}:", widget)
+
+    def _compose_collapsible_if_present(
+        self, title: str, names: list[str], visible_columns: dict[str, Any]
+    ) -> ComposeResult:
+        """Helper to yield a Collapsible if any of names are in visible_columns."""
+        # We need to list the keys because we'll be popping from visible_columns
+        actual_names = [name for name in names if name in visible_columns]
+        if actual_names:
+            with Collapsible(title=title, collapsed=False):
+                for name in actual_names:
+                    yield from self._compose_field_row(visible_columns.pop(name))
+
     def compose(self) -> ComposeResult:
         yield Static(
             "Klient*in aus der Liste auswählen oder neue*n anlegen.",
             id="edit-client-header",
         )
         with VerticalScroll(id="edit-client-form"):
-            # Build rows
-            for db_column in self._visible_db_columns():
-                name = db_column.name
-                field_type = get_python_type(db_column.type)
-                required = self._is_required(name)
-                label_text = f"{name}*" if required else name
-                default = ""
+            # Gather all visible columns
+            visible_columns = {col.name: col for col in self._visible_db_columns()}
 
-                widget = self._build_field_widget(
-                    name=name,
-                    field_type=field_type,
-                    default=default,
-                    required=required,
-                    tooltip=db_column.doc,
-                )
-                self._register_widget(name, widget)
+            # Required fields first, in the order of REQUIRED_FIELDS
+            for name in REQUIRED_FIELDS:
+                if name in visible_columns:
+                    yield from self._compose_field_row(visible_columns.pop(name))
 
-                # Keep the original row layout choices
-                if isinstance(widget, Checkbox):
-                    yield CheckboxRow(widget)
-                else:
-                    yield InputRow(f"{label_text}:", widget)
+            # Address fields in a Collapsible
+            yield from self._compose_collapsible_if_present(
+                "Adressdaten", ADDRESS_FIELDS, visible_columns
+            )
+
+            # Other fields (neither required nor address nor nta/nos/lrst)
+            other_names = [
+                name
+                for name in list(visible_columns.keys())
+                if not name.startswith(("nta", "nos", "lrst"))
+            ]
+            for name in other_names:
+                yield from self._compose_field_row(visible_columns.pop(name))
+
+            # LRST fields in a Collapsible
+            yield from self._compose_collapsible_if_present(
+                "LRS/LRSt", LRST_FIELDS, visible_columns
+            )
+
+            # NTA fields in a Collapsible
+            nta_names = [
+                name for name in list(visible_columns.keys()) if name.startswith("nta")
+            ]
+            yield from self._compose_collapsible_if_present(
+                "Nachteilsausgleich", nta_names, visible_columns
+            )
+
+            # NOS fields in a Collapsible
+            nos_names = [
+                name for name in list(visible_columns.keys()) if name.startswith("nos")
+            ]
+            yield from self._compose_collapsible_if_present(
+                "Notenschutz", nos_names, visible_columns
+            )
+
+            # Remaining fields if any (should be none)
+            for name in list(visible_columns.keys()):
+                yield from self._compose_field_row(visible_columns.pop(name))
 
             # Actions
             self.save_button = Button(label="Speichern", id="save", variant="success")
@@ -221,7 +296,9 @@ class EditClient(Container):
     def _is_required(self, name: str) -> bool:
         return name in REQUIRED_FIELDS
 
-    def _register_widget(self, name: str, widget: Checkbox | Input | Select) -> None:
+    def _register_widget(
+        self, name: str, widget: Checkbox | Input | Select[str]
+    ) -> None:
         if isinstance(widget, Checkbox):
             self.checkboxes[name] = widget
         elif isinstance(widget, Input):
@@ -244,8 +321,8 @@ class EditClient(Container):
         default: str | bool | None,
         required: bool,
         tooltip: str | None,
-    ) -> Checkbox | Select | Input:
-        widget: Checkbox | Select[Any] | Input
+    ) -> Checkbox | Select[str] | Input:
+        widget: Checkbox | Select[str] | Input
         # Booleans -> Checkbox
         if field_type is bool:
             widget = Checkbox(
@@ -334,7 +411,7 @@ class EditClient(Container):
         for name, widget in {**self.inputs, **self.dates}.items():
             value = self._original_data.get(name)
             if isinstance(widget, Select):
-                if value:
+                if isinstance(value, str) and value:
                     widget.value = value
                 elif not self._is_required(name):
                     widget.clear()
