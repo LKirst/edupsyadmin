@@ -369,7 +369,7 @@ class Client(Base):
     ) -> None:
         client_id_int_or_none = to_int_or_none(client_id)
         if client_id_int_or_none is not None:
-            self.client_id = client_id
+            self.client_id = client_id_int_or_none
         self.first_name_encr = first_name_encr
         self.last_name_encr = last_name_encr
         self.gender_encr = (

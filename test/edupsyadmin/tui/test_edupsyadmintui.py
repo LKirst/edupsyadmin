@@ -96,8 +96,12 @@ async def test_fill_form_worker_uses_convenience_data(
     }
     mock_clients_manager.get_decrypted_client.return_value = raw_client_data
 
+    from typing import cast
+
+    from edupsyadmin.api.types import ClientData
+
     # Calculate the expected data after it has been processed
-    expected_data = add_convenience_data(raw_client_data.copy())
+    expected_data = add_convenience_data(cast(ClientData, raw_client_data.copy()))
 
     app = EdupsyadminTui(manager=mock_clients_manager)
 

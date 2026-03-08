@@ -5,6 +5,7 @@ from edupsyadmin.api.managers import ClientsManager
 
 # TODO: Remove FPDF dependency?
 from edupsyadmin.api.reports import Report, normal_distribution_plot
+from edupsyadmin.api.types import ClientData
 from edupsyadmin.utils.convert_measures import iq_to_t, iq_to_z
 from edupsyadmin.utils.datediff import mydatediff
 
@@ -34,10 +35,11 @@ def create_report(
     clients_manager = ClientsManager(
         database_url=database_url,
     )
-    client_dict = clients_manager.get_decrypted_client(client_id)
+    client_dict: ClientData = clients_manager.get_decrypted_client(client_id)
 
     testdate = datetime.strptime(test_date, "%Y-%m-%d").date()
-    birthday = datetime.strptime(client_dict["birthday_encr"], "%Y-%m-%d").date()
+    birthday_str = client_dict.get("birthday_encr", "")
+    birthday = datetime.strptime(birthday_str, "%Y-%m-%d").date()
 
     age_str = f"Alter: {mydatediff(birthday, testdate)}"
     text = []
@@ -110,7 +112,7 @@ def create_report(
     heading = f"CFT 20-R (Testdatum: {testdate}; Code: {client_id})"
     report = Report(heading, text, fn_plot)
     report.print_page()
-    report.output(directory / Path(f"{client_id}_Auswertung.pdf"))
+    report.output(str(directory / Path(f"{client_id}_Auswertung.pdf")))
 
     # remove the plot png
     fn_plot.unlink()

@@ -1,5 +1,5 @@
-from datetime import date
-from typing import Any, ClassVar
+from datetime import date, datetime
+from typing import Any, ClassVar, cast
 
 from textual import on
 from textual.app import ComposeResult
@@ -18,6 +18,7 @@ from textual.widgets import (
 )
 from textual.widgets._select import NoSelection
 
+from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.config import config
 from edupsyadmin.db.clients import LRST_DIAG, LRST_TEST_BY, Client
 from edupsyadmin.utils.python_type import get_python_type
@@ -64,15 +65,13 @@ LRST_FIELDS = [
 DATE_REGEX = r"\d{4}-[0-1]\d-[0-3]\d"
 
 
-def _to_str_or_bool(value: None | date | bool | str | int | float) -> str | bool | None:
+def _to_str_or_bool(value: object) -> str | bool | None:
     if value is None:
         return None
-    if isinstance(value, date):
-        return value.isoformat()
-    if isinstance(value, bool | str):  # check this before checking if int!
+    if isinstance(value, bool):
         return value
-    if isinstance(value, int | float):
-        return str(value)
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
     return str(value)
 
 
@@ -284,7 +283,7 @@ class EditClient(Container):
         yield RichLog(classes="log", id="edit-client-log")
 
     def _normalize_original_data(
-        self, data: dict[str, Any]
+        self, data: ClientData
     ) -> dict[str, str | bool | None]:
         return {k: _to_str_or_bool(v) for k, v in data.items()}
 
@@ -394,7 +393,7 @@ class EditClient(Container):
         widget.tooltip = tooltip
         return widget
 
-    def update_client(self, client_id: int | None, data: dict[str, Any] | None) -> None:
+    def update_client(self, client_id: int | None, data: ClientData | None) -> None:
         self.client_id = client_id
         data = data or _get_empty_client_dict()
 
@@ -519,12 +518,12 @@ class EditClient(Container):
 
 
 # TODO: make defaults configurable
-def _get_empty_client_dict() -> dict[str, str | bool | int]:
+def _get_empty_client_dict() -> ClientData:
     defaults = {
         "min_sessions": 45,
         "n_session": 1,
     }
-    empty_client_dict: dict[str, str | bool | int] = {}
+    empty_client_dict: dict[str, Any] = {}
     for db_column in Client.__table__.columns:
         field_type = get_python_type(db_column.type)
         name = db_column.name
@@ -535,4 +534,4 @@ def _get_empty_client_dict() -> dict[str, str | bool | int]:
             empty_client_dict[name] = False
         else:
             empty_client_dict[name] = ""
-    return empty_client_dict
+    return cast(ClientData, empty_client_dict)

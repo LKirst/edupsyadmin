@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from rich.text import Text
 from textual import on
@@ -21,6 +19,7 @@ from textual.widgets import (
     Static,
 )
 
+from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.config import config
 
 if TYPE_CHECKING:
@@ -164,7 +163,7 @@ class FillForm(Widget):
             event.input.value = str(current_path)
 
     # TODO: improve confusing function name
-    def update_client(self, client_id: int, client_data: dict[str, Any]) -> None:
+    def update_client(self, client_id: int, client_data: ClientData) -> None:
         """Update the widget with data for a specific client."""
         self.client_id = client_id
         info = self.query_one("#client-info", Static)
@@ -177,7 +176,7 @@ class FillForm(Widget):
 
     # TODO: improve confusing function name
     # TODO: remove redundancy
-    def update_clients(self, clients_data: dict[int, dict[str, Any]]) -> None:
+    def update_clients(self, clients_data: dict[int, ClientData]) -> None:
         """Update the widget with data for multiple clients."""
         self.client_ids = list(clients_data.keys())
         info = self.query_one("#client-info", Static)
@@ -257,7 +256,7 @@ class FillFormScreen(Screen):
 
     def on_mount(self) -> None:
         """Load the client data and update the FillForm widget."""
-        clients_data = {}
+        clients_data: dict[int, ClientData] = {}
         for client_id in self.client_ids:
             clients_data[client_id] = self.clients_manager.get_decrypted_client(
                 client_id

@@ -1,9 +1,10 @@
 from datetime import date
 from importlib.resources import files
-from typing import Any
+from typing import Any, cast
 
 from dateutil.parser import parse
 
+from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 from edupsyadmin.utils.academic_year import (
@@ -49,7 +50,7 @@ def _date_to_german_string(isodate: date | str | None) -> str:
     if (isodate is None) or (isodate == ""):
         return ""
     try:
-        return parse(isodate, dayfirst=False).strftime("%d.%m.%Y")
+        return parse(str(isodate), dayfirst=False).strftime("%d.%m.%Y")
     except ValueError:
         logger.error(f"'{isodate}' could not be parsed as a date")
         raise
@@ -58,7 +59,7 @@ def _date_to_german_string(isodate: date | str | None) -> str:
         raise
 
 
-def _add_client_address(data: dict[str, Any]) -> None:
+def _add_client_address(data: ClientData) -> None:
     """Add client's name and address to data."""
     first_name = data.get("first_name_encr", "")
     last_name = data.get("last_name_encr", "")
@@ -74,7 +75,7 @@ def _add_client_address(data: dict[str, Any]) -> None:
         logger.debug(f"Couldn't add home address because of missing data: {e}")
 
 
-def _add_school_psychologist_address(data: dict[str, Any]) -> None:
+def _add_school_psychologist_address(data: ClientData) -> None:
     """Add school psychologist's address from config to data."""
     data["schoolpsy_name"] = config.schoolpsy.schoolpsy_name
     data["schoolpsy_street"] = config.schoolpsy.schoolpsy_street
@@ -85,7 +86,7 @@ def _add_school_psychologist_address(data: dict[str, Any]) -> None:
     data["schoolpsy_addr_s_wname"] = data["schoolpsy_addr_m_wname"].replace("\n", ", ")
 
 
-def _add_school_address(data: dict[str, Any]) -> None:
+def _add_school_address(data: ClientData) -> None:
     """Add school address from config to data."""
     school_key = data.get("school")
     if not school_key:
@@ -102,7 +103,7 @@ def _add_school_address(data: dict[str, Any]) -> None:
     data["school_addr_s_wname"] = data["school_addr_m_wname"].replace("\n", ", ")
 
 
-def _add_lrst_diagnosis(data: dict[str, Any]) -> None:
+def _add_lrst_diagnosis(data: ClientData) -> None:
     """Add long version of LRSt diagnosis to data."""
     diagnosis = data.get("lrst_diagnosis_encr")
     if not diagnosis:
@@ -122,23 +123,23 @@ def _add_lrst_diagnosis(data: dict[str, Any]) -> None:
         )
 
 
-def _add_dates(data: dict[str, Any]) -> None:
+def _add_dates(data: ClientData) -> None:
     """Add various formatted dates to data."""
     data["today_date"] = date.today()
-    dates_to_convert = [
-        "birthday_encr",
-        "today_date",
-        "lrst_last_test_date_encr",
-        "document_shredding_date",
+    dates_to_convert: list[tuple[str, str]] = [
+        ("birthday_encr", "birthday_encr_de"),
+        ("today_date", "today_date_de"),
+        ("lrst_last_test_date_encr", "lrst_last_test_date_encr_de"),
+        ("document_shredding_date", "document_shredding_date_de"),
     ]
-    for idate in dates_to_convert:
-        gdate = idate + "_de"
-        data[gdate] = _date_to_german_string(data.get(idate))
+    for idate, gdate in dates_to_convert:
+        # TypedDict doesn't support dynamic key access with variables
+        cast(Any, data)[gdate] = _date_to_german_string(data.get(cast(Any, idate)))
 
     data["school_year"] = get_this_academic_year_string()
 
 
-def _add_nta_schoolyear(data: dict[str, Any]) -> None:
+def _add_nta_schoolyear(data: ClientData) -> None:
     """Add NTA/NOS end schoolyear to data."""
     if (
         data.get("nta_nos_end")
@@ -147,12 +148,13 @@ def _add_nta_schoolyear(data: dict[str, Any]) -> None:
     ):
         data["nta_nos_end_schoolyear"] = get_academic_year_string(
             get_estimated_end_of_academic_year(
-                grade_current=data["class_int"], grade_target=data["nta_nos_end_grade"]
+                grade_current=cast(int, data["class_int"]),
+                grade_target=cast(int, data["nta_nos_end_grade"]),
             )
         )
 
 
-def _convert_lrst_test_by(data: dict[str, Any]) -> None:
+def _convert_lrst_test_by(data: ClientData) -> None:
     """Convert lrst_last_test_by_encr to numerical value for forms."""
     test_by = data.get("lrst_last_test_by_encr")
     if not test_by:
@@ -176,7 +178,7 @@ def _convert_lrst_test_by(data: dict[str, Any]) -> None:
         )
 
 
-def add_convenience_data(data: dict[str, Any]) -> dict[str, Any]:
+def add_convenience_data(data: ClientData) -> ClientData:
     """
     Füge Daten hinzu, die sich aus einem Eintrag in einer `Client`-Datenbank,
     der Konfigurationsdatei und einer Datei zu den Schulfächern (optional)

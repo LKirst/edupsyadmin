@@ -1,16 +1,16 @@
-from typing import Any
-
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from edupsyadmin.api.types import ClientData
 
-def display_client_details(client_data: dict[str, Any]) -> None:
+
+def display_client_details(client_data: ClientData) -> None:
     """Displays client details in a formatted way using rich."""
     console = Console()
 
     # Helper to print a table for a group of fields
-    def print_group_table(data: dict, title: str, fields: list[str]) -> None:
+    def print_group_table(data: ClientData, title: str, fields: list[str]) -> None:
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column(style="cyan")
         table.add_column()

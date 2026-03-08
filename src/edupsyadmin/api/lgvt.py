@@ -3,10 +3,12 @@ import math
 import os
 from datetime import date, datetime
 from pathlib import Path
+from typing import Any, cast
 
 import pandas as pd
 
 from edupsyadmin.api.managers import ClientsManager
+from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.config import config
 from edupsyadmin.utils.convert_measures import percentile_to_t
 
@@ -122,10 +124,14 @@ def mk_report(
     t_day = datetime.strptime(test_date, "%Y-%m-%d").date()
 
     clients_manager = ClientsManager(database_url=database_url)
-    client_dict = clients_manager.get_decrypted_client(client_id)
+    client_dict: ClientData = clients_manager.get_decrypted_client(client_id)
 
-    name = client_dict["first_name_encr"] + " " + client_dict["last_name_encr"]
-    schoolyear = client_dict["class_int"]
+    name = (
+        client_dict.get("first_name_encr", "")
+        + " "
+        + client_dict.get("last_name_encr", "")
+    )
+    schoolyear = int(cast(Any, client_dict.get("class_int", 0)))
 
     results = get_indeces(fn_csv, name, schoolyear, t_day, version)
 

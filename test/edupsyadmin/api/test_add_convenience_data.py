@@ -1,9 +1,11 @@
 from datetime import datetime
+from typing import cast
 from unittest.mock import patch
 
 import pytest
 
 from edupsyadmin.api.add_convenience_data import add_convenience_data
+from edupsyadmin.api.types import ClientData
 from edupsyadmin.utils.academic_year import get_this_academic_year_string
 
 
@@ -89,8 +91,10 @@ def test_add_convenience_data(mock_get_subjects, mock_config, client_dict_intern
         "lrst_last_test_date_encr",
         "document_shredding_date",
     ]
+    from typing import cast
+
     for d in dates:
-        assert _is_valid_german_date(result[d + "_de"])
+        assert _is_valid_german_date(cast(dict, result)[d + "_de"])
 
     # Verify that the school subjects were fetched
     mock_get_subjects.assert_called_once_with(client_dict_internal["school"])
@@ -116,7 +120,7 @@ def test_add_convenience_data_invalid_lrst_diagnosis(mock_get_subjects, mock_con
     mock_get_subjects.return_value = "Math"
     client_data = {"lrst_diagnosis_encr": "invalid_diagnosis", "school": "FirstSchool"}
     with pytest.raises(ValueError, match="lrst_diagnosis can be only one of"):
-        add_convenience_data(client_data)
+        add_convenience_data(cast(ClientData, client_data))
 
 
 @patch("edupsyadmin.api.add_convenience_data._get_subjects")
@@ -127,7 +131,7 @@ def test_add_convenience_data_missing_address_parts(mock_get_subjects, mock_conf
         "last_name_encr": "Doe",
         "school": "FirstSchool",
     }
-    result = add_convenience_data(client_data)
+    result = add_convenience_data(cast(ClientData, client_data))
     assert "addr_s_nname" not in result
     assert "addr_m_wname" not in result
 
@@ -139,6 +143,6 @@ def test_add_convenience_data_invalid_lrst_test_by(
 ):
     mock_get_subjects.return_value = "Math"
     client_data = {"lrst_last_test_by_encr": "invalid_tester", "school": "FirstSchool"}
-    result = add_convenience_data(client_data)
+    result = add_convenience_data(cast(ClientData, client_data))
     assert "lrst_schpsy" not in result
     mock_logger_error.assert_called_once()

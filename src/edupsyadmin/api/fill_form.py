@@ -7,10 +7,11 @@ from typing import Any
 
 from liquid import Template, exceptions
 
+from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.logger import logger
 
 
-def _modify_bool_and_none_for_pdf_form(data: dict[str, Any]) -> dict[str, Any]:
+def _modify_bool_and_none_for_pdf_form(data: ClientData) -> dict[str, Any]:
     """
     Replace every boolean True with 'Yes' and False with 'Off', which are the
     values checkboxes accept in most PDF forms. Replace None with empty
@@ -20,7 +21,7 @@ def _modify_bool_and_none_for_pdf_form(data: dict[str, Any]) -> dict[str, Any]:
     :return: a modified dictionary where booleans are replaced
         with string values and None values are replaced with an empty string
     """
-    updated_data = {}
+    updated_data: dict[str, Any] = {}
     logger.debug("Replacing True with 'Yes' and False with 'Off'")
     for key, value in data.items():
         if isinstance(value, bool):
@@ -32,7 +33,7 @@ def _modify_bool_and_none_for_pdf_form(data: dict[str, Any]) -> dict[str, Any]:
     return updated_data
 
 
-def write_form_pdf(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
+def write_form_pdf(fn: Path, out_fn: Path, data: ClientData) -> None:
     """
     Fill a pdf form with data using pypdf.
 
@@ -57,7 +58,7 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
         if not fields:
             logger.debug(f"The file {fn} is not a form.")
         else:
-            logger.debug("\nForm fields:\n{fields.keys()}")
+            logger.debug(f"\nForm fields:\n{fields.keys()}")
             logger.debug(f"\nData keys:\n{data_wo_bool.keys()}")
             comb_key_fields = product(range(len(reader.pages)), fields.keys())
             for i, key in comb_key_fields:
@@ -77,7 +78,7 @@ def write_form_pdf(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
         writer.write(output_stream)
 
 
-def write_form_pdf2(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
+def write_form_pdf2(fn: Path, out_fn: Path, data: ClientData) -> None:
     """
     Fill a pdf form with data using fillpdf.
 
@@ -101,7 +102,7 @@ def write_form_pdf2(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
         shutil.copyfile(fn, out_fn)
 
 
-def write_form_md(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
+def write_form_md(fn: Path, out_fn: Path, data: ClientData) -> None:
     """
     Render a liquid template with data passed to the function.
 
@@ -127,7 +128,7 @@ def write_form_md(fn: Path, out_fn: Path, data: dict[str, Any]) -> None:
 
 
 def fill_form(
-    client_data: dict[str, Any],
+    client_data: ClientData,
     form_paths: Sequence[str | os.PathLike[str]],
     out_dir: str | os.PathLike[str] = ".",
     use_fillpdf: bool = True,
@@ -150,7 +151,7 @@ def fill_form(
             raise FileNotFoundError(
                 f"The template file does not exist: {fp}; cwd is: {Path.cwd()}"
             )
-        out_fp = Path(out_dir, f"{client_data['client_id']}_{fp.name}")
+        out_fp = Path(out_dir, f"{client_data.get('client_id')}_{fp.name}")
         logger.info(f"Writing to {out_fp.resolve()}")
         if fp.suffix == ".md":
             write_form_md(fp, out_fp, client_data)

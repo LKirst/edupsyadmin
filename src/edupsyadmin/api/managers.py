@@ -1,11 +1,12 @@
 import logging  # just for interaction with the sqlalchemy logger
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from sqlalchemy import create_engine, inspect, or_, select
 from sqlalchemy.orm import sessionmaker
 
+from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db import clients as clients_db
@@ -50,14 +51,15 @@ class ClientsManager:
             logger.info(f"added client: {new_client}")
             return new_client.client_id
 
-    def get_decrypted_client(self, client_id: int) -> dict[str, Any]:
+    def get_decrypted_client(self, client_id: int) -> ClientData:
         logger.debug(f"trying to access client (client_id = {client_id})")
         with self.Session() as session:
             client = session.get(clients_db.Client, client_id)
             if client is None:
                 raise ClientNotFoundError(client_id)
             # Create a clean dictionary using the cached mapper
-            return {c.key: getattr(client, c.key) for c in self._mapper.column_attrs}
+            data = {c.key: getattr(client, c.key) for c in self._mapper.column_attrs}
+            return cast(ClientData, data)
 
     def get_clients_overview(
         self,
@@ -129,8 +131,11 @@ class ClientsManager:
         with self.Session() as session:
             stmt = select(clients_db.Client)
             clients = session.scalars(stmt).all()
-            data = [
-                {c.key: getattr(client, c.key) for c in self._mapper.column_attrs}
+            data: list[ClientData] = [
+                cast(
+                    ClientData,
+                    {c.key: getattr(client, c.key) for c in self._mapper.column_attrs},
+                )
                 for client in clients
             ]
             return pd.DataFrame(data)

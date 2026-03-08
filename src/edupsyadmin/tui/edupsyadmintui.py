@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from textual import work
@@ -10,6 +8,7 @@ from textual.message import Message
 from textual.widgets import Footer, Header, LoadingIndicator
 
 from edupsyadmin.api.fill_form import fill_form
+from edupsyadmin.api.types import ClientData
 from edupsyadmin.tui.clients_overview import ClientsOverview
 from edupsyadmin.tui.edit_client import EditClient
 from edupsyadmin.tui.fill_form_widget import FillForm, FillFormScreen
@@ -206,7 +205,7 @@ class EdupsyadminTui(App[None]):
             if message.client_id is not None and message.client_data is not None:
                 edit_client_widget.update_client(message.client_id, message.client_data)
             else:
-                edit_client_widget.update_client(None, {})
+                edit_client_widget.update_client(None, None)
             self.notify("Daten erfolgreich gespeichert.", severity="information")
 
     async def on_edit_client_cancel_edit(self, message: EditClient.CancelEdit) -> None:
@@ -214,7 +213,7 @@ class EdupsyadminTui(App[None]):
             return
 
         edit_client_widget = self.query_one(EditClient)
-        edit_client_widget.update_client(None, {})
+        edit_client_widget.update_client(None, None)
         self.notify("Bearbeitung abgebrochen.", severity="information")
 
     async def on_fill_form_start_fill(self, message: FillForm.StartFill) -> None:
@@ -295,7 +294,7 @@ class EdupsyadminTui(App[None]):
         def __init__(
             self,
             client_id: int,
-            client_data: dict[str, Any] | None,
+            client_data: ClientData | None,
             error: Exception | None = None,
         ) -> None:
             self.client_id = client_id
@@ -307,7 +306,7 @@ class EdupsyadminTui(App[None]):
         def __init__(
             self,
             client_id: int | None = None,
-            client_data: dict[str, Any] | None = None,
+            client_data: ClientData | None = None,
             error: Exception | None = None,
         ) -> None:
             self.client_id = client_id
