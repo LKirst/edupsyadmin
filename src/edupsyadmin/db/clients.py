@@ -84,6 +84,34 @@ class Client(Base):
     notes_encr: Mapped[str] = mapped_column(
         EncryptedString, doc="Verschlüsselte Notizen zum Klienten"
     )
+    keyword_taet_encr: Mapped[str] = mapped_column(
+        EncryptedString,
+        doc="Schlüsselwort für die Kategorie des Klienten im Tätigkeitsbericht",
+    )
+    # I need lrst_diagnosis as a variable separate from keyword_taet_encr,
+    # because LRSt can be present even if it is not the most important topic
+    lrst_diagnosis_encr: Mapped[str] = mapped_column(
+        EncryptedString,
+        doc=(
+            f"Diagnose im Zusammenhang mit LRSt. Zulässig sind die Werte: "
+            f"{', '.join(LRST_DIAG)}"
+        ),
+    )
+    lrst_last_test_date_encr: Mapped[str] = mapped_column(
+        EncryptedString,
+        doc=(
+            "Datum (YYYY-MM-DD) der letzten Testung im Zusammenhang "
+            "einer Überprüfung von LRSt"
+        ),
+    )
+    lrst_last_test_by_encr: Mapped[str] = mapped_column(
+        EncryptedString,
+        doc=(
+            "Fachperson, von der die letzte Überprüfung von LRSt "
+            "durchgeführt wurde; kann nur einer der folgenden Werte sein: "
+            f"{', '.join(LRST_TEST_BY)}"
+        ),
+    )
 
     # Unencrypted variables
     client_id: Mapped[int] = mapped_column(
@@ -128,34 +156,6 @@ class Client(Base):
             "Datum für die Dokumentenvernichtung im Zusammenhang mit dem Klienten."
             "Diese Variable wird abgeleitet aus der Variable "
             ":attr:`estimated_graduation_date`."
-        ),
-    )
-    keyword_taet_encr: Mapped[str] = mapped_column(
-        EncryptedString,
-        doc="Schlüsselwort für die Kategorie des Klienten im Tätigkeitsbericht",
-    )
-    # I need lrst_diagnosis as a variable separate from keyword_taet_encr,
-    # because LRSt can be present even if it is not the most important topic
-    lrst_diagnosis_encr: Mapped[str] = mapped_column(
-        EncryptedString,
-        doc=(
-            f"Diagnose im Zusammenhang mit LRSt. Zulässig sind die Werte: "
-            f"{', '.join(LRST_DIAG)}"
-        ),
-    )
-    lrst_last_test_date_encr: Mapped[str] = mapped_column(
-        EncryptedString,
-        doc=(
-            "Datum (YYYY-MM-DD) der letzten Testung im Zusammenhang "
-            "einer Überprüfung von LRSt"
-        ),
-    )
-    lrst_last_test_by_encr: Mapped[str] = mapped_column(
-        EncryptedString,
-        doc=(
-            "Fachperson, von der die letzte Überprüfung von LRSt "
-            "durchgeführt wurde; kann nur einer der folgenden Werte sein: "
-            f"{', '.join(LRST_TEST_BY)}"
         ),
     )
     datetime_created: Mapped[datetime] = mapped_column(
@@ -311,6 +311,7 @@ class Client(Base):
             "Notenschutzmaßnahmen zeitlich begrenzt sind"
         ),
     )
+
     min_sessions: Mapped[int] = mapped_column(
         Integer,
         doc=(
@@ -321,6 +322,9 @@ class Client(Base):
     n_sessions: Mapped[int] = mapped_column(
         Integer,
         doc=("Anzahl der mit dem Klienten verbundenen Beratungs- und Testsitzungen."),
+    )
+    case_active: Mapped[bool] = mapped_column(
+        Boolean, default=True, doc="Zeigt, ob ein Fall aktiv oder abgeschlossen ist"
     )
 
     def __init__(
@@ -361,6 +365,7 @@ class Client(Base):
         lrst_last_test_by_encr: str = "",
         min_sessions: int | str | None = None,
         n_sessions: int | str | None = None,
+        case_active: bool | str | int | None = True,
     ) -> None:
         client_id_int_or_none = to_int_or_none(client_id)
         if client_id_int_or_none is not None:
@@ -413,6 +418,7 @@ class Client(Base):
 
         self.min_sessions = to_int_or_none(min_sessions) or 45
         self.n_sessions = to_int_or_none(n_sessions) or 1
+        self.case_active = to_bool_or_none(case_active) or False
 
         # Placeholder for derived fields and timestamps - will be handled by events
         self.class_int = None
@@ -509,10 +515,6 @@ class Client(Base):
     def validate_nos_rs_ausn_faecher(self, key: str, value: str | None) -> str | None:
         return value
 
-    @validates("nos_rs", "nos_les")
-    def validate_nos_bool(self, key: str, value: bool | str | int) -> bool:
-        return to_bool_or_none(value) or False
-
     @validates("nos_other_details")
     def validate_nos_other_details(self, key: str, value: str) -> str:
         return value
@@ -537,8 +539,11 @@ class Client(Base):
         "nta_ersgew",
         "nta_vorlesen",
         "nta_struktur",
+        "nos_rs",
+        "nos_les",
+        "case_active",
     )
-    def validate_nta_bool(self, key: str, value: bool | str | int) -> bool:
+    def validate_bool(self, key: str, value: bool | str | int) -> bool:
         return to_bool_or_none(value) or False
 
     @validates("nta_other_details")
