@@ -34,3 +34,12 @@ repos:
   rev: v0.1.28
   hooks:
     - id: rumdl-fmt  # Auto-format and fail if issues remain
+- repo: local
+  hooks:
+    - id: ty-check
+      name: ty-check
+      entry: ty check
+      language: python
+      types: [python]
+      args: [--python=.venv/]
+      pass_filenames: true
