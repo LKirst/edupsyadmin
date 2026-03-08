@@ -1,3 +1,9 @@
+## 8.2.1 (2026-03-08)
+
+### Refactor
+
+- add ClientData TypedDict and enhance type hinting
+
 ## 8.2.0 (2026-03-08)
 
 ### Feat
