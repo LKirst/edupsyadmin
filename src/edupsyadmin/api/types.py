@@ -1,58 +1,58 @@
 from datetime import date, datetime
-from typing import TypedDict
+from typing import Required, TypedDict
 
 
 class ClientData(TypedDict, total=False):
     # Base fields from Client model
-    client_id: int
-    first_name_encr: str
-    last_name_encr: str
-    gender_encr: str
-    birthday_encr: str
-    street_encr: str
-    city_encr: str
-    parent_encr: str
-    telephone1_encr: str
-    telephone2_encr: str
-    email_encr: str
-    notes_encr: str
-    keyword_taet_encr: str
-    lrst_diagnosis_encr: str
-    lrst_last_test_date_encr: str
-    lrst_last_test_by_encr: str
-    school: str
-    entry_date: date | None
-    class_name: str | None
-    class_int: int | None
-    estimated_graduation_date: date | None
-    document_shredding_date: date | None
-    datetime_created: datetime
-    datetime_lastmodified: datetime
-    notenschutz: bool
-    nos_rs: bool
-    nos_rs_ausn: bool
-    nos_rs_ausn_faecher: str | None
-    nos_les: bool
-    nos_other: bool
-    nos_other_details: str | None
-    nachteilsausgleich: bool
-    nta_zeitv: bool
-    nta_zeitv_vieltext: int | None
-    nta_zeitv_wenigtext: int | None
-    nta_font: bool
-    nta_aufg: bool
-    nta_struktur: bool
-    nta_arbeitsm: bool
-    nta_ersgew: bool
-    nta_vorlesen: bool
-    nta_other: bool
-    nta_other_details: str | None
-    nta_nos_notes: str | None
-    nta_nos_end: bool
-    nta_nos_end_grade: int | None
-    min_sessions: int
-    n_sessions: int
-    case_active: bool
+    client_id: Required[int]
+    first_name_encr: Required[str]
+    last_name_encr: Required[str]
+    gender_encr: Required[str]
+    birthday_encr: Required[str]
+    street_encr: Required[str]
+    city_encr: Required[str]
+    parent_encr: Required[str]
+    telephone1_encr: Required[str]
+    telephone2_encr: Required[str]
+    email_encr: Required[str]
+    notes_encr: Required[str]
+    keyword_taet_encr: Required[str]
+    lrst_diagnosis_encr: Required[str]
+    lrst_last_test_date_encr: Required[str]
+    lrst_last_test_by_encr: Required[str]
+    school: Required[str]
+    entry_date: Required[date | None]
+    class_name: Required[str | None]
+    class_int: Required[int | None]
+    estimated_graduation_date: Required[date | None]
+    document_shredding_date: Required[date | None]
+    datetime_created: Required[datetime]
+    datetime_lastmodified: Required[datetime]
+    notenschutz: Required[bool]
+    nos_rs: Required[bool]
+    nos_rs_ausn: Required[bool]
+    nos_rs_ausn_faecher: Required[str | None]
+    nos_les: Required[bool]
+    nos_other: Required[bool]
+    nos_other_details: Required[str | None]
+    nachteilsausgleich: Required[bool]
+    nta_zeitv: Required[bool]
+    nta_zeitv_vieltext: Required[int | None]
+    nta_zeitv_wenigtext: Required[int | None]
+    nta_font: Required[bool]
+    nta_aufg: Required[bool]
+    nta_struktur: Required[bool]
+    nta_arbeitsm: Required[bool]
+    nta_ersgew: Required[bool]
+    nta_vorlesen: Required[bool]
+    nta_other: Required[bool]
+    nta_other_details: Required[str | None]
+    nta_nos_notes: Required[str | None]
+    nta_nos_end: Required[bool]
+    nta_nos_end_grade: Required[int | None]
+    min_sessions: Required[int]
+    n_sessions: Required[int]
+    case_active: Required[bool]
 
     # Convenience fields added by add_convenience_data
     name: str
