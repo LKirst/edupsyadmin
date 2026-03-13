@@ -174,7 +174,7 @@ def _determine_app_username(args: argparse.Namespace) -> int:
         try:
             args.app_username = config.core.app_username
             logger.debug(f"Using app_username from config: '{args.app_username}'")
-        except (KeyError, AttributeError):
+        except KeyError, AttributeError:
             # For edit-config, username might not be set yet.
             if args.command_name == "edit-config":
                 args.app_username = "default"
@@ -198,7 +198,7 @@ def _determine_app_uid(args: argparse.Namespace) -> None:
         try:
             args.app_uid = config.core.app_uid
             logger.debug(f"Using app_uid from config: '{args.app_uid}'")
-        except (KeyError, AttributeError):
+        except KeyError, AttributeError:
             args.app_uid = APP_UID  # Fallback to hardcoded default
             logger.debug(
                 f"app_uid not found in config, using default: '{args.app_uid}'"
@@ -248,7 +248,22 @@ def main(argv: list[str] | None = None) -> int:
 
     command = args.command
     logger.debug(f"Executing command: {args.command_name}")
-    logger.debug(f"Commandline arguments: {vars(args)}")
+
+    # Scrub sensitive arguments from logs
+    sensitive_keys = {
+        "name",
+        "csv",
+        "key_value_pairs",
+        "inject_data",
+        "form_paths",
+        "out",
+    }
+    safe_args = {
+        k: (v if k not in sensitive_keys else "[SCRUBBED]")
+        for k, v in vars(args).items()
+        if k != "command"
+    }
+    logger.debug(f"Commandline arguments: {safe_args}")
 
     try:
         command(args)
