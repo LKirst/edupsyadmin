@@ -224,5 +224,5 @@ class ClientsOverview(Static):
         self._sort_table_by("school", "last_name_encr")
 
     def action_sort_by_class_name(self) -> None:
-        """Sort DataTable by class_name and last name"""
-        self._sort_table_by("class_name", "last_name_encr")
+        """Sort DataTable by class_name_encr and last name"""
+        self._sort_table_by("class_name_encr", "last_name_encr")

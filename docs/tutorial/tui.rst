@@ -39,7 +39,7 @@ angehören:
 
 Zusätzlich können die angezeigten Spalten mit ``--columns`` angepasst werden.
 Eine Auswahl an Spalten wird immer angezeigt (``client_id``, ``school``,
-``last_name_encr``, ``first_name_encr``, ``class_name``). Mit ``--columns``
+``last_name_encr``, ``first_name_encr``, ``class_name_encr``). Mit ``--columns``
 können weitere Spalten hinzugefügt werden.
 
 Folgender Befehl zeigt zusätzlich die Spalte für ``notes_encr`` und
@@ -98,7 +98,7 @@ sortiert werden:
    * - :kbd:`s`
      - Schule (``school``) und dann Nachname
    * - :kbd:`c`
-     - Klasse (``class_name``) und dann Nachname
+     - Klasse (``class_name_encr``) und dann Nachname
 
 Nächste Schritte
 ----------------

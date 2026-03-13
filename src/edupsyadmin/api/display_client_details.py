@@ -29,7 +29,7 @@ def display_client_details(client_data: ClientData) -> None:
         "gender_encr",
         "birthday_encr",
         "school",
-        "class_name",
+        "class_name_encr",
         "entry_date",
         "keyword_taet_encr",
         "min_sessions",

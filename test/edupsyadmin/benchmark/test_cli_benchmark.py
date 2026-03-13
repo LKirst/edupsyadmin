@@ -32,7 +32,7 @@ def test_get_clients_benchmark(benchmark, mock_config, tmp_path, num_clients):
         clients_manager.add_client(
             school="FirstSchool",
             gender_encr="f",
-            class_name="11TKKG",
+            class_name_encr="11TKKG",
             first_name_encr=f"Erika_{i}",
             last_name_encr="Mustermann",
             birthday_encr="2000-12-24",

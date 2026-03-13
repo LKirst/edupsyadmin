@@ -234,6 +234,8 @@ def _get_encrypted_field_names() -> list[str]:
         "telephone2_encr",
         "email_encr",
         "notes_encr",
+        "class_name_encr",
+        "class_int_encr",
         "keyword_taet_encr",
         "lrst_diagnosis_encr",
         "lrst_last_test_date_encr",

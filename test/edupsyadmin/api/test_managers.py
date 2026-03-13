@@ -22,8 +22,8 @@ EXPECTED_KEYS = {
     "client_id",
     "school",
     "entry_date",
-    "class_name",
-    "class_int",
+    "class_name_encr",
+    "class_int_encr",
     "estimated_graduation_date",
     "document_shredding_date",
     "keyword_taet_encr",
@@ -73,7 +73,7 @@ class TestManagers:
             "school": "FirstSchool",
             "gender_encr": "f",
             "entry_date": date(2021, 6, 30),
-            "class_name": "7TKKG",
+            "class_name_encr": "7TKKG",
             "first_name_encr": "Lieschen",
             "last_name_encr": "Müller",
             "birthday_encr": "1990-01-01",
@@ -87,7 +87,7 @@ class TestManagers:
             "school": "FirstSchool",
             "gender_encr": "f",
             "entry_date": date(2021, 6, 30),
-            "class_name": "7TKKG",
+            "class_name_encr": "7TKKG",
             "first_name_encr": "Lieschen",
             "last_name_encr": "Müller",
             "birthday_encr": "1990-01-01",
@@ -128,7 +128,7 @@ class TestManagers:
             "school": "SecondSchool",
             "gender_encr": "m",
             "entry_date": date(2020, 12, 24),
-            "class_name": "5a",
+            "class_name_encr": "5a",
             "first_name_encr": "Aam",
             "last_name_encr": "Admi",
             "birthday_encr": "1992-01-01",
@@ -587,20 +587,20 @@ class TestClientValidation:
     def test_class_name_parsing(self, clients_manager, client_dict_set_by_user):
         client_data = client_dict_set_by_user.copy()
         del client_data["client_id"]
-        client_data["class_name"] = "10a"
+        client_data["class_name_encr"] = "10a"
         client_id = clients_manager.add_client(**client_data)
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["class_int"] == 10
+        assert client["class_int_encr"] == 10
         assert client["estimated_graduation_date"] is not None
         assert client["document_shredding_date"] is not None
 
-        # Test with no number in class_name
+        # Test with no number in class_name_encr
         # FIXME: Raise an error because it containes no integer
         # TODO: write a validates method for the db model and a validator for the tui
-        client_data["class_name"] = "Vorklasse"
+        client_data["class_name_encr"] = "Vorklasse"
         client_id_2 = clients_manager.add_client(**client_data)
         client2 = clients_manager.get_decrypted_client(client_id_2)
-        assert client2["class_int"] is None
+        assert client2["class_int_encr"] is None
         assert client2["estimated_graduation_date"] is None
         assert client2["document_shredding_date"] is None
 

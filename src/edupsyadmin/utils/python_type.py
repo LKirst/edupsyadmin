@@ -14,7 +14,9 @@ def get_python_type(sqlalchemy_type: TypeEngine[Any]) -> type:
     """
 
     if isinstance(sqlalchemy_type, TypeDecorator):
-        sqlalchemy_type = sqlalchemy_type.impl  # type: ignore[assignment]
+        if hasattr(sqlalchemy_type, "python_type"):
+            return sqlalchemy_type.python_type
+        sqlalchemy_type = sqlalchemy_type.impl
 
     if isinstance(sqlalchemy_type, Integer):
         return int

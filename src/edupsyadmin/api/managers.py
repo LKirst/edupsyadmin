@@ -75,7 +75,7 @@ class ClientsManager:
             "school",
             "last_name_encr",
             "first_name_encr",
-            "class_name",
+            "class_name_encr",
         ]
 
         # Defaults for extra columns when none provided

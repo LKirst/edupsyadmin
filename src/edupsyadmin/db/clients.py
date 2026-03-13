@@ -33,6 +33,10 @@ class EncryptedString(TypeDecorator):
     impl = String
     cache_ok = True  # SQLAlchemy 2.0 requirement
 
+    @property
+    def python_type(self) -> type:
+        return str
+
     def process_bind_param(self, value: str | None, dialect) -> str | None:
         if value is None:
             return None
@@ -42,6 +46,33 @@ class EncryptedString(TypeDecorator):
         if value is None:
             return None
         return encr.decrypt(value)
+
+
+class EncryptedInteger(TypeDecorator):
+    """Stores base-64 ciphertext in a TEXT column;
+    Presents plain int values to the application."""
+
+    impl = String
+    cache_ok = True
+
+    @property
+    def python_type(self) -> type:
+        return int
+
+    def process_bind_param(self, value: int | None, dialect) -> str | None:
+        if value is None:
+            return None
+        return encr.encrypt(str(value))
+
+    def process_result_value(self, value: str | None, dialect) -> int | None:
+        if value is None:
+            return None
+        decrypted = encr.decrypt(value)
+        try:
+            return int(decrypted) if decrypted else None
+        except ValueError, TypeError:
+            logger.error(f"Could not convert decrypted value '{decrypted}' to int")
+            return None
 
 
 class Client(Base):
@@ -83,6 +114,21 @@ class Client(Base):
     )
     notes_encr: Mapped[str] = mapped_column(
         EncryptedString, doc="Verschlüsselte Notizen zum Klienten"
+    )
+    class_name_encr: Mapped[str | None] = mapped_column(
+        EncryptedString,
+        doc=(
+            "Verschlüsselter Klassenname des Klienten (einschließlich Buchstaben). "
+            "Muss eine Zahl für die Jahrgangsstufe enthalten, wenn ein "
+            ":attr:`document_shredding_date` berechnet werden soll."
+        ),
+    )
+    class_int_encr: Mapped[int | None] = mapped_column(
+        EncryptedInteger,
+        doc=(
+            "Verschlüsselte numerische Darstellung der Klasse des Klienten. "
+            "Diese Variable wird abgeleitet aus :attr:`class_name_encr`."
+        ),
     )
     keyword_taet_encr: Mapped[str] = mapped_column(
         EncryptedString,
@@ -127,27 +173,12 @@ class Client(Base):
     entry_date: Mapped[date | None] = mapped_column(
         Date, doc="Eintrittsdatum des Klienten in das System"
     )
-    class_name: Mapped[str | None] = mapped_column(
-        String,
-        doc=(
-            "Klassenname des Klienten (einschließlich Buchstaben). "
-            "Muss eine Zahl für die Jahrgangsstufe enthalten, wenn ein "
-            ":attr:`document_shredding_date` berechnet werden soll."
-        ),
-    )
-    class_int: Mapped[int | None] = mapped_column(
-        Integer,
-        doc=(
-            "Numerische Darstellung der Klasse des Klienten. "
-            "Diese Variable wird abgeleitet aus :attr:`class_name`."
-        ),
-    )
     estimated_graduation_date: Mapped[date | None] = mapped_column(
         Date,
         doc=(
             "Voraussichtliches Abschlussdatum des Klienten. "
             "Diese Variable wird abgeleitet aus der Variable `end` aus "
-            "der Konfigurationsdatei und der Variable `class_name`."
+            "der Konfigurationsdatei und der Variable `class_name_encr`."
         ),
     )
     document_shredding_date: Mapped[date | None] = mapped_column(
@@ -331,7 +362,7 @@ class Client(Base):
         self,
         school: str,
         gender_encr: str,
-        class_name: str,
+        class_name_encr: str,
         first_name_encr: str,
         last_name_encr: str,
         birthday_encr: date | str,
@@ -388,7 +419,7 @@ class Client(Base):
         self.notes_encr = notes_encr
         self.school = school
         self.entry_date = to_date_or_none(entry_date)
-        self.class_name = class_name
+        self.class_name_encr = class_name_encr
         self.lrst_diagnosis_encr = lrst_diagnosis_encr
         _lrst_date_dt = to_date_or_none(lrst_last_test_date_encr)
         self.lrst_last_test_date_encr = (
@@ -421,7 +452,7 @@ class Client(Base):
         self.case_active = to_bool_or_none(case_active) or False
 
         # Placeholder for derived fields and timestamps - will be handled by events
-        self.class_int = None
+        self.class_int_encr = None
         self.estimated_graduation_date = None
         self.document_shredding_date = None
         self.notenschutz = False
@@ -444,22 +475,22 @@ class Client(Base):
         """
         # Handle gender conversion (if not already done by __init__)
 
-        # Calculate class_int
-        if self.class_name:
+        # Calculate class_int_encr
+        if self.class_name_encr:
             try:
-                self.class_int = extract_number(self.class_name)
-            except TypeError:
-                self.class_int = None
+                self.class_int_encr = extract_number(self.class_name_encr)
+            except TypeError, ValueError:
+                self.class_int_encr = None
         else:
-            self.class_int = None
+            self.class_int_encr = None
 
         # Calculate estimated_graduation_date and document_shredding_date
         self.estimated_graduation_date = None
         self.document_shredding_date = None
-        if self.class_int is not None and self.school in config.school:
+        if self.class_int_encr is not None and self.school in config.school:
             try:
                 self.estimated_graduation_date = get_estimated_end_of_academic_year(
-                    grade_current=self.class_int,
+                    grade_current=self.class_int_encr,
                     grade_target=config.school[self.school].end,
                 )
                 if self.estimated_graduation_date:
@@ -583,12 +614,7 @@ class Client(Base):
         return to_date_or_none(value)
 
     def __repr__(self) -> str:
-        return (
-            f"<Client(id='{self.client_id}', "
-            f"sc='{self.school}', "
-            f"cl='{self.class_name}'"
-            f")>"
-        )
+        return f"<Client(id='{self.client_id}', sc='{self.school}')>"
 
 
 @event.listens_for(Client, "before_insert")

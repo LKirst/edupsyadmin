@@ -111,7 +111,7 @@ class TestMigrationEncryption:
             client = Client(
                 school="FirstSchool",
                 gender_encr="m",
-                class_name="1a",
+                class_name_encr="1a",
                 first_name_encr="OldName",
                 last_name_encr="OldSurname",
                 birthday_encr="2000-01-01",
@@ -147,7 +147,7 @@ class TestMigrationEncryption:
             client = Client(
                 school="FirstSchool",
                 gender_encr="f",
-                class_name="2b",
+                class_name_encr="2b",
                 first_name_encr="Alice",
                 last_name_encr="Wonderland",
                 birthday_encr="1995-05-05",
@@ -200,7 +200,7 @@ class TestMigrationEncryption:
             client = Client(
                 school="FirstSchool",
                 gender_encr="m",
-                class_name="1a",
+                class_name_encr="1a",
                 first_name_encr="Test",
                 last_name_encr="User",
                 birthday_encr="2000-01-01",
@@ -230,7 +230,7 @@ class TestMigrationEncryption:
             client = Client(
                 school="FirstSchool",
                 gender_encr="m",
-                class_name="1a",
+                class_name_encr="1a",
                 first_name_encr="Test",
                 last_name_encr="User",
                 birthday_encr="2000-01-01",

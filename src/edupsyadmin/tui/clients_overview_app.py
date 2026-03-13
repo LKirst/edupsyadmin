@@ -16,7 +16,9 @@ class ClientsOverviewApp(App):
         Binding("n", "sort_by_last_name", "Sortieren nach `last_name_encr`", show=True),
         Binding("s", "sort_by_school", "Sortieren nach `schule`", show=True),
         Binding("i", "sort_by_client_id", "Sortieren nach `client_id`", show=True),
-        Binding("c", "sort_by_class_name", "Sortieren nach `class_name`", show=True),
+        Binding(
+            "c", "sort_by_class_name", "Sortieren nach `class_name_encr`", show=True
+        ),
         Binding("ctrl+r", "reload", "Neu laden", show=True),
     ]
 
@@ -61,5 +63,5 @@ class ClientsOverviewApp(App):
         self.query_one(ClientsOverview).action_sort_by_school()
 
     def action_sort_by_class_name(self) -> None:
-        """Sort DataTable by class_name and last name"""
+        """Sort DataTable by class_name_encr and last name"""
         self.query_one(ClientsOverview).action_sort_by_class_name()

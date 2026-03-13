@@ -143,12 +143,12 @@ def _add_nta_schoolyear(data: ClientData) -> None:
     """Add NTA/NOS end schoolyear to data."""
     if (
         data.get("nta_nos_end")
-        and data.get("class_int")
+        and data.get("class_int_encr")
         and data.get("nta_nos_end_grade")
     ):
         data["nta_nos_end_schoolyear"] = get_academic_year_string(
             get_estimated_end_of_academic_year(
-                grade_current=cast(int, data["class_int"]),
+                grade_current=cast(int, data["class_int_encr"]),
                 grade_target=cast(int, data["nta_nos_end_grade"]),
             )
         )

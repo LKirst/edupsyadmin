@@ -66,7 +66,7 @@ def _enter_client_csv(
         column_mapping = {
             "gender": "gender_encr",
             "entryDate": "entry_date",
-            "klasse.name": "class_name",
+            "klasse.name": "class_name_encr",
             "foreName": "first_name_encr",
             "longName": "last_name_encr",
             "birthDate": "birthday_encr",

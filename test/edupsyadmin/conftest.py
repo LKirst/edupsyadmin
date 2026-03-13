@@ -7,6 +7,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import keyring
+import keyring.errors
 import pytest
 import yaml
 from cryptography.fernet import Fernet
@@ -138,9 +139,13 @@ def mock_config_snapshots(
     If I use the mock_config from above, shapshots are different on every
     machine because the pdf paths are absolute.
     """
-    template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
+    template_traversable = (
+        importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
+    )
     conf_path = tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml"
-    shutil.copy(template_path, conf_path)
+    with importlib.resources.as_file(template_traversable) as template_path:
+        shutil.copy(template_path, conf_path)
+
     config.load(conf_path)
 
     # set or override some config values
@@ -186,7 +191,7 @@ def client_dict_all_str() -> dict[str, str]:
         "school": "FirstSchool",
         "gender_encr": "m",
         "entry_date": "2021-06-30",
-        "class_name": "11TKKG",
+        "class_name_encr": "11TKKG",
         "first_name_encr": "John",
         "last_name_encr": "Doe",
         "birthday_encr": "1990-01-01",
@@ -211,7 +216,7 @@ def client_dict_all_str() -> dict[str, str]:
             "school": "FirstSchool",
             "gender_encr": "m",
             "entry_date": date(2021, 6, 30),
-            "class_name": "11TKKG",
+            "class_name_encr": "11TKKG",
             "first_name_encr": "John",
             "last_name_encr": "Doe",
             "birthday_encr": "1990-01-01",
@@ -233,7 +238,7 @@ def client_dict_all_str() -> dict[str, str]:
             "school": "SecondSchool",
             "gender_encr": "f",
             "entry_date": date(2021, 6, 30),
-            "class_name": "Ki12",
+            "class_name_encr": "Ki12",
             "first_name_encr": "Äöüß",
             "last_name_encr": "Müller",
             "birthday_encr": "1990-01-01",
@@ -266,8 +271,8 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
             "school": "FirstSchool",
             "gender_encr": "m",
             "entry_date": date(2021, 6, 30),
-            "class_name": "11TKKG",
-            "class_int": 11,
+            "class_name_encr": "11TKKG",
+            "class_int_encr": 11,
             "first_name_encr": "John",
             "last_name_encr": "Doe",
             "birthday_encr": "1990-01-01",
@@ -293,8 +298,8 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
             "school": "SecondSchool",
             "gender_encr": "f",
             "entry_date": date(2021, 6, 30),
-            "class_name": "Ki12",
-            "class_int": 12,
+            "class_name_encr": "Ki12",
+            "class_int_encr": 12,
             "first_name_encr": "Äöüß",
             "last_name_encr": "Müller",
             "birthday_encr": "1990-01-01",

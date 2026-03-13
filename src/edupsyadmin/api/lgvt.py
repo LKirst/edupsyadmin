@@ -131,7 +131,7 @@ def mk_report(
         + " "
         + client_dict.get("last_name_encr", "")
     )
-    schoolyear = int(cast(Any, client_dict.get("class_int", 0)))
+    schoolyear = int(cast(Any, client_dict.get("class_int_encr", 0)))
 
     results = get_indeces(fn_csv, name, schoolyear, t_day, version)
 

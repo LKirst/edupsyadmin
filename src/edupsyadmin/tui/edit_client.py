@@ -28,13 +28,13 @@ REQUIRED_FIELDS = [
     "last_name_encr",
     "school",
     "gender_encr",
-    "class_name",
+    "class_name_encr",
     "birthday_encr",
 ]
 
 # fields which depend on other fields and should not be set by the user
 HIDDEN_FIELDS = {
-    "class_int",
+    "class_int_encr",
     "estimated_graduation_date",
     "document_shredding_date",
     "datetime_created",

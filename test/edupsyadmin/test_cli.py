@@ -172,7 +172,7 @@ def test_get_clients_all(capsys, mock_config, mock_webuntis, tmp_path):
     clients_manager.add_client(
         school="FirstSchool",
         gender_encr="f",
-        class_name="11TKKG",
+        class_name_encr="11TKKG",
         first_name_encr="Erika",
         last_name_encr="Mustermann",
         birthday_encr="2000-12-24",
@@ -206,7 +206,7 @@ def test_get_clients_single(capsys, mock_config, mock_webuntis, tmp_path):
     clients_manager.add_client(
         school="FirstSchool",
         gender_encr="f",
-        class_name="11TKKG",
+        class_name_encr="11TKKG",
         first_name_encr="Erika",
         last_name_encr="Mustermann",
         birthday_encr="2000-12-24",
@@ -214,7 +214,7 @@ def test_get_clients_single(capsys, mock_config, mock_webuntis, tmp_path):
     clients_manager.add_client(
         school="FirstSchool",
         gender_encr="m",
-        class_name="11TKKG",
+        class_name_encr="11TKKG",
         first_name_encr="Max",
         last_name_encr="Mustermann",
         birthday_encr="2000-01-01",
@@ -249,7 +249,7 @@ def test_set_client(capsys, mock_config, mock_webuntis, tmp_path):
     clients_manager.add_client(
         school="FirstSchool",
         gender_encr="f",
-        class_name="11TKKG",
+        class_name_encr="11TKKG",
         first_name_encr="Erika",
         last_name_encr="Mustermann",
         birthday_encr="2000-12-24",
@@ -259,14 +259,14 @@ def test_set_client(capsys, mock_config, mock_webuntis, tmp_path):
     args = argparse.Namespace(
         database_url=database_url,
         client_id=[1],
-        key_value_pairs=["street_encr=Veränderte Straße 5", "class_name=42ab"],
+        key_value_pairs=["street_encr=Veränderte Straße 5", "class_name_encr=42ab"],
     )
     set_client_command.execute(args)
 
     # Assert
     client = clients_manager.get_decrypted_client(client_id=1)
     assert client["street_encr"] == "Veränderte Straße 5"
-    assert client["class_name"] == "42ab"
+    assert client["class_name_encr"] == "42ab"
 
 
 # TODO: test inject_data
@@ -285,7 +285,7 @@ def test_create_documentation(
     client_id = clients_manager.add_client(
         school="FirstSchool",
         gender_encr="f",
-        class_name="11TKKG",
+        class_name_encr="11TKKG",
         first_name_encr="Erika",
         last_name_encr="Mustermann",
         birthday_encr="2000-12-24",
@@ -322,7 +322,7 @@ def test_delete_client(mock_config, tmp_path):
     client_id = clients_manager.add_client(
         school="FirstSchool",
         gender_encr="f",
-        class_name="11TKKG",
+        class_name_encr="11TKKG",
         first_name_encr="Erika",
         last_name_encr="Mustermann",
         birthday_encr="2000-12-24",
@@ -431,7 +431,7 @@ class TestRotateKey:
         client_id = clients_manager.add_client(
             school="FirstSchool",
             gender_encr="f",
-            class_name="11TKKG",
+            class_name_encr="11TKKG",
             first_name_encr="RotateMe",
             last_name_encr="Now",
             birthday_encr="2000-01-01",

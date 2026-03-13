@@ -18,7 +18,7 @@ COLUMNS = [
     "school",
     "first_name_encr",
     "last_name_encr",
-    "class_name",
+    "class_name_encr",
     "notenschutz",
     "nachteilsausgleich",
     "lrst_diagnosis",
