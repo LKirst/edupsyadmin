@@ -30,11 +30,11 @@ def display_client_details(client_data: ClientData) -> None:
         "birthday_encr",
         "school",
         "class_name_encr",
-        "entry_date",
+        "entry_date_encr",
         "keyword_taet_encr",
         "min_sessions",
         "n_sessions",
-        "estimated_graduation_date",
+        "estimated_graduation_date_encr",
     ]
     print_group_table(client_data, "Person", person_fields)
 
@@ -95,7 +95,7 @@ def display_client_details(client_data: ClientData) -> None:
 
     # Dates
     dates_fields = [
-        "document_shredding_date",
+        "document_shredding_date_encr",
         "datetime_created",
         "datetime_lastmodified",
     ]

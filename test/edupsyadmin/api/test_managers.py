@@ -21,11 +21,11 @@ EXPECTED_KEYS = {
     "notes_encr",
     "client_id",
     "school",
-    "entry_date",
+    "entry_date_encr",
     "class_name_encr",
     "class_int_encr",
-    "estimated_graduation_date",
-    "document_shredding_date",
+    "estimated_graduation_date_encr",
+    "document_shredding_date_encr",
     "keyword_taet_encr",
     "lrst_diagnosis_encr",
     "lrst_last_test_date_encr",
@@ -72,7 +72,7 @@ class TestManagers:
             "client_id": 99,
             "school": "FirstSchool",
             "gender_encr": "f",
-            "entry_date": date(2021, 6, 30),
+            "entry_date_encr": date(2021, 6, 30),
             "class_name_encr": "7TKKG",
             "first_name_encr": "Lieschen",
             "last_name_encr": "Müller",
@@ -86,7 +86,7 @@ class TestManagers:
             "client_id": "98",
             "school": "FirstSchool",
             "gender_encr": "f",
-            "entry_date": date(2021, 6, 30),
+            "entry_date_encr": date(2021, 6, 30),
             "class_name_encr": "7TKKG",
             "first_name_encr": "Lieschen",
             "last_name_encr": "Müller",
@@ -127,7 +127,7 @@ class TestManagers:
         another_client_dict = {
             "school": "SecondSchool",
             "gender_encr": "m",
-            "entry_date": date(2020, 12, 24),
+            "entry_date_encr": date(2020, 12, 24),
             "class_name_encr": "5a",
             "first_name_encr": "Aam",
             "last_name_encr": "Admi",
@@ -496,29 +496,31 @@ class TestClientValidation:
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
         # Valid date string
-        clients_manager.edit_client([client_id], {"entry_date": "2022-01-01"})
+        clients_manager.edit_client([client_id], {"entry_date_encr": "2022-01-01"})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["entry_date"] == date(2022, 1, 1)
+        assert client["entry_date_encr"] == date(2022, 1, 1)
 
         # None
-        clients_manager.edit_client([client_id], {"entry_date": None})
+        clients_manager.edit_client([client_id], {"entry_date_encr": None})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["entry_date"] is None
+        assert client["entry_date_encr"] is None
 
         # date object
         test_date = date(2022, 2, 1)
-        clients_manager.edit_client([client_id], {"entry_date": test_date})
+        clients_manager.edit_client([client_id], {"entry_date_encr": test_date})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["entry_date"] == test_date
+        assert client["entry_date_encr"] == test_date
 
         # Empty string
-        clients_manager.edit_client([client_id], {"entry_date": ""})
+        clients_manager.edit_client([client_id], {"entry_date_encr": ""})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["entry_date"] is None
+        assert client["entry_date_encr"] is None
 
         # Invalid date string
         with pytest.raises(ValueError):
-            clients_manager.edit_client([client_id], {"entry_date": "invalid-date"})
+            clients_manager.edit_client(
+                [client_id], {"entry_date_encr": "invalid-date"}
+            )
 
     def test_validate_keyword_taet_encr(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
@@ -591,8 +593,8 @@ class TestClientValidation:
         client_id = clients_manager.add_client(**client_data)
         client = clients_manager.get_decrypted_client(client_id)
         assert client["class_int_encr"] == 10
-        assert client["estimated_graduation_date"] is not None
-        assert client["document_shredding_date"] is not None
+        assert client["estimated_graduation_date_encr"] is not None
+        assert client["document_shredding_date_encr"] is not None
 
         # Test with no number in class_name_encr
         # FIXME: Raise an error because it containes no integer
@@ -601,8 +603,8 @@ class TestClientValidation:
         client_id_2 = clients_manager.add_client(**client_data)
         client2 = clients_manager.get_decrypted_client(client_id_2)
         assert client2["class_int_encr"] is None
-        assert client2["estimated_graduation_date"] is None
-        assert client2["document_shredding_date"] is None
+        assert client2["estimated_graduation_date_encr"] is None
+        assert client2["document_shredding_date_encr"] is None
 
 
 # Make the script executable.

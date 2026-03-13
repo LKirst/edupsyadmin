@@ -21,11 +21,11 @@ class ClientData(TypedDict, total=False):
     lrst_last_test_date_encr: Required[str]
     lrst_last_test_by_encr: Required[str]
     school: Required[str]
-    entry_date: Required[date | None]
+    entry_date_encr: Required[date | None]
     class_name_encr: Required[str | None]
     class_int_encr: Required[int | None]
-    estimated_graduation_date: Required[date | None]
-    document_shredding_date: Required[date | None]
+    estimated_graduation_date_encr: Required[date | None]
+    document_shredding_date_encr: Required[date | None]
     datetime_created: Required[datetime]
     datetime_lastmodified: Required[datetime]
     notenschutz: Required[bool]
@@ -71,9 +71,10 @@ class ClientData(TypedDict, total=False):
     school_addr_s_wname: str
     lrst_diagnosis_long: str
     today_date: date
-    birthday_encr_de: str
+    birthday_de: str
     today_date_de: str
-    lrst_last_test_date_encr_de: str
+    entry_date_de: str
+    lrst_last_test_date_de: str
     document_shredding_date_de: str
     school_year: str
     nta_nos_end_schoolyear: str

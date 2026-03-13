@@ -85,16 +85,16 @@ def test_add_convenience_data(mock_get_subjects, mock_config, client_dict_intern
     )
 
     # Check dates
-    dates = [
-        "birthday_encr",
-        "today_date",
-        "lrst_last_test_date_encr",
-        "document_shredding_date",
+    expected_dates = [
+        "birthday_de",
+        "today_date_de",
+        "lrst_last_test_date_de",
+        "document_shredding_date_de",
     ]
     from typing import cast
 
-    for d in dates:
-        assert _is_valid_german_date(cast(dict, result)[d + "_de"])
+    for d in expected_dates:
+        assert _is_valid_german_date(cast(dict, result)[d])
 
     # Verify that the school subjects were fetched
     mock_get_subjects.assert_called_once_with(client_dict_internal["school"])

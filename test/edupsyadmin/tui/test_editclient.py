@@ -79,7 +79,7 @@ async def test_type_date(mock_config):
 
     async with app.run_test(size=TERMINAL_SIZE) as pilot:
         await pilot.pause()
-        wid = "#entry_date"
+        wid = "#entry_date_encr"
         input_widget = pilot.app.query_one(wid, Input)
         input_widget.focus()
         await pilot.press(*"2025-01-01")

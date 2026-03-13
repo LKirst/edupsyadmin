@@ -2,7 +2,6 @@ from datetime import date, datetime
 
 from sqlalchemy import (
     Boolean,
-    Date,
     DateTime,
     Integer,
     String,
@@ -75,6 +74,35 @@ class EncryptedInteger(TypeDecorator):
             return None
 
 
+class EncryptedDate(TypeDecorator):
+    """Stores base-64 ciphertext in a TEXT column;
+    Presents plain date objects to the application."""
+
+    impl = String
+    cache_ok = True
+
+    @property
+    def python_type(self) -> type:
+        return date
+
+    def process_bind_param(self, value: date | None, dialect) -> str | None:
+        if value is None:
+            return None
+        return encr.encrypt(value.isoformat())
+
+    def process_result_value(self, value: str | None, dialect) -> date | None:
+        if value is None:
+            return None
+        decrypted = encr.decrypt(value)
+        if not decrypted:
+            return None
+        try:
+            return datetime.strptime(decrypted, "%Y-%m-%d").date()
+        except ValueError, TypeError:
+            logger.error(f"Could not convert decrypted value '{decrypted}' to date")
+            return None
+
+
 class Client(Base):
     __tablename__ = "clients"
 
@@ -120,7 +148,7 @@ class Client(Base):
         doc=(
             "Verschlüsselter Klassenname des Klienten (einschließlich Buchstaben). "
             "Muss eine Zahl für die Jahrgangsstufe enthalten, wenn ein "
-            ":attr:`document_shredding_date` berechnet werden soll."
+            ":attr:`document_shredding_date_encr` berechnet werden soll."
         ),
     )
     class_int_encr: Mapped[int | None] = mapped_column(
@@ -170,23 +198,23 @@ class Client(Base):
             "(Kurzname wie in der Konfiguration festgelegt)"
         ),
     )
-    entry_date: Mapped[date | None] = mapped_column(
-        Date, doc="Eintrittsdatum des Klienten in das System"
+    entry_date_encr: Mapped[date | None] = mapped_column(
+        EncryptedDate, doc="Verschlüsseltes Eintrittsdatum des Klienten in das System"
     )
-    estimated_graduation_date: Mapped[date | None] = mapped_column(
-        Date,
+    estimated_graduation_date_encr: Mapped[date | None] = mapped_column(
+        EncryptedDate,
         doc=(
             "Voraussichtliches Abschlussdatum des Klienten. "
             "Diese Variable wird abgeleitet aus der Variable `end` aus "
             "der Konfigurationsdatei und der Variable `class_name_encr`."
         ),
     )
-    document_shredding_date: Mapped[date | None] = mapped_column(
-        Date,
+    document_shredding_date_encr: Mapped[date | None] = mapped_column(
+        EncryptedDate,
         doc=(
             "Datum für die Dokumentenvernichtung im Zusammenhang mit dem Klienten."
             "Diese Variable wird abgeleitet aus der Variable "
-            ":attr:`estimated_graduation_date`."
+            ":attr:`estimated_graduation_date_encr`."
         ),
     )
     datetime_created: Mapped[datetime] = mapped_column(
@@ -374,7 +402,7 @@ class Client(Base):
         telephone2_encr: str = "",
         email_encr: str = "",
         notes_encr: str = "",
-        entry_date: date | str | None = None,
+        entry_date_encr: date | str | None = None,
         nos_rs: bool | str | int | None = None,
         nos_rs_ausn_faecher: str | None = None,
         nos_les: bool | str | int | None = None,
@@ -418,7 +446,7 @@ class Client(Base):
         self.email_encr = email_encr
         self.notes_encr = notes_encr
         self.school = school
-        self.entry_date = to_date_or_none(entry_date)
+        self.entry_date_encr = to_date_or_none(entry_date_encr)
         self.class_name_encr = class_name_encr
         self.lrst_diagnosis_encr = lrst_diagnosis_encr
         _lrst_date_dt = to_date_or_none(lrst_last_test_date_encr)
@@ -453,8 +481,8 @@ class Client(Base):
 
         # Placeholder for derived fields and timestamps - will be handled by events
         self.class_int_encr = None
-        self.estimated_graduation_date = None
-        self.document_shredding_date = None
+        self.estimated_graduation_date_encr = None
+        self.document_shredding_date_encr = None
         self.notenschutz = False
         self.nos_rs_ausn = False
         self.nos_other = False
@@ -484,23 +512,25 @@ class Client(Base):
         else:
             self.class_int_encr = None
 
-        # Calculate estimated_graduation_date and document_shredding_date
-        self.estimated_graduation_date = None
-        self.document_shredding_date = None
+        # Calculate estimated_graduation_date_encr and document_shredding_date_encr
+        self.estimated_graduation_date_encr = None
+        self.document_shredding_date_encr = None
         if self.class_int_encr is not None and self.school in config.school:
             try:
-                self.estimated_graduation_date = get_estimated_end_of_academic_year(
-                    grade_current=self.class_int_encr,
-                    grade_target=config.school[self.school].end,
+                self.estimated_graduation_date_encr = (
+                    get_estimated_end_of_academic_year(
+                        grade_current=self.class_int_encr,
+                        grade_target=config.school[self.school].end,
+                    )
                 )
-                if self.estimated_graduation_date:
-                    self.document_shredding_date = get_date_destroy_records(
-                        self.estimated_graduation_date
+                if self.estimated_graduation_date_encr:
+                    self.document_shredding_date_encr = get_date_destroy_records(
+                        self.estimated_graduation_date_encr
                     )
             except Exception as e:
                 logger.warning(
-                    f"Could not calculate estimated_graduation_date or "
-                    f"document_shredding_date for client {self.client_id}: {e}"
+                    f"Could not calculate estimated_graduation_date_encr or "
+                    f"document_shredding_date_encr for client {self.client_id}: {e}"
                 )
 
         # Notenschutz flags
@@ -609,8 +639,10 @@ class Client(Base):
         dt = to_date_or_none(value)
         return dt.isoformat() if dt else ""
 
-    @validates("entry_date")
-    def validate_entry_date(self, key: str, value: str | date | None) -> date | None:
+    @validates("entry_date_encr")
+    def validate_entry_date_encr(
+        self, key: str, value: str | date | None
+    ) -> date | None:
         return to_date_or_none(value)
 
     def __repr__(self) -> str:

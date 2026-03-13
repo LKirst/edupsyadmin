@@ -65,7 +65,7 @@ def _enter_client_csv(
         separator = "\t"
         column_mapping = {
             "gender": "gender_encr",
-            "entryDate": "entry_date",
+            "entryDate": "entry_date_encr",
             "klasse.name": "class_name_encr",
             "foreName": "first_name_encr",
             "longName": "last_name_encr",
@@ -117,7 +117,7 @@ def _enter_client_csv(
         )
 
     # Handle date formatting
-    for date_col in ["entry_date", "birthday_encr"]:
+    for date_col in ["entry_date_encr", "birthday_encr"]:
         if date_col in client_data and isinstance(client_data[date_col], str):
             try:
                 client_data[date_col] = datetime.strptime(

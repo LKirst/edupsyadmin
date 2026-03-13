@@ -35,8 +35,8 @@ REQUIRED_FIELDS = [
 # fields which depend on other fields and should not be set by the user
 HIDDEN_FIELDS = {
     "class_int_encr",
-    "estimated_graduation_date",
-    "document_shredding_date",
+    "estimated_graduation_date_encr",
+    "document_shredding_date_encr",
     "datetime_created",
     "datetime_lastmodified",
     "notenschutz",

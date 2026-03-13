@@ -38,7 +38,7 @@ csv_import:
     separator: "\t"
     column_mapping:
       "gender": "gender_encr"
-      "entryDate": "entry_date"
+      "entryDate": "entry_date_encr"
       "klasse.name": "class_name_encr"
       "foreName": "first_name_encr"
       "longName": "last_name_encr"

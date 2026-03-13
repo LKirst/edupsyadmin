@@ -121,5 +121,5 @@ async def test_fill_form_worker_uses_convenience_data(
     # Verify that the data passed to fill_form was the processed data
     assert actual_data_passed == expected_data
     assert (
-        "birthday_encr_de" in actual_data_passed
+        "birthday_de" in actual_data_passed
     )  # Check for a field added by convenience func

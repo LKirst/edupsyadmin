@@ -127,11 +127,13 @@ def _add_dates(data: ClientData) -> None:
     """Add various formatted dates to data."""
     data["today_date"] = date.today()
     dates_to_convert: list[tuple[str, str]] = [
-        ("birthday_encr", "birthday_encr_de"),
+        ("birthday_encr", "birthday_de"),
         ("today_date", "today_date_de"),
-        ("lrst_last_test_date_encr", "lrst_last_test_date_encr_de"),
-        ("document_shredding_date", "document_shredding_date_de"),
+        ("entry_date_encr", "entry_date_de"),
+        ("lrst_last_test_date_encr", "lrst_last_test_date_de"),
+        ("document_shredding_date_encr", "document_shredding_date_de"),
     ]
+
     for idate, gdate in dates_to_convert:
         # TypedDict doesn't support dynamic key access with variables
         cast(Any, data)[gdate] = _date_to_german_string(data.get(cast(Any, idate)))
@@ -211,9 +213,10 @@ def add_convenience_data(data: ClientData) -> ClientData:
         - **school_addr_s_wname**: Adresse der Schule,
         - **school_addr_m_wname**: Adresse der Schule mit Zeilenumbrüchen,
         - **lrst_diagnosis_long**: Ausgeschriebene LRSt-Diagnose,
-        - **lrst_last_test_de**: Datum des letzten Tests, im Format DD.MM.YYYY,
+        - **lrst_last_test_date_de**: Datum des letzten Tests, im Format DD.MM.YYYY,
         - **today_date_de**: Heutiges Datum, im Format DD.MM.YYYY,
-        - **birthday_encr_de**: Geburtsdatum des Schülers im Format DD.MM.YYYY,
+        - **entry_date_de**: Eintrittsdatum im Format DD.MM.YYYY,
+        - **birthday_de**: Geburtsdatum des Schülers im Format DD.MM.YYYY,
         - **document_shredding_date_de**: Datum für Aktenvernichtung im Format
           DD.MM.YYYY,
         - **nta_nos_end_schoolyear**: Schuljahr bis zu dem NTA und Notenschutz
