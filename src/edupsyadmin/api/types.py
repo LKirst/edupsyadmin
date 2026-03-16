@@ -8,7 +8,7 @@ class ClientData(TypedDict, total=False):
     first_name_encr: Required[str]
     last_name_encr: Required[str]
     gender_encr: Required[str]
-    birthday_encr: Required[str]
+    birthday_encr: Required[date]
     street_encr: Required[str]
     city_encr: Required[str]
     parent_encr: Required[str]

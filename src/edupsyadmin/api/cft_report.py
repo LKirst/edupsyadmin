@@ -38,8 +38,10 @@ def create_report(
     client_dict: ClientData = clients_manager.get_decrypted_client(client_id)
 
     testdate = datetime.strptime(test_date, "%Y-%m-%d").date()
-    birthday_str = client_dict.get("birthday_encr", "")
-    birthday = datetime.strptime(birthday_str, "%Y-%m-%d").date()
+    birthday = client_dict.get("birthday_encr")
+
+    if birthday is None:
+        raise ValueError(f"No birthday found for client {client_id}")
 
     age_str = f"Alter: {mydatediff(birthday, testdate)}"
     text = []

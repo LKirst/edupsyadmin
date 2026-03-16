@@ -76,7 +76,7 @@ class TestManagers:
             "class_name_encr": "7TKKG",
             "first_name_encr": "Lieschen",
             "last_name_encr": "Müller",
-            "birthday_encr": "1990-01-01",
+            "birthday_encr": date(1990, 1, 1),
         }
         client_id = clients_manager.add_client(**client_dict_with_id)
         assert client_id == 99
@@ -90,7 +90,7 @@ class TestManagers:
             "class_name_encr": "7TKKG",
             "first_name_encr": "Lieschen",
             "last_name_encr": "Müller",
-            "birthday_encr": "1990-01-01",
+            "birthday_encr": date(1990, 1, 1),
         }
         client_id = clients_manager.add_client(**client_dict_with_id)
         assert client_id == 98
@@ -131,7 +131,7 @@ class TestManagers:
             "class_name_encr": "5a",
             "first_name_encr": "Aam",
             "last_name_encr": "Admi",
-            "birthday_encr": "1992-01-01",
+            "birthday_encr": date(1992, 1, 1),
             "street_encr": "Platzhalterplatz 1",
             "city_encr": "87534 Oberstaufen",
             "telephone1_encr": "0000 0000",
@@ -478,13 +478,13 @@ class TestClientValidation:
         # Valid date string
         clients_manager.edit_client([client_id], {"birthday_encr": "2000-01-01"})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["birthday_encr"] == "2000-01-01"
+        assert client["birthday_encr"] == date(2000, 1, 1)
 
         # date object
         test_date = date(2001, 2, 3)
         clients_manager.edit_client([client_id], {"birthday_encr": test_date})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["birthday_encr"] == "2001-02-03"
+        assert client["birthday_encr"] == test_date
 
         # Invalid date string
         with pytest.raises(

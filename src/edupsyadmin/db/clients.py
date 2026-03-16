@@ -37,9 +37,7 @@ class EncryptedString(TypeDecorator):
         return str
 
     def process_bind_param(self, value: str | None, dialect) -> str | None:
-        if value is None:
-            return None
-        return encr.encrypt(value)
+        return encr.encrypt(value or "")
 
     def process_result_value(self, value: str | None, dialect) -> str | None:
         if value is None:
@@ -60,7 +58,7 @@ class EncryptedInteger(TypeDecorator):
 
     def process_bind_param(self, value: int | None, dialect) -> str | None:
         if value is None:
-            return None
+            return encr.encrypt("")
         return encr.encrypt(str(value))
 
     def process_result_value(self, value: str | None, dialect) -> int | None:
@@ -87,7 +85,7 @@ class EncryptedDate(TypeDecorator):
 
     def process_bind_param(self, value: date | None, dialect) -> str | None:
         if value is None:
-            return None
+            return encr.encrypt("")
         return encr.encrypt(value.isoformat())
 
     def process_result_value(self, value: str | None, dialect) -> date | None:
@@ -118,8 +116,8 @@ class Client(Base):
     gender_encr: Mapped[str] = mapped_column(
         EncryptedString, doc="Verschlüsseltes Geschlecht des Klienten (m/f/x)"
     )
-    birthday_encr: Mapped[str] = mapped_column(
-        EncryptedString, doc="Verschlüsseltes Geburtsdatum des Klienten (JJJJ-MM-TT)"
+    birthday_encr: Mapped[date] = mapped_column(
+        EncryptedDate, doc="Verschlüsseltes Geburtsdatum des Klienten (JJJJ-MM-TT)"
     )
     street_encr: Mapped[str] = mapped_column(
         EncryptedString, doc="Verschlüsselte Straßenadresse und Hausnummer des Klienten"
@@ -436,8 +434,10 @@ class Client(Base):
             if gender_encr not in ["w", "d"]
             else ("f" if gender_encr == "w" else "x")
         )
-        _birthday_dt = to_date_or_none(birthday_encr)
-        self.birthday_encr = _birthday_dt.isoformat() if _birthday_dt else ""
+        dt_birthday = to_date_or_none(birthday_encr)
+        if dt_birthday is None:
+            raise ValueError("Das Geburtsdatum ist ein Pflichtfeld.")
+        self.birthday_encr = dt_birthday
         self.street_encr = street_encr
         self.city_encr = city_encr
         self.parent_encr = parent_encr
@@ -635,12 +635,18 @@ class Client(Base):
         return value
 
     @validates("birthday_encr")
-    def validate_birthday(self, key: str, value: str | date | None) -> str:
+    def validate_birthday(self, key: str, value: str | date | None) -> date:
         dt = to_date_or_none(value)
-        return dt.isoformat() if dt else ""
+        if dt is None:
+            raise ValueError("Das Geburtsdatum ist ein Pflichtfeld.")
+        return dt
 
-    @validates("entry_date_encr")
-    def validate_entry_date_encr(
+    @validates(
+        "entry_date_encr",
+        "estimated_graduation_date_encr",
+        "document_shredding_date_encr",
+    )
+    def validate_optional_dates(
         self, key: str, value: str | date | None
     ) -> date | None:
         return to_date_or_none(value)

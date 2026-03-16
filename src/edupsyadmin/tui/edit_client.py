@@ -48,7 +48,13 @@ HIDDEN_FIELDS = {
     "nta_nos_end",
 }
 
-DATE_FIELDS = {"birthday_encr", "lrst_last_test_date_encr"}
+DATE_FIELDS = {
+    "birthday_encr",
+    "entry_date_encr",
+    "lrst_last_test_date_encr",
+    "estimated_graduation_date_encr",
+    "document_shredding_date_encr",
+}
 ADDRESS_FIELDS = [
     "street_encr",
     "city_encr",
