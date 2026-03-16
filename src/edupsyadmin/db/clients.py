@@ -143,6 +143,7 @@ class Client(Base):
     )
     class_name_encr: Mapped[str | None] = mapped_column(
         EncryptedString,
+        nullable=False,
         doc=(
             "Verschlüsselter Klassenname des Klienten (einschließlich Buchstaben). "
             "Muss eine Zahl für die Jahrgangsstufe enthalten, wenn ein "
@@ -151,6 +152,7 @@ class Client(Base):
     )
     class_int_encr: Mapped[int | None] = mapped_column(
         EncryptedInteger,
+        nullable=False,
         doc=(
             "Verschlüsselte numerische Darstellung der Klasse des Klienten. "
             "Diese Variable wird abgeleitet aus :attr:`class_name_encr`."
@@ -197,10 +199,13 @@ class Client(Base):
         ),
     )
     entry_date_encr: Mapped[date | None] = mapped_column(
-        EncryptedDate, doc="Verschlüsseltes Eintrittsdatum des Klienten in das System"
+        EncryptedDate,
+        nullable=False,
+        doc="Verschlüsseltes Eintrittsdatum des Klienten in das System",
     )
     estimated_graduation_date_encr: Mapped[date | None] = mapped_column(
         EncryptedDate,
+        nullable=False,
         doc=(
             "Voraussichtliches Abschlussdatum des Klienten. "
             "Diese Variable wird abgeleitet aus der Variable `end` aus "
@@ -209,6 +214,7 @@ class Client(Base):
     )
     document_shredding_date_encr: Mapped[date | None] = mapped_column(
         EncryptedDate,
+        nullable=False,
         doc=(
             "Datum für die Dokumentenvernichtung im Zusammenhang mit dem Klienten."
             "Diese Variable wird abgeleitet aus der Variable "

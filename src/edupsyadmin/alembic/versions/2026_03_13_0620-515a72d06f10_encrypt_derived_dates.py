@@ -49,21 +49,21 @@ def upgrade() -> None:
             sa.Column(
                 "entry_date_encr",
                 edupsyadmin.db.clients.EncryptedDate(),
-                nullable=True,
+                nullable=False,
             )
         )
         batch_op.add_column(
             sa.Column(
                 "estimated_graduation_date_encr",
                 edupsyadmin.db.clients.EncryptedDate(),
-                nullable=True,
+                nullable=False,
             )
         )
         batch_op.add_column(
             sa.Column(
                 "document_shredding_date_encr",
                 edupsyadmin.db.clients.EncryptedDate(),
-                nullable=True,
+                nullable=False,
             )
         )
         batch_op.drop_column("entry_date")
@@ -80,15 +80,9 @@ def upgrade() -> None:
     )
 
     for client_id, entry_date, grad_date, shred_date in results:
-        encrypted_entry = (
-            encr.encrypt(entry_date.isoformat()) if entry_date is not None else None
-        )
-        encrypted_grad = (
-            encr.encrypt(grad_date.isoformat()) if grad_date is not None else None
-        )
-        encrypted_shred = (
-            encr.encrypt(shred_date.isoformat()) if shred_date is not None else None
-        )
+        encrypted_entry = encr.encrypt(entry_date.isoformat() if entry_date else "")
+        encrypted_grad = encr.encrypt(grad_date.isoformat() if grad_date else "")
+        encrypted_shred = encr.encrypt(shred_date.isoformat() if shred_date else "")
 
         connection.execute(
             new_clients_table.update()
