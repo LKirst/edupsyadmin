@@ -17,12 +17,10 @@ Update
     die neue Version geändert hat. Das kannst du auf `PYPI
     <https://pypi.org/project/edupsyadmin/#history>`_ prüfen.
 
-Um keine Dateien zu überschreiben, erstellt edupsyadmin für jede Version
-einen eigenen Unterordner für Kofigurationsdatei, Datenbank und Salt (eine
-Datei, die für die Verschlüsselung verwendet wird). Die Datenbank für die
-ältere Version der App wird nicht automatisch gelöscht oder überschrieben.
-Die Datenbank, die mit der alten Version erstellt wurde bleibt als Backup
-bestehen.
+Um keine Dateien zu überschreiben, erstellt edupsyadmin für jede Version einen
+eigenen Unterordner für Kofigurationsdatei und Datenbank. Die Datenbank für die
+ältere Version der App wird nicht automatisch gelöscht oder überschrieben. Die
+Datenbank, die mit der alten Version erstellt wurde bleibt als Backup bestehen.
 
 .. warning::
 
@@ -40,8 +38,8 @@ Installation hat und wo deine Dateien (d.h. nach dem Update das Backup) liegen:
    $ edupsyadmin info
 
 Falls du die Daten migrieren willst, notiere dir den Text der ausgegeben wird
-mit ``edupsyadmin version``, ``database_url``, ``config_path`` und
-``salt_path``. Auch wenn du die Daten nicht migrieren willst, solltest du dir
+mit ``edupsyadmin version``, ``database_url`` und ``config_path``.
+Auch wenn du die Daten nicht migrieren willst, solltest du dir
 die ``database_url`` notieren, damit du das Backup später findest, wenn du es
 löschen willst.
 
@@ -89,8 +87,6 @@ Verschieben der Dateien
 -----------------------
 
 Mit ``edupsyadmin info`` kannst du nach Aktualisierung der App überprüfen, wo
-Konfigurationsdatei, Datenbank und Salt für die neue Version liegen (sollten).
+Konfigurationsdatei und Datenbank für die neue Version liegen (sollten).
 Wenn du die Konfigurationsdatei wiederverwenden willst, kannst du sie vom
-alten Pfad an den neuen kopieren. Dasselbe kannst du auch für Datenbank und
-Salt tun (aber nur in Kombination, da die Verschlüsselung der Datenbank nur mit
-Salt entschlüsselt werden kann).
+alten Pfad an den neuen kopieren. Dasselbe kannst du auch für die Datenbank tun.
