@@ -68,7 +68,7 @@ def check_key_validity(key: bytes | None) -> bool:
     try:
         Fernet(key)
         return True
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return False
 
 
@@ -92,7 +92,7 @@ def _get_legacy_keys(uid: str, username: str) -> list[bytes]:
         key_list_str = json.loads(key_data)
         if isinstance(key_list_str, list):
             return [k.encode("utf-8") for k in key_list_str]
-    except (json.JSONDecodeError, AttributeError):
+    except json.JSONDecodeError, AttributeError:
         # Fallback for old format: single base64-encoded key
         logger.debug(
             "Could not decode as JSON, falling back to legacy single-key format."
@@ -180,7 +180,6 @@ def set_keys_in_keyring(uid: str, username: str, keys: list[bytes]) -> None:
 
 def load_or_create_salt(salt_path: Path) -> bytes:
     """Loads a salt from a file or creates a new one if it doesn't exist."""
-    # TODO: store the salt in the db, not in a separate file
     if salt_path.is_file():
         logger.debug(f"Using existing salt from `{salt_path}`")
         return salt_path.read_bytes()
@@ -190,6 +189,27 @@ def load_or_create_salt(salt_path: Path) -> bytes:
     salt_path.touch(mode=0o600)
     salt_path.write_bytes(salt)
     return salt
+
+
+def get_salt_from_db(database_url: str) -> bytes:
+    """Fetches the salt from the database metadata table."""
+    from sqlalchemy import create_engine, text
+
+    engine = create_engine(database_url)
+    with engine.connect() as conn:
+        try:
+            result = conn.execute(
+                text("SELECT value FROM system_metadata WHERE key = 'salt'")
+            ).fetchone()
+            if result:
+                return bytes.fromhex(result[0])
+        except Exception as e:
+            logger.error(f"Error fetching salt from DB: {e}")
+
+    raise RuntimeError(
+        "Salt not found in database. Has the database been initialized? "
+        "Try running any command that accesses the database first."
+    )
 
 
 # global encryption instance

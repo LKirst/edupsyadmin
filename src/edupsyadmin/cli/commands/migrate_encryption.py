@@ -42,7 +42,7 @@ def execute(args: Namespace) -> None:
         OLD_KDF_ITERATIONS,
         derive_key_from_password,
         get_keys_from_keyring,
-        load_or_create_salt,
+        get_salt_from_db,
     )
 
     logger.warning(
@@ -63,7 +63,7 @@ def execute(args: Namespace) -> None:
         sys.exit(1)
 
     # Derive old key
-    salt = load_or_create_salt(args.salt_path)
+    salt = get_salt_from_db(args.database_url)
     old_key = derive_key_from_password(old_password, salt, OLD_KDF_ITERATIONS)
 
     del old_password  # clear the reference

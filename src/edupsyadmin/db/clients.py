@@ -101,6 +101,14 @@ class EncryptedDate(TypeDecorator):
             return None
 
 
+class SystemMetadata(Base):
+    """Stores unencrypted system-wide settings like the encryption salt."""
+
+    __tablename__ = "system_metadata"
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    value: Mapped[str] = mapped_column(String)
+
+
 class Client(Base):
     __tablename__ = "clients"
 

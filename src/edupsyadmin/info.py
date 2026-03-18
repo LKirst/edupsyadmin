@@ -35,7 +35,17 @@ def info(
     table.add_row("Database URL", database_url)
     table.add_row("Config Path", str(config_path))
     table.add_row("Keyring Backend", str(get_keyring()))
-    table.add_row("Salt Path", str(salt_path))
+
+    try:
+        from edupsyadmin.core.encrypt import get_salt_from_db
+
+        _ = get_salt_from_db(database_url)
+        salt_in_db = "[bold green]Yes[/bold green]"
+    except Exception:
+        salt_in_db = "[bold red]No[/bold red]"
+
+    table.add_row("Salt in Database", salt_in_db)
+    table.add_row("Salt Path (Legacy)", str(salt_path))
 
     # Display in a panel
     console.print()

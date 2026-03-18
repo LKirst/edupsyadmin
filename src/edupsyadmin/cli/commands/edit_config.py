@@ -25,4 +25,9 @@ def add_arguments(parser: ArgumentParser) -> None:
 def execute(args: Namespace) -> None:
     """Execute the edit-config command."""
     config_editor_app_cls = lazy_import("edupsyadmin.tui.editconfig").ConfigEditorApp
-    config_editor_app_cls(args.config_path, args.app_uid, args.app_username).run()
+    config_editor_app_cls(
+        args.config_path,
+        args.app_uid,
+        args.app_username,
+        database_url=args.database_url,
+    ).run()

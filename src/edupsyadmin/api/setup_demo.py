@@ -11,7 +11,7 @@ from edupsyadmin.core.encrypt import (
     derive_key_from_password,
     encr,
     get_keys_from_keyring,
-    load_or_create_salt,
+    get_salt_from_db,
     set_keys_in_keyring,
 )
 from edupsyadmin.core.logger import logger
@@ -48,13 +48,16 @@ def setup_demo() -> None:
     # Define demo password
     demo_password = "edupsyadmin-demo-password"
 
+    # Run migrations for the demo database FIRST to create the metadata table and salt
+    upgrade_db(demo_db_url)
+
     # Set an encryption key for the demo user
     # Check if a key already exists
     keys = get_keys_from_keyring(config.core.app_uid, config.core.app_username)
     if not keys:
         logger.info("No encryption key found for demo user. Generating a new one.")
-        # Load or create salt for key derivation
-        salt = load_or_create_salt(demo_salt_path)
+        # Load or create salt for key derivation from DB
+        salt = get_salt_from_db(demo_db_url)
         # Derive key from password and salt
         key = derive_key_from_password(demo_password, salt, DEFAULT_KDF_ITERATIONS)
         # Store the derived key in the keyring as a list
@@ -72,10 +75,7 @@ def setup_demo() -> None:
     encr.set_keys(keys)
     logger.info("Encryption initialized for demo session.")
 
-    # Run migrations for the demo database
-    upgrade_db(demo_db_url)
-
-    # Instantiate ClientsManager to create demo.db and demo-salt.txt
+    # Instantiate ClientsManager
     clients_manager = ClientsManager(database_url=demo_db_url)
 
     # Define and add sample data
@@ -122,30 +122,26 @@ def setup_demo() -> None:
     logger.info("Demo environment created successfully!")
     print("\nThe following files have been created in your current directory:")
     print(f"  - {demo_config_path}")
-    print(f"  - {demo_salt_path}")
     print("  - demo.db")
     print("\nTo use the demo environment, run commands like this:")
     print(
         "  edupsyadmin --config_path demo-config.yml "
-        "--salt_path demo-salt.txt --database_url sqlite:///demo.db tui"
+        "--database_url sqlite:///demo.db tui"
     )
 
     # Generate alias suggestions
     abs_config_path = Path(demo_config_path).resolve()
-    abs_salt_path = Path(demo_salt_path).resolve()
     abs_db_path = Path("demo.db").resolve()
 
     bash_alias = (
         f"alias edupsyadmin_demo='edupsyadmin "
         f'--config_path "{abs_config_path}" '
-        f'--salt_path "{abs_salt_path}" '
         f'--database_url "sqlite:///{abs_db_path}"\''
     )
     # A function is more common in PowerShell profiles and robustly passes arguments
     powershell_function = (
         f"function edupsyadmin_demo {{ "
         f'edupsyadmin --config_path \\"{abs_config_path}\\" '
-        f'--salt_path \\"{abs_salt_path}\\" '
         f'--database_url \\"sqlite:///{abs_db_path}\\" $args '
         f"}}"
     )

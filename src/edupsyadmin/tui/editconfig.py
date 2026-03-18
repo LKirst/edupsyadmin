@@ -17,7 +17,7 @@ from edupsyadmin.core.encrypt import (
     check_key_validity,
     derive_key_from_password,
     get_keys_from_keyring,
-    load_or_create_salt,
+    get_salt_from_db,
     set_keys_in_keyring,
 )
 from edupsyadmin.tui.dialogs import YesNoDialog
@@ -305,7 +305,12 @@ class ConfigEditorApp(App[None]):
     ]
 
     def __init__(
-        self, config_path: Path, app_uid: str, app_username: str, **kwargs
+        self,
+        config_path: Path,
+        app_uid: str,
+        app_username: str,
+        database_url: str,
+        **kwargs,
     ) -> None:
         super().__init__(**kwargs)
         self.config_path = config_path
@@ -313,10 +318,8 @@ class ConfigEditorApp(App[None]):
         self.config_dict = config.model_dump(exclude_defaults=False)
         self.app_uid = app_uid
         self.app_username = app_username
+        self.database_url = database_url
 
-        # Determine salt path based on config location
-        config_dir = self.config_path.parent
-        self.salt_path = config_dir / "salt.txt"
         self.title = "Konfiguration für edupsyadmin"
 
     def compose(self) -> ComposeResult:
@@ -621,7 +624,7 @@ class ConfigEditorApp(App[None]):
         # Await the worker to complete the blocking operation
         self._key_derivation_worker(
             password,
-            self.salt_path,
+            self.database_url,
             app_uid,
             username,
             existing_keys,
@@ -647,7 +650,7 @@ class ConfigEditorApp(App[None]):
     def _key_derivation_worker(
         self,
         password: str,
-        salt_path: Path,
+        database_url: str,
         app_uid: str,
         username: str,
         existing_keys: list[bytes],
@@ -656,7 +659,7 @@ class ConfigEditorApp(App[None]):
         worker = get_current_worker()  # Get worker for cancellation checks
 
         try:
-            salt = load_or_create_salt(salt_path)
+            salt = get_salt_from_db(database_url)
             iterations = (
                 int(kdf_iterations_value)
                 if kdf_iterations_value
