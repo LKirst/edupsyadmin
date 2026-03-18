@@ -3,6 +3,7 @@ import yaml
 from conftest import TEST_UID, TEST_USERNAME
 from textual.widgets import Input
 
+from edupsyadmin.api.migration import upgrade_db
 from edupsyadmin.tui.editconfig import (
     ConfigEditorApp,
     SchoolEditor,
@@ -10,9 +11,14 @@ from edupsyadmin.tui.editconfig import (
 
 
 @pytest.mark.asyncio
-async def test_app_loads_config(mock_config_snapshots):
+async def test_app_loads_config(mock_config_snapshots, tmp_path):
     """Test if the app loads the configuration correctly."""
-    app = ConfigEditorApp(mock_config_snapshots, TEST_UID, TEST_USERNAME)
+    db_path = tmp_path / "test.db"
+    db_url = f"sqlite:///{db_path}"
+    upgrade_db(db_url)
+    app = ConfigEditorApp(
+        mock_config_snapshots, TEST_UID, TEST_USERNAME, database_url=db_url
+    )
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app.query_exactly_one("#core-logging", Input).value == "DEBUG"
@@ -23,13 +29,23 @@ async def test_app_loads_config(mock_config_snapshots):
         # TODO: check School(s)
 
 
-def test_initial_layout(mock_config_snapshots, snap_compare):
-    app = ConfigEditorApp(mock_config_snapshots, TEST_UID, TEST_USERNAME)
+def test_initial_layout(mock_config_snapshots, snap_compare, tmp_path):
+    db_path = tmp_path / "test.db"
+    db_url = f"sqlite:///{db_path}"
+    upgrade_db(db_url)
+    app = ConfigEditorApp(
+        mock_config_snapshots, TEST_UID, TEST_USERNAME, database_url=db_url
+    )
     assert snap_compare(app, terminal_size=(80, 250))
 
 
-def test_add_new_school_container(mock_config_snapshots, snap_compare):
-    app = ConfigEditorApp(mock_config_snapshots, TEST_UID, TEST_USERNAME)
+def test_add_new_school_container(mock_config_snapshots, snap_compare, tmp_path):
+    db_path = tmp_path / "test.db"
+    db_url = f"sqlite:///{db_path}"
+    upgrade_db(db_url)
+    app = ConfigEditorApp(
+        mock_config_snapshots, TEST_UID, TEST_USERNAME, database_url=db_url
+    )
 
     async def run_before(pilot):
         add_school_button = pilot.app.query_one("#add-school-button")
@@ -41,8 +57,13 @@ def test_add_new_school_container(mock_config_snapshots, snap_compare):
     assert snap_compare(app, run_before=run_before, terminal_size=(80, 280))
 
 
-def test_edit_new_school_container(mock_config_snapshots, snap_compare):
-    app = ConfigEditorApp(mock_config_snapshots, TEST_UID, TEST_USERNAME)
+def test_edit_new_school_container(mock_config_snapshots, snap_compare, tmp_path):
+    db_path = tmp_path / "test.db"
+    db_url = f"sqlite:///{db_path}"
+    upgrade_db(db_url)
+    app = ConfigEditorApp(
+        mock_config_snapshots, TEST_UID, TEST_USERNAME, database_url=db_url
+    )
 
     async def run_before(pilot):
         add_school_button = pilot.app.query_one("#add-school-button")
@@ -69,10 +90,14 @@ def test_edit_new_school_container(mock_config_snapshots, snap_compare):
 
 
 @pytest.mark.asyncio
-async def test_app_saves_config_changes(mock_config):
+async def test_app_saves_config_changes(mock_config, tmp_path):
     """Test if the app saves changes to the configuration file."""
+    db_path = tmp_path / "test.db"
+    db_url = f"sqlite:///{db_path}"
+    upgrade_db(db_url)
+
     config_path = mock_config
-    app = ConfigEditorApp(config_path, TEST_UID, TEST_USERNAME)
+    app = ConfigEditorApp(config_path, TEST_UID, TEST_USERNAME, database_url=db_url)
 
     new_logging_level = "INFO"
     new_schoolpsy_name = "Dr. New Name"

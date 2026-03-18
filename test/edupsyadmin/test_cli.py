@@ -346,13 +346,16 @@ def test_edit_config_command(mock_config):
 
         # Call the command function
         args = argparse.Namespace(
-            config_path=mock_config, app_uid=TEST_UID, app_username=TEST_USERNAME
+            config_path=mock_config,
+            app_uid=TEST_UID,
+            app_username=TEST_USERNAME,
+            database_url="sqlite:///test.db",
         )
         edit_config_command.execute(args)
 
         # Assert that the app was initialized with the correct config path
         mock_lazy_import.return_value.ConfigEditorApp.assert_called_once_with(
-            mock_config, TEST_UID, TEST_USERNAME
+            mock_config, TEST_UID, TEST_USERNAME, database_url="sqlite:///test.db"
         )
 
         # Assert that the app was run

@@ -31,6 +31,7 @@ def test_upgrade_db_new_database(tmp_path: Path):
 
     assert "clients" in tables
     assert "alembic_version" in tables
+    assert "system_metadata" in tables
 
     # Check some columns in clients
     columns = {col["name"] for col in inspector.get_columns("clients")}
@@ -48,13 +49,65 @@ def test_upgrade_db_legacy_database(tmp_path: Path):
     db_url = f"sqlite:///{db_path}"
 
     # 1. Create a legacy-style database manually (raw sqlite3)
+    # The columns must match what the initial migration (4087c43f0c7c) expects.
     with sqlite3.connect(db_path) as conn:
         conn.execute(
-            "CREATE TABLE clients (client_id INTEGER PRIMARY KEY, school TEXT)"
+            """
+            CREATE TABLE clients (
+                client_id INTEGER PRIMARY KEY,
+                school TEXT,
+                entry_date DATE,
+                estimated_graduation_date DATE,
+                document_shredding_date DATE,
+                class_name TEXT,
+                class_int INTEGER,
+                first_name_encr TEXT NOT NULL DEFAULT '',
+                last_name_encr TEXT NOT NULL DEFAULT '',
+                gender_encr TEXT NOT NULL DEFAULT '',
+                birthday_encr TEXT NOT NULL DEFAULT '',
+                street_encr TEXT NOT NULL DEFAULT '',
+                city_encr TEXT NOT NULL DEFAULT '',
+                parent_encr TEXT NOT NULL DEFAULT '',
+                telephone1_encr TEXT NOT NULL DEFAULT '',
+                telephone2_encr TEXT NOT NULL DEFAULT '',
+                email_encr TEXT NOT NULL DEFAULT '',
+                notes_encr TEXT NOT NULL DEFAULT '',
+                keyword_taet_encr TEXT NOT NULL DEFAULT '',
+                lrst_diagnosis_encr TEXT NOT NULL DEFAULT '',
+                lrst_last_test_date_encr TEXT NOT NULL DEFAULT '',
+                lrst_last_test_by_encr TEXT NOT NULL DEFAULT '',
+                datetime_created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                datetime_lastmodified DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                notenschutz BOOLEAN NOT NULL DEFAULT 0,
+                nos_rs BOOLEAN NOT NULL DEFAULT 0,
+                nos_rs_ausn BOOLEAN NOT NULL DEFAULT 0,
+                nos_les BOOLEAN NOT NULL DEFAULT 0,
+                nos_other BOOLEAN NOT NULL DEFAULT 0,
+                nachteilsausgleich BOOLEAN NOT NULL DEFAULT 0,
+                nta_zeitv BOOLEAN NOT NULL DEFAULT 0,
+                nta_font BOOLEAN NOT NULL DEFAULT 0,
+                nta_aufg BOOLEAN NOT NULL DEFAULT 0,
+                nta_struktur BOOLEAN NOT NULL DEFAULT 0,
+                nta_arbeitsm BOOLEAN NOT NULL DEFAULT 0,
+                nta_ersgew BOOLEAN NOT NULL DEFAULT 0,
+                nta_vorlesen BOOLEAN NOT NULL DEFAULT 0,
+                nta_other BOOLEAN NOT NULL DEFAULT 0,
+                nta_nos_end BOOLEAN NOT NULL DEFAULT 0,
+                min_sessions INTEGER NOT NULL DEFAULT 45,
+                n_sessions INTEGER NOT NULL DEFAULT 1
+            )
+            """
         )
         conn.execute("INSERT INTO clients (school) VALUES ('LegacySchool')")
 
-    # 2. Run migration
+    # 2. Initialize encryption with a dummy key for migrations that need it
+    from cryptography.fernet import Fernet
+
+    from edupsyadmin.core.encrypt import encr
+
+    encr.set_keys([Fernet.generate_key()])
+
+    # 3. Run migration
     # This should detect 'clients' and 'stamp' it instead of trying to CREATE TABLE
     upgrade_db(db_url)
 
@@ -65,6 +118,7 @@ def test_upgrade_db_legacy_database(tmp_path: Path):
 
     assert "clients" in tables
     assert "alembic_version" in tables
+    assert "system_metadata" in tables
 
     # Verify data was preserved
     with engine.connect() as conn:
