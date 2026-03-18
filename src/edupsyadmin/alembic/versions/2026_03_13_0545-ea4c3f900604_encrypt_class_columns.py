@@ -70,14 +70,19 @@ def upgrade() -> None:
     )
 
     for client_id, class_name, class_int in results:
-        encrypted_name = encr.encrypt(class_name) if class_name is not None else None
-        encrypted_int = encr.encrypt(str(class_int)) if class_int is not None else None
+        encrypted_name = encr.encrypt(class_name or "")
+        encrypted_int = encr.encrypt(str(class_int) if class_int is not None else "")
 
         connection.execute(
             new_clients_table.update()
             .where(new_clients_table.c.client_id == client_id)
             .values(class_name_encr=encrypted_name, class_int_encr=encrypted_int)
         )
+
+    # 5. Enforce NOT NULL constraint now that columns are populated.
+    with op.batch_alter_table("clients") as batch_op:
+        batch_op.alter_column("class_name_encr", nullable=False)
+        batch_op.alter_column("class_int_encr", nullable=False)
 
 
 def downgrade() -> None:

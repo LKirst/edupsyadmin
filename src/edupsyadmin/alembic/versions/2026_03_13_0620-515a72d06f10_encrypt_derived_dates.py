@@ -49,21 +49,21 @@ def upgrade() -> None:
             sa.Column(
                 "entry_date_encr",
                 edupsyadmin.db.clients.EncryptedDate(),
-                nullable=False,
+                nullable=True,
             )
         )
         batch_op.add_column(
             sa.Column(
                 "estimated_graduation_date_encr",
                 edupsyadmin.db.clients.EncryptedDate(),
-                nullable=False,
+                nullable=True,
             )
         )
         batch_op.add_column(
             sa.Column(
                 "document_shredding_date_encr",
                 edupsyadmin.db.clients.EncryptedDate(),
-                nullable=False,
+                nullable=True,
             )
         )
         batch_op.drop_column("entry_date")
@@ -93,6 +93,12 @@ def upgrade() -> None:
                 document_shredding_date_encr=encrypted_shred,
             )
         )
+
+    # 5. Finally, enforce the NOT NULL constraint now that all rows are populated.
+    with op.batch_alter_table("clients") as batch_op:
+        batch_op.alter_column("entry_date_encr", nullable=False)
+        batch_op.alter_column("estimated_graduation_date_encr", nullable=False)
+        batch_op.alter_column("document_shredding_date_encr", nullable=False)
 
 
 def downgrade() -> None:
