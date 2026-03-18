@@ -66,10 +66,12 @@ def upgrade_db(database_url: str) -> None:
 
             if is_legacy:
                 logger.info(
-                    "Legacy database detected. Stamping with the latest "
-                    "Alembic revision."
+                    "Legacy database detected. Stamping with the initial "
+                    "Alembic revision (4087c43f0c7c)."
                 )
-                command.stamp(alembic_cfg, "head")
+                # Stamp with the initial v8 migration so that all subsequent
+                # migrations are applied.
+                command.stamp(alembic_cfg, "4087c43f0c7c")
                 logger.info("Database stamped successfully.")
 
         # For all cases, run upgrade. This is idempotent for stamped databases.
