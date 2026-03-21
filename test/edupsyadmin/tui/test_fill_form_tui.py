@@ -23,7 +23,7 @@ def mock_clients_manager(mock_config):
     return manager
 
 
-def test_initial_layout(snap_compare, mock_clients_manager, tmp_path):
+def test_fill_form_initial_layout(snap_compare, mock_clients_manager, tmp_path):
     """Test the initial layout of the fill form app."""
     # Create a mock directory structure
     docs_dir = tmp_path / "documents"
@@ -48,6 +48,12 @@ def test_initial_layout(snap_compare, mock_clients_manager, tmp_path):
         # Update the path input to match
         path_input = pilot.app.query_one("#path-input", Input)
         path_input.value = "TMP/DIR"
+
+        # Fix the root label to be deterministic for snapshots
+        # We wait for the tree to have a root before setting it.
+        while dir_tree.root is None:
+            await pilot.pause(0.01)
+        dir_tree.root.label = "TMP/DIR"
 
         await pilot.pause()
 
@@ -154,8 +160,6 @@ async def test_fill_button_emits_start_fill_message(
     form_path.touch()
 
     app = FillFormApp(clients_manager=mock_clients_manager, client_ids=[CLIENT_ID])
-    messages = []
-    app.post_message = messages.append
 
     async with app.run_test() as pilot:
         fill_form_widget = pilot.app.query_one(FillForm)
@@ -170,11 +174,19 @@ async def test_fill_button_emits_start_fill_message(
         )
         dir_tree.selected_paths = {form_path}
 
-        # 3. Click the button
-        await pilot.click("#fill-button")
-        await pilot.pause()
+        # 3. Use patch with wraps to capture messages without breaking the app
+        with patch.object(app, "post_message", wraps=app.post_message) as mock_post:
+            # 4. Click the button
+            await pilot.click("#fill-button")
+            await pilot.pause()
 
-    start_fill_messages = [m for m in messages if isinstance(m, FillForm.StartFill)]
+            # Find the StartFill message in call arguments
+            start_fill_messages = [
+                args[0]
+                for args, _ in mock_post.call_args_list
+                if isinstance(args[0], FillForm.StartFill)
+            ]
+
     assert len(start_fill_messages) == 1
     message = start_fill_messages[0]
     assert message.client_ids == [CLIENT_ID]
@@ -188,14 +200,18 @@ async def test_fill_button_emits_start_fill_message(
 async def test_cancel_button_emits_cancel_message(mock_clients_manager):
     """Test that the 'Cancel' button emits the Cancel message."""
     app = FillFormApp(clients_manager=mock_clients_manager, client_ids=[CLIENT_ID])
-    messages = []
-    app.post_message = messages.append
 
     async with app.run_test() as pilot:
-        await pilot.click("#cancel-button")
-        await pilot.pause()
+        with patch.object(app, "post_message", wraps=app.post_message) as mock_post:
+            await pilot.click("#cancel-button")
+            await pilot.pause()
 
-    cancel_messages = [m for m in messages if isinstance(m, FillForm.Cancel)]
+            cancel_messages = [
+                args[0]
+                for args, _ in mock_post.call_args_list
+                if isinstance(args[0], FillForm.Cancel)
+            ]
+
     assert len(cancel_messages) == 1
 
 
@@ -214,11 +230,12 @@ async def test_select_directory_and_file_nodes(mock_clients_manager, tmp_path):
         await pilot.pause()  # Let the tree reload
 
         # Find the nodes for the directory and file
+        # Use str() to handle both rich.Text and str types safely
         dir_node = next(
-            (n for n in tree.root.children if n.label.plain == "my_test_dir"), None
+            (n for n in tree.root.children if str(n.label) == "my_test_dir"), None
         )
         file_node = next(
-            (n for n in tree.root.children if n.label.plain == "my_test_file.pdf"),
+            (n for n in tree.root.children if str(n.label) == "my_test_file.pdf"),
             None,
         )
         assert dir_node is not None

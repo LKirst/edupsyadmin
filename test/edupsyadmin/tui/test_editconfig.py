@@ -29,7 +29,7 @@ async def test_app_loads_config(mock_config_snapshots, tmp_path):
         # TODO: check School(s)
 
 
-def test_initial_layout(mock_config_snapshots, snap_compare, tmp_path):
+def test_editconfig_initial_layout(mock_config_snapshots, snap_compare, tmp_path):
     db_path = tmp_path / "test.db"
     db_url = f"sqlite:///{db_path}"
     upgrade_db(db_url)
