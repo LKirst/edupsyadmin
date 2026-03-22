@@ -9,6 +9,7 @@ from typing import Any
 from edupsyadmin.__version__ import __version__
 from edupsyadmin.api.managers import ClientNotFoundError
 from edupsyadmin.api.migration import MigrationError, upgrade_db
+from edupsyadmin.api.migration_fs import create_db_backup, migrate_to_stable_paths
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import encr, get_keys_from_keyring
 from edupsyadmin.core.logger import logger
@@ -212,6 +213,9 @@ def _run_db_migrations(args: argparse.Namespace) -> int:
     no_db_commands = ["info", "flatten-pdfs"]
     if args.command_name not in no_db_commands:
         try:
+            # Create a backup before any potential database migration
+            db_path = Path(args.database_url.removeprefix("sqlite:///"))
+            create_db_backup(db_path)
             upgrade_db(args.database_url)
         except MigrationError as err:
             logger.critical(err)
@@ -221,7 +225,7 @@ def _run_db_migrations(args: argparse.Namespace) -> int:
 
 def _setup_app_encryption(args: argparse.Namespace) -> None:
     """Set up encryption for commands that require it."""
-    no_encryption_commands = ["info", "edit-config", "setup-demo", "migrate-encryption"]
+    no_encryption_commands = ["info", "edit-config", "setup-demo"]
     if args.command_name not in no_encryption_commands:
         _setup_encryption(args.app_uid, args.app_username)
 
@@ -233,6 +237,12 @@ def main(argv: list[str] | None = None) -> int:
     :return: exit status
     """
     args = _args(argv)
+
+    # Migrate versioned paths to stable paths if necessary
+    db_path = Path(args.database_url.removeprefix("sqlite:///"))
+    migrate_to_stable_paths(
+        config_file=args.config_path, salt_file=args.salt_path, db_file=db_path
+    )
 
     _handle_config_and_logging(args)
 
