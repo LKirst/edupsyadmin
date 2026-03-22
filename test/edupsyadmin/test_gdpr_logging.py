@@ -9,6 +9,7 @@ def test_scrubbing_sensitive_args_in_logs():
 
     # Mock dependencies to avoid side effects (DB, encryption, keyring, etc.)
     with (
+        patch("edupsyadmin.cli.migrate_to_stable_paths"),
         patch("edupsyadmin.cli._handle_config_and_logging"),
         patch("edupsyadmin.cli._determine_app_username", return_value=0),
         patch("edupsyadmin.cli._determine_app_uid"),
@@ -65,6 +66,7 @@ def test_scrubbing_set_client_args_in_logs():
     """Test that set-client sensitive arguments are scrubbed."""
 
     with (
+        patch("edupsyadmin.cli.migrate_to_stable_paths"),
         patch("edupsyadmin.cli._handle_config_and_logging"),
         patch("edupsyadmin.cli._determine_app_username", return_value=0),
         patch("edupsyadmin.cli._determine_app_uid"),
