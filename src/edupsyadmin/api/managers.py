@@ -124,20 +124,15 @@ class ClientsManager:
 
     def get_all_clients_df(self) -> pd.DataFrame:
         """
-        Get the entire database as a pandas DataFrame via ORM to ensure decryption.
+        Get the entire database as a pandas DataFrame
         """
-        logger.debug("querying entire database via ORM")
+        logger.debug("querying entire database")
+        # Get all columns from the mapper
+        cols = [self._colmap[name] for name in self._valid_keys if name in self._colmap]
+        stmt = select(*cols)
         with self.Session() as session:
-            stmt = select(clients_db.Client)
-            clients = session.scalars(stmt).all()
-            data: list[ClientData] = [
-                cast(
-                    ClientData,
-                    {c.key: getattr(client, c.key) for c in self._mapper.column_attrs},
-                )
-                for client in clients
-            ]
-            return pd.DataFrame(data)
+            result = session.execute(stmt)
+            return pd.DataFrame(result.fetchall(), columns=list(result.keys()))
 
     def edit_client(self, client_ids: list[int], new_data: dict[str, Any]) -> None:
         logger.debug(f"editing clients (ids = {client_ids})")
