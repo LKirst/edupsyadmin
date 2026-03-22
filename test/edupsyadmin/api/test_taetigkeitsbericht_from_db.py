@@ -71,17 +71,17 @@ def test_summary_statistics_h_sessions():
 
 def test_wstd_in_zstd():
     result = wstd_in_zstd(5)
-    assert result.loc["wstd_spsy", "value"] == 5
-    assert result.loc["zstd_spsy_week_target", "value"] > 0
+    assert pd.to_numeric(result.loc["wstd_spsy", "value"]) == 5
+    assert pd.to_numeric(result.loc["zstd_spsy_week_target", "value"]) > 0
 
 
 def test_summary_statistics_wstd():
     school_students = {"SchoolA": 100, "SchoolB": 200}
     result = summary_statistics_wstd(5, 23, 1000.0, school_students)
 
-    assert result.loc["nstudents_SchoolA", "value"] == 100
-    assert result.loc["nstudents_SchoolB", "value"] == 200
-    assert result.loc["nstudents_all", "value"] == 300
+    assert pd.to_numeric(result.loc["nstudents_SchoolA", "value"]) == 100
+    assert pd.to_numeric(result.loc["nstudents_SchoolB", "value"]) == 200
+    assert pd.to_numeric(result.loc["nstudents_all", "value"]) == 300
 
 
 @patch("edupsyadmin.api.taetigkeitsbericht_from_db.dfi.export")
@@ -132,7 +132,7 @@ def test_taetigkeitsbericht(
     mock_create_report, mock_clients_manager, mock_config, tmp_path
 ):
     mock_manager_instance = mock_clients_manager.return_value
-    mock_manager_instance.get_all_clients_df.return_value = pd.DataFrame(
+    mock_manager_instance.get_clients_overview.return_value = pd.DataFrame(
         {
             "school": ["FirstSchool", "FirstSchool", "SecondSchool"],
             "keyword_taet_encr": ["cat1", "cat2", "cat2"],
