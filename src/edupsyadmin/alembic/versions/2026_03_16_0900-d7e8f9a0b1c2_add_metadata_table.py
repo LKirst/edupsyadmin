@@ -8,6 +8,7 @@ Create Date: 2026-03-16 09:00:00.000000
 
 import os
 from collections.abc import Sequence
+from pathlib import Path
 
 import sqlalchemy as sa
 from alembic import op
@@ -32,10 +33,14 @@ def upgrade() -> None:
 
     # 2. Migrate existing salt
     salt = None
-    if DEFAULT_SALT_PATH.exists():
-        salt = DEFAULT_SALT_PATH.read_bytes()
-    else:
-        salt = os.urandom(16)
+
+    # Try to get salt path from alembic config
+    config = op.get_context().config
+    assert config
+    salt_path_str = config.get_main_option("salt_path")
+    salt_path = Path(salt_path_str) if salt_path_str else DEFAULT_SALT_PATH
+
+    salt = salt_path.read_bytes() if salt_path.exists() else os.urandom(16)
 
     # Insert into the new table
     op.execute(
