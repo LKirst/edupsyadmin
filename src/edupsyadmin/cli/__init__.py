@@ -216,7 +216,7 @@ def _run_db_migrations(args: argparse.Namespace) -> int:
             # Create a backup before any potential database migration
             db_path = Path(args.database_url.removeprefix("sqlite:///"))
             create_db_backup(db_path)
-            upgrade_db(args.database_url)
+            upgrade_db(args.database_url, salt_path=args.salt_path)
         except MigrationError as err:
             logger.critical(err)
             return 1
@@ -251,10 +251,10 @@ def main(argv: list[str] | None = None) -> int:
 
     _determine_app_uid(args)
 
+    _setup_app_encryption(args)
+
     if (result := _run_db_migrations(args)) != 0:
         return result
-
-    _setup_app_encryption(args)
 
     command = args.command
     logger.debug(f"Executing command: {args.command_name}")

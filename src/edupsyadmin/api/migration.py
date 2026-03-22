@@ -2,6 +2,7 @@
 
 from collections.abc import Iterator
 from importlib import resources
+from pathlib import Path
 
 import sqlalchemy as sa
 from alembic import command
@@ -23,7 +24,7 @@ class MigrationError(Exception):
         self.message = message
 
 
-def upgrade_db(database_url: str) -> None:
+def upgrade_db(database_url: str, salt_path: Path | None = None) -> None:
     """
     Upgrade the database to the latest version using Alembic.
 
@@ -47,6 +48,10 @@ def upgrade_db(database_url: str) -> None:
         alembic_cfg = Config(str(alembic_ini_path))
         alembic_cfg.set_main_option("script_location", str(alembic_script_location))
         alembic_cfg.set_main_option("sqlalchemy.url", database_url)
+
+        # Pass salt_path to alembic config so migrations can use it
+        if salt_path:
+            alembic_cfg.set_main_option("salt_path", str(salt_path))
 
         # Connect to the database to check its state
         engine = create_engine(database_url)
