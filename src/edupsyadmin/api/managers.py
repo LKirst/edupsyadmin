@@ -1,5 +1,4 @@
 import logging  # just for interaction with the sqlalchemy logger
-from datetime import datetime
 from typing import Any, cast
 
 import pandas as pd
@@ -168,7 +167,6 @@ class ClientsManager:
                         f"changing value for key: {key} for client: {client.client_id}"
                     )
                     setattr(client, key, value)
-                client.datetime_lastmodified = datetime.now()
 
     def delete_client(self, client_id: int) -> None:
         logger.debug(f"deleting client {client_id}")
