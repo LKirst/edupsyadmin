@@ -33,6 +33,10 @@ def info(
     table.add_row("App UID", app_uid)
     table.add_row("App Username", app_username)
     table.add_row("Database URL", database_url)
+    db_path = Path(database_url.removeprefix("sqlite:///"))
+    backup_path = db_path.with_suffix(".db.bak")
+    if backup_path.exists():
+        table.add_row("Database Backup", str(backup_path))
     table.add_row("Config Path", str(config_path))
     table.add_row("Keyring Backend", str(get_keyring()))
 
