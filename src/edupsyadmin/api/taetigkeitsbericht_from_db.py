@@ -323,11 +323,13 @@ def taetigkeitsbericht(
     """
 
     # Query the data
-    # TODO: Optimize the query (you don't need all data)
     clients_manager = ClientsManager(
         database_url=database_url,
     )
-    df = clients_manager.get_all_clients_df()
+    # Only fetch required columns
+    df = clients_manager.get_clients_overview(
+        columns=["keyword_taet_encr", "min_sessions", "n_sessions"]
+    )
     df["h_sessions"] = df["min_sessions"] / 60.0
 
     df, summary_categories = add_categories_to_df(df, "keyword_taet_encr")
