@@ -29,7 +29,7 @@ anzeigen. Im Beispiel unten, sind die möglichen Unterbefehle markiert.
 
     $ edupsyadmin --help
     usage: edupsyadmin [-h] [-v] [-w WARN]
-                   {create-documentation,delete-client,edit-config,flatten-pdfs,get-clients,info,migrate-encryption,mk-report,new-client,set-client,setup-demo,taetigkeitsbericht,tui} ...
+                   {create-documentation,delete-client,edit-config,flatten-pdfs,get-clients,info,mk-report,new-client,set-client,setup-demo,taetigkeitsbericht,tui} ...
 
     options:
       -h, --help            show this help message and exit
@@ -37,7 +37,7 @@ anzeigen. Im Beispiel unten, sind die möglichen Unterbefehle markiert.
       -w, --warn WARN       logger warning level [WARN]
 
     subcommands:
-      {create-documentation,delete-client,edit-config,flatten-pdfs,get-clients,info,migrate-encryption,mk-report,new-client,set-client,setup-demo,taetigkeitsbericht,tui}
+      {create-documentation,delete-client,edit-config,flatten-pdfs,get-clients,info,mk-report,new-client,set-client,setup-demo,taetigkeitsbericht,tui}
         create-documentation
                             Fill a pdf form or a text file with a liquid template
         delete-client       Delete a client in the database
@@ -45,7 +45,6 @@ anzeigen. Im Beispiel unten, sind die möglichen Unterbefehle markiert.
         flatten-pdfs        Flatten pdf forms (experimental)
         get-clients         Show clients overview or single client
         info                Get useful information for debugging
-        migrate-encryption  [DEPRECATED] Migrate database to new encryption system
         mk-report           Create a report for a given test type. (experimental)
         new-client          Add a new client
         set-client          Change values for one or more clients
