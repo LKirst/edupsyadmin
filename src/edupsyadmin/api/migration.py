@@ -182,6 +182,10 @@ def _get_encrypted_field_names() -> list[str]:
         "lrst_diagnosis_encr",
         "lrst_last_test_date_encr",
         "lrst_last_test_by_encr",
+        "nos_rs_ausn_faecher_encr",
+        "nos_other_details_encr",
+        "nta_other_details_encr",
+        "nta_nos_notes_encr",
     ]
 
 
@@ -201,6 +205,8 @@ def _verify_migration(db_session: Session, expected_count: int) -> None:
             _ = client.first_name_encr
             _ = client.last_name_encr
             _ = client.birthday_encr
+            _ = client.nos_rs_ausn_faecher_encr
+            _ = client.nta_nos_notes_encr
 
         logger.info(f"Verification successful: all {len(clients)} clients accessible")
     except Exception as e:

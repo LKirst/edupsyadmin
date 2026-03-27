@@ -243,7 +243,7 @@ class Client(Base):
         doc=(
             "Gibt an, ob der Klient Notenschutz hat. "
             "Diese Variable wird abgeleitet aus "
-            ":attr:`nos_rs`, :attr:`nos_les` und :attr:`nos_other_details`."
+            ":attr:`nos_rs`, :attr:`nos_les` und :attr:`nos_other_details_encr`."
         ),
     )
     nos_rs: Mapped[bool] = mapped_column(
@@ -259,9 +259,12 @@ class Client(Base):
             "ausgenommen sind"
         ),
     )
-    nos_rs_ausn_faecher: Mapped[str | None] = mapped_column(
-        String,
-        doc="Fächer, die vom Notenschutz (Rechtschreibung) ausgenommen sind",
+    nos_rs_ausn_faecher_encr: Mapped[str | None] = mapped_column(
+        EncryptedString,
+        doc=(
+            "Verschlüsselte Fächer, die vom Notenschutz (Rechtschreibung) "
+            "ausgenommen sind"
+        ),
     )
     nos_les: Mapped[bool] = mapped_column(
         Boolean,
@@ -273,12 +276,15 @@ class Client(Base):
         default=False,
         doc=(
             "Gibt an, ob der Klient andere Formen des Notenschutzes hat."
-            "Diese Variable wird abgeleitet aus :attr:`nos_other_details`."
+            "Diese Variable wird abgeleitet aus :attr:`nos_other_details_encr`."
         ),
     )
-    nos_other_details: Mapped[str | None] = mapped_column(
-        String,
-        doc="Details zu anderen Formen des Notenschutzes für den Klienten",
+    nos_other_details_encr: Mapped[str | None] = mapped_column(
+        EncryptedString,
+        doc=(
+            "Verschlüsselte Details zu anderen Formen des Notenschutzes "
+            "für den Klienten"
+        ),
     )
 
     # Nachteilsausgleich
@@ -289,7 +295,7 @@ class Client(Base):
             "Gibt an, ob der Klient Nachteilsausgleich (NTA) hat. "
             "Diese Variable wird abgeleitet aus den Variablen zur spezifischen "
             "Form des Nachteilsausgleichs z.B. :attr:`nta_zeitv_vieltext` "
-            "oder :attr:`nta_other_details`."
+            "oder :attr:`nta_other_details_encr`."
         ),
     )
     nta_zeitv: Mapped[bool] = mapped_column(
@@ -355,15 +361,16 @@ class Client(Base):
         default=False,
         doc=(
             "Gibt an, ob der Klient andere Formen des NTAs hat. "
-            "Diese Variable wird abgeleitet aus :attr:`nta_other_details`."
+            "Diese Variable wird abgeleitet aus :attr:`nta_other_details_encr`."
         ),
     )
-    nta_other_details: Mapped[str | None] = mapped_column(
-        String,
-        doc="Details zu anderen Formen des NTAs für den Klienten",
+    nta_other_details_encr: Mapped[str | None] = mapped_column(
+        EncryptedString,
+        doc="Verschlüsselte Details zu anderen Formen des NTAs für den Klienten",
     )
-    nta_nos_notes: Mapped[str | None] = mapped_column(
-        String, doc="Notizen zu Notenschutz und Nachteilsausgleich"
+    nta_nos_notes_encr: Mapped[str | None] = mapped_column(
+        EncryptedString,
+        doc="Verschlüsselte Notizen zu Notenschutz und Nachteilsausgleich",
     )
     nta_nos_end: Mapped[bool] = mapped_column(
         Boolean,
@@ -416,9 +423,9 @@ class Client(Base):
         notes_encr: str = "",
         entry_date_encr: date | str | None = None,
         nos_rs: bool | str | int | None = None,
-        nos_rs_ausn_faecher: str | None = None,
+        nos_rs_ausn_faecher_encr: str | None = None,
         nos_les: bool | str | int | None = None,
-        nos_other_details: str | None = None,
+        nos_other_details_encr: str | None = None,
         nta_zeitv_vieltext: int | str | None = None,
         nta_zeitv_wenigtext: int | str | None = None,
         nta_font: bool | str | int | None = None,
@@ -427,8 +434,8 @@ class Client(Base):
         nta_arbeitsm: bool | str | int | None = None,
         nta_ersgew: bool | str | int | None = None,
         nta_vorlesen: bool | str | int | None = None,
-        nta_other_details: str | None = None,
-        nta_nos_notes: str | None = None,
+        nta_other_details_encr: str | None = None,
+        nta_nos_notes_encr: str | None = None,
         nta_nos_end_grade: int | str | None = None,
         lrst_diagnosis_encr: str = "",
         lrst_last_test_date_encr: date | str = "",
@@ -472,9 +479,9 @@ class Client(Base):
 
         # Notenschutz
         self.nos_rs = to_bool_or_none(nos_rs) or False
-        self.nos_rs_ausn_faecher = nos_rs_ausn_faecher
+        self.nos_rs_ausn_faecher_encr = nos_rs_ausn_faecher_encr
         self.nos_les = to_bool_or_none(nos_les) or False
-        self.nos_other_details = nos_other_details
+        self.nos_other_details_encr = nos_other_details_encr
 
         # Nachteilsausgleich
         self.nta_zeitv_vieltext = to_int_or_none(nta_zeitv_vieltext)
@@ -485,8 +492,8 @@ class Client(Base):
         self.nta_arbeitsm = to_bool_or_none(nta_arbeitsm) or False
         self.nta_ersgew = to_bool_or_none(nta_ersgew) or False
         self.nta_vorlesen = to_bool_or_none(nta_vorlesen) or False
-        self.nta_other_details = nta_other_details
-        self.nta_nos_notes = nta_nos_notes
+        self.nta_other_details_encr = nta_other_details_encr
+        self.nta_nos_notes_encr = nta_nos_notes_encr
         self.nta_nos_end_grade = to_int_or_none(nta_nos_end_grade)
 
         self.min_sessions = to_int_or_none(min_sessions) or 45
@@ -549,9 +556,11 @@ class Client(Base):
 
         # Notenschutz flags
         self.nos_rs_ausn = bool(
-            self.nos_rs_ausn_faecher and self.nos_rs_ausn_faecher.strip()
+            self.nos_rs_ausn_faecher_encr and self.nos_rs_ausn_faecher_encr.strip()
         )
-        self.nos_other = bool(self.nos_other_details and self.nos_other_details.strip())
+        self.nos_other = bool(
+            self.nos_other_details_encr and self.nos_other_details_encr.strip()
+        )
         self.notenschutz = self.nos_rs or self.nos_les or self.nos_other
 
         # Nachteilsausgleich flags
@@ -559,7 +568,9 @@ class Client(Base):
             (self.nta_zeitv_vieltext is not None and self.nta_zeitv_vieltext > 0)
             or (self.nta_zeitv_wenigtext is not None and self.nta_zeitv_wenigtext > 0)
         )
-        self.nta_other = bool(self.nta_other_details and self.nta_other_details.strip())
+        self.nta_other = bool(
+            self.nta_other_details_encr and self.nta_other_details_encr.strip()
+        )
         self.nachteilsausgleich = (
             self.nta_font
             or self.nta_aufg
@@ -586,12 +597,14 @@ class Client(Base):
     def validate_keyword_taet_encr(self, key: str, value: str) -> str:
         return check_keyword(value) or ""
 
-    @validates("nos_rs_ausn_faecher")
-    def validate_nos_rs_ausn_faecher(self, key: str, value: str | None) -> str | None:
+    @validates("nos_rs_ausn_faecher_encr")
+    def validate_nos_rs_ausn_faecher_encr(
+        self, key: str, value: str | None
+    ) -> str | None:
         return value
 
-    @validates("nos_other_details")
-    def validate_nos_other_details(self, key: str, value: str) -> str:
+    @validates("nos_other_details_encr")
+    def validate_nos_other_details_encr(self, key: str, value: str) -> str:
         return value
 
     @validates("min_sessions", "n_sessions")
@@ -621,8 +634,8 @@ class Client(Base):
     def validate_bool(self, key: str, value: bool | str | int) -> bool:
         return to_bool_or_none(value) or False
 
-    @validates("nta_other_details")
-    def validate_nta_other_details(self, key: str, value: str) -> str:
+    @validates("nta_other_details_encr")
+    def validate_nta_other_details_encr(self, key: str, value: str) -> str:
         return value
 
     @validates("nta_nos_end_grade")

@@ -35,9 +35,10 @@ EXPECTED_KEYS = {
     "notenschutz",
     "nos_rs",
     "nos_rs_ausn",
-    "nos_rs_ausn_faecher",
+    "nos_rs_ausn_faecher_encr",
     "nos_les",
     "nos_other",
+    "nos_other_details_encr",
     "nachteilsausgleich",
     "nta_zeitv",
     "nta_zeitv_vieltext",
@@ -49,8 +50,8 @@ EXPECTED_KEYS = {
     "nta_ersgew",
     "nta_vorlesen",
     "nta_other",
-    "nta_other_details",
-    "nta_nos_notes",
+    "nta_other_details_encr",
+    "nta_nos_notes_encr",
     "nta_nos_end",
     "nta_nos_end_grade",
     "min_sessions",
@@ -222,27 +223,29 @@ class TestClientValidation:
         client = clients_manager.get_decrypted_client(client_id)
         assert client["lrst_diagnosis_encr"] == ""
 
-    def test_validate_nos_rs_ausn_faecher(
+    def test_validate_nos_rs_ausn_faecher_encr(
         self, clients_manager, client_dict_set_by_user
     ):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
         # With value
-        clients_manager.edit_client([client_id], {"nos_rs_ausn_faecher": "Deutsch"})
+        clients_manager.edit_client(
+            [client_id], {"nos_rs_ausn_faecher_encr": "Deutsch"}
+        )
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["nos_rs_ausn_faecher"] == "Deutsch"
+        assert client["nos_rs_ausn_faecher_encr"] == "Deutsch"
         assert client["nos_rs_ausn"] is True
 
         # With empty value
-        clients_manager.edit_client([client_id], {"nos_rs_ausn_faecher": " "})
+        clients_manager.edit_client([client_id], {"nos_rs_ausn_faecher_encr": " "})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["nos_rs_ausn_faecher"] == " "
+        assert client["nos_rs_ausn_faecher_encr"] == " "
         assert client["nos_rs_ausn"] is False
 
         # With None
-        clients_manager.edit_client([client_id], {"nos_rs_ausn_faecher": None})
+        clients_manager.edit_client([client_id], {"nos_rs_ausn_faecher_encr": None})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["nos_rs_ausn_faecher"] is None
+        assert client["nos_rs_ausn_faecher_encr"] == ""
         assert client["nos_rs_ausn"] is False
 
     def test_validate_nos_bool(self, clients_manager, client_dict_set_by_user):
@@ -250,7 +253,8 @@ class TestClientValidation:
 
         # Ensure all are false initially
         clients_manager.edit_client(
-            [client_id], {"nos_rs": False, "nos_les": False, "nos_other_details": ""}
+            [client_id],
+            {"nos_rs": False, "nos_les": False, "nos_other_details_encr": ""},
         )
         client = clients_manager.get_decrypted_client(client_id)
         assert client["nos_rs"] is False
@@ -284,27 +288,32 @@ class TestClientValidation:
         with pytest.raises(ValueError, match="cannot be converted to a boolean"):
             clients_manager.edit_client([client_id], {"nos_rs": "abc"})
 
-    def test_validate_nos_other_details(self, clients_manager, client_dict_set_by_user):
+    def test_validate_nos_other_details_encr(
+        self, clients_manager, client_dict_set_by_user
+    ):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
         # Ensure all are false initially
         clients_manager.edit_client(
-            [client_id], {"nos_rs": False, "nos_les": False, "nos_other_details": ""}
+            [client_id],
+            {"nos_rs": False, "nos_les": False, "nos_other_details_encr": ""},
         )
         client = clients_manager.get_decrypted_client(client_id)
         assert client["notenschutz"] is False
 
         # With value
-        clients_manager.edit_client([client_id], {"nos_other_details": "Some details"})
+        clients_manager.edit_client(
+            [client_id], {"nos_other_details_encr": "Some details"}
+        )
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["nos_other_details"] == "Some details"
+        assert client["nos_other_details_encr"] == "Some details"
         assert client["nos_other"] is True
         assert client["notenschutz"] is True
 
         # With empty value
-        clients_manager.edit_client([client_id], {"nos_other_details": ""})
+        clients_manager.edit_client([client_id], {"nos_other_details_encr": ""})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["nos_other_details"] == ""
+        assert client["nos_other_details_encr"] == ""
         assert client["nos_other"] is False
         assert client["notenschutz"] is False
 
@@ -352,7 +361,7 @@ class TestClientValidation:
             "nta_vorlesen",
         ]
         reset_data: dict[str, str | Any] = dict.fromkeys(nta_bool_fields, False)
-        reset_data["nta_other_details"] = ""  # makes sure nta_other is False
+        reset_data["nta_other_details_encr"] = ""  # makes sure nta_other is False
         reset_data["nta_zeitv_vieltext"] = None
         reset_data["nta_zeitv_wenigtext"] = None
         clients_manager.edit_client([client_id], reset_data)
@@ -374,7 +383,9 @@ class TestClientValidation:
             assert client[field] is False
             assert client["nachteilsausgleich"] is False
 
-    def test_validate_nta_other_details(self, clients_manager, client_dict_set_by_user):
+    def test_validate_nta_other_details_encr(
+        self, clients_manager, client_dict_set_by_user
+    ):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
         # Ensure all are false initially
@@ -387,7 +398,7 @@ class TestClientValidation:
             "nta_vorlesen",
         ]
         reset_data: dict[str, str | Any] = dict.fromkeys(nta_bool_fields, False)
-        reset_data["nta_other_details"] = ""  # makes sure nta_other is False
+        reset_data["nta_other_details_encr"] = ""  # makes sure nta_other is False
         reset_data["nta_zeitv_vieltext"] = None
         reset_data["nta_zeitv_wenigtext"] = None
         clients_manager.edit_client([client_id], reset_data)
@@ -395,16 +406,18 @@ class TestClientValidation:
         assert client["nachteilsausgleich"] is False
 
         # With value
-        clients_manager.edit_client([client_id], {"nta_other_details": "Some details"})
+        clients_manager.edit_client(
+            [client_id], {"nta_other_details_encr": "Some details"}
+        )
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["nta_other_details"] == "Some details"
+        assert client["nta_other_details_encr"] == "Some details"
         assert client["nta_other"] is True
         assert client["nachteilsausgleich"] is True
 
         # With empty value
-        clients_manager.edit_client([client_id], {"nta_other_details": ""})
+        clients_manager.edit_client([client_id], {"nta_other_details_encr": ""})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["nta_other_details"] == ""
+        assert client["nta_other_details_encr"] == ""
         assert client["nta_other"] is False
         assert client["nachteilsausgleich"] is False
 
@@ -552,17 +565,17 @@ class TestClientValidation:
         client = clients_manager.get_decrypted_client(client_id)
         assert client["min_sessions"] == 120
 
-    def test_nta_nos_notes(self, clients_manager, client_dict_set_by_user):
+    def test_nta_nos_notes_encr(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
         notes = "Some notes about NTA/NOS"
-        clients_manager.edit_client([client_id], {"nta_nos_notes": notes})
+        clients_manager.edit_client([client_id], {"nta_nos_notes_encr": notes})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["nta_nos_notes"] == notes
+        assert client["nta_nos_notes_encr"] == notes
 
-        clients_manager.edit_client([client_id], {"nta_nos_notes": None})
+        clients_manager.edit_client([client_id], {"nta_nos_notes_encr": None})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client["nta_nos_notes"] is None
+        assert client["nta_nos_notes_encr"] == ""
 
     def test_gender_conversion(self, clients_manager, client_dict_set_by_user):
         client_w = client_dict_set_by_user.copy()

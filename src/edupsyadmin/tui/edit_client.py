@@ -527,7 +527,7 @@ class EditClient(Container):
 def _get_empty_client_dict() -> ClientData:
     defaults = {
         "min_sessions": 45,
-        "n_session": 1,
+        "n_sessions": 1,
     }
     empty_client_dict: dict[str, Any] = {}
     for db_column in Client.__table__.columns:

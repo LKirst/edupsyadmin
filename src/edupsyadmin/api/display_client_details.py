@@ -58,10 +58,10 @@ def display_client_details(client_data: ClientData) -> None:
         "notenschutz",
         "nos_rs",
         "nos_rs_ausn",
-        "nos_rs_ausn_faecher",
+        "nos_rs_ausn_faecher_encr",
         "nos_les",
         "nos_other",
-        "nos_other_details",
+        "nos_other_details_encr",
     ]
     print_group_table(client_data, "Notenschutz", notenschutz_fields)
 
@@ -78,8 +78,8 @@ def display_client_details(client_data: ClientData) -> None:
         "nta_ersgew",
         "nta_vorlesen",
         "nta_other",
-        "nta_other_details",
-        "nta_nos_notes",
+        "nta_other_details_encr",
+        "nta_nos_notes_encr",
         "nta_nos_end",
         "nta_nos_end_grade",
     ]
