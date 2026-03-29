@@ -1,18 +1,18 @@
 from sqlalchemy import text
 
 
-def test_get_all_clients_df_returns_decrypted_data(
+def test_get_all_clients_returns_decrypted_data(
     clients_manager, client_dict_set_by_user
 ):
     """
-    Verifies that get_all_clients_df() returns decrypted plaintext,
+    Verifies that get_clients_overview(columns="all") returns decrypted plaintext,
     not encrypted ciphertext.
     """
     # 1. Add a client using the manager
     client_id = clients_manager.add_client(**client_dict_set_by_user)
 
-    # 2. Retrieve data via get_all_clients_df()
-    df = clients_manager.get_all_clients_df()
+    # 2. Retrieve data via get_clients_overview(columns=["all"])
+    df = clients_manager.get_clients_overview(columns=["all"])
 
     # 3. Check if the value in the DataFrame is decrypted
     # We use .iloc[0] because we only added one client to the fresh test DB

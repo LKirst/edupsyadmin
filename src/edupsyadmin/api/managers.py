@@ -64,7 +64,7 @@ class ClientsManager:
         self,
         nta_nos: bool = False,
         schools: list[str] | None = None,
-        columns: list[str] | None = None,
+        columns: list[str] | str | None = None,
     ) -> pd.DataFrame:
         logger.debug("trying to query client data for overview")
 
@@ -77,28 +77,34 @@ class ClientsManager:
             "class_name_encr",
         ]
 
-        # Defaults for extra columns when none provided
-        default_extras = [
-            "notenschutz",
-            "nachteilsausgleich",
-            "min_sessions",
-            "lrst_diagnosis_encr",
-            "keyword_taet_encr",
-        ]
+        if columns == "all" or columns == ["all"]:
+            final_columns = list(self._colmap.keys())
+        else:
+            # Defaults for extra columns when none provided
+            default_extras = [
+                "notenschutz",
+                "nachteilsausgleich",
+                "min_sessions",
+                "lrst_diagnosis_encr",
+                "keyword_taet_encr",
+            ]
 
-        extras = default_extras if columns is None else columns
+            if columns is None or (isinstance(columns, list) and not columns):
+                extras = default_extras
+            else:
+                extras = cast(list[str], columns)
 
-        # Validate extras against available columns
-        invalid = set(extras) - set(self._colmap.keys())
-        if invalid:
-            allowed = ", ".join(sorted(self._colmap.keys()))
-            raise ValueError(
-                f"Invalid column names: {', '.join(sorted(invalid))}. "
-                f"Allowed: {allowed}"
-            )
+            # Validate extras against available columns
+            invalid = set(extras) - set(self._colmap.keys())
+            if invalid:
+                allowed = ", ".join(sorted(self._colmap.keys()))
+                raise ValueError(
+                    f"Invalid column names: {', '.join(sorted(invalid))}. "
+                    f"Allowed: {allowed}"
+                )
 
-        # Merge required + extras, de-duplicate while preserving order
-        final_columns = list(dict.fromkeys(required_columns + extras))
+            # Merge required + extras, de-duplicate while preserving order
+            final_columns = list(dict.fromkeys(required_columns + extras))
 
         # Build SELECT
         selected_cols = [self._colmap[name].label(name) for name in final_columns]
@@ -120,18 +126,6 @@ class ClientsManager:
 
         with self.Session() as session:
             result = session.execute(stmt, execution_options={"yield_per": 100})
-            return pd.DataFrame(result.fetchall(), columns=list(result.keys()))
-
-    def get_all_clients_df(self) -> pd.DataFrame:
-        """
-        Get the entire database as a pandas DataFrame
-        """
-        logger.debug("querying entire database")
-        # Get all columns from the mapper
-        cols = [self._colmap[name] for name in self._valid_keys if name in self._colmap]
-        stmt = select(*cols)
-        with self.Session() as session:
-            result = session.execute(stmt)
             return pd.DataFrame(result.fetchall(), columns=list(result.keys()))
 
     def edit_client(self, client_ids: list[int], new_data: dict[str, Any]) -> None:
