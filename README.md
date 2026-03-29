@@ -172,6 +172,12 @@ Run the test suite:
 .venv/bin/python -m pytest -v -n auto --cov=src test/
 ```
 
+Run the benchmarks (set `--benchmark-time-unit=s` to set the unit to seconds)
+
+```text
+.venv/bin/python -m pytest --benchmark-only test/
+```
+
 Build documentation:
 
 ```text
