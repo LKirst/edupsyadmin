@@ -3,12 +3,28 @@ import shutil
 from collections.abc import Sequence
 from itertools import product
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from liquid import Template, exceptions
 
 from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.logger import logger
+
+
+def _add_aliases(data: ClientData) -> ClientData:
+    """
+    For every key ending in '_encr', create an alias without that suffix.
+
+    :param data: original dictionary
+    :return: modified dictionary with aliases
+    """
+    aliased_data: dict[str, Any] = {**data}
+    for key, value in data.items():
+        if key.endswith("_encr"):
+            alias = key.removesuffix("_encr")
+            if alias not in aliased_data:
+                aliased_data[alias] = value
+    return cast(ClientData, aliased_data)
 
 
 def _modify_bool_and_none_for_pdf_form(data: ClientData) -> dict[str, Any]:
@@ -144,6 +160,9 @@ def fill_form(
         that uses the library fillpdf or a function that uses pypdf2, defaults
         to True
     """
+    # Add aliases at the fill_form stage only
+    aliased_data = _add_aliases(client_data)
+
     for fn in form_paths:
         fp = Path(fn)
         logger.info(f"Using the template {fp}")
@@ -154,8 +173,8 @@ def fill_form(
         out_fp = Path(out_dir, f"{client_data.get('client_id')}_{fp.name}")
         logger.info(f"Writing to {out_fp.resolve()}")
         if fp.suffix == ".md":
-            write_form_md(fp, out_fp, client_data)
+            write_form_md(fp, out_fp, aliased_data)
         elif use_fillpdf:
-            write_form_pdf2(fp, out_fp, client_data)
+            write_form_pdf2(fp, out_fp, aliased_data)
         else:
-            write_form_pdf(fp, out_fp, client_data)
+            write_form_pdf(fp, out_fp, aliased_data)
