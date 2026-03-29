@@ -7,10 +7,13 @@ from pathlib import Path
 import sqlalchemy as sa
 from alembic import command
 from alembic.config import Config
+from alembic.runtime.migration import MigrationContext
+from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
+from edupsyadmin.api.migration_fs import create_db_backup
 from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db.clients import Client
@@ -33,6 +36,8 @@ def upgrade_db(database_url: str, salt_path: Path | None = None) -> None:
     2. A legacy, pre-Alembic database: "Stamps" the database with the latest
        revision and then runs any new migrations.
     3. An already versioned-database: Runs any pending migrations.
+
+    A backup is only created if a migration is actually required.
     """
     logger.info("Checking for database migrations...")
     try:
@@ -53,9 +58,16 @@ def upgrade_db(database_url: str, salt_path: Path | None = None) -> None:
         if salt_path:
             alembic_cfg.set_main_option("salt_path", str(salt_path))
 
+        # Check if migration is needed before proceeding
+        script = ScriptDirectory.from_config(alembic_cfg)
+        head_revision = script.get_current_head()
+
         # Connect to the database to check its state
         engine = create_engine(database_url)
         with engine.connect() as connection:
+            context = MigrationContext.configure(connection)
+            current_revision = context.get_current_revision()
+
             inspector = inspect(connection)
             table_names = inspector.get_table_names()
 
@@ -69,6 +81,18 @@ def upgrade_db(database_url: str, salt_path: Path | None = None) -> None:
                 == 0
             )
 
+            needs_migration = is_legacy or (current_revision != head_revision)
+
+            if not needs_migration:
+                logger.info("Database is up to date.")
+                return
+
+            # A migration is needed.
+            # Create a backup if we are upgrading an existing database with data.
+            if table_names:
+                db_path = Path(database_url.removeprefix("sqlite:///"))
+                create_db_backup(db_path)
+
             if is_legacy:
                 logger.info(
                     "Legacy database detected. Stamping with the initial "
@@ -79,9 +103,9 @@ def upgrade_db(database_url: str, salt_path: Path | None = None) -> None:
                 command.stamp(alembic_cfg, "4087c43f0c7c")
                 logger.info("Database stamped successfully.")
 
-        # For all cases, run upgrade. This is idempotent for stamped databases.
+        # For all cases, run upgrade.
         command.upgrade(alembic_cfg, "head")
-        logger.info("Database is up to date.")
+        logger.info("Database migration completed successfully.")
 
     except Exception as e:
         # Catching a broad exception because alembic can raise various errors

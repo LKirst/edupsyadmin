@@ -9,7 +9,7 @@ from typing import Any
 from edupsyadmin.__version__ import __version__
 from edupsyadmin.api.managers import ClientNotFoundError
 from edupsyadmin.api.migration import MigrationError, upgrade_db
-from edupsyadmin.api.migration_fs import create_db_backup, migrate_to_stable_paths
+from edupsyadmin.api.migration_fs import migrate_to_stable_paths
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import encr, get_keys_from_keyring
 from edupsyadmin.core.logger import logger
@@ -213,9 +213,6 @@ def _run_db_migrations(args: argparse.Namespace) -> int:
     no_db_commands = ["info", "flatten-pdfs"]
     if args.command_name not in no_db_commands:
         try:
-            # Create a backup before any potential database migration
-            db_path = Path(args.database_url.removeprefix("sqlite:///"))
-            create_db_backup(db_path)
             upgrade_db(args.database_url, salt_path=args.salt_path)
         except MigrationError as err:
             logger.critical(err)
