@@ -14,7 +14,7 @@ TEST_UID = "example.com"
 
 
 @pytest.mark.parametrize("num_clients", [10, 100, 1000])
-def test_get_clients_benchmark(benchmark, mock_config, tmp_path, num_clients):
+def test_cli_get_clients_execution(benchmark, mock_config, tmp_path, num_clients):
     """Benchmark the get_clients command."""
     # Set up encryption before database access
     encr.set_keys([Fernet.generate_key()])

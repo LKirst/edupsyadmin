@@ -18,12 +18,12 @@ def encryption_service():
     return encr
 
 
-def test_encrypt_benchmark(benchmark, encryption_service):
+def test_core_encrypt_string(benchmark, encryption_service):
     """Benchmark the encrypt function."""
     benchmark(encryption_service.encrypt, SECRET_MESSAGE)
 
 
-def test_decrypt_benchmark(benchmark, encryption_service):
+def test_core_decrypt_string(benchmark, encryption_service):
     """Benchmark the decrypt function."""
     token = encryption_service.encrypt(SECRET_MESSAGE)
     benchmark(encryption_service.decrypt, token)

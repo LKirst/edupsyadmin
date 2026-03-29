@@ -39,7 +39,7 @@ def benchmark_db(tmp_path, mock_config):
     return manager
 
 
-def test_decrypt_single_client_benchmark(benchmark, benchmark_db):
+def test_db_decrypt_one_full_client(benchmark, benchmark_db):
     """Benchmark decrypting all fields of a single client."""
 
     def decrypt_one():
@@ -49,12 +49,36 @@ def test_decrypt_single_client_benchmark(benchmark, benchmark_db):
     benchmark(decrypt_one)
 
 
-def test_decrypt_80_clients_benchmark(benchmark, benchmark_db):
-    """Benchmark decrypting all fields of 80 clients."""
+@pytest.mark.parametrize("num_clients", [10, 100, 1000])
+def test_db_get_clients_overview_execution(
+    benchmark, tmp_path, mock_config, num_clients
+):
+    """Benchmark decrypting N clients via get_clients_overview."""
+    # Set up encryption before database access
+    encr.set_keys([Fernet.generate_key()])
 
-    def decrypt_80():
+    database_path = tmp_path / "benchmark.sqlite"
+    database_url = f"sqlite:///{database_path}"
+
+    # Arrange: Set up a database with a significant number of clients
+    upgrade_db(database_url)
+    manager = ClientsManager(
+        database_url=database_url,
+    )
+    for i in range(num_clients):  # Add clients for the benchmark
+        manager.add_client(
+            school="FirstSchool",
+            gender_encr="f",
+            class_name_encr="11TKKG",
+            first_name_encr=f"Erika_{i}",
+            last_name_encr="Mustermann",
+            birthday_encr="2000-12-24",
+        )
+
+    def run_get_overview():
         # get_clients_overview triggers decryption of all fields for all
         # clients during the SQLAlchemy result processing.
-        return benchmark_db.get_clients_overview(columns=["all"])
+        return manager.get_clients_overview(columns=["all"])
 
-    benchmark(decrypt_80)
+    # Assert: benchmark the execution
+    benchmark(run_get_overview)
