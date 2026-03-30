@@ -71,6 +71,7 @@ class ClientsManager:
         # Always-present base columns
         required_columns = [
             "client_id",
+            "case_active",
             "school",
             "last_name_encr",
             "first_name_encr",

@@ -15,8 +15,8 @@ from edupsyadmin.tui.dialogs import YesNoDialog
 def _format_cell(value: str | bool | float | int) -> Text | str | bool | float | int:
     """Format a cell value with colors:
     - NaN → grey
-    - True → green
-    - False → red
+    - True → bold green "True"
+    - False → bold red "False"
     """
     if pd.isna(value):
         return Text("—", style="dim")
@@ -28,6 +28,37 @@ def _format_cell(value: str | bool | float | int) -> Text | str | bool | float |
         return Text("False", style="bold red")
 
     return value
+
+
+class StyledID:
+    """A helper to allow numerical sorting and styled rendering of client IDs."""
+
+    def __init__(self, value: int, style: str) -> None:
+        self.value = value
+        self.style = style
+
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, StyledID):
+            return self.value < other.value
+        if isinstance(other, int):
+            return self.value < other
+        return str(self.value) < str(other)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, StyledID):
+            return self.value == other.value
+        if isinstance(other, int):
+            return self.value == other
+        return str(self.value) == str(other)
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+    def __rich__(self) -> Text:
+        return Text(str(self.value), style=self.style)
+
+    def __int__(self) -> int:
+        return self.value
 
 
 class ClientsOverview(Static):
@@ -110,34 +141,57 @@ class ClientsOverview(Static):
         except Exception as e:
             self.post_message(self._ClientDeleted(error=e))
 
+    def _setup_table_columns(self, table: DataTable, columns: list[str]) -> None:
+        """Sets up the DataTable columns if not already present."""
+        if not table.columns:
+            for col in columns:
+                if col == "case_active":
+                    continue
+                width = 20 if col in ("first_name_encr", "last_name_encr") else None
+                table.add_column(col, key=col, width=width)
+
+    def _add_rows_to_table(self, table: DataTable, df: pd.DataFrame) -> None:
+        """Formats and adds rows from the DataFrame to the DataTable."""
+        skip_formatting = {"client_id"}
+        formatted_rows = []
+        for row_tuple in df.itertuples(index=False, name=None):
+            row_dict = dict(zip(df.columns, row_tuple, strict=True))
+            case_active = row_dict.get("case_active", True)
+            client_id_style = "bold green" if case_active else "bold red"
+
+            formatted_row = []
+            for col in df.columns:
+                if col == "case_active":
+                    continue
+                val = row_dict[col]
+                if col == "client_id":
+                    formatted_row.append(StyledID(int(val), style=client_id_style))
+                elif col in skip_formatting:
+                    formatted_row.append(val)
+                else:
+                    formatted_row.append(_format_cell(val))
+            formatted_rows.append(formatted_row)
+
+        table.add_rows(formatted_rows)
+
     def on_clients_overview__df_loaded(self, message: _DfLoaded) -> None:
         table = self.query_one(DataTable)
         table.clear()
 
         df = message.df
-        # Columns that should NOT be formatted (keep as plain values)
-        skip_formatting = {"client_id"}
+        if df.empty:
+            table.loading = False
+            self.notify("Tabelle neu geladen.")
+            return
 
-        if not df.empty:
-            if not table.columns:
-                for col in df.columns:
-                    table.add_column(col, key=col)
+        self._setup_table_columns(table, list(df.columns))
+        self._add_rows_to_table(table, df)
 
-            formatted_rows = []
-            for row in df.itertuples(index=False, name=None):
-                formatted_row = [
-                    value if df.columns[i] in skip_formatting else _format_cell(value)
-                    for i, value in enumerate(row)
-                ]
-                formatted_rows.append(formatted_row)
-
-            table.add_rows(formatted_rows)
-
-            if self._last_applied_sort[0]:
-                table.sort(
-                    *self._last_applied_sort[0],
-                    reverse=self._last_applied_sort[1],
-                )
+        if self._last_applied_sort[0]:
+            table.sort(
+                *self._last_applied_sort[0],
+                reverse=self._last_applied_sort[1],
+            )
 
         table.loading = False
         self.notify("Tabelle neu geladen.")
@@ -164,14 +218,14 @@ class ClientsOverview(Static):
             return
 
         row_data = table.get_row_at(table.cursor_row)
-        client_id_str = row_data[0]
+        client_id_val = row_data[0]
         last_name = row_data[2]
         first_name = row_data[3]
 
         try:
-            client_id = int(client_id_str)
+            client_id = int(client_id_val)
         except ValueError, TypeError:
-            self.notify(f"Invalid client_id: {client_id_str}", severity="error")
+            self.notify(f"Invalid client_id: {client_id_val}", severity="error")
             return
 
         def check_delete(delete: bool | None) -> None:
@@ -195,12 +249,12 @@ class ClientsOverview(Static):
             return
         row_key = event.row_key
         if row_key is not None:
-            client_id_str = event.data_table.get_row(row_key)[0]
+            client_id_val = event.data_table.get_row(row_key)[0]
             try:
-                client_id = int(client_id_str)
+                client_id = int(client_id_val)
                 self.post_message(self.ClientSelected(client_id))
             except ValueError, TypeError:
-                self.notify(f"Ungültige client_id: {client_id_str}")
+                self.notify(f"Ungültige client_id: {client_id_val}")
 
     def _sort_table_by(self, *column_keys: str) -> None:
         """Sorts the DataTable by the given column keys, toggling direction."""
