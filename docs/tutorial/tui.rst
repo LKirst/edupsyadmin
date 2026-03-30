@@ -16,7 +16,9 @@ aus:
 
 Wie du siehst, ist die TUI in zwei Hauptbereiche unterteilt:
 
-- **Links**: Eine Übersichtstabelle aller Klienten in der Datenbank.
+- **Links**: Eine Übersichtstabelle aller Klienten in der Datenbank. Die Farbe
+  der ``client_id`` signalisiert dabei den Status des Falls (``case_active``):
+  Grün steht für einen aktiven Fall, Rot für einen abgeschlossenen Fall.
 - **Rechts**: Ein Formular zur Anzeige und Bearbeitung der Daten des
   ausgewählten Klienten.
 
