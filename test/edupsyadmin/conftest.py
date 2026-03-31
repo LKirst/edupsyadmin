@@ -105,7 +105,7 @@ def mock_keyring(monkeypatch):
 @pytest.fixture(scope="function")
 def mock_config(
     tmp_path_factory: pytest.TempPathFactory, pdf_forms, request
-) -> Generator[str]:
+) -> Generator[Path]:
     template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
     conf_path = tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml"
 
@@ -134,7 +134,7 @@ def mock_config(
 @pytest.fixture(scope="function")
 def mock_config_snapshots(
     tmp_path_factory: pytest.TempPathFactory, request
-) -> Generator[str]:
+) -> Generator[Path]:
     """
     If I use the mock_config from above, shapshots are different on every
     machine because the pdf paths are absolute.

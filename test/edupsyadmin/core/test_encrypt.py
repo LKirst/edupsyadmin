@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 import keyring
+import keyring.errors
 import pytest
 from cryptography.fernet import Fernet
 

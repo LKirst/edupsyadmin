@@ -42,7 +42,7 @@ class DialogTestApp(App[None]):
         yield Footer()
 
     def action_show_dialog(self) -> None:
-        def handle_result(result: bool) -> None:
+        def handle_result(result: bool | None) -> None:
             self.app.log(f"Dialog dismissed with result: {result}")
 
         self.push_screen(YesNoDialog(question="Möchten Sie fortfahren?"), handle_result)
