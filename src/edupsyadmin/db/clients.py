@@ -597,16 +597,6 @@ class Client(Base):
     def validate_keyword_taet_encr(self, key: str, value: str) -> str:
         return check_keyword(value) or ""
 
-    @validates("nos_rs_ausn_faecher_encr")
-    def validate_nos_rs_ausn_faecher_encr(
-        self, key: str, value: str | None
-    ) -> str | None:
-        return value
-
-    @validates("nos_other_details_encr")
-    def validate_nos_other_details_encr(self, key: str, value: str) -> str:
-        return value
-
     @validates("min_sessions", "n_sessions")
     def validate_sessions(self, key: str, value: str | int) -> int:
         val = to_int_or_none(value)
@@ -633,10 +623,6 @@ class Client(Base):
     )
     def validate_bool(self, key: str, value: bool | str | int) -> bool:
         return to_bool_or_none(value) or False
-
-    @validates("nta_other_details_encr")
-    def validate_nta_other_details_encr(self, key: str, value: str) -> str:
-        return value
 
     @validates("nta_nos_end_grade")
     def validate_nta_nos_end_grade(
