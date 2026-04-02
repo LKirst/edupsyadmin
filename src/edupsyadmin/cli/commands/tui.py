@@ -47,15 +47,18 @@ def _suppress_console_logging() -> None:
 
 def execute(args: Namespace) -> None:
     """Entry point for the TUI."""
-    # Suppress console logging BEFORE creating managers or starting TUI
-    _suppress_console_logging()
-
     clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
-    edupsyadmin_tui_cls = lazy_import("edupsyadmin.tui.edupsyadmintui").EdupsyadminTui
-
     clients_manager = clients_manager_cls(
         database_url=args.database_url,
     )
+    logger = lazy_import("edupsyadmin.core.logger").logger
+    total = clients_manager.get_total_count()
+    logger.info(f"Database contains {total} entries.")
+
+    # Suppress console logging BEFORE creating managers or starting TUI
+    _suppress_console_logging()
+
+    edupsyadmin_tui_cls = lazy_import("edupsyadmin.tui.edupsyadmintui").EdupsyadminTui
 
     app = edupsyadmin_tui_cls(
         manager=clients_manager,

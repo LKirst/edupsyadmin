@@ -2,6 +2,7 @@ import textwrap
 from argparse import ArgumentParser, Namespace
 
 from edupsyadmin.cli.utils import lazy_import
+from edupsyadmin.core.logger import logger
 
 COMMAND_DESCRIPTION = "Show clients overview or single client"
 COMMAND_HELP = "Show clients overview or single client"
@@ -54,6 +55,9 @@ def execute(args: Namespace) -> None:
     clients_manager = clients_manager_cls(
         database_url=args.database_url,
     )
+
+    total = clients_manager.get_total_count()
+    logger.info(f"Database contains {total} entries.")
 
     if args.tui:
         clients_overview_app_cls = lazy_import(

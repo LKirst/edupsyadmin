@@ -2,7 +2,7 @@ import logging  # just for interaction with the sqlalchemy logger
 from typing import Any, cast
 
 import pandas as pd
-from sqlalchemy import create_engine, inspect, or_, select
+from sqlalchemy import create_engine, func, inspect, or_, select
 from sqlalchemy.orm import sessionmaker
 
 from edupsyadmin.api.types import ClientData
@@ -165,3 +165,11 @@ class ClientsManager:
             if not client:
                 raise ClientNotFoundError(client_id)
             session.delete(client)
+
+    def get_total_count(self) -> int:
+        """Get the total number of clients in the database."""
+        logger.debug("querying total client count from database")
+        with self.Session() as session:
+            return (
+                session.scalar(select(func.count()).select_from(clients_db.Client)) or 0
+            )
