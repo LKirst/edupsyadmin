@@ -1,43 +1,20 @@
-from datetime import date
 from pathlib import Path
 
 import pandas as pd
 
 from edupsyadmin.api.managers import ClientsManager
+from edupsyadmin.api.reports import TaetigkeitsberichtReport
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 
 try:
     import dataframe_image as dfi
-    from fpdf import FPDF
 
-    pdflibs_imported = True
+    dfi_imported = True
 except ImportError:
-    pdflibs_imported = False
-
+    dfi_imported = False
 
 pd.set_option("display.precision", 1)
-
-if pdflibs_imported:
-
-    class Report(FPDF):
-        def __init__(self, name: str) -> None:
-            super().__init__()
-            self.WIDTH = 210
-            self.HEIGHT = 297
-            self.header_text = f"Tätigkeitsbericht {date.today()} ({name})"
-
-        def header(self) -> None:
-            self.set_font("Arial", "B", 11)
-            self.cell(w=0, h=10, text=self.header_text, border=0, ln=0, align="C")
-            self.ln(20)  # line break
-
-        def footer(self) -> None:
-            # page numbers
-            self.set_y(-15)
-            self.set_font("Arial", "I", 8)
-            self.set_text_color(128)
-            self.cell(0, 10, "Page " + str(self.page_no()), border=0, ln=0, align="C")
 
 
 def get_subcategories(
@@ -179,7 +156,9 @@ def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> pd.DataFrame:
         "n Wochenstunden Schulpsychologie (Anrechnungsstunden)",
     ]
     wstds.loc["zstd_spsy_1wstd_target", :] = [
-        pd.to_numeric(wstds.at["zstd_year", "value"]) / wstd_total,
+        pd.to_numeric(wstds.at["zstd_year", "value"]) / wstd_total
+        if wstd_total > 0
+        else 0,
         ("h Arbeit / Jahr, die einer Wochenstunde entsprächen"),
     ]
     wstds.loc["zstd_spsy_year_target", :] = [
@@ -242,9 +221,9 @@ def summary_statistics_wstd(
             zstd_spsy_year_actual
             / pd.to_numeric(summarystats_wstd.at["ww_year", "value"])
         )
+        target = pd.to_numeric(summarystats_wstd.at["zstd_spsy_year_target", "value"])
         summarystats_wstd.loc["perc_spsy_year_actual", "value"] = (
-            zstd_spsy_year_actual
-            / pd.to_numeric(summarystats_wstd.at["zstd_spsy_year_target", "value"])
+            zstd_spsy_year_actual / target if target > 0 else 0
         ) * 100
     return summarystats_wstd
 
@@ -256,47 +235,26 @@ def create_taetigkeitsbericht_report(
     summary_categories: pd.DataFrame | None = None,
     summary_h_sessions: pd.DataFrame | None = None,
 ) -> None:
-    if pdflibs_imported:
+    if dfi_imported:
         Path("resources").mkdir(parents=True, exist_ok=True)
         wstd_img = "resources/summary_wstd.png"
         dfi.export(summary_wstd, wstd_img, table_conversion="matplotlib")
+        h_sessions_img = None
         if summary_h_sessions is not None:
             h_sessions_img = "resources/summary_h_sessions.png"
             dfi.export(
                 summary_h_sessions, h_sessions_img, table_conversion="matplotlib"
             )
 
-        report = Report(name)
-        if summary_categories is not None:
-            report.add_page()
-            for nm, val in summary_categories.items():
-                report.cell(w=15, h=9, border=0, text=f"{nm}:")
-                report.ln(6)  # line break
-                for text in [
-                    "einmaliger Kurzkontakt",
-                    "1-3 Sitzungen",
-                    "mehr als 3 Sitzungen",
-                ]:
-                    report.cell(w=50, h=9, border=0, text=text)
-                report.ln(6)  # linebreak
-                for colnm in [
-                    "count_1_session",
-                    "count_2to3_sessions",
-                    "count_mt3_sessions",
-                ]:
-                    report.cell(w=50, h=9, border=0, text=f"{val[colnm]:.0f}")
-                report.ln(18)  # line break
-        if summary_h_sessions is not None:
-            report.add_page()
-            report.image(h_sessions_img, x=15, y=report.HEIGHT * 1 / 4, w=180)
-        report.add_page()
-        report.image(wstd_img, x=15, y=20, w=report.WIDTH - 20)
-        report.output(basename_out + "_report.pdf")
-    else:
-        logger.warning(
-            "pdf libraries (dataframe_image and fpdf) are not installed "
-            "to generate a pdf output."
+        report = TaetigkeitsberichtReport(name)
+        report.build(
+            basename_out + "_report.pdf",
+            summary_wstd_img=wstd_img,
+            summary_h_sessions_img=h_sessions_img,
+            summary_categories=summary_categories,
         )
+    else:
+        logger.warning("dataframe_image is not installed to generate a pdf output.")
 
 
 def taetigkeitsbericht(
