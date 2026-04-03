@@ -199,6 +199,110 @@ class TestManagers:
         updated_client = clients_manager.get_decrypted_client(client_id)
         assert updated_client["first_name_encr"] != "new_name"
 
+    def test_get_total_count(self, clients_manager, client_dict_set_by_user):
+        initial_count = clients_manager.get_total_count()
+        clients_manager.add_client(**client_dict_set_by_user)
+        assert clients_manager.get_total_count() == initial_count + 1
+
+    def test_get_decrypted_client_not_found(self, clients_manager):
+        with pytest.raises(ClientNotFoundError):
+            clients_manager.get_decrypted_client(999)
+
+    def test_get_clients_overview(self, clients_manager):
+        # Add a few clients
+        c1_id = clients_manager.add_client(
+            school="FirstSchool",
+            gender_encr="m",
+            first_name_encr="A",
+            last_name_encr="Alpha",
+            birthday_encr="2010-01-01",
+            class_name_encr="1a",
+            nos_rs=True,
+        )
+        c2_id = clients_manager.add_client(
+            school="SecondSchool",
+            gender_encr="f",
+            first_name_encr="B",
+            last_name_encr="Beta",
+            birthday_encr="2011-01-01",
+            class_name_encr="2b",
+            nta_zeitv_vieltext=25,
+        )
+        clients_manager.add_client(
+            school="FirstSchool",
+            gender_encr="x",
+            first_name_encr="C",
+            last_name_encr="Gamma",
+            birthday_encr="2012-01-01",
+            class_name_encr="3c",
+        )
+
+        # 1. Default overview
+        df = clients_manager.get_clients_overview()
+        assert len(df) == 3
+        expected_base = {
+            "client_id",
+            "case_active",
+            "school",
+            "last_name_encr",
+            "first_name_encr",
+            "class_name_encr",
+        }
+        assert expected_base.issubset(df.columns)
+
+        # 2. Filter by school
+        df_school = clients_manager.get_clients_overview(schools=["FirstSchool"])
+        assert len(df_school) == 2
+        assert all(df_school["school"] == "FirstSchool")
+
+        # 3. Filter by nta_nos
+        df_nta_nos = clients_manager.get_clients_overview(nta_nos=True)
+        assert len(df_nta_nos) == 2  # A (nos_rs) and B (nta_zeitv)
+        assert set(df_nta_nos["client_id"]) == {c1_id, c2_id}
+
+        # 4. Custom columns
+        df_cols = clients_manager.get_clients_overview(
+            columns=["birthday_encr", "city_encr"]
+        )
+        assert "birthday_encr" in df_cols.columns
+        assert "city_encr" in df_cols.columns
+        assert (
+            "first_name_encr" in df_cols.columns
+        )  # should still be there as it's required
+
+        # 5. columns="all"
+        df_all = clients_manager.get_clients_overview(columns="all")
+        assert len(df_all.columns) >= len(EXPECTED_KEYS)
+
+        # 6. Invalid columns
+        with pytest.raises(ValueError, match="Invalid column names"):
+            clients_manager.get_clients_overview(columns=["non_existent_column"])
+
+    def test_edit_client_partial_not_found(
+        self, clients_manager, client_dict_set_by_user
+    ):
+        c1_id = clients_manager.add_client(**client_dict_set_by_user)
+
+        from unittest.mock import patch
+
+        from edupsyadmin.core.logger import logger as app_logger
+
+        with patch.object(app_logger, "warning") as mock_warning:
+            # Edit one existing and one non-existing ID
+            clients_manager.edit_client(
+                [c1_id, 999], {"first_name_encr": "UpdatedName"}
+            )
+
+            # Check if warning was called with expected message
+            called_with_999 = any(
+                "{999}" in str(call.args[0]) for call in mock_warning.call_args_list
+            )
+            assert called_with_999
+
+        # Verify c1 was updated
+        updated_c1 = clients_manager.get_decrypted_client(c1_id)
+        assert updated_c1["first_name_encr"] == "UpdatedName"
+
 
 class TestClientValidation:
     def test_validate_lrst_diagnosis(self, clients_manager, client_dict_set_by_user):

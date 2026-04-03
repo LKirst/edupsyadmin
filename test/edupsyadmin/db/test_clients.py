@@ -95,3 +95,57 @@ def test_empty_string_handled_as_none_for_dates(tmp_path):
         client_db = session.get(Client, client_id)
         assert client_db is not None
         assert client_db.entry_date_encr is None
+
+
+def test_to_bool_or_none():
+    from edupsyadmin.db.clients import to_bool_or_none
+
+    assert to_bool_or_none(True) is True
+    assert to_bool_or_none(False) is False
+    assert to_bool_or_none("1") is True
+    assert to_bool_or_none("0") is False
+    assert to_bool_or_none("true") is True
+    assert to_bool_or_none("FALSE") is False
+    assert to_bool_or_none(1) is True
+    assert to_bool_or_none(0) is False
+    assert to_bool_or_none(None) is None
+    assert to_bool_or_none("") is None
+    assert to_bool_or_none("  ") is None
+
+    with pytest.raises(ValueError, match="cannot be converted to a boolean"):
+        to_bool_or_none("abc")
+    with pytest.raises(ValueError, match="cannot be converted to a boolean"):
+        to_bool_or_none(2)
+    with pytest.raises(TypeError):
+        to_bool_or_none([])  # ty: ignore[invalid-argument-type]
+
+
+def test_to_int_or_none():
+    from edupsyadmin.db.clients import to_int_or_none
+
+    assert to_int_or_none(123) == 123
+    assert to_int_or_none("456") == 456
+    assert to_int_or_none(None) is None
+    assert to_int_or_none("") is None
+    assert to_int_or_none("  ") is None
+
+    with pytest.raises(ValueError, match="cannot be converted to an integer"):
+        to_int_or_none("abc")
+    with pytest.raises(TypeError):
+        to_int_or_none([])  # ty: ignore[invalid-argument-type]
+
+
+def test_to_date_or_none():
+    from edupsyadmin.db.clients import to_date_or_none
+
+    test_date = date(2023, 1, 1)
+    assert to_date_or_none(test_date) == test_date
+    assert to_date_or_none("2023-01-01") == test_date
+    assert to_date_or_none(None) is None
+    assert to_date_or_none("") is None
+    assert to_date_or_none("  ") is None
+
+    with pytest.raises(ValueError, match="Invalid date format"):
+        to_date_or_none("01.01.2023")
+    with pytest.raises(TypeError):
+        to_date_or_none(123)  # ty: ignore[invalid-argument-type]

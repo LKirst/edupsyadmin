@@ -1,7 +1,5 @@
 """Tests for filesystem migration logic."""
 
-from unittest.mock import patch
-
 from edupsyadmin.api.migration_fs import (
     find_latest_versioned_dir,
     looks_like_version,
@@ -58,20 +56,19 @@ def test_migrate_to_stable_paths(tmp_path):
     old_db_file = old_data_dir / "edupsyadmin.db"
     old_db_file.write_text("old db")
 
-    with patch("edupsyadmin.api.migration_fs.logger"):
-        migrate_to_stable_paths(
-            config_file=config_dir / "config.yml",
-            salt_file=config_dir / "salt.txt",
-            db_file=data_dir / "edupsyadmin.db",
-        )
+    migrate_to_stable_paths(
+        config_file=config_dir / "config.yml",
+        salt_file=config_dir / "salt.txt",
+        db_file=data_dir / "edupsyadmin.db",
+    )
 
-        # Verify migration
-        assert (config_dir / "config.yml").read_text() == "old config"
-        assert (config_dir / "salt.txt").read_text() == "old salt"
-        assert (data_dir / "edupsyadmin.db").read_text() == "old db"
-        # Verify backup was created
-        assert (data_dir / "edupsyadmin.db.bak").exists()
-        assert (data_dir / "edupsyadmin.db.bak").read_text() == "old db"
+    # Verify migration
+    assert (config_dir / "config.yml").read_text() == "old config"
+    assert (config_dir / "salt.txt").read_text() == "old salt"
+    assert (data_dir / "edupsyadmin.db").read_text() == "old db"
+    # Verify backup was created
+    assert (data_dir / "edupsyadmin.db.bak").exists()
+    assert (data_dir / "edupsyadmin.db.bak").read_text() == "old db"
 
 
 def test_migrate_no_overwrite(tmp_path):
@@ -90,12 +87,11 @@ def test_migrate_no_overwrite(tmp_path):
     old_config_dir.mkdir()
     (old_config_dir / "config.yml").write_text("old config")
 
-    with patch("edupsyadmin.api.migration_fs.logger"):
-        migrate_to_stable_paths(
-            config_file=config_dir / "config.yml",
-            salt_file=config_dir / "salt.txt",
-            db_file=data_dir / "edupsyadmin.db",
-        )
+    migrate_to_stable_paths(
+        config_file=config_dir / "config.yml",
+        salt_file=config_dir / "salt.txt",
+        db_file=data_dir / "edupsyadmin.db",
+    )
 
-        # Should NOT overwrite existing config
-        assert (config_dir / "config.yml").read_text() == "new config"
+    # Should NOT overwrite existing config
+    assert (config_dir / "config.yml").read_text() == "new config"
