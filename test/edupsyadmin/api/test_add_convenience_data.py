@@ -136,13 +136,13 @@ def test_add_convenience_data_missing_address_parts(mock_get_subjects, mock_conf
     assert "addr_m_wname" not in result
 
 
-@patch("edupsyadmin.api.add_convenience_data.logger.error")
 @patch("edupsyadmin.api.add_convenience_data._get_subjects")
 def test_add_convenience_data_invalid_lrst_test_by(
-    mock_get_subjects, mock_logger_error, mock_config
+    mock_get_subjects, mock_config, caplog
 ):
     mock_get_subjects.return_value = "Math"
     client_data = {"lrst_last_test_by_encr": "invalid_tester", "school": "FirstSchool"}
-    result = add_convenience_data(cast(ClientData, client_data))
+    with caplog.at_level("ERROR", logger="edupsyadmin"):
+        result = add_convenience_data(cast(ClientData, client_data))
     assert "lrst_schpsy" not in result
-    mock_logger_error.assert_called_once()
+    assert "Value for lrst_last_test_by must be in" in caplog.text
