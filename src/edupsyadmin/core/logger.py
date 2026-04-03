@@ -5,6 +5,7 @@ until the logger is started.
 
 """
 
+import logging
 from logging import Formatter, NullHandler, StreamHandler
 from logging import Logger as _Logger
 from typing import TextIO
@@ -17,7 +18,7 @@ class Logger(_Logger):
 
     LOGFMT = "%(asctime)s;%(levelname)s;%(name)s;%(message)s"
 
-    def __init__(self, name: str | None = None) -> None:
+    def __init__(self, name: str) -> None:
         """Initialize this logger.
 
         Loggers with the same name refer to the same underlying object.
@@ -30,7 +31,7 @@ class Logger(_Logger):
         # to whether the logger has been started yet. The standard Logger API
         # may be used to add and remove additional handlers, but the
         # NullHandler should always be left in place.
-        super().__init__(name or __name__.split(".")[0])
+        super().__init__(name)
         self.addHandler(NullHandler())  # default to no output
 
     def start(self, level: str = "WARN", stream: TextIO | None = None) -> None:
@@ -71,4 +72,5 @@ class Logger(_Logger):
             self.removeHandler(handler)
 
 
-logger = Logger()
+logging.setLoggerClass(Logger)
+logger = logging.getLogger("edupsyadmin")

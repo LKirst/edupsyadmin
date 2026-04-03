@@ -20,7 +20,7 @@ from edupsyadmin.core.logger import Logger
 def logger():
     """Return a Logger object for testing."""
     # Don't modify global object.
-    return Logger()
+    return Logger("test_logger")
 
 
 class TestLogger:
