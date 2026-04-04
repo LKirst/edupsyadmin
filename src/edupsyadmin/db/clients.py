@@ -30,7 +30,7 @@ class EncryptedString(TypeDecorator):
     Presents plain str values to the application."""
 
     impl = String
-    cache_ok = True  # SQLAlchemy 2.0 requirement
+    cache_ok = True
 
     @property
     def python_type(self) -> type:
