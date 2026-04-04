@@ -6,6 +6,7 @@ from dateutil.parser import parse
 
 from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.config import config
+from edupsyadmin.core.enums import LrstDiagnosis, LrstTesterType
 from edupsyadmin.core.logger import logger
 from edupsyadmin.utils.academic_year import (
     get_academic_year_string,
@@ -109,18 +110,13 @@ def _add_lrst_diagnosis(data: ClientData) -> None:
     if not diagnosis:
         return
 
-    diagnosis_mapping = {
-        "lrst": "Lese-Rechtschreib-Störung",
-        "iLst": "isolierte Lesestörung",
-        "iRst": "isolierte Rechtschreibstörung",
-    }
-    if diagnosis in diagnosis_mapping:
-        data["lrst_diagnosis_long"] = diagnosis_mapping[diagnosis]
-    else:
-        allowed = list(diagnosis_mapping.keys())
+    try:
+        data["lrst_diagnosis_long"] = LrstDiagnosis(diagnosis).long_name
+    except ValueError:
+        allowed = [v.value for v in LrstDiagnosis]
         raise ValueError(
             f"lrst_diagnosis can be only one of {allowed}, but was {diagnosis}"
-        )
+        ) from None
 
 
 def _add_dates(data: ClientData) -> None:
@@ -162,21 +158,12 @@ def _convert_lrst_test_by(data: ClientData) -> None:
     if not test_by:
         return
 
-    test_by_mapping = {
-        "schpsy": 1,
-        "psychia": 2,
-        "psychoth": 3,
-        "spz": 4,
-        "andere": 5,
-    }
-
-    if test_by in test_by_mapping:
-        data["lrst_schpsy"] = test_by_mapping[test_by]
-    else:
+    try:
+        data["lrst_schpsy"] = LrstTesterType(test_by).numerical_value
+    except ValueError:
+        allowed = [v.value for v in LrstTesterType]
         logger.error(
-            f"Value for lrst_last_test_by must be in "
-            f"{list(test_by_mapping.keys())} but is "
-            f"{test_by}"
+            f"Value for lrst_last_test_by must be in {allowed} but is {test_by}"
         )
 
 

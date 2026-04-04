@@ -1,13 +1,15 @@
 from datetime import date, datetime
 from typing import Required, TypedDict
 
+from edupsyadmin.core.enums import Gender, LrstDiagnosis, LrstTesterType
+
 
 class ClientData(TypedDict, total=False):
     # Base fields from Client model
     client_id: Required[int]
     first_name_encr: Required[str]
     last_name_encr: Required[str]
-    gender_encr: Required[str]
+    gender_encr: Required[Gender | str]
     birthday_encr: Required[date]
     street_encr: Required[str]
     city_encr: Required[str]
@@ -17,9 +19,9 @@ class ClientData(TypedDict, total=False):
     email_encr: Required[str]
     notes_encr: Required[str]
     keyword_taet_encr: Required[str]
-    lrst_diagnosis_encr: Required[str]
+    lrst_diagnosis_encr: Required[LrstDiagnosis | str]
     lrst_last_test_date_encr: Required[str]
-    lrst_last_test_by_encr: Required[str]
+    lrst_last_test_by_encr: Required[LrstTesterType | str]
     school: Required[str]
     entry_date_encr: Required[date | None]
     class_name_encr: Required[str | None]

@@ -20,7 +20,8 @@ from textual.widgets._select import NoSelection
 
 from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.config import config
-from edupsyadmin.db.clients import LRST_DIAG, LRST_TEST_BY, Client
+from edupsyadmin.core.enums import Gender, LrstDiagnosis, LrstTesterType
+from edupsyadmin.db.clients import Client
 from edupsyadmin.utils.python_type import get_python_type
 
 REQUIRED_FIELDS = [
@@ -188,8 +189,9 @@ class EditClient(Container):
         self.save_button: Button | None = None
         self.choice_fields: dict[str, list[tuple[str, str]]] = {
             "school": [(k, k) for k in config.school],
-            "lrst_diagnosis_encr": [(v, v) for v in LRST_DIAG],
-            "lrst_last_test_by_encr": [(v, v) for v in LRST_TEST_BY],
+            "gender_encr": [(v.value, v.value) for v in Gender],
+            "lrst_diagnosis_encr": [(v.value, v.value) for v in LrstDiagnosis],
+            "lrst_last_test_by_encr": [(v.value, v.value) for v in LrstTesterType],
         }
 
     def _compose_field_row(self, db_column: Any) -> ComposeResult:

@@ -2,6 +2,11 @@ from datetime import date
 from typing import Any
 from unittest.mock import MagicMock
 
+# NOTE: Running these TUI tests interferes with `caplog` in subsequent tests.
+# Textual (or the app initialization) appears to redirect or capture logging
+# in a way that prevents `caplog` from seeing logs emitted by the `edupsyadmin`
+# logger in later tests within the same test session.
+# If you see failing `caplog` assertions, try running the failing test in isolation.
 import pytest
 from textual.widgets import Checkbox, Input
 

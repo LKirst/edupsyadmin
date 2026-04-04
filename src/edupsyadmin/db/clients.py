@@ -12,6 +12,7 @@ from sqlalchemy.types import TypeDecorator
 
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import encr
+from edupsyadmin.core.enums import Gender, LrstDiagnosis, LrstTesterType
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db import Base
 from edupsyadmin.utils.academic_year import (
@@ -21,8 +22,8 @@ from edupsyadmin.utils.academic_year import (
 from edupsyadmin.utils.int_from_str import extract_number
 from edupsyadmin.utils.taetigkeitsbericht_check_key import check_keyword
 
-LRST_DIAG = {"lrst", "iLst", "iRst"}
-LRST_TEST_BY = {"schpsy", "psychia", "psychoth", "spz", "andere"}
+LRST_DIAG: frozenset[LrstDiagnosis] = frozenset(LrstDiagnosis)
+LRST_TEST_BY: frozenset[LrstTesterType] = frozenset(LrstTesterType)
 
 
 class EncryptedString(TypeDecorator):
@@ -450,11 +451,14 @@ class Client(Base):
             self.client_id = client_id_int_or_none
         self.first_name_encr = first_name_encr
         self.last_name_encr = last_name_encr
-        self.gender_encr = (
-            gender_encr
-            if gender_encr not in ["w", "d"]
-            else ("f" if gender_encr == "w" else "x")
-        )
+        if gender_encr in ["w", "f"]:
+            self.gender_encr = Gender.FEMALE
+        elif gender_encr in ["d", "x"]:
+            self.gender_encr = Gender.DIVERSE
+        elif gender_encr == "m":
+            self.gender_encr = Gender.MALE
+        else:
+            self.gender_encr = gender_encr
         dt_birthday = to_date_or_none(birthday_encr)
         if dt_birthday is None:
             raise ValueError("Das Geburtsdatum ist ein Pflichtfeld.")
