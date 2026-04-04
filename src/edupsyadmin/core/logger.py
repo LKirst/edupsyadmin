@@ -72,5 +72,8 @@ class Logger(_Logger):
             self.removeHandler(handler)
 
 
+# Set the logger class BEFORE getting any loggers
 logging.setLoggerClass(Logger)
-logger = logging.getLogger("edupsyadmin")
+
+# Now create the logger - it will be an instance of our custom Logger class
+logger: Logger = logging.getLogger("edupsyadmin")  # ty: ignore[invalid-assignment]
