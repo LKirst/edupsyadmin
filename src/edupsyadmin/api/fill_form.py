@@ -1,11 +1,10 @@
-import os
 import shutil
 from collections.abc import Sequence
-from itertools import product
 from pathlib import Path
 from typing import Any, cast
 
-from liquid import Template, exceptions
+from liquid import parse
+from liquid.exceptions import LiquidError
 
 from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.logger import logger
@@ -76,20 +75,26 @@ def write_form_pdf(fn: Path, out_fn: Path, data: ClientData) -> None:
         else:
             logger.debug(f"\nForm fields:\n{fields.keys()}")
             logger.debug(f"\nData keys:\n{data_wo_bool.keys()}")
-            comb_key_fields = product(range(len(reader.pages)), fields.keys())
-            for i, key in comb_key_fields:
+
+            fields_to_update: dict[str, Any] = {}
+            for key in fields:
                 if key in data_wo_bool:
+                    value = data_wo_bool[key]
+                    if value:
+                        fields_to_update[key] = value
+
+            # update all fields at once for each page
+            if fields_to_update:
+                for i, page in enumerate(writer.pages):
                     try:
-                        if data_wo_bool[key]:
-                            writer.update_page_form_field_values(
-                                writer.pages[i], {key: data_wo_bool[key]}
-                            )
-                    except KeyError:
-                        logger.debug(
-                            f"Couldn't fill in {key} on p. {i + 1} of {fn.name}"
-                        )
+                        writer.update_page_form_field_values(page, fields_to_update)
+                    except KeyError as e:
+                        raise KeyError(
+                            f"Bulk update of fields failed on p. {i + 1} of {fn.name}"
+                        ) from e
+
     if out_fn.exists():
-        raise FileExistsError
+        raise FileExistsError(f"Output file already exists: {out_fn}")
     with out_fn.open("wb") as output_stream:
         writer.write(output_stream)
 
@@ -125,28 +130,36 @@ def write_form_md(fn: Path, out_fn: Path, data: ClientData) -> None:
     :param fn: filename of a text file with the liquid template
     :param out_fn: filename for the output
     :param data: the data to fill the liquid template with
-    :raises [TODO:name]: [TODO:description]
+    :raises LiquidError: LiquidError
     """
     with fn.open("r", encoding="utf8") as text_file:
         txt = text_file.read()
         try:
-            template = Template(txt)
-        except exceptions.LiquidError as e:
-            logger.error(txt)
-            raise e
+            template = parse(txt)
+        except LiquidError as e:
+            e.add_note(
+                "There is an issue with your template "
+                "(not related to the data you're trying to fill in)."
+            )
+            raise
+
         try:
             msg = template.render(**data)
-        except exceptions.LiquidError as e:
-            logger.error(e)
-            msg = ""
+        except LiquidError as e:
+            e.add_note(
+                "The template could be parsed, but there was an issue with "
+                "rendering the template with the provided field values."
+            )
+            raise
+
     with out_fn.open("w", encoding="utf8") as out_file:
         out_file.writelines(msg)
 
 
 def fill_form(
     client_data: ClientData,
-    form_paths: Sequence[str | os.PathLike[str]],
-    out_dir: str | os.PathLike[str] = ".",
+    form_paths: Sequence[Path],
+    out_dir: Path = Path(),
     use_fillpdf: bool = True,
 ) -> None:
     """
@@ -163,8 +176,7 @@ def fill_form(
     # Add aliases at the fill_form stage only
     aliased_data = _add_aliases(client_data)
 
-    for fn in form_paths:
-        fp = Path(fn)
+    for fp in form_paths:
         logger.info(f"Using the template {fp}")
         if not fp.is_file():
             raise FileNotFoundError(
