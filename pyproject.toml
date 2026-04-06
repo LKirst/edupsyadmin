@@ -23,8 +23,10 @@ dependencies = [
   "platformdirs>=4.3.6",
   "pydantic>=2.12.3",
   "pypdf>=5.1",
+  "python-dateutil>=2.9.0.post0",
   "python-liquid>=1.12.1",
   "pyyaml>=6.0.2",
+  "rich>=14.3.3",
   "scipy>=1.14.1",
   "sqlalchemy>=2.0.36",
   "textual>=8",
@@ -34,6 +36,7 @@ optional-dependencies.flattenpdf = [ "pdf2image>=1.17" ]
 optional-dependencies.reportsandtaetigkeitsber = [
   "dataframe-image>=0.2.6",
   "matplotlib>=3.9.2",
+  "numpy>=2.4.4",
   "reportlab>=4.2.5",
 ]
 scripts.edupsyadmin = "edupsyadmin.cli:main"
@@ -42,6 +45,7 @@ homepage = "https://github.com/LKirst/edupsyadmin.git"
 [dependency-groups]
 dev = [
   "commitizen>=3.31",
+  "deptry>=0.25.1",
   "pandas-stubs>=2.2.3.241009",
   "prek>=0.3.8",
   "pytest>=8.3.3",

@@ -1,4 +1,5 @@
 import importlib.resources
+import io
 import shutil
 from collections.abc import Generator
 from datetime import date
@@ -12,11 +13,15 @@ import pytest
 import yaml
 from cryptography.fernet import Fernet
 from keyring.backends.null import Keyring as NullKeyring
+from pdf2image import convert_from_path
+from PIL import Image
 from sample_pdf_form import create_pdf_form
 from sample_webuntis_export import create_sample_webuntis_export
+from syrupy.extensions.image import PNGImageSnapshotExtension
 
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.api.migration import upgrade_db
+from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import Logger, logger
@@ -284,6 +289,7 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
             "nos_les": False,
             "notenschutz": True,
             "nta_zeitv_vieltext": 10,
+            "nta_zeitv": True,
             "nachteilsausgleich": True,
             "nta_nos_end": True,
             "nta_nos_end_grade": 11,
@@ -311,6 +317,7 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
             "nos_les": False,
             "notenschutz": False,
             "nta_zeitv_vieltext": None,
+            "nta_zeitv": False,
             "nachteilsausgleich": False,
             "nta_nos_end": False,
             "nta_nos_end_grade": None,
@@ -323,7 +330,7 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
     ],
     scope="session",
 )
-def client_dict_internal(request) -> dict[str, Any]:
+def client_dict_internal(request) -> ClientData:
     """
     The attributes of a clients object. Includes data that the clients object
     sets internally.
@@ -377,3 +384,35 @@ def pdf_forms(tmp_path_factory: pytest.TempPathFactory) -> list[Path]:
     testing_logger.debug(f"PDF forms fixture created at {pdf_form_paths}")
 
     return pdf_form_paths
+
+
+class PDFSnapshotExtension(PNGImageSnapshotExtension):
+    """Extension for syrupy to handle PDF snapshots by converting them to PNG."""
+
+    def serialize(self, data: Any, **_kwargs: Any) -> Any:
+        if isinstance(data, (str, Path)):
+            # It's a path to a PDF
+            images = convert_from_path(data)
+            if not images:
+                return super().serialize(b"")
+
+            # Stitch images together vertically
+            widths, heights = zip(*(i.size for i in images), strict=False)
+            max_width = max(widths)
+            total_height = sum(heights)
+
+            combined = Image.new("RGB", (max_width, total_height))
+            y_offset = 0
+            for im in images:
+                combined.paste(im, (0, y_offset))
+                y_offset += im.size[1]
+
+            img_byte_arr = io.BytesIO()
+            combined.save(img_byte_arr, format="PNG")
+            return super().serialize(img_byte_arr.getvalue())
+        return super().serialize(data)
+
+
+@pytest.fixture
+def pdf_snapshot(snapshot):
+    return snapshot.use_extension(PDFSnapshotExtension)
