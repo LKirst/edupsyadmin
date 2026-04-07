@@ -1,7 +1,7 @@
 import shutil
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from liquid import parse
 from liquid.exceptions import LiquidError
@@ -10,7 +10,12 @@ from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.logger import logger
 
 
-def _add_aliases(data: ClientData) -> ClientData:
+def _ensure_output_not_exists(out_fn: Path) -> None:
+    if out_fn.exists():
+        raise FileExistsError(f"Output file already exists: {out_fn}")
+
+
+def _add_aliases(data: ClientData | dict[str, Any]) -> dict[str, Any]:
     """
     For every key ending in '_encr', create an alias without that suffix.
 
@@ -23,10 +28,12 @@ def _add_aliases(data: ClientData) -> ClientData:
             alias = key.removesuffix("_encr")
             if alias not in aliased_data:
                 aliased_data[alias] = value
-    return cast(ClientData, aliased_data)
+    return aliased_data
 
 
-def _modify_bool_and_none_for_pdf_form(data: ClientData) -> dict[str, Any]:
+def _modify_bool_and_none_for_pdf_form(
+    data: ClientData | dict[str, Any],
+) -> dict[str, Any]:
     """
     Replace every boolean True with 'Yes' and False with 'Off', which are the
     values checkboxes accept in most PDF forms. Replace None with empty
@@ -48,7 +55,7 @@ def _modify_bool_and_none_for_pdf_form(data: ClientData) -> dict[str, Any]:
     return updated_data
 
 
-def write_form_pdf(fn: Path, out_fn: Path, data: ClientData) -> None:
+def write_form_pypdf(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) -> None:
     """
     Fill a pdf form with data using pypdf.
 
@@ -58,6 +65,8 @@ def write_form_pdf(fn: Path, out_fn: Path, data: ClientData) -> None:
     :raises FileExistsError: FileExistsError
     """
     from pypdf import PdfReader, PdfWriter
+
+    _ensure_output_not_exists(out_fn)
 
     data_wo_bool = _modify_bool_and_none_for_pdf_form(data)
 
@@ -93,13 +102,13 @@ def write_form_pdf(fn: Path, out_fn: Path, data: ClientData) -> None:
                             f"Bulk update of fields failed on p. {i + 1} of {fn.name}"
                         ) from e
 
-    if out_fn.exists():
-        raise FileExistsError(f"Output file already exists: {out_fn}")
     with out_fn.open("wb") as output_stream:
         writer.write(output_stream)
 
 
-def write_form_pdf2(fn: Path, out_fn: Path, data: ClientData) -> None:
+def write_form_fillpdf(
+    fn: Path, out_fn: Path, data: ClientData | dict[str, Any]
+) -> None:
     """
     Fill a pdf form with data using fillpdf.
 
@@ -108,6 +117,8 @@ def write_form_pdf2(fn: Path, out_fn: Path, data: ClientData) -> None:
     :param data: the data to fill the pdf with
     """
     from fillpdf import fillpdfs
+
+    _ensure_output_not_exists(out_fn)
 
     data_wo_bool = _modify_bool_and_none_for_pdf_form(data)
 
@@ -123,7 +134,7 @@ def write_form_pdf2(fn: Path, out_fn: Path, data: ClientData) -> None:
         shutil.copyfile(fn, out_fn)
 
 
-def write_form_md(fn: Path, out_fn: Path, data: ClientData) -> None:
+def write_form_md(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) -> None:
     """
     Render a liquid template with data passed to the function.
 
@@ -132,6 +143,9 @@ def write_form_md(fn: Path, out_fn: Path, data: ClientData) -> None:
     :param data: the data to fill the liquid template with
     :raises LiquidError: LiquidError
     """
+
+    _ensure_output_not_exists(out_fn)
+
     with fn.open("r", encoding="utf8") as text_file:
         txt = text_file.read()
         try:
@@ -153,13 +167,13 @@ def write_form_md(fn: Path, out_fn: Path, data: ClientData) -> None:
             raise
 
     with out_fn.open("w", encoding="utf8") as out_file:
-        out_file.writelines(msg)
+        out_file.write(msg)
 
 
 def fill_form(
-    client_data: ClientData,
+    client_data: ClientData | dict[str, Any],
     form_paths: Sequence[Path],
-    out_dir: Path = Path(),
+    out_dir: Path | None = None,
     use_fillpdf: bool = True,
 ) -> None:
     """
@@ -173,7 +187,9 @@ def fill_form(
         that uses the library fillpdf or a function that uses pypdf2, defaults
         to True
     """
-    # Add aliases at the fill_form stage only
+    if out_dir is None:
+        out_dir = Path()
+
     aliased_data = _add_aliases(client_data)
 
     for fp in form_paths:
@@ -187,6 +203,6 @@ def fill_form(
         if fp.suffix == ".md":
             write_form_md(fp, out_fp, aliased_data)
         elif use_fillpdf:
-            write_form_pdf2(fp, out_fp, aliased_data)
+            write_form_fillpdf(fp, out_fp, aliased_data)
         else:
-            write_form_pdf(fp, out_fp, aliased_data)
+            write_form_pypdf(fp, out_fp, aliased_data)
