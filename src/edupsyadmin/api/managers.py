@@ -92,8 +92,10 @@ class ClientsManager:
 
             if columns is None or (isinstance(columns, list) and not columns):
                 extras = default_extras
+            elif isinstance(columns, str):
+                extras = [columns]
             else:
-                extras = cast(list[str], columns)
+                extras = columns
 
             # Validate extras against available columns
             invalid = set(extras) - set(self._colmap.keys())

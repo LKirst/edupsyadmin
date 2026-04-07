@@ -278,6 +278,11 @@ class TestManagers:
         with pytest.raises(ValueError, match="Invalid column names"):
             clients_manager.get_clients_overview(columns=["non_existent_column"])
 
+        # 7. Single column as string
+        df_single = clients_manager.get_clients_overview(columns="birthday_encr")
+        assert "birthday_encr" in df_single.columns
+        assert "first_name_encr" in df_single.columns
+
     def test_edit_client_partial_not_found(
         self, clients_manager, client_dict_set_by_user
     ):
