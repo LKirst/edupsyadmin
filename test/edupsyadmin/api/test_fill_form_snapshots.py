@@ -7,6 +7,9 @@ def test_fill_form_mantelbogen_snapshot(
 ):
     """Visual snapshot test for the 'mantelbogen' PDF form."""
     clientd = add_convenience_data(client_dict_internal)
+    # Override dynamic dates for stable snapshots
+    clientd["today_date_de"] = "16.10.2025"
+    clientd["school_year"] = "2025/2026"
 
     # Find the mantelbogen form in pdf_forms
     form_path = next(f for f in pdf_forms if "mantelbogen" in f.name)
@@ -22,6 +25,9 @@ def test_fill_form_anschreiben_snapshot(
 ):
     """Visual snapshot test for the 'anschreiben' PDF form."""
     clientd = add_convenience_data(client_dict_internal)
+    # Override dynamic dates for stable snapshots
+    clientd["today_date_de"] = "16.10.2025"
+    clientd["school_year"] = "2025/2026"
 
     # Find the anschreiben form in pdf_forms
     form_path = next(f for f in pdf_forms if "anschreiben" in f.name)
@@ -37,6 +43,9 @@ def test_fill_form_stellungnahme_snapshot(
 ):
     """Visual snapshot test for the 'stellungnahme' PDF form."""
     clientd = add_convenience_data(client_dict_internal)
+    # Override dynamic dates for stable snapshots
+    clientd["today_date_de"] = "16.10.2025"
+    clientd["school_year"] = "2025/2026"
 
     # Find the stellungnahme form in pdf_forms
     form_path = next(f for f in pdf_forms if "stellungnahme" in f.name)
@@ -52,6 +61,9 @@ def test_fill_form_reportlab_snapshot(
 ):
     """Visual snapshot test for the reportlab-generated PDF form."""
     clientd = add_convenience_data(client_dict_internal)
+    # Override dynamic dates for stable snapshots
+    clientd["today_date_de"] = "16.10.2025"
+    clientd["school_year"] = "2025/2026"
 
     # Find the reportlab form in pdf_forms
     form_path = next(f for f in pdf_forms if "reportlab" in f.name)
