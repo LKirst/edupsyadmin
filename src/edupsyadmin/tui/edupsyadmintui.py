@@ -39,18 +39,11 @@ class EdupsyadminTui(App[None]):
     }
     """
     BINDINGS: ClassVar[list[BindingType]] = [
-        Binding("ctrl+q", "quit", "Beenden", show=True),
+        Binding("ctrl+q", "quit", "Beenden", show=True, priority=True),
         Binding(
             "ctrl+n", "new_client", description="Neue*n Klient*in anlegen", show=True
         ),
         Binding("ctrl+f", "fill_forms", "Formulare ausfüllen", show=True),
-        Binding("n", "sort_by_last_name", "Sortieren nach `last_name_encr`", show=True),
-        Binding("s", "sort_by_school", "Sortieren nach `schule`", show=True),
-        Binding("i", "sort_by_client_id", "Sortieren nach `client_id`", show=True),
-        Binding(
-            "c", "sort_by_class_name", "Sortieren nach `class_name_encr`", show=True
-        ),
-        Binding("ctrl+r", "reload", "Neu laden", show=True),
     ]
 
     def __init__(
@@ -271,26 +264,6 @@ class EdupsyadminTui(App[None]):
             return
 
         self.push_screen(FillFormScreen(self.manager, [client_id]))
-
-    def action_reload(self) -> None:
-        """Reloads the data in the table from the database."""
-        self.query_one(ClientsOverview).action_reload()
-
-    def action_sort_by_client_id(self) -> None:
-        """Sort DataTable by client_id"""
-        self.query_one(ClientsOverview).action_sort_by_client_id()
-
-    def action_sort_by_last_name(self) -> None:
-        """Sort DataTable by last name"""
-        self.query_one(ClientsOverview).action_sort_by_last_name()
-
-    def action_sort_by_school(self) -> None:
-        """Sort DataTable by school and last name"""
-        self.query_one(ClientsOverview).action_sort_by_school()
-
-    def action_sort_by_class_name(self) -> None:
-        """Sort DataTable by class_name_encr and last name"""
-        self.query_one(ClientsOverview).action_sort_by_class_name()
 
     class _ClientDataResult(Message):
         def __init__(

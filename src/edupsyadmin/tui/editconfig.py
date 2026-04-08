@@ -301,7 +301,7 @@ class ConfigEditorApp(App[None]):
     CSS_PATH = "editconfig.tcss"
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("ctrl+s", "save", "Speichern", show=True),
-        Binding("ctrl+q", "quit", "Abbrechen", show=True),
+        Binding("ctrl+q", "quit", "Abbrechen", show=True, priority=True),
     ]
 
     def __init__(

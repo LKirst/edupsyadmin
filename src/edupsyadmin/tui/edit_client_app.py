@@ -14,7 +14,7 @@ class EditClientApp(App):
     """A standalone Textual App to display the EditClient widget."""
 
     BINDINGS: ClassVar[list[BindingType]] = [
-        Binding("ctrl+q", "quit", "Quit", show=True)
+        Binding("ctrl+q", "quit", "Beenden", show=True, priority=True)
     ]
 
     def __init__(

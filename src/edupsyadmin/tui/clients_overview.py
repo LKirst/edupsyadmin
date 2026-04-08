@@ -66,6 +66,11 @@ class ClientsOverview(Static):
 
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("delete", "request_delete_client", "Löschen"),
+        Binding("n", "sort_by_last_name", "Sortieren nach `last_name_encr`"),
+        Binding("s", "sort_by_school", "Sortieren nach `schule`"),
+        Binding("i", "sort_by_client_id", "Sortieren nach `client_id`"),
+        Binding("c", "sort_by_class_name", "Sortieren nach `class_name_encr`"),
+        Binding("ctrl+r", "reload", "Neu laden"),
     ]
 
     class ClientSelected(Message):
