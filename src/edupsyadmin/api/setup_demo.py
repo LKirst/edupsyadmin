@@ -81,7 +81,7 @@ def setup_demo() -> None:
     # Define and add sample data
     sample_clients = [
         {
-            "school": "DemoSchule",
+            "school": "FirstSchool",  # This has to correspond to the value in config
             "first_name_encr": "Max",
             "last_name_encr": "Mustermann",
             "gender_encr": "m",
@@ -91,7 +91,7 @@ def setup_demo() -> None:
             "min_sessions": 90,
         },
         {
-            "school": "DemoSchule",
+            "school": "FirstSchool",
             "first_name_encr": "Erika",
             "last_name_encr": "Musterfrau",
             "gender_encr": "f",
@@ -105,7 +105,7 @@ def setup_demo() -> None:
             "min_sessions": 240,
         },
         {
-            "school": "DemoSchule",
+            "school": "FirstSchool",
             "first_name_encr": "John",
             "last_name_encr": "Doe",
             "gender_encr": "x",
