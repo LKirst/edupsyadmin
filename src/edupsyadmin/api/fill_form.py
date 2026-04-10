@@ -171,7 +171,7 @@ def write_form_md(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) -> 
 
 
 def fill_form(
-    client_data: ClientData | dict[str, Any],
+    client_data: ClientData,
     form_paths: Sequence[Path],
     out_dir: Path | None = None,
     use_fillpdf: bool = True,
