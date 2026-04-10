@@ -14,7 +14,6 @@ from edupsyadmin.api.reports import (
     TestReportData,
     normal_distribution_plot,
 )
-from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.config import config
 from edupsyadmin.utils.convert_measures import percentile_to_t, t_to_z
 from edupsyadmin.utils.datediff import mydatediff
@@ -132,8 +131,9 @@ def mk_report(
     fn_csv = getattr(config.lgvtcsv, version)
     t_day = datetime.strptime(test_date, "%Y-%m-%d").date()
 
-    clients_manager = ClientsManager(database_url=database_url)
-    client_dict: ClientData = clients_manager.get_decrypted_client(client_id)
+    client_dict = ClientsManager(
+        database_url=database_url,
+    ).get_decrypted_client(client_id)
 
     name = (
         (client_dict.get("first_name_encr", "") or "")

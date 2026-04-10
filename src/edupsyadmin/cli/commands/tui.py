@@ -12,7 +12,7 @@ COMMAND_EPILOG = textwrap.dedent(
     Example:
       # Start the TUI
       edupsyadmin tui
-"""
+""",
 )
 
 
@@ -25,7 +25,11 @@ def add_arguments(parser: ArgumentParser) -> None:
         help="show only students with Nachteilsausgleich or Notenschutz",
     )
     parser.add_argument(
-        "--school", nargs="*", type=str, default=None, help="filter by school name"
+        "--school",
+        nargs="*",
+        type=str,
+        default=None,
+        help="filter by school name",
     )
     parser.add_argument("--columns", default=None, nargs="*", help="columns to show")
 
@@ -37,8 +41,8 @@ def _suppress_console_logging() -> None:
     sqlalchemy_logger = logging.getLogger("sqlalchemy.engine")
 
     # Remove all console handlers (stdout/stderr)
-    for logger_obj in [root_logger, sqlalchemy_logger]:
-        for handler in logger_obj.handlers[:]:
+    for logger_obj in (root_logger, sqlalchemy_logger):
+        for handler in logger_obj.handlers.copy():
             if isinstance(handler, logging.StreamHandler) and (
                 handler.stream in (sys.stdout, sys.stderr)
             ):

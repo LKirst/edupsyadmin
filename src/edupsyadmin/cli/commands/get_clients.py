@@ -22,7 +22,7 @@ COMMAND_EPILOG = textwrap.dedent(
 
           # Show all clients, and display the columns keyword_taet_encr and notes_encr
           edupsyadmin get-clients --tui --columns keyword_taet_encr notes_encr
-          """
+          """,
 )
 
 
@@ -35,11 +35,17 @@ def add_arguments(parser: ArgumentParser) -> None:
         help="show only students with Nachteilsausgleich or Notenschutz",
     )
     parser.add_argument(
-        "--school", nargs="*", type=str, default=[], help="filter by school name"
+        "--school",
+        nargs="*",
+        type=str,
+        default=[],
+        help="filter by school name",
     )
     parser.add_argument("--out", help="path for an output file")
     parser.add_argument(
-        "--client_id", type=int, help="id for a single client to display"
+        "--client_id",
+        type=int,
+        help="id for a single client to display",
     )
     parser.add_argument("--columns", default=[], nargs="*", help="columns to show")
     parser.add_argument(
@@ -61,7 +67,7 @@ def execute(args: Namespace) -> None:
 
     if args.tui:
         clients_overview_app_cls = lazy_import(
-            "edupsyadmin.tui.clients_overview_app"
+            "edupsyadmin.tui.clients_overview_app",
         ).ClientsOverviewApp
         clients_overview_app_cls(
             clients_manager=clients_manager,
@@ -71,7 +77,7 @@ def execute(args: Namespace) -> None:
         ).run()
     else:
         display_client_details = lazy_import(
-            "edupsyadmin.api.display_client_details"
+            "edupsyadmin.api.display_client_details",
         ).display_client_details
         pd = lazy_import("pandas")
 

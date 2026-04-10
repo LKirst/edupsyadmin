@@ -30,7 +30,7 @@ COMMAND_EPILOG = textwrap.dedent(
       # Add from CSV and keep the file
       edupsyadmin new-client --csv "./path/to/sample.csv" \
         --name "ClientName" --school MySchool --keepfile
-"""
+""",
 )
 
 
@@ -78,8 +78,9 @@ def _enter_client_csv(
             "address.email": "email_encr",
         }
 
-    df = pd.read_csv(csv_path, sep=separator, encoding="utf-8", dtype=str)
-    df = df.rename(columns=column_mapping)
+    df = pd.read_csv(csv_path, sep=separator, encoding="utf-8", dtype=str).rename(
+        columns=column_mapping,
+    )
 
     # this is necessary so that telephone numbers are strings that can be encrypted
     df["telephone1_encr"] = df["telephone1_encr"].fillna("").astype(str)
@@ -103,7 +104,7 @@ def _enter_client_csv(
 
     if client_series.empty:
         raise ValueError(
-            f"The name '{name}' was not found in the CSV file '{csv_path}'."
+            f"The name '{name}' was not found in the CSV file '{csv_path}'.",
         )
 
     client_data = client_series.iloc[0].to_dict()
@@ -117,17 +118,18 @@ def _enter_client_csv(
         )
 
     # Handle date formatting
-    for date_col in ["entry_date_encr", "birthday_encr"]:
+    for date_col in ("entry_date_encr", "birthday_encr"):
         if date_col in client_data and isinstance(client_data[date_col], str):
             try:
                 client_data[date_col] = datetime.strptime(
-                    client_data[date_col], "%d.%m.%Y"
+                    client_data[date_col],
+                    "%d.%m.%Y",
                 ).date()
             except ValueError:
                 logger.error(
                     f"Could not parse date '{client_data[date_col]}' "
                     f"for column '{date_col}'. "
-                    "Please ensure the format is DD.MM.YYYY."
+                    "Please ensure the format is DD.MM.YYYY.",
                 )
                 client_data[date_col] = None
 
@@ -201,12 +203,16 @@ def execute(args: Namespace) -> None:
         if args.name is None:
             raise ValueError("Pass a name to read a client from a csv.")
         _enter_client_csv(
-            clients_manager, args.csv, args.school, args.name, args.import_config
+            clients_manager,
+            args.csv,
+            args.school,
+            args.name,
+            args.import_config,
         )
         if not args.keepfile:
             Path(args.csv).unlink()
     else:
         edit_client_app_cls = lazy_import(
-            "edupsyadmin.tui.edit_client_app"
+            "edupsyadmin.tui.edit_client_app",
         ).EditClientApp
         edit_client_app_cls(clients_manager=clients_manager).run()

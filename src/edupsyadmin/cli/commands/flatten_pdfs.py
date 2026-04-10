@@ -13,7 +13,7 @@ COMMAND_EPILOG = textwrap.dedent(
 
           # Flatten multiple PDF forms in the current folder
           edupsyadmin flatten-pdfs *.pdf
-          """
+          """,
 )
 
 
@@ -22,7 +22,10 @@ def add_arguments(parser: ArgumentParser) -> None:
     default_library = lazy_import("edupsyadmin.api.flatten_pdf").DEFAULT_LIBRARY
     parser.set_defaults(command=execute)
     parser.add_argument(
-        "--library", type=str, default=default_library, choices=["pdf2image", "fillpdf"]
+        "--library",
+        type=str,
+        default=default_library,
+        choices=["pdf2image", "fillpdf"],
     )
     parser.add_argument("form_paths", nargs="+", type=Path)
 

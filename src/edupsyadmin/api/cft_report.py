@@ -9,7 +9,6 @@ from edupsyadmin.api.reports import (
     TestReportData,
     normal_distribution_plot,
 )
-from edupsyadmin.api.types import ClientData
 from edupsyadmin.utils.convert_measures import iq_to_t, iq_to_z
 from edupsyadmin.utils.datediff import mydatediff
 
@@ -36,10 +35,9 @@ def create_report(
     test_date: str,
     directory: str | PathLike[str] = ".",
 ) -> None:
-    clients_manager = ClientsManager(
+    client_dict = ClientsManager(
         database_url=database_url,
-    )
-    client_dict: ClientData = clients_manager.get_decrypted_client(client_id)
+    ).get_decrypted_client(client_id)
 
     testdate = datetime.strptime(test_date, "%Y-%m-%d").date()
     birthday = client_dict.get("birthday_encr")

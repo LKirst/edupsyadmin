@@ -38,7 +38,7 @@ def upgrade() -> None:
             clients_table.c.client_id,
             clients_table.c.class_name,
             clients_table.c.class_int,
-        )
+        ),
     ).fetchall()
 
     # 3. Use batch_alter_table for SQLite compatibility
@@ -49,14 +49,14 @@ def upgrade() -> None:
                 "class_name_encr",
                 edupsyadmin.db.clients.EncryptedString(),
                 nullable=True,
-            )
+            ),
         )
         batch_op.add_column(
             sa.Column(
                 "class_int_encr",
                 edupsyadmin.db.clients.EncryptedInteger(),
                 nullable=True,
-            )
+            ),
         )
         batch_op.drop_column("class_int")
         batch_op.drop_column("class_name")
@@ -76,7 +76,7 @@ def upgrade() -> None:
         connection.execute(
             new_clients_table.update()
             .where(new_clients_table.c.client_id == client_id)
-            .values(class_name_encr=encrypted_name, class_int_encr=encrypted_int)
+            .values(class_name_encr=encrypted_name, class_int_encr=encrypted_int),
         )
 
     # 5. Enforce NOT NULL constraint now that columns are populated.
@@ -101,7 +101,7 @@ def downgrade() -> None:
             clients_table.c.client_id,
             clients_table.c.class_name_encr,
             clients_table.c.class_int_encr,
-        )
+        ),
     ).fetchall()
 
     # 3. Revert schema changes
@@ -134,5 +134,5 @@ def downgrade() -> None:
         connection.execute(
             old_clients_table.update()
             .where(old_clients_table.c.client_id == client_id)
-            .values(class_name=decrypted_name, class_int=decrypted_int)
+            .values(class_name=decrypted_name, class_int=decrypted_int),
         )

@@ -133,7 +133,9 @@ class ClientsOverview(Static):
     def get_clients_df(self) -> None:
         """Get clients overview as a pandas DataFrame."""
         df = self.manager.get_clients_overview(
-            nta_nos=self.nta_nos, schools=self.schools, columns=self.columns
+            nta_nos=self.nta_nos,
+            schools=self.schools,
+            columns=self.columns,
         )
         self.post_message(self._DfLoaded(df))
 
@@ -249,7 +251,7 @@ class ClientsOverview(Static):
         if getattr(self.app, "is_busy", False):
             self.notify(
                 "Beschäftigt. Bitte warten, bis der vorherige "
-                "Vorgang abgeschlossen ist."
+                "Vorgang abgeschlossen ist.",
             )
             return
         row_key = event.row_key

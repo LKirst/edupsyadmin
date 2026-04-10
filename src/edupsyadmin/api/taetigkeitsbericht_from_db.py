@@ -18,7 +18,8 @@ pd.set_option("display.precision", 1)
 
 
 def get_subcategories(
-    categorykey: str, extrcategories: list[str] | None = None
+    categorykey: str,
+    extrcategories: list[str] | None = None,
 ) -> list[str]:
     """
     Extract all hierarchical subcategories from a dot-separated category key.
@@ -63,7 +64,8 @@ def add_categories_to_df(
     for key in category_keys:
         subcategories = get_subcategories(key)
         df.loc[df[category_colnm] == key, subcategories] = df.loc[
-            df[category_colnm] == key, "h_sessions"
+            df[category_colnm] == key,
+            "h_sessions",
         ]
         categories_all.extend(subcategories)
 
@@ -243,7 +245,9 @@ def create_taetigkeitsbericht_report(
         if summary_h_sessions is not None:
             h_sessions_img = "resources/summary_h_sessions.png"
             dfi.export(
-                summary_h_sessions, h_sessions_img, table_conversion="matplotlib"
+                summary_h_sessions,
+                h_sessions_img,
+                table_conversion="matplotlib",
             )
 
         report = TaetigkeitsberichtReport(name)
@@ -280,13 +284,11 @@ def taetigkeitsbericht(
     )
     """
 
-    # Query the data
-    clients_manager = ClientsManager(
-        database_url=database_url,
-    )
     # Only fetch required columns
-    df = clients_manager.get_clients_overview(
-        columns=["keyword_taet_encr", "min_sessions", "n_sessions"]
+    df = ClientsManager(
+        database_url=database_url,
+    ).get_clients_overview(
+        columns=["keyword_taet_encr", "min_sessions", "n_sessions"],
     )
     df["h_sessions"] = df["min_sessions"] / 60.0
 
@@ -310,7 +312,10 @@ def taetigkeitsbericht(
 
     # Summary statistics for Wochenstunden
     summarystats_wstd = summary_statistics_wstd(
-        wstd_psy, wstd_total, zstd_spsy_year_actual, school_students_dict
+        wstd_psy,
+        wstd_total,
+        zstd_spsy_year_actual,
+        school_students_dict,
     )
     summarystats_wstd.to_csv(out_basename + "_wstd.csv")
     print(summarystats_wstd)

@@ -78,7 +78,7 @@ class ClientsManager:
             "class_name_encr",
         ]
 
-        if columns == "all" or columns == ["all"]:
+        if columns in ("all", ["all"]):
             final_columns = list(self._colmap.keys())
         else:
             # Defaults for extra columns when none provided
@@ -103,7 +103,7 @@ class ClientsManager:
                 allowed = ", ".join(sorted(self._colmap.keys()))
                 raise ValueError(
                     f"Invalid column names: {', '.join(sorted(invalid))}. "
-                    f"Allowed: {allowed}"
+                    f"Allowed: {allowed}",
                 )
 
             # Merge required + extras, de-duplicate while preserving order
@@ -120,7 +120,7 @@ class ClientsManager:
                 or_(
                     clients_db.Client.notenschutz.is_(True),
                     clients_db.Client.nachteilsausgleich.is_(True),
-                )
+                ),
             )
         if schools:
             conditions.append(clients_db.Client.school.in_(schools))
@@ -141,7 +141,7 @@ class ClientsManager:
 
         with self.Session() as session, session.begin():
             stmt = select(clients_db.Client).where(
-                clients_db.Client.client_id.in_(client_ids)
+                clients_db.Client.client_id.in_(client_ids),
             )
             clients = session.scalars(stmt).all()
 
@@ -150,13 +150,13 @@ class ClientsManager:
 
             if not_found_ids:
                 logger.warning(
-                    f"clients with following ids could not be found: {not_found_ids}"
+                    f"clients with following ids could not be found: {not_found_ids}",
                 )
 
             for client in clients:
                 for key, value in new_data.items():
                     logger.debug(
-                        f"changing value for key: {key} for client: {client.client_id}"
+                        f"changing value for key: {key} for client: {client.client_id}",
                     )
                     setattr(client, key, value)
 

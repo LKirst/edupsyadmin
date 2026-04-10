@@ -23,7 +23,8 @@ TOOLTIPS = {
 }
 
 NoPeriodValidator = Regex(
-    regex=r"^(?!.*\.).*$", failure_description="Darf keine Punkte enthalten"
+    regex=r"^(?!.*\.).*$",
+    failure_description="Darf keine Punkte enthalten",
 )
 
 PathIsFileValidator = Function(
@@ -51,7 +52,7 @@ class ConfigInput(Horizontal):
     def __init__(
         self,
         key: str,
-        value: Any,
+        value: str | int | None,
         id: str | None = None,
         validators: list | None = None,
         valid_empty: bool | None = None,
@@ -74,7 +75,7 @@ class ConfigInput(Horizontal):
 
         display_value = str(self.value) if self.value is not None else ""
         inp_type: Literal["integer", "text"] = (
-            "integer" if self.key in ["kdf_iterations", "end", "nstudents"] else "text"
+            "integer" if self.key in ("kdf_iterations", "end", "nstudents") else "text"
         )
         # Use provided valid_empty or default based on key
         if self.valid_empty is not None:
@@ -153,7 +154,7 @@ class SchoolEditor(Vertical):
         ]
         for key in school_order:
             if key in self._school_data:
-                yield ConfigInput(key, self._school_data[key])
+                yield ConfigInput(key, value=self._school_data[key])
         yield DeleteItemButton()
 
     def get_data(self) -> tuple[str | None, dict[str, Any] | None]:
@@ -192,7 +193,9 @@ class FormSetEditor(Vertical):
             with Horizontal(classes="input-container"):
                 yield Static("Pfad:", classes="label")
                 yield Input(
-                    path, classes="path-input", validators=[PathIsFileValidator]
+                    path,
+                    classes="path-input",
+                    validators=[PathIsFileValidator],
                 )
         yield Button("Pfad hinzufügen", classes="add-path-button")
         yield DeleteItemButton()
@@ -240,11 +243,11 @@ class CsvImportEditor(Vertical):
             ("Pipe (|)", "|"),
         ]
         current_separator = self._import_data.get("separator")
-        default_value = current_separator if current_separator else "\t"
+        default_value = current_separator or "\t"
         option_values = [opt[1] for opt in separator_options]
         if current_separator and current_separator not in option_values:
             separator_options.append(
-                (f"Custom ('{current_separator}')", current_separator)
+                (f"Custom ('{current_separator}')", current_separator),
             )
         with Horizontal(classes="input-container"):
             yield Static("Trennzeichen:", classes="label")
@@ -299,10 +302,10 @@ class LgvtEditor(Vertical):
 
     def compose(self) -> ComposeResult:
         yield Static("LGVT CSV-Dateien")
-        for key in ["Rosenkohl", "Laufbursche", "Toechter"]:
+        for key in ("Rosenkohl", "Laufbursche", "Toechter"):
             yield ConfigInput(
                 key,
-                self._lgvt_data.get(key, ""),
+                value=self._lgvt_data.get(key, ""),
                 id=f"lgvt-{key}",
                 validators=[PathIsFileValidator],
                 valid_empty=True,
@@ -310,7 +313,7 @@ class LgvtEditor(Vertical):
 
     def get_data(self) -> dict[str, str | None]:
         data = {}
-        for key in ["Rosenkohl", "Laufbursche", "Toechter"]:
+        for key in ("Rosenkohl", "Laufbursche", "Toechter"):
             inp = self.query_one(f"#lgvt-{key}", Input)
-            data[key] = inp.value if inp.value else None
+            data[key] = inp.value or None
         return data

@@ -13,7 +13,7 @@ COMMAND_EPILOG = textwrap.dedent(
 
       # Generate a report with custom output name and total hours
       edupsyadmin taetigkeitsbericht 10 --out_basename "MyReport" --wstd_total 28
-"""
+""",
 )
 
 
@@ -21,7 +21,9 @@ def add_arguments(parser: ArgumentParser) -> None:
     """CLI adaptor for the api.taetigkeitsbericht_from_db.taetigkeitsbericht command."""
     parser.set_defaults(command=execute)
     parser.add_argument(
-        "wstd_psy", type=int, help="Anrechnungsstunden in Wochenstunden"
+        "wstd_psy",
+        type=int,
+        help="Anrechnungsstunden in Wochenstunden",
     )
     parser.add_argument(
         "--out_basename",
@@ -46,7 +48,7 @@ def add_arguments(parser: ArgumentParser) -> None:
 def execute(args: Namespace) -> None:
     """Execute the taetigkeitsbericht command."""
     taetigkeitsbericht = lazy_import(
-        "edupsyadmin.api.taetigkeitsbericht_from_db"
+        "edupsyadmin.api.taetigkeitsbericht_from_db",
     ).taetigkeitsbericht
     taetigkeitsbericht(
         app_username=args.app_username,

@@ -41,7 +41,10 @@ class EdupsyadminTui(App[None]):
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("ctrl+q", "quit", "Beenden", show=True, priority=True),
         Binding(
-            "ctrl+n", "new_client", description="Neue*n Klient*in anlegen", show=True
+            "ctrl+n",
+            "new_client",
+            description="Neue*n Klient*in anlegen",
+            show=True,
         ),
         Binding("ctrl+f", "fill_forms", "Formulare ausfüllen", show=True),
     ]
@@ -99,8 +102,9 @@ class EdupsyadminTui(App[None]):
                 full_client_data = self.manager.get_decrypted_client(saved_client_id)
                 self.post_message(
                     self._ClientDataSaveResult(
-                        client_id=saved_client_id, client_data=full_client_data
-                    )
+                        client_id=saved_client_id,
+                        client_data=full_client_data,
+                    ),
                 )
             else:
                 self.post_message(self._ClientDataSaveResult())
@@ -124,7 +128,8 @@ class EdupsyadminTui(App[None]):
             self.post_message(self._FormsFilledResult(error=e))
 
     async def on_clients_overview_client_selected(
-        self, message: ClientsOverview.ClientSelected
+        self,
+        message: ClientsOverview.ClientSelected,
     ) -> None:
         """Handle the client selection message."""
         if self.is_busy:
@@ -142,7 +147,8 @@ class EdupsyadminTui(App[None]):
         self.get_client_data(message.client_id)
 
     def on_edupsyadmin_tui__client_data_result(
-        self, message: _ClientDataResult
+        self,
+        message: _ClientDataResult,
     ) -> None:
         """Handle the result of getting client data."""
         loading_indicator = self.query_one("#main-loading-indicator", LoadingIndicator)
@@ -158,7 +164,8 @@ class EdupsyadminTui(App[None]):
         else:
             edit_client_widget = self.query_one(EditClient)
             edit_client_widget.update_client(
-                client_id=message.client_id, data=message.client_data
+                client_id=message.client_id,
+                data=message.client_data,
             )
 
     async def on_edit_client_save_client(self, message: EditClient.SaveClient) -> None:
@@ -179,7 +186,8 @@ class EdupsyadminTui(App[None]):
         self.save_client_data(message.client_id, message.data)
 
     def on_edupsyadmin_tui__client_data_save_result(
-        self, message: _ClientDataSaveResult
+        self,
+        message: _ClientDataSaveResult,
     ) -> None:
         """Handle the result of saving client data."""
         loading_indicator = self.query_one("#main-loading-indicator", LoadingIndicator)
@@ -190,7 +198,8 @@ class EdupsyadminTui(App[None]):
 
         if message.error:
             self.notify(
-                f"Fehler beim Speichern der Daten: {message.error}", severity="error"
+                f"Fehler beim Speichern der Daten: {message.error}",
+                severity="error",
             )
         else:
             overview_widget = self.query_one(ClientsOverview)
@@ -226,7 +235,8 @@ class EdupsyadminTui(App[None]):
         self.pop_screen()
 
     def on_edupsyadmin_tui__forms_filled_result(
-        self, message: _FormsFilledResult
+        self,
+        message: _FormsFilledResult,
     ) -> None:
         """Handle the result of filling forms."""
         self.query_one("#main-loading-indicator").display = False

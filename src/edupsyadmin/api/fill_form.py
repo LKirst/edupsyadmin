@@ -99,7 +99,7 @@ def write_form_pypdf(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) 
                         writer.update_page_form_field_values(page, fields_to_update)
                     except KeyError as e:
                         raise KeyError(
-                            f"Bulk update of fields failed on p. {i + 1} of {fn.name}"
+                            f"Bulk update of fields failed on p. {i + 1} of {fn.name}",
                         ) from e
 
     with out_fn.open("wb") as output_stream:
@@ -107,7 +107,9 @@ def write_form_pypdf(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) 
 
 
 def write_form_fillpdf(
-    fn: Path, out_fn: Path, data: ClientData | dict[str, Any]
+    fn: Path,
+    out_fn: Path,
+    data: ClientData | dict[str, Any],
 ) -> None:
     """
     Fill a pdf form with data using fillpdf.
@@ -129,7 +131,7 @@ def write_form_fillpdf(
         fillpdfs.write_fillable_pdf(fn, out_fn, data_wo_bool)
     else:
         logger.info(
-            f"The pdf {fn} has no form fields. Copying the file without any changes"
+            f"The pdf {fn} has no form fields. Copying the file without any changes",
         )
         shutil.copyfile(fn, out_fn)
 
@@ -153,7 +155,7 @@ def write_form_md(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) -> 
         except LiquidError as e:
             e.add_note(
                 "There is an issue with your template "
-                "(not related to the data you're trying to fill in)."
+                "(not related to the data you're trying to fill in).",
             )
             raise
 
@@ -162,7 +164,7 @@ def write_form_md(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) -> 
         except LiquidError as e:
             e.add_note(
                 "The template could be parsed, but there was an issue with "
-                "rendering the template with the provided field values."
+                "rendering the template with the provided field values.",
             )
             raise
 
@@ -196,7 +198,7 @@ def fill_form(
         logger.info(f"Using the template {fp}")
         if not fp.is_file():
             raise FileNotFoundError(
-                f"The template file does not exist: {fp}; cwd is: {Path.cwd()}"
+                f"The template file does not exist: {fp}; cwd is: {Path.cwd()}",
             )
         out_fp = Path(out_dir, f"{client_data.get('client_id')}_{fp.name}")
         logger.info(f"Writing to {out_fp.resolve()}")

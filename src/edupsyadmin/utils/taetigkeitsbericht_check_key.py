@@ -30,5 +30,5 @@ def check_keyword(keyword: str | None) -> str | None:
         return keyword
     raise ValueError(
         f"Invalid keyword: '{keyword}'. Possible keywords are: "
-        f"{', '.join(sorted(possible_keywords))}"
+        f"{', '.join(sorted(possible_keywords))}",
     )

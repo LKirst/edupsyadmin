@@ -46,8 +46,7 @@ def parse_key_value_pairs(pairs: Iterable[str], option_name: str) -> dict[str, s
     result: dict[str, str] = {}
     bad: list[str] = []
 
-    for raw in pairs:
-        s = str(raw)
+    for s in pairs:
         # Must contain exactly one '='
         if s.count("=") != 1:
             bad.append(s)
@@ -66,7 +65,7 @@ def parse_key_value_pairs(pairs: Iterable[str], option_name: str) -> dict[str, s
     if bad:
         raise ValueError(
             f"Malformed {option_name} entries: {', '.join(bad)}. "
-            "Use exactly one '=' with a non-empty key (e.g., key=value)."
+            "Use exactly one '=' with a non-empty key (e.g., key=value).",
         )
 
     return result

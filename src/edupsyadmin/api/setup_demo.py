@@ -66,7 +66,7 @@ def setup_demo() -> None:
         keys = [key]  # Update keys variable for subsequent use
     else:
         logger.info(
-            "Demo user already has an encryption key in keyring. Using existing key."
+            "Demo user already has an encryption key in keyring. Using existing key.",
         )
 
     # Initialize encryption for this session
@@ -126,7 +126,7 @@ def setup_demo() -> None:
     print("\nTo use the demo environment, run commands like this:")
     print(
         "  edupsyadmin --config_path demo-config.yml "
-        "--database_url sqlite:///demo.db tui"
+        "--database_url sqlite:///demo.db tui",
     )
 
     # Generate alias suggestions

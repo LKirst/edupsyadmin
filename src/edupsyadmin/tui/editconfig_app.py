@@ -89,7 +89,7 @@ class ConfigEditorApp(App[None]):
             # Core section
             yield Static("App-Einstellungen", classes="section-header")
             core_config = self.config_dict.get("core", {})
-            for key in ["logging", "app_uid", "app_username", "kdf_iterations"]:
+            for key in ("logging", "app_uid", "app_username", "kdf_iterations"):
                 if key in core_config:
                     yield ConfigInput(key, core_config[key], id=f"core-{key}")
 
@@ -99,7 +99,7 @@ class ConfigEditorApp(App[None]):
             # Schoolpsy section
             yield Static("Schulpsychologie-Einstellungen", classes="section-header")
             schoolpsy_config = self.config_dict.get("schoolpsy", {})
-            for key in ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]:
+            for key in ("schoolpsy_name", "schoolpsy_street", "schoolpsy_city"):
                 if key in schoolpsy_config:
                     yield ConfigInput(key, schoolpsy_config[key], id=f"schoolpsy-{key}")
 
@@ -132,7 +132,7 @@ class ConfigEditorApp(App[None]):
     def _get_core_config_from_ui(self) -> dict[str, Any]:
         """Rebuild core configuration from UI."""
         config = {}
-        for key in ["logging", "app_uid", "app_username", "kdf_iterations"]:
+        for key in ("logging", "app_uid", "app_username", "kdf_iterations"):
             inp = self.query_one(f"#core-{key}", Input)
             if key == "kdf_iterations":
                 config[key] = int(inp.value) if inp.value else None
@@ -143,12 +143,13 @@ class ConfigEditorApp(App[None]):
     def _get_schoolpsy_config_from_ui(self) -> dict[str, str]:
         """Rebuild schoolpsy configuration from UI."""
         config = {}
-        for key in ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]:
+        for key in ("schoolpsy_name", "schoolpsy_street", "schoolpsy_city"):
             config[key] = self.query_one(f"#schoolpsy-{key}", Input).value or ""
         return config
 
     def _get_dynamic_section_data(
-        self, editor_type: type[SchoolEditor | FormSetEditor | CsvImportEditor]
+        self,
+        editor_type: type[SchoolEditor | FormSetEditor | CsvImportEditor],
     ) -> dict[str, Any]:
         """Helper to get data from dynamic section editors."""
         data = {}
@@ -160,8 +161,7 @@ class ConfigEditorApp(App[None]):
 
     def _get_lgvt_config_from_ui(self) -> dict[str, str | None] | None:
         """Rebuild LGVT CSV configuration from UI."""
-        lgvt_editor = self.query_one(LgvtEditor)
-        lgvt_data = lgvt_editor.get_data()
+        lgvt_data = self.query_one(LgvtEditor).get_data()
         if any(lgvt_data.values()):
             return lgvt_data
         return None
@@ -193,11 +193,13 @@ class ConfigEditorApp(App[None]):
                     "nstudents": "",
                 }
                 editor = SchoolEditor(
-                    f"NewSchool{len(self.query(SchoolEditor)) + 1}", default_data
+                    f"NewSchool{len(self.query(SchoolEditor)) + 1}",
+                    default_data,
                 )
             elif section == "form_set":
                 editor = FormSetEditor(
-                    f"NewFormSet{len(self.query(FormSetEditor)) + 1}", []
+                    f"NewFormSet{len(self.query(FormSetEditor)) + 1}",
+                    [],
                 )
             elif section == "csv_import":
                 default_data: dict[str, Any] = {
@@ -274,7 +276,6 @@ class ConfigEditorApp(App[None]):
                 severity="error",
             )
             self.bell()
-            return
 
     async def _handle_new_password_flow(
         self,
@@ -289,7 +290,8 @@ class ConfigEditorApp(App[None]):
         """
         if len(password) < 8:
             self.notify(
-                "Passwort muss mindestens 8 Zeichen lang sein", severity="error"
+                "Passwort muss mindestens 8 Zeichen lang sein",
+                severity="error",
             )
             self.bell()
             return
@@ -306,8 +308,8 @@ class ConfigEditorApp(App[None]):
                 confirmed = await self.app.push_screen(
                     YesNoDialog(
                         "Ein gültiger Schlüssel existiert bereits. "
-                        "Möchten Sie einen neuen Schlüssel hinzufügen und rotieren?"
-                    )
+                        "Möchten Sie einen neuen Schlüssel hinzufügen und rotieren?",
+                    ),
                 )
                 if not confirmed:
                     self.notify(
@@ -347,7 +349,8 @@ class ConfigEditorApp(App[None]):
 
         if not app_uid or not username:
             self.notify(
-                "app_uid und app_username müssen gesetzt sein", severity="error"
+                "app_uid und app_username müssen gesetzt sein",
+                severity="error",
             )
             self.bell()
             return
@@ -377,7 +380,7 @@ class ConfigEditorApp(App[None]):
 
             if worker.is_cancelled:
                 self.post_message(
-                    KeyDerivationResult(False, "Key generation cancelled.")
+                    KeyDerivationResult(False, "Key generation cancelled."),
                 )
                 return
 
@@ -385,7 +388,7 @@ class ConfigEditorApp(App[None]):
 
             if worker.is_cancelled:
                 self.post_message(
-                    KeyDerivationResult(False, "Key generation cancelled.")
+                    KeyDerivationResult(False, "Key generation cancelled."),
                 )
                 return
 
@@ -394,12 +397,16 @@ class ConfigEditorApp(App[None]):
 
             self.post_message(
                 KeyDerivationResult(
-                    True, "Neuer Verschlüsselungsschlüssel hinzugefügt und gespeichert."
-                )
+                    True,
+                    "Neuer Verschlüsselungsschlüssel hinzugefügt und gespeichert.",
+                ),
             )
         except Exception as e:
             self.post_message(
-                KeyDerivationResult(False, f"Fehler beim Speichern des Schlüssels: {e}")
+                KeyDerivationResult(
+                    False,
+                    f"Fehler beim Speichern des Schlüssels: {e}",
+                ),
             )
 
     @work(thread=True)
@@ -410,7 +417,9 @@ class ConfigEditorApp(App[None]):
         except Exception as e:
             self.log(f"Error getting keys: {e}")
             self.call_from_thread(
-                self.notify, f"Fehler beim Laden der Schlüssel: {e}", severity="error"
+                self.notify,
+                f"Fehler beim Laden der Schlüssel: {e}",
+                severity="error",
             )
             self.call_from_thread(self.bell)
             self.call_from_thread(self.exit)

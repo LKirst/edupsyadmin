@@ -121,38 +121,48 @@ class Client(Base):
     # These variables cannot be optional (i.e. cannot be None) because if
     # they were, the encryption functions would raise an exception.
     first_name_encr: Mapped[str] = mapped_column(
-        EncryptedString, doc="Verschlüsselter Vorname des Klienten"
+        EncryptedString,
+        doc="Verschlüsselter Vorname des Klienten",
     )
     last_name_encr: Mapped[str] = mapped_column(
-        EncryptedString, doc="Verschlüsselter Nachname des Klienten"
+        EncryptedString,
+        doc="Verschlüsselter Nachname des Klienten",
     )
     gender_encr: Mapped[str] = mapped_column(
-        EncryptedString, doc="Verschlüsseltes Geschlecht des Klienten (m/f/x)"
+        EncryptedString,
+        doc="Verschlüsseltes Geschlecht des Klienten (m/f/x)",
     )
     birthday_encr: Mapped[date] = mapped_column(
-        EncryptedDate, doc="Verschlüsseltes Geburtsdatum des Klienten (JJJJ-MM-TT)"
+        EncryptedDate,
+        doc="Verschlüsseltes Geburtsdatum des Klienten (JJJJ-MM-TT)",
     )
     street_encr: Mapped[str] = mapped_column(
-        EncryptedString, doc="Verschlüsselte Straßenadresse und Hausnummer des Klienten"
+        EncryptedString,
+        doc="Verschlüsselte Straßenadresse und Hausnummer des Klienten",
     )
     city_encr: Mapped[str] = mapped_column(
-        EncryptedString, doc="Verschlüsselter Postleitzahl und Stadt des Klienten"
+        EncryptedString,
+        doc="Verschlüsselter Postleitzahl und Stadt des Klienten",
     )
     parent_encr: Mapped[str] = mapped_column(
         EncryptedString,
         doc="Verschlüsselter Name des Elternteils/Erziehungsberechtigten des Klienten",
     )
     telephone1_encr: Mapped[str] = mapped_column(
-        EncryptedString, doc="Verschlüsselte primäre Telefonnummer des Klienten"
+        EncryptedString,
+        doc="Verschlüsselte primäre Telefonnummer des Klienten",
     )
     telephone2_encr: Mapped[str] = mapped_column(
-        EncryptedString, doc="Verschlüsselte sekundäre Telefonnummer des Klienten"
+        EncryptedString,
+        doc="Verschlüsselte sekundäre Telefonnummer des Klienten",
     )
     email_encr: Mapped[str] = mapped_column(
-        EncryptedString, doc="Verschlüsselte E-Mail-Adresse des Klienten"
+        EncryptedString,
+        doc="Verschlüsselte E-Mail-Adresse des Klienten",
     )
     notes_encr: Mapped[str] = mapped_column(
-        EncryptedString, doc="Verschlüsselte Notizen zum Klienten"
+        EncryptedString,
+        doc="Verschlüsselte Notizen zum Klienten",
     )
     class_name_encr: Mapped[str] = mapped_column(
         EncryptedString,
@@ -202,7 +212,9 @@ class Client(Base):
 
     # Unencrypted variables
     client_id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, doc="ID des Klienten"
+        Integer,
+        primary_key=True,
+        doc="ID des Klienten",
     )
     school: Mapped[str] = mapped_column(
         String,
@@ -235,10 +247,12 @@ class Client(Base):
         ),
     )
     datetime_created: Mapped[datetime] = mapped_column(
-        DateTime, doc="Zeitstempel, wann der Klienten-Datensatz erstellt wurde"
+        DateTime,
+        doc="Zeitstempel, wann der Klienten-Datensatz erstellt wurde",
     )
     datetime_lastmodified: Mapped[datetime] = mapped_column(
-        DateTime, doc="Zeitstempel, wann der Klienten-Datensatz zuletzt geändert wurde"
+        DateTime,
+        doc="Zeitstempel, wann der Klienten-Datensatz zuletzt geändert wurde",
     )
 
     # Notenschutz
@@ -411,7 +425,9 @@ class Client(Base):
         doc=("Anzahl der mit dem Klienten verbundenen Beratungs- und Testsitzungen."),
     )
     case_active: Mapped[bool] = mapped_column(
-        Boolean, default=True, doc="Zeigt, ob ein Fall aktiv oder abgeschlossen ist"
+        Boolean,
+        default=True,
+        doc="Zeigt, ob ein Fall aktiv oder abgeschlossen ist",
     )
 
     def __init__(
@@ -459,9 +475,9 @@ class Client(Base):
             self.client_id = client_id_int_or_none
         self.first_name_encr = first_name_encr
         self.last_name_encr = last_name_encr
-        if gender_encr in ["w", "f"]:
+        if gender_encr in ("w", "f"):
             self.gender_encr = Gender.FEMALE
-        elif gender_encr in ["d", "x"]:
+        elif gender_encr in ("d", "x"):
             self.gender_encr = Gender.DIVERSE
         elif gender_encr == "m":
             self.gender_encr = Gender.MALE
@@ -558,30 +574,30 @@ class Client(Base):
                 )
                 if self.estimated_graduation_date_encr:
                     self.document_shredding_date_encr = get_date_destroy_records(
-                        self.estimated_graduation_date_encr
+                        self.estimated_graduation_date_encr,
                     )
             except Exception as e:
                 logger.warning(
                     f"Could not calculate estimated_graduation_date_encr or "
-                    f"document_shredding_date_encr for client {self.client_id}: {e}"
+                    f"document_shredding_date_encr for client {self.client_id}: {e}",
                 )
 
         # Notenschutz flags
         self.nos_rs_ausn = bool(
-            self.nos_rs_ausn_faecher_encr and self.nos_rs_ausn_faecher_encr.strip()
+            self.nos_rs_ausn_faecher_encr and self.nos_rs_ausn_faecher_encr.strip(),
         )
         self.nos_other = bool(
-            self.nos_other_details_encr and self.nos_other_details_encr.strip()
+            self.nos_other_details_encr and self.nos_other_details_encr.strip(),
         )
         self.notenschutz = self.nos_rs or self.nos_les or self.nos_other
 
         # Nachteilsausgleich flags
         self.nta_zeitv = bool(
             (self.nta_zeitv_vieltext is not None and self.nta_zeitv_vieltext > 0)
-            or (self.nta_zeitv_wenigtext is not None and self.nta_zeitv_wenigtext > 0)
+            or (self.nta_zeitv_wenigtext is not None and self.nta_zeitv_wenigtext > 0),
         )
         self.nta_other = bool(
-            self.nta_other_details_encr and self.nta_other_details_encr.strip()
+            self.nta_other_details_encr and self.nta_other_details_encr.strip(),
         )
         self.nachteilsausgleich = (
             self.nta_font
@@ -601,7 +617,7 @@ class Client(Base):
         if value and value not in LRST_DIAG:
             raise ValueError(
                 f"Invalid value for lrst_diagnosis. "
-                f"Allowed values are: {', '.join(LRST_DIAG)}"
+                f"Allowed values are: {', '.join(LRST_DIAG)}",
             )
         return value
 
@@ -618,7 +634,9 @@ class Client(Base):
 
     @validates("nta_zeitv_vieltext", "nta_zeitv_wenigtext")
     def validate_nta_zeitv_percentage(
-        self, key: str, value: str | int | None
+        self,
+        key: str,
+        value: str | int | None,
     ) -> int | None:
         return to_int_or_none(value)
 
@@ -638,13 +656,17 @@ class Client(Base):
 
     @validates("nta_nos_end_grade")
     def validate_nta_nos_end_grade(
-        self, key: str, value: str | int | None
+        self,
+        key: str,
+        value: str | int | None,
     ) -> int | None:
         return to_int_or_none(value)
 
     @validates("lrst_last_test_date_encr")
     def validate_lrst_last_test_date_encr(
-        self, key: str, value: str | date | None
+        self,
+        key: str,
+        value: str | date | None,
     ) -> str:
         dt = to_date_or_none(value)
         return dt.isoformat() if dt else ""
@@ -655,7 +677,7 @@ class Client(Base):
         if value and value not in LRST_TEST_BY:
             raise ValueError(
                 f"Invalid value for {key}. "
-                f"Allowed values are: {', '.join(LRST_TEST_BY)}"
+                f"Allowed values are: {', '.join(LRST_TEST_BY)}",
             )
         return value
 
@@ -672,7 +694,9 @@ class Client(Base):
         "document_shredding_date_encr",
     )
     def validate_optional_dates(
-        self, key: str, value: str | date | None
+        self,
+        key: str,
+        value: str | date | None,
     ) -> date | None:
         return to_date_or_none(value)
 
@@ -713,17 +737,18 @@ def to_bool_or_none(value: str | bool | int | None) -> bool | None:
         if value == 0:
             return False
         raise ValueError(
-            f"Integer value {value} cannot be converted to a boolean (expected 0 or 1)."
+            f"Integer value {value} cannot be converted to a boolean "
+            "(expected 0 or 1).",
         )
     if isinstance(value, str):
         lower_value = value.lower().strip()
-        if lower_value == "true" or lower_value == "1":
+        if lower_value in ("true", "1"):
             return True
-        if lower_value == "false" or lower_value == "0":
+        if lower_value in ("false", "0"):
             return False
         raise ValueError(
             f"String value '{value}' cannot be converted to a boolean "
-            f"(expected 'true', 'false', '0', or '1')."
+            f"(expected 'true', 'false', '0', or '1').",
         )
     raise TypeError(f"Value of type {type(value)} cannot be converted to a boolean.")
 
@@ -744,7 +769,7 @@ def to_int_or_none(value: str | int | None) -> int | None:
             return int(value)
         except ValueError as e:
             raise ValueError(
-                f"String value '{value}' cannot be converted to an integer."
+                f"String value '{value}' cannot be converted to an integer.",
             ) from e
     raise TypeError(f"Value of type {type(value)} cannot be converted to an integer.")
 
@@ -765,6 +790,6 @@ def to_date_or_none(value: str | date | None) -> date | None:
             return datetime.strptime(value, "%Y-%m-%d").date()
         except ValueError as e:
             raise ValueError(
-                f"Invalid date format for '{value}'. Use YYYY-MM-DD."
+                f"Invalid date format for '{value}'. Use YYYY-MM-DD.",
             ) from e
     raise TypeError(f"Value of type {type(value)} cannot be converted to a date.")

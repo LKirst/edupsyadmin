@@ -10,7 +10,7 @@ COMMAND_EPILOG = textwrap.dedent(
     Example:
       # Show app version, paths and other info
       edupsyadmin info
-"""
+""",
 )
 
 

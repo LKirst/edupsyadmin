@@ -26,7 +26,7 @@ __all__ = ("main",)
 def _setup_encryption(app_uid: str, app_username: str) -> None:
     """Initialize the global encryption instance with keys from the keyring."""
     logger.debug(
-        f"Loading encryption keys for uid='{app_uid}', username='{app_username}'"
+        f"Loading encryption keys for uid='{app_uid}', username='{app_username}'",
     )
 
     # Get keys from keyring
@@ -37,7 +37,7 @@ def _setup_encryption(app_uid: str, app_username: str) -> None:
             "No encryption keys found in keyring for "
             f"uid='{app_uid}', username='{app_username}'. "
             "Please set a password in the configuration editor first "
-            "(edupsyadmin edit-config)."
+            "(edupsyadmin edit-config).",
         )
 
     try:
@@ -48,7 +48,7 @@ def _setup_encryption(app_uid: str, app_username: str) -> None:
         raise RuntimeError(
             "Invalid encryption key found in keyring. One or more keys may be invalid. "
             f"Please reset your password using 'edupsyadmin edit-config'. "
-            f"Details: {e}"
+            f"Details: {e}",
         ) from e
 
 
@@ -93,7 +93,11 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     """
     parser = ArgumentParser(formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument(
-        "-c", "--config_path", type=Path, default=None, help=argparse.SUPPRESS
+        "-c",
+        "--config_path",
+        type=Path,
+        default=None,
+        help=argparse.SUPPRESS,
     )
     parser.add_argument("--salt_path", type=Path, default=None, help=argparse.SUPPRESS)
     parser.add_argument(
@@ -106,14 +110,19 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     # default must be None, otherwise the value from the config for logging
     # level will be overwritten
     parser.add_argument(
-        "-w", "--warn", default=None, help="logger warning level [WARN]"
+        "-w",
+        "--warn",
+        default=None,
+        help="logger warning level [WARN]",
     )
 
     # Global arguments
     parser.add_argument("--app_username", default=None, help=argparse.SUPPRESS)
     parser.add_argument("--app_uid", default=None, help=argparse.SUPPRESS)
     parser.add_argument(
-        "--database_url", default=DEFAULT_DB_URL, help=argparse.SUPPRESS
+        "--database_url",
+        default=DEFAULT_DB_URL,
+        help=argparse.SUPPRESS,
     )
 
     parser.set_defaults(command=None)
@@ -150,13 +159,13 @@ def _handle_config_and_logging(args: argparse.Namespace) -> None:
     # if the config file doesn't exist, copy a sample config
     if not args.config_path.exists():
         template_path = str(
-            importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
+            importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml",
         )
         shutil.copy(template_path, args.config_path)
         logger.info(
             "Could not find the specified config file. "
             f"Created a sample config at {args.config_path}. "
-            "Fill it with your values."
+            "Fill it with your values.",
         )
     config.load(args.config_path)
     config.core.config = args.config_path
@@ -184,7 +193,7 @@ def _determine_app_username(args: argparse.Namespace) -> int:
                 logger.error(
                     "app_username not found. Either pass it via the command line "
                     "or set it in the config.yml (e.g., by running "
-                    "'edupsyadmin edit-config')."
+                    "'edupsyadmin edit-config').",
                 )
                 return 1
     else:
@@ -202,7 +211,7 @@ def _determine_app_uid(args: argparse.Namespace) -> None:
         except KeyError, AttributeError:
             args.app_uid = APP_UID  # Fallback to hardcoded default
             logger.debug(
-                f"app_uid not found in config, using default: '{args.app_uid}'"
+                f"app_uid not found in config, using default: '{args.app_uid}'",
             )
     else:  # Passed on CLI
         logger.debug(f"Using app_uid passed as cli argument: '{args.app_uid}'")
@@ -238,7 +247,9 @@ def main(argv: list[str] | None = None) -> int:
     # Migrate versioned paths to stable paths if necessary
     db_path = Path(args.database_url.removeprefix("sqlite:///"))
     migrate_to_stable_paths(
-        config_file=args.config_path, salt_file=args.salt_path, db_file=db_path
+        config_file=args.config_path,
+        salt_file=args.salt_path,
+        db_file=db_path,
     )
 
     _handle_config_and_logging(args)

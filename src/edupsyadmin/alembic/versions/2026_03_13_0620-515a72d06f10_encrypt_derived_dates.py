@@ -40,7 +40,7 @@ def upgrade() -> None:
             clients_table.c.entry_date,
             clients_table.c.estimated_graduation_date,
             clients_table.c.document_shredding_date,
-        )
+        ),
     ).fetchall()
 
     # 3. Use batch_alter_table for SQLite compatibility
@@ -50,21 +50,21 @@ def upgrade() -> None:
                 "entry_date_encr",
                 edupsyadmin.db.clients.EncryptedDate(),
                 nullable=True,
-            )
+            ),
         )
         batch_op.add_column(
             sa.Column(
                 "estimated_graduation_date_encr",
                 edupsyadmin.db.clients.EncryptedDate(),
                 nullable=True,
-            )
+            ),
         )
         batch_op.add_column(
             sa.Column(
                 "document_shredding_date_encr",
                 edupsyadmin.db.clients.EncryptedDate(),
                 nullable=True,
-            )
+            ),
         )
         batch_op.drop_column("entry_date")
         batch_op.drop_column("estimated_graduation_date")
@@ -91,7 +91,7 @@ def upgrade() -> None:
                 entry_date_encr=encrypted_entry,
                 estimated_graduation_date_encr=encrypted_grad,
                 document_shredding_date_encr=encrypted_shred,
-            )
+            ),
         )
 
     # 5. Finally, enforce the NOT NULL constraint now that all rows are populated.
@@ -119,17 +119,17 @@ def downgrade() -> None:
             clients_table.c.entry_date_encr,
             clients_table.c.estimated_graduation_date_encr,
             clients_table.c.document_shredding_date_encr,
-        )
+        ),
     ).fetchall()
 
     # 3. Revert schema changes
     with op.batch_alter_table("clients") as batch_op:
         batch_op.add_column(sa.Column("entry_date", sa.DATE(), nullable=True))
         batch_op.add_column(
-            sa.Column("estimated_graduation_date", sa.DATE(), nullable=True)
+            sa.Column("estimated_graduation_date", sa.DATE(), nullable=True),
         )
         batch_op.add_column(
-            sa.Column("document_shredding_date", sa.DATE(), nullable=True)
+            sa.Column("document_shredding_date", sa.DATE(), nullable=True),
         )
         batch_op.drop_column("document_shredding_date_encr")
         batch_op.drop_column("estimated_graduation_date_encr")
@@ -176,5 +176,5 @@ def downgrade() -> None:
                 entry_date=decrypted_entry,
                 estimated_graduation_date=decrypted_grad,
                 document_shredding_date=decrypted_shred,
-            )
+            ),
         )

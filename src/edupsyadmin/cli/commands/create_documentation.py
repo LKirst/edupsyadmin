@@ -27,7 +27,7 @@ COMMAND_EPILOG = textwrap.dedent(
           # Fill a form for client with ID 3, injecting custom data
           edupsyadmin create-documentation 3 --form_paths "./path/to/form.pdf" \
             --inject_data "key1=value1" "key2=value2"
-          """
+          """,
 )
 
 
@@ -35,7 +35,9 @@ def add_arguments(parser: ArgumentParser) -> None:
     """CLI adaptor for the create-documentation command."""
     parser.set_defaults(command=execute)
     parser.add_argument(
-        "--tui", action="store_true", help="Open TUI for interactive form filling."
+        "--tui",
+        action="store_true",
+        help="Open TUI for interactive form filling.",
     )
     parser.add_argument("client_id", type=int, nargs="+")
     parser.add_argument(
@@ -45,7 +47,11 @@ def add_arguments(parser: ArgumentParser) -> None:
         help="name of a set of file paths defined in the config file",
     )
     parser.add_argument(
-        "--form_paths", nargs="*", type=Path, default=[], help="form file paths"
+        "--form_paths",
+        nargs="*",
+        type=Path,
+        default=[],
+        help="form file paths",
     )
     parser.add_argument(
         "--inject_data",
@@ -68,12 +74,13 @@ def execute(args: Namespace) -> None:
     if args.tui:
         fill_form_app_cls = lazy_import("edupsyadmin.tui.fill_form_app").FillFormApp
         fill_form_app_cls(
-            clients_manager=clients_manager, client_ids=args.client_id
+            clients_manager=clients_manager,
+            client_ids=args.client_id,
         ).run()
         return
 
     add_convenience_data = lazy_import(
-        "edupsyadmin.api.add_convenience_data"
+        "edupsyadmin.api.add_convenience_data",
     ).add_convenience_data
     fill_form = lazy_import("edupsyadmin.api.fill_form").fill_form
 
@@ -89,7 +96,7 @@ def execute(args: Namespace) -> None:
             raise KeyError(
                 "Es ist in der Konfigurationsdatei kein Form Set mit dem "
                 f"Namen '{args.form_set}' angelegt. Verfügbare Sets sind: "
-                f"{available_sets}"
+                f"{available_sets}",
             ) from e
     elif not form_paths and not args.tui:
         raise ValueError("At least one of 'form_set' or 'form_paths' must be non-empty")
@@ -101,7 +108,8 @@ def execute(args: Namespace) -> None:
         client_dict_w_convdat = add_convenience_data(client_dict)
         if args.inject_data:
             inject_dict = parse_key_value_pairs(
-                args.inject_data, option_name="--inject_data"
+                args.inject_data,
+                option_name="--inject_data",
             )
             client_dict_w_convdat = client_dict_w_convdat | inject_dict
         fill_form(client_dict_w_convdat, form_paths_normalized)

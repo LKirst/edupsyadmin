@@ -72,10 +72,14 @@ def add_prefix(file_path: str | Path, prefix: str = "print_") -> Path:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "inpaths", nargs="+", help="The paths of the pdf which you want to flatten."
+        "inpaths",
+        nargs="+",
+        help="The paths of the pdf which you want to flatten.",
     )
     parser.add_argument(
-        "--library", default=DEFAULT_LIBRARY, choices=["fillpdf", "pdf2image"]
+        "--library",
+        default=DEFAULT_LIBRARY,
+        choices=["fillpdf", "pdf2image"],
     )
     args = parser.parse_args()
     flatten_pdfs(args.impaths, args.library)

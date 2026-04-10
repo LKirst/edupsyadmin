@@ -54,7 +54,9 @@ def get_estimated_end_of_academic_year(
 
 
 def get_estimated_end_of_this_academic_year(
-    grade_current: int, grade_target: int, last_month: int = DEFAULT_LAST_MONTH
+    grade_current: int,
+    grade_target: int,
+    last_month: int = DEFAULT_LAST_MONTH,
 ) -> date:
     """
     Estimates the end date of the current academic year.
@@ -66,7 +68,10 @@ def get_estimated_end_of_this_academic_year(
     """
     date_current = date.today()
     return get_estimated_end_of_academic_year(
-        date_current, grade_current, grade_target, last_month
+        date_current,
+        grade_current,
+        grade_target,
+        last_month,
     )
 
 

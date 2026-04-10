@@ -14,7 +14,7 @@ COMMAND_DESCRIPTION = textwrap.dedent(
     in the database so that they are all encrypted with the current primary key.
     This is a good security practice to perform after changing your password
     (which generates a new primary key).
-    """
+    """,
 )
 COMMAND_HELP = "Re-encrypt all data with the current primary key"
 COMMAND_EPILOG = textwrap.dedent(
@@ -24,7 +24,7 @@ COMMAND_EPILOG = textwrap.dedent(
 
     IMPORTANT: Make a backup of your database before running this command!
     This operation can take a long time for large databases. Do not interrupt it.
-"""
+""",
 )
 
 
@@ -61,7 +61,7 @@ def execute(args: Namespace) -> None:
         cleanup_response = (
             input(
                 "\nDo you want to delete old, unused encryption keys from your "
-                "keyring? (yes/no): "
+                "keyring? (yes/no): ",
             )
             .strip()
             .lower()

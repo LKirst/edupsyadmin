@@ -37,8 +37,7 @@ class Encryption:
         """Encrypts a string using the primary key."""
         if self._fernet is None:
             raise RuntimeError("Encryption keys not set.")
-        token = self._fernet.encrypt(data.encode("utf-8"))
-        return token.decode("utf-8")
+        return self._fernet.encrypt(data.encode("utf-8")).decode("utf-8")
 
     def decrypt(self, token: str) -> str:
         """Decrypts a token string, trying all available keys."""
@@ -95,7 +94,7 @@ def _get_legacy_keys(uid: str, username: str) -> list[bytes]:
     except json.JSONDecodeError, AttributeError:
         # Fallback for old format: single base64-encoded key
         logger.debug(
-            "Could not decode as JSON, falling back to legacy single-key format."
+            "Could not decode as JSON, falling back to legacy single-key format.",
         )
         return [key_data.encode("utf-8")]
 
@@ -199,7 +198,7 @@ def get_salt_from_db(database_url: str) -> bytes:
     with engine.connect() as conn:
         try:
             result = conn.execute(
-                text("SELECT value FROM system_metadata WHERE key = 'salt'")
+                text("SELECT value FROM system_metadata WHERE key = 'salt'"),
             ).fetchone()
             if result:
                 return bytes.fromhex(result[0])
@@ -208,7 +207,7 @@ def get_salt_from_db(database_url: str) -> bytes:
 
     raise RuntimeError(
         "Salt not found in database. Has the database been initialized? "
-        "Try running any command that accesses the database first."
+        "Try running any command that accesses the database first.",
     )
 
 

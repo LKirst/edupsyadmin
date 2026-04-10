@@ -218,7 +218,10 @@ class EditClient(Container):
             yield InputRow(f"{label_text}:", widget)
 
     def _compose_collapsible_if_present(
-        self, title: str, names: list[str], visible_columns: dict[str, Any]
+        self,
+        title: str,
+        names: list[str],
+        visible_columns: dict[str, Any],
     ) -> ComposeResult:
         """Helper to yield a Collapsible if any of names are in visible_columns."""
         # We need to list the keys because we'll be popping from visible_columns
@@ -244,7 +247,9 @@ class EditClient(Container):
 
             # Address fields in a Collapsible
             yield from self._compose_collapsible_if_present(
-                "Adressdaten", ADDRESS_FIELDS, visible_columns
+                "Adressdaten",
+                ADDRESS_FIELDS,
+                visible_columns,
             )
 
             # Other fields (neither required nor address nor nta/nos/lrst)
@@ -258,7 +263,9 @@ class EditClient(Container):
 
             # LRST fields in a Collapsible
             yield from self._compose_collapsible_if_present(
-                "LRS/LRSt", LRST_FIELDS, visible_columns
+                "LRS/LRSt",
+                LRST_FIELDS,
+                visible_columns,
             )
 
             # NTA fields in a Collapsible
@@ -266,7 +273,9 @@ class EditClient(Container):
                 name for name in list(visible_columns.keys()) if name.startswith("nta")
             ]
             yield from self._compose_collapsible_if_present(
-                "Nachteilsausgleich", nta_names, visible_columns
+                "Nachteilsausgleich",
+                nta_names,
+                visible_columns,
             )
 
             # NOS fields in a Collapsible
@@ -274,7 +283,9 @@ class EditClient(Container):
                 name for name in list(visible_columns.keys()) if name.startswith("nos")
             ]
             yield from self._compose_collapsible_if_present(
-                "Notenschutz", nos_names, visible_columns
+                "Notenschutz",
+                nos_names,
+                visible_columns,
             )
 
             # Remaining fields if any (should be none)
@@ -291,7 +302,8 @@ class EditClient(Container):
         yield RichLog(classes="log", id="edit-client-log")
 
     def _normalize_original_data(
-        self, data: ClientData
+        self,
+        data: ClientData,
     ) -> dict[str, str | bool | None]:
         return {k: _to_str_or_bool(v) for k, v in data.items()}
 
@@ -304,7 +316,9 @@ class EditClient(Container):
         return name in REQUIRED_FIELDS
 
     def _register_widget(
-        self, name: str, widget: Checkbox | Input | Select[str]
+        self,
+        name: str,
+        widget: Checkbox | Input | Select[str],
     ) -> None:
         if isinstance(widget, Checkbox):
             self.checkboxes[name] = widget
@@ -415,7 +429,7 @@ class EditClient(Container):
             header.update("Daten für einen neuen Klienten")
 
         # Update widget values
-        for name, widget in {**self.inputs, **self.dates}.items():
+        for name, widget in (self.inputs | self.dates).items():
             value = self._original_data.get(name)
             if isinstance(widget, Select):
                 if isinstance(value, str) and value:
@@ -473,7 +487,7 @@ class EditClient(Container):
                     widget.add_class("-valid")
             log.write(
                 "Bitte alle Pflichtfelder (*) ausfüllen und auf "
-                "korrekte Formate achten."
+                "korrekte Formate achten.",
             )
             return False
         return True
@@ -489,7 +503,7 @@ class EditClient(Container):
         current: dict[str, str | bool | None] = {}
 
         # Handle inputs and dates
-        for name, widget in {**self.inputs, **self.dates}.items():
+        for name, widget in (self.inputs | self.dates).items():
             if isinstance(widget, Select):
                 # TODO: Do I need to check for NoSelection?
                 value = widget.value

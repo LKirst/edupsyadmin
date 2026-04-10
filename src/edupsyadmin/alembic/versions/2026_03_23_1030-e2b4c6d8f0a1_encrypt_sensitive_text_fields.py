@@ -32,28 +32,28 @@ def upgrade() -> None:
                 "nos_rs_ausn_faecher_encr",
                 edupsyadmin.db.clients.EncryptedString(),
                 nullable=True,
-            )
+            ),
         )
         batch_op.add_column(
             sa.Column(
                 "nos_other_details_encr",
                 edupsyadmin.db.clients.EncryptedString(),
                 nullable=True,
-            )
+            ),
         )
         batch_op.add_column(
             sa.Column(
                 "nta_other_details_encr",
                 edupsyadmin.db.clients.EncryptedString(),
                 nullable=True,
-            )
+            ),
         )
         batch_op.add_column(
             sa.Column(
                 "nta_nos_notes_encr",
                 edupsyadmin.db.clients.EncryptedString(),
                 nullable=True,
-            )
+            ),
         )
 
     # Step 2: Fetch existing data
@@ -77,7 +77,7 @@ def upgrade() -> None:
             clients_table.c.nos_other_details,
             clients_table.c.nta_other_details,
             clients_table.c.nta_nos_notes,
-        )
+        ),
     ).fetchall()
 
     # Step 3: Migrate data with encryption (NULL -> empty string for privacy)
@@ -104,12 +104,12 @@ def upgrade() -> None:
                     nos_other_details_encr=encrypted_nos_other,
                     nta_other_details_encr=encrypted_nta_other,
                     nta_nos_notes_encr=encrypted_nta_notes,
-                )
+                ),
             )
         except Exception as e:
             raise RuntimeError(
                 f"Failed to encrypt data for client_id {client_id}. "
-                f"Migration aborted. Error: {e}"
+                f"Migration aborted. Error: {e}",
             ) from e
 
     # Step 4: Drop old columns only after successful data migration
@@ -126,7 +126,7 @@ def downgrade() -> None:
     # Step 1: Add back the original unencrypted columns
     with op.batch_alter_table("clients") as batch_op:
         batch_op.add_column(
-            sa.Column("nos_rs_ausn_faecher", sa.String(), nullable=True)
+            sa.Column("nos_rs_ausn_faecher", sa.String(), nullable=True),
         )
         batch_op.add_column(sa.Column("nos_other_details", sa.String(), nullable=True))
         batch_op.add_column(sa.Column("nta_other_details", sa.String(), nullable=True))
@@ -153,7 +153,7 @@ def downgrade() -> None:
             clients_table.c.nos_other_details_encr,
             clients_table.c.nta_other_details_encr,
             clients_table.c.nta_nos_notes_encr,
-        )
+        ),
     ).fetchall()
 
     # Step 3: Migrate data with decryption
@@ -189,12 +189,12 @@ def downgrade() -> None:
                     nos_other_details=decrypted_nos_other or None,
                     nta_other_details=decrypted_nta_other or None,
                     nta_nos_notes=decrypted_nta_notes or None,
-                )
+                ),
             )
         except Exception as e:
             raise RuntimeError(
                 f"Failed to decrypt data for client_id {client_id}. "
-                f"Migration rollback aborted. Error: {e}"
+                f"Migration rollback aborted. Error: {e}",
             ) from e
 
     # Step 4: Drop encrypted columns only after successful data migration

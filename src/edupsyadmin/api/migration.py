@@ -76,7 +76,7 @@ def upgrade_db(database_url: str, salt_path: Path | None = None) -> None:
             is_legacy = "clients" in table_names and (
                 "alembic_version" not in table_names
                 or connection.scalar(
-                    select(sa.func.count()).select_from(text("alembic_version"))
+                    select(sa.func.count()).select_from(text("alembic_version")),
                 )
                 == 0
             )
@@ -96,7 +96,7 @@ def upgrade_db(database_url: str, salt_path: Path | None = None) -> None:
             if is_legacy:
                 logger.info(
                     "Legacy database detected. Stamping with the initial "
-                    "Alembic revision (4087c43f0c7c)."
+                    "Alembic revision (4087c43f0c7c).",
                 )
                 # Stamp with the initial v8 migration so that all subsequent
                 # migrations are applied.
@@ -125,7 +125,7 @@ def re_encrypt_all_data(db_session: Session, batch_size: int = 100) -> None:
         raise MigrationError("Encryption is not initialized.")
 
     logger.info(
-        "Starting data re-encryption to rotate all fields to the primary key..."
+        "Starting data re-encryption to rotate all fields to the primary key...",
     )
 
     try:
@@ -145,7 +145,9 @@ def re_encrypt_all_data(db_session: Session, batch_size: int = 100) -> None:
                     try:
                         current_value = getattr(client, field_name)  # decrypt
                         setattr(
-                            client, field_name, current_value
+                            client,
+                            field_name,
+                            current_value,
                         )  # re-encrypt with primary
                         # Ensure UPDATE even if plaintext unchanged
                         flag_modified(client, field_name)
@@ -153,13 +155,13 @@ def re_encrypt_all_data(db_session: Session, batch_size: int = 100) -> None:
                         raise MigrationError(
                             "Validation failed during re-encryption for "
                             f"client_id={client.client_id}, field='{field_name}'. "
-                            f"Details: {e}"
+                            f"Details: {e}",
                         ) from e
 
             db_session.commit()
             processed_count += len(batch)
             logger.info(
-                f"Progress: {processed_count}/{total_clients} clients processed."
+                f"Progress: {processed_count}/{total_clients} clients processed.",
             )
 
         logger.info("Verifying re-encryption...")
@@ -221,7 +223,7 @@ def _verify_migration(db_session: Session, expected_count: int) -> None:
         if len(clients) != expected_count:
             raise MigrationError(
                 f"Client count mismatch: expected {expected_count}, "
-                f"found {len(clients)}"
+                f"found {len(clients)}",
             )
 
         sample_size = min(10, len(clients))

@@ -67,10 +67,13 @@ def _add_client_address(data: ClientData) -> None:
     data["name"] = f"{first_name} {last_name}"
     try:
         data["addr_s_nname"] = _get_addr_mulitline(
-            data["street_encr"], data["city_encr"]
+            data["street_encr"],
+            data["city_encr"],
         ).replace("\n", ", ")
         data["addr_m_wname"] = _get_addr_mulitline(
-            data["street_encr"], data["city_encr"], data["name"]
+            data["street_encr"],
+            data["city_encr"],
+            data["name"],
         )
     except (TypeError, KeyError) as e:
         logger.debug(f"Couldn't add home address because of missing data: {e}")
@@ -82,7 +85,9 @@ def _add_school_psychologist_address(data: ClientData) -> None:
     data["schoolpsy_street"] = config.schoolpsy.schoolpsy_street
     data["schoolpsy_city"] = config.schoolpsy.schoolpsy_city
     data["schoolpsy_addr_m_wname"] = _get_addr_mulitline(
-        data["schoolpsy_street"], data["schoolpsy_city"], data["schoolpsy_name"]
+        data["schoolpsy_street"],
+        data["schoolpsy_city"],
+        data["schoolpsy_name"],
     )
     data["schoolpsy_addr_s_wname"] = data["schoolpsy_addr_m_wname"].replace("\n", ", ")
 
@@ -99,7 +104,9 @@ def _add_school_address(data: ClientData) -> None:
     data["school_city"] = schoolconfig.school_city
     data["school_head_w_school"] = schoolconfig.school_head_w_school
     data["school_addr_m_wname"] = _get_addr_mulitline(
-        data["school_street"], data["school_city"], data["school_name"]
+        data["school_street"],
+        data["school_city"],
+        data["school_name"],
     )
     data["school_addr_s_wname"] = data["school_addr_m_wname"].replace("\n", ", ")
 
@@ -115,7 +122,7 @@ def _add_lrst_diagnosis(data: ClientData) -> None:
     except ValueError:
         allowed = [v.value for v in LrstDiagnosis]
         raise ValueError(
-            f"lrst_diagnosis can be only one of {allowed}, but was {diagnosis}"
+            f"lrst_diagnosis can be only one of {allowed}, but was {diagnosis}",
         ) from None
 
 
@@ -148,7 +155,7 @@ def _add_nta_schoolyear(data: ClientData) -> None:
             get_estimated_end_of_academic_year(
                 grade_current=cast(int, data["class_int_encr"]),
                 grade_target=cast(int, data["nta_nos_end_grade"]),
-            )
+            ),
         )
 
 
@@ -163,7 +170,7 @@ def _convert_lrst_test_by(data: ClientData) -> None:
     except ValueError:
         allowed = [v.value for v in LrstTesterType]
         logger.error(
-            f"Value for lrst_last_test_by must be in {allowed} but is {test_by}"
+            f"Value for lrst_last_test_by must be in {allowed} but is {test_by}",
         )
 
 

@@ -30,7 +30,11 @@ class MultiSelectDirectoryTree(DirectoryTree):
     """A DirectoryTree that allows for custom multi-selection logic."""
 
     def __init__(
-        self, path: Path | str, *, id: str | None = None, classes: str | None = None
+        self,
+        path: Path | str,
+        *,
+        id: str | None = None,
+        classes: str | None = None,
     ) -> None:
         super().__init__(path, id=id, classes=classes)
         self.selected_paths: set[Path] = set()
@@ -171,7 +175,7 @@ class FillForm(Widget):
         last_name = client_data.get("last_name_encr", "")
         info.update(
             f"Fülle Formulare für Klient*in: {first_name} {last_name} "
-            f"(ID: {self.client_id})"
+            f"(ID: {self.client_id})",
         )
 
     # TODO: improve confusing function name
@@ -189,14 +193,14 @@ class FillForm(Widget):
             last_name = client_data.get("last_name_encr", "")
             info.update(
                 f"Fülle Formulare für Klient*in: {first_name} {last_name} "
-                f"(ID: {client_id})"
+                f"(ID: {client_id})",
             )
         else:
             # Multiple clients - show count and IDs
             ids_str = ", ".join(str(cid) for cid in self.client_ids)
             info.update(
                 f"Fülle Formulare für {len(self.client_ids)} Klient*innen "
-                f"(IDs: {ids_str})"
+                f"(IDs: {ids_str})",
             )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -215,13 +219,14 @@ class FillForm(Widget):
             dir_tree = self.query_one(MultiSelectDirectoryTree)
             selected_file_paths = dir_tree.selected_paths
 
-            for p in selected_file_paths:
-                if p.suffix in (".pdf", ".md"):
-                    form_paths.append(str(p))
+            form_paths.extend(
+                str(p) for p in selected_file_paths if p.suffix in (".pdf", ".md")
+            )
 
             if not form_paths:
                 self.notify(
-                    "Please select at least one form or form set.", severity="error"
+                    "Please select at least one form or form set.",
+                    severity="error",
                 )
                 return
 
@@ -259,7 +264,7 @@ class FillFormScreen(Screen):
         clients_data: dict[int, ClientData] = {}
         for client_id in self.client_ids:
             clients_data[client_id] = self.clients_manager.get_decrypted_client(
-                client_id
+                client_id,
             )
 
         self.query_one(FillForm).update_clients(clients_data)

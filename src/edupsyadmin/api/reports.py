@@ -52,7 +52,7 @@ class TestReport:
                 fontSize=11,
                 spaceBefore=12,
                 spaceAfter=6,
-            )
+            ),
         )
         self.styles.add(
             ParagraphStyle(
@@ -62,7 +62,7 @@ class TestReport:
                 fontSize=14,
                 alignment=1,  # Centered
                 spaceAfter=20,
-            )
+            ),
         )
 
     def _header_footer(self, canvas, _doc) -> None:
@@ -89,7 +89,7 @@ class TestReport:
 
         # Client Metadata Table
         metadata = [
-            ["Name / ID:", str(self.data.client_name_or_id)],
+            ["Name / ID:", self.data.client_name_or_id],
             ["Klasse:", str(self.data.grade) if self.data.grade is not None else ""],
             ["Testdatum:", self.data.test_date.strftime("%d.%m.%Y")],
             ["Geburtsdatum:", self.data.birthday.strftime("%d.%m.%Y")],
@@ -104,11 +104,10 @@ class TestReport:
                     ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
                     ("TOPPADDING", (0, 0), (-1, -1), 3),
-                ]
-            )
+                ],
+            ),
         )
-        flowables.append(t)
-        flowables.append(Spacer(1, 12))
+        flowables.extend((t, Spacer(1, 12)))
 
         # Results
         for item in self.data.results:
@@ -124,8 +123,8 @@ class TestReport:
                             ("FONTNAME", (1, 0), (1, 0), "Helvetica"),
                             ("ALIGN", (0, 0), (0, 0), "LEFT"),
                             ("ALIGN", (1, 0), (1, 0), "LEFT"),
-                        ]
-                    )
+                        ],
+                    ),
                 )
                 flowables.append(res_t)
 
@@ -138,7 +137,9 @@ class TestReport:
             flowables.append(img)
 
         doc.build(
-            flowables, onFirstPage=self._header_footer, onLaterPages=self._header_footer
+            flowables,
+            onFirstPage=self._header_footer,
+            onLaterPages=self._header_footer,
         )
 
 
@@ -178,9 +179,6 @@ class TaetigkeitsberichtReport:
 
         if summary_categories is not None:
             for nm, val in summary_categories.items():
-                flowables.append(Paragraph(f"<b>{nm}:</b>", self.styles["Normal"]))
-                flowables.append(Spacer(1, 6))
-
                 data = [
                     ["einmaliger Kurzkontakt", "1-3 Sitzungen", "mehr als 3 Sitzungen"],
                     [
@@ -195,26 +193,32 @@ class TaetigkeitsberichtReport:
                         [
                             ("FONTNAME", (0, 0), (-1, 0), "Helvetica"),
                             ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                        ]
-                    )
+                        ],
+                    ),
                 )
-                flowables.append(t)
-                flowables.append(Spacer(1, 18))
+                flowables.extend(
+                    (
+                        Paragraph(f"<b>{nm}:</b>", self.styles["Normal"]),
+                        Spacer(1, 6),
+                        t,
+                        Spacer(1, 18),
+                    ),
+                )
 
         if summary_h_sessions_img and Path(summary_h_sessions_img).exists():
-            flowables.append(Spacer(1, 20))
             img = Image(summary_h_sessions_img)
             img = _scale_image(img, available_width=A4[0] - 3 * cm)
-            flowables.append(img)
+            flowables.extend((Spacer(1, 20), img))
 
         if Path(summary_wstd_img).exists():
-            flowables.append(Spacer(1, 20))
             img = Image(summary_wstd_img)
             img = _scale_image(img, available_width=A4[0] - 3 * cm)
-            flowables.append(img)
+            flowables.extend((Spacer(1, 20), img))
 
         doc.build(
-            flowables, onFirstPage=self._header_footer, onLaterPages=self._header_footer
+            flowables,
+            onFirstPage=self._header_footer,
+            onLaterPages=self._header_footer,
         )
 
 
@@ -226,7 +230,8 @@ def _scale_image(img: Image, available_width: float) -> Image:
 
 
 def normal_distribution_plot(
-    v_lines: list[int | float], plot_filename: str | os.PathLike[str] = "plot.png"
+    v_lines: list[int | float],
+    plot_filename: str | os.PathLike[str] = "plot.png",
 ) -> None:
     mu = 0
     variance = 1
@@ -237,7 +242,10 @@ def normal_distribution_plot(
 
     normal_area = np.arange(-1, 1, 1 / 20)
     plt.fill_between(
-        normal_area, stats.norm.pdf(normal_area, mu, sigma), alpha=0.3, color="grey"
+        normal_area,
+        stats.norm.pdf(normal_area, mu, sigma),
+        alpha=0.3,
+        color="grey",
     )
 
     for value in v_lines:

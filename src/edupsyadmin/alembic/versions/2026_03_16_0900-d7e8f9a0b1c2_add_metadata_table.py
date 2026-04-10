@@ -45,8 +45,8 @@ def upgrade() -> None:
     # Insert into the new table
     op.execute(
         sa.text(
-            "INSERT INTO system_metadata (key, value) VALUES ('salt', :salt_hex)"
-        ).bindparams(salt_hex=salt.hex())
+            "INSERT INTO system_metadata (key, value) VALUES ('salt', :salt_hex)",
+        ).bindparams(salt_hex=salt.hex()),
     )
 
 

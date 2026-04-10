@@ -12,7 +12,7 @@ COMMAND_EPILOG = textwrap.dedent(
     Example:
       # Create a sandboxed demo environment
       edupsyadmin setup_demo
-"""
+""",
 )
 
 

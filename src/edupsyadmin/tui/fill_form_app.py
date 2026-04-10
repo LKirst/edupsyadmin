@@ -16,7 +16,7 @@ class FillFormApp(App[None]):
     """A standalone Textual App to display the FillForm widget."""
 
     BINDINGS: ClassVar[list[BindingType]] = [
-        Binding("ctrl+q", "quit", "Beenden", show=True, priority=True)
+        Binding("ctrl+q", "quit", "Beenden", show=True, priority=True),
     ]
 
     def __init__(
@@ -46,7 +46,7 @@ class FillFormApp(App[None]):
         for client_id in self.client_ids:
             try:
                 clients_data[client_id] = self.clients_manager.get_decrypted_client(
-                    client_id
+                    client_id,
                 )
             except ClientNotFoundError:
                 failed_ids.append(client_id)
@@ -104,7 +104,7 @@ class FillFormApp(App[None]):
                 severity = "warning"
             else:
                 msg = "Failed to fill forms for all clients. Errors:\n" + "\n".join(
-                    error_messages
+                    error_messages,
                 )
                 severity = "error"
 
@@ -112,7 +112,9 @@ class FillFormApp(App[None]):
 
         except Exception as e:
             self.call_from_thread(
-                self.notify, f"Critical error filling forms: {e}", severity="error"
+                self.notify,
+                f"Critical error filling forms: {e}",
+                severity="error",
             )
         finally:
             self.call_from_thread(self.exit)

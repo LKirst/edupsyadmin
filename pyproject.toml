@@ -80,11 +80,13 @@ lint.select = [
   "B",
   "C4",   # flake8-comprehensions – point out sub-optimal list/dict/set comps
   "C901", # checks for functions with a high McCabe complexity
+  "COM",  # flake8-commas
   "E",
   "F",
   "I",
-  "ISC",  # flake-8-implicit-str-concat - implicitly string concatenation
+  "ISC",  # flake8-implicit-str-concat - implicitly string concatenation
   "N",
+  "PERF", # perflint - a linter for performance anti-patterns
   "PTH",  # flake8-use-pathlib - find use of function that could be replaced by pathlib
   "RET",  # flake8-return – keep return statements consistent and meaningful
   "RUF",  # Ruff-native extras – small bug-catchers & style nits not in other sets "UP",

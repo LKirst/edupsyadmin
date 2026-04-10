@@ -14,7 +14,7 @@ class EditClientApp(App):
     """A standalone Textual App to display the EditClient widget."""
 
     BINDINGS: ClassVar[list[BindingType]] = [
-        Binding("ctrl+q", "quit", "Beenden", show=True, priority=True)
+        Binding("ctrl+q", "quit", "Beenden", show=True, priority=True),
     ]
 
     def __init__(
@@ -46,7 +46,8 @@ class EditClientApp(App):
         try:
             if message.client_id is not None:
                 self.clients_manager.edit_client(
-                    client_ids=[message.client_id], new_data=message.data
+                    client_ids=[message.client_id],
+                    new_data=message.data,
                 )
             else:
                 self.clients_manager.add_client(**message.data)

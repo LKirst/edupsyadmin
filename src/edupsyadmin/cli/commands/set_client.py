@@ -15,7 +15,7 @@ COMMAND_EPILOG = textwrap.dedent(
       # clients with ID 1 and 2
       edupsyadmin set-client 1 2 --key_value_pairs "nta_font=1" \
         "nta_zeitv_vieltext=20"
-"""
+""",
 )
 
 
@@ -47,14 +47,16 @@ def execute(args: Namespace) -> None:
 
     if args.key_value_pairs:
         key_value_pairs_dict = parse_key_value_pairs(
-            args.key_value_pairs, option_name="--key_value_pairs"
+            args.key_value_pairs,
+            option_name="--key_value_pairs",
         )
         clients_manager.edit_client(
-            client_ids=args.client_id, new_data=key_value_pairs_dict
+            client_ids=args.client_id,
+            new_data=key_value_pairs_dict,
         )
     else:
         edit_client_app_cls = lazy_import(
-            "edupsyadmin.tui.edit_client_app"
+            "edupsyadmin.tui.edit_client_app",
         ).EditClientApp
         for cid in args.client_id:
             edit_client_app_cls(clients_manager=clients_manager, client_id=cid).run()

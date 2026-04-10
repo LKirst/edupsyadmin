@@ -25,37 +25,59 @@ def upgrade() -> None:
     op.create_table(
         "clients",
         sa.Column(
-            "first_name_encr", edupsyadmin.db.clients.EncryptedString(), nullable=False
+            "first_name_encr",
+            edupsyadmin.db.clients.EncryptedString(),
+            nullable=False,
         ),
         sa.Column(
-            "last_name_encr", edupsyadmin.db.clients.EncryptedString(), nullable=False
+            "last_name_encr",
+            edupsyadmin.db.clients.EncryptedString(),
+            nullable=False,
         ),
         sa.Column(
-            "gender_encr", edupsyadmin.db.clients.EncryptedString(), nullable=False
+            "gender_encr",
+            edupsyadmin.db.clients.EncryptedString(),
+            nullable=False,
         ),
         sa.Column(
-            "birthday_encr", edupsyadmin.db.clients.EncryptedString(), nullable=False
+            "birthday_encr",
+            edupsyadmin.db.clients.EncryptedString(),
+            nullable=False,
         ),
         sa.Column(
-            "street_encr", edupsyadmin.db.clients.EncryptedString(), nullable=False
+            "street_encr",
+            edupsyadmin.db.clients.EncryptedString(),
+            nullable=False,
         ),
         sa.Column(
-            "city_encr", edupsyadmin.db.clients.EncryptedString(), nullable=False
+            "city_encr",
+            edupsyadmin.db.clients.EncryptedString(),
+            nullable=False,
         ),
         sa.Column(
-            "parent_encr", edupsyadmin.db.clients.EncryptedString(), nullable=False
+            "parent_encr",
+            edupsyadmin.db.clients.EncryptedString(),
+            nullable=False,
         ),
         sa.Column(
-            "telephone1_encr", edupsyadmin.db.clients.EncryptedString(), nullable=False
+            "telephone1_encr",
+            edupsyadmin.db.clients.EncryptedString(),
+            nullable=False,
         ),
         sa.Column(
-            "telephone2_encr", edupsyadmin.db.clients.EncryptedString(), nullable=False
+            "telephone2_encr",
+            edupsyadmin.db.clients.EncryptedString(),
+            nullable=False,
         ),
         sa.Column(
-            "email_encr", edupsyadmin.db.clients.EncryptedString(), nullable=False
+            "email_encr",
+            edupsyadmin.db.clients.EncryptedString(),
+            nullable=False,
         ),
         sa.Column(
-            "notes_encr", edupsyadmin.db.clients.EncryptedString(), nullable=False
+            "notes_encr",
+            edupsyadmin.db.clients.EncryptedString(),
+            nullable=False,
         ),
         sa.Column("client_id", sa.Integer(), nullable=False),
         sa.Column("school", sa.String(), nullable=False),
