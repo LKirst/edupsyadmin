@@ -98,6 +98,9 @@ lint.per-file-ignores."src/edupsyadmin/tui/*" = [ "A002", "ARG" ]
 lint.per-file-ignores."test/*" = [ "ARG" ]
 lint.flake8-tidy-imports.ban-relative-imports = "all"
 
+[tool.ty]
+terminal.error-on-warning = true
+
 [tool.pytest]
 ini_options.addopts = "--benchmark-skip"
 ini_options.testpaths = [ "test" ]

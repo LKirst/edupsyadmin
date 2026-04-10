@@ -72,6 +72,87 @@ class DeleteItemButton(Button):
             parent.remove()
 
 
+class ConfigInput(Horizontal):
+    """A row containing a label and an input field for configuration."""
+
+    def __init__(
+        self,
+        key: str,
+        value: Any,
+        id: str | None = None,
+        validators: list | None = None,
+        valid_empty: bool | None = None,
+        password: bool = False,
+        placeholder: str | None = None,
+    ) -> None:
+        super().__init__(classes="input-container")
+        self.key = key
+        self.value = value
+        self.row_id = id
+        self.validators = validators
+        self.valid_empty = valid_empty
+        self.password = password
+        self.placeholder = placeholder
+
+    def compose(self) -> ComposeResult:
+        label = Static(f"{self.key}:", classes="label")
+        label.tooltip = TOOLTIPS.get(self.key, "")
+        yield label
+
+        display_value = str(self.value) if self.value is not None else ""
+        inp_type: Literal["integer", "text"] = (
+            "integer" if self.key in ["kdf_iterations", "end", "nstudents"] else "text"
+        )
+        # Use provided valid_empty or default based on key
+        if self.valid_empty is not None:
+            valid_empty = self.valid_empty
+        else:
+            valid_empty = self.key == "kdf_iterations"
+
+        inp = Input(
+            display_value,
+            id=self.row_id or self.key,
+            placeholder=self.placeholder or self.key,
+            type=inp_type,
+            valid_empty=valid_empty,
+            validators=self.validators or [],
+            password=self.password,
+        )
+        inp.tooltip = TOOLTIPS.get(self.key, "")
+        yield inp
+
+
+class PasswordEditor(Vertical):
+    """A widget to edit password settings."""
+
+    def compose(self) -> ComposeResult:
+        yield Static("Passwort", classes="section-header")
+        yield ConfigInput(
+            key="Neues Passwort",
+            value="",
+            id="password",
+            valid_empty=True,
+            password=True,
+            placeholder="Leer lassen, falls schon ein Passwort festgelegt wurde",
+        )
+        yield ConfigInput(
+            key="Passwort bestätigen",
+            value="",
+            id="password_confirm",
+            valid_empty=True,
+            password=True,
+            placeholder="Passwort wiederholen",
+        )
+
+    @property
+    def password(self) -> str:
+        return self.query_one("#password", Input).value
+
+    @property
+    def password_confirm(self) -> str:
+        return self.query_one("#password_confirm", Input).value
+
+
 class SchoolEditor(Vertical):
     """A widget to edit a single school's configuration."""
 
@@ -99,17 +180,7 @@ class SchoolEditor(Vertical):
         ]
         for key in school_order:
             if key in self._school_data:
-                value = self._school_data[key]
-                with Horizontal(classes="input-container"):
-                    label = Static(f"{key}:", classes="label")
-                    label.tooltip = TOOLTIPS.get(key, "")
-                    yield label
-                    inp_type: Literal["integer", "text"] = (
-                        "integer" if key in ["end", "nstudents"] else "text"
-                    )
-                    inp = Input(str(value), id=key, placeholder=key, type=inp_type)
-                    inp.tooltip = TOOLTIPS.get(key, "")
-                    yield inp
+                yield ConfigInput(key, self._school_data[key])
         yield DeleteItemButton()
 
     def get_data(self) -> tuple[str | None, dict[str, Any] | None]:
@@ -119,11 +190,10 @@ class SchoolEditor(Vertical):
         data = {}
         for inp in self.query(Input):
             if inp.id and inp.id != "item_key":
-                val = (
-                    int(inp.value)
-                    if inp.id in ["end", "nstudents"] and inp.value
-                    else inp.value
-                )
+                if inp.type == "integer":
+                    val = int(inp.value) if inp.value else None
+                else:
+                    val = inp.value
                 data[inp.id] = val
         return key, data
 
@@ -257,17 +327,13 @@ class LgvtEditor(Vertical):
     def compose(self) -> ComposeResult:
         yield Static("LGVT CSV-Dateien")
         for key in ["Rosenkohl", "Laufbursche", "Toechter"]:
-            value = self._lgvt_data.get(key, "")
-            with Horizontal(classes="input-container"):
-                yield Static(f"{key}:", classes="label")
-                inp = Input(
-                    str(value) if value else "",
-                    id=f"lgvt-{key}",
-                    placeholder=key,
-                    validators=[PathIsFileValidator],
-                    valid_empty=True,
-                )
-                yield inp
+            yield ConfigInput(
+                key,
+                self._lgvt_data.get(key, ""),
+                id=f"lgvt-{key}",
+                validators=[PathIsFileValidator],
+                valid_empty=True,
+            )
 
     def get_data(self) -> dict[str, str | None]:
         data = {}
@@ -328,71 +394,19 @@ class ConfigEditorApp(App[None]):
             # Core section
             yield Static("App-Einstellungen", classes="section-header")
             core_config = self.config_dict.get("core", {})
-            core_order = [
-                "logging",
-                "app_uid",
-                "app_username",
-                "kdf_iterations",
-            ]
-            for key in core_order:
+            for key in ["logging", "app_uid", "app_username", "kdf_iterations"]:
                 if key in core_config:
-                    value = core_config[key]
-                    with Horizontal(classes="input-container"):
-                        label = Static(f"{key}:", classes="label")
-                        label.tooltip = TOOLTIPS.get(key, "")
-                        yield label
-
-                        display_value = str(value) if value is not None else ""
-                        inp_type: Literal["integer", "text"] = (
-                            "integer"
-                            if key in ["kdf_iterations", "kdf_iterations_old"]
-                            else "text"
-                        )
-                        valid_empty = key == "kdf_iterations"
-
-                        inp = Input(
-                            display_value,
-                            id=f"core-{key}",
-                            placeholder=key,
-                            type=inp_type,
-                            valid_empty=valid_empty,
-                        )
-                        inp.tooltip = TOOLTIPS.get(key, "")
-                        yield inp
+                    yield ConfigInput(key, core_config[key], id=f"core-{key}")
 
             # Password
-            yield Static("Passwort", classes="section-header")
-            with Horizontal(classes="input-container"):
-                yield Static("Neues Passwort:", classes="label")
-                yield Input(
-                    placeholder=(
-                        "Leer lassen, falls schon ein Passwort festegelegt wurde"
-                    ),
-                    password=True,
-                    id="password",
-                )
-            with Horizontal(classes="input-container"):
-                yield Static("Passwort bestätigen:", classes="label")
-                yield Input(
-                    placeholder="Passwort wiederholen",
-                    password=True,
-                    id="password_confirm",
-                )
+            yield PasswordEditor(id="password-section")
 
             # Schoolpsy section
             yield Static("Schulpsychologie-Einstellungen", classes="section-header")
             schoolpsy_config = self.config_dict.get("schoolpsy", {})
-            schoolpsy_order = ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]
-            for key in schoolpsy_order:
+            for key in ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]:
                 if key in schoolpsy_config:
-                    value = schoolpsy_config[key]
-                    with Horizontal(classes="input-container"):
-                        label = Static(f"{key}:", classes="label")
-                        label.tooltip = TOOLTIPS.get(key, "")
-                        yield label
-                        inp = Input(str(value), id=f"schoolpsy-{key}", placeholder=key)
-                        inp.tooltip = TOOLTIPS.get(key, "")
-                        yield inp
+                    yield ConfigInput(key, schoolpsy_config[key], id=f"schoolpsy-{key}")
 
             # Dynamic sections
             yield Static("Schulen", classes="section-header")
@@ -423,20 +437,18 @@ class ConfigEditorApp(App[None]):
     def _get_core_config_from_ui(self) -> dict[str, Any]:
         """Rebuild core configuration from UI."""
         config = {}
-        keys = ["logging", "app_uid", "app_username", "kdf_iterations"]
-        for key in keys:
-            value = self.query_one(f"#core-{key}", Input).value
+        for key in ["logging", "app_uid", "app_username", "kdf_iterations"]:
+            inp = self.query_one(f"#core-{key}", Input)
             if key == "kdf_iterations":
-                config[key] = int(value) if value else None
+                config[key] = int(inp.value) if inp.value else None
             else:
-                config[key] = value or ""
+                config[key] = inp.value or ""
         return config
 
     def _get_schoolpsy_config_from_ui(self) -> dict[str, str]:
         """Rebuild schoolpsy configuration from UI."""
         config = {}
-        keys = ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]
-        for key in keys:
+        for key in ["schoolpsy_name", "schoolpsy_street", "schoolpsy_city"]:
             config[key] = self.query_one(f"#schoolpsy-{key}", Input).value or ""
         return config
 
@@ -519,8 +531,10 @@ class ConfigEditorApp(App[None]):
         self.loading = False
         existing_keys = message.keys
 
-        password = self.query_one("#password", Input).value
-        password_confirm = self.query_one("#password_confirm", Input).value
+        password_editor = self.query_one("#password-section", PasswordEditor)
+        password = password_editor.password
+        password_confirm = password_editor.password_confirm
+
         app_uid = self.query_one("#core-app_uid", Input).value
         username = self.query_one("#core-app_username", Input).value
 

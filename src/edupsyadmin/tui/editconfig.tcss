@@ -13,6 +13,11 @@ VerticalScroll {
     text-style: bold;
 }
 
+PasswordEditor {
+    height: auto;
+    padding: 0;
+}
+
 /* Container for a single item (School, FormSet, etc.) */
 .item-container {
     height: auto;
