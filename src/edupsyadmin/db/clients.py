@@ -41,6 +41,10 @@ class EncryptedString(TypeDecorator):
         return encr.encrypt(value or "")
 
     def process_result_value(self, value: str | None, dialect) -> str | None:
+        """
+        Note to self: This should never receive value=None!
+        I just handle it here to silence the type checker.
+        """
         if value is None:
             return None
         return encr.decrypt(value)
@@ -150,7 +154,7 @@ class Client(Base):
     notes_encr: Mapped[str] = mapped_column(
         EncryptedString, doc="Verschlüsselte Notizen zum Klienten"
     )
-    class_name_encr: Mapped[str | None] = mapped_column(
+    class_name_encr: Mapped[str] = mapped_column(
         EncryptedString,
         nullable=False,
         doc=(
@@ -260,8 +264,9 @@ class Client(Base):
             "ausgenommen sind"
         ),
     )
-    nos_rs_ausn_faecher_encr: Mapped[str | None] = mapped_column(
+    nos_rs_ausn_faecher_encr: Mapped[str] = mapped_column(
         EncryptedString,
+        nullable=False,
         doc=(
             "Verschlüsselte Fächer, die vom Notenschutz (Rechtschreibung) "
             "ausgenommen sind"
@@ -280,8 +285,9 @@ class Client(Base):
             "Diese Variable wird abgeleitet aus :attr:`nos_other_details_encr`."
         ),
     )
-    nos_other_details_encr: Mapped[str | None] = mapped_column(
+    nos_other_details_encr: Mapped[str] = mapped_column(
         EncryptedString,
+        nullable=False,
         doc=(
             "Verschlüsselte Details zu anderen Formen des Notenschutzes "
             "für den Klienten"
@@ -365,12 +371,14 @@ class Client(Base):
             "Diese Variable wird abgeleitet aus :attr:`nta_other_details_encr`."
         ),
     )
-    nta_other_details_encr: Mapped[str | None] = mapped_column(
+    nta_other_details_encr: Mapped[str] = mapped_column(
         EncryptedString,
+        nullable=False,
         doc="Verschlüsselte Details zu anderen Formen des NTAs für den Klienten",
     )
-    nta_nos_notes_encr: Mapped[str | None] = mapped_column(
+    nta_nos_notes_encr: Mapped[str] = mapped_column(
         EncryptedString,
+        nullable=False,
         doc="Verschlüsselte Notizen zu Notenschutz und Nachteilsausgleich",
     )
     nta_nos_end: Mapped[bool] = mapped_column(
@@ -424,9 +432,9 @@ class Client(Base):
         notes_encr: str = "",
         entry_date_encr: date | str | None = None,
         nos_rs: bool | str | int | None = None,
-        nos_rs_ausn_faecher_encr: str | None = None,
+        nos_rs_ausn_faecher_encr: str = "",
         nos_les: bool | str | int | None = None,
-        nos_other_details_encr: str | None = None,
+        nos_other_details_encr: str = "",
         nta_zeitv_vieltext: int | str | None = None,
         nta_zeitv_wenigtext: int | str | None = None,
         nta_font: bool | str | int | None = None,
@@ -435,8 +443,8 @@ class Client(Base):
         nta_arbeitsm: bool | str | int | None = None,
         nta_ersgew: bool | str | int | None = None,
         nta_vorlesen: bool | str | int | None = None,
-        nta_other_details_encr: str | None = None,
-        nta_nos_notes_encr: str | None = None,
+        nta_other_details_encr: str = "",
+        nta_nos_notes_encr: str = "",
         nta_nos_end_grade: int | str | None = None,
         lrst_diagnosis_encr: str = "",
         lrst_last_test_date_encr: date | str = "",
