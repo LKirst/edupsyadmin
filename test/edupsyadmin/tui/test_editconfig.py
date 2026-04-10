@@ -5,8 +5,10 @@ from textual.widgets import Input
 
 from edupsyadmin.api.migration import upgrade_db
 from edupsyadmin.tui.editconfig import (
-    ConfigEditorApp,
     SchoolEditor,
+)
+from edupsyadmin.tui.editconfig_app import (
+    ConfigEditorApp,
 )
 
 
