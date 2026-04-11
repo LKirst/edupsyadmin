@@ -39,8 +39,9 @@ optional-dependencies.reportsandtaetigkeitsber = [
   "numpy>=2.4.4",
   "reportlab>=4.2.5",
 ]
+urls.documentation = "https://edupsyadmin.readthedocs.io"
+urls.homepage = "https://github.com/LKirst/edupsyadmin.git"
 scripts.edupsyadmin = "edupsyadmin.cli:main"
-homepage = "https://github.com/LKirst/edupsyadmin.git"
 
 [dependency-groups]
 dev = [
