@@ -54,6 +54,15 @@ def add_arguments(parser: ArgumentParser) -> None:
         help="form file paths",
     )
     parser.add_argument(
+        "--out_dir",
+        type=Path,
+        default=None,
+        help=(
+            "output directory for filled forms "
+            "(overrides the default from the config file)"
+        ),
+    )
+    parser.add_argument(
         "--inject_data",
         nargs="*",
         default=[],
@@ -103,6 +112,9 @@ def execute(args: Namespace) -> None:
 
     form_paths_normalized: list[Path] = [normalize_path(p) for p in form_paths]
     logger.debug(f"Trying to fill the files: {form_paths_normalized}")
+
+    out_dir = args.out_dir or config.core.output_directory
+
     for cid in args.client_id:
         client_dict = clients_manager.get_decrypted_client(cid)
         client_dict_w_convdat = add_convenience_data(client_dict)
@@ -112,4 +124,8 @@ def execute(args: Namespace) -> None:
                 option_name="--inject_data",
             )
             client_dict_w_convdat = client_dict_w_convdat | inject_dict
-        fill_form(client_dict_w_convdat, form_paths_normalized)
+        fill_form(
+            client_dict_w_convdat,
+            form_paths_normalized,
+            out_dir=out_dir,
+        )

@@ -20,6 +20,8 @@ TOOLTIPS = {
     "school_city": "Stadt und Postleitzahl der Schule",
     "end": "Jahrgangsstufe, nach der Schüler typischerweise die Schule abschließen",
     "nstudents": "Anzahl Schüler an der Schule",
+    "template_directory": "Standardordner für Formularvorlagen",
+    "output_directory": "Standardordner für ausgefüllte Formulare",
 }
 
 NoPeriodValidator = Regex(
@@ -30,6 +32,11 @@ NoPeriodValidator = Regex(
 PathIsFileValidator = Function(
     function=lambda value: Path(value).expanduser().is_file(),
     failure_description="Pfad ist keine Datei.",
+)
+
+PathIsDirValidator = Function(
+    function=lambda value: Path(value).expanduser().is_dir(),
+    failure_description="Pfad ist kein Ordner.",
 )
 
 

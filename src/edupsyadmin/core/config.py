@@ -25,6 +25,8 @@ class CoreConfig(BaseModel):
     app_username: str
     config: str | None = None  # This is added at runtime
     kdf_iterations: int | None = None
+    template_directory: Path | None = None
+    output_directory: Path | None = None
 
 
 class SchoolpsyConfig(BaseModel):

@@ -72,17 +72,17 @@ class FillForm(Widget):
         padding: 1;
         margin-bottom: 1;
     }
-    #path-input-container {
+    .path-container {
         height: auto;
         margin-bottom: 1;
     }
-    #path-input-container Label {
-        width: auto;
+    .path-container Label {
+        width: 15;
         height: 3;
-        content-align: center middle;
+        content-align: right middle;
         margin-right: 1;
     }
-    #path-input-container Input {
+    .path-container Input {
         width: 1fr;
     }
     #form-selection-container {
@@ -110,9 +110,15 @@ class FillForm(Widget):
     class StartFill(Message):
         """Message to start filling forms."""
 
-        def __init__(self, client_ids: list[int], form_paths: list[str]) -> None:
+        def __init__(
+            self,
+            client_ids: list[int],
+            form_paths: list[str],
+            out_dir: str | None = None,
+        ) -> None:
             self.client_ids = client_ids
             self.form_paths = form_paths
+            self.out_dir = out_dir
             super().__init__()
 
     class Cancel(Message):
@@ -125,16 +131,20 @@ class FillForm(Widget):
     def compose(self) -> ComposeResult:
         with VerticalScroll():
             yield Static(id="client-info")
-            with Horizontal(id="path-input-container"):
-                yield Label("Path:")
-                yield Input(id="path-input", placeholder="Enter path...")
+            with Horizontal(id="template-path-row", classes="path-container"):
+                yield Label("Template Path:")
+                yield Input(id="path-input", placeholder="Enter template path...")
+            with Horizontal(id="output-path-row", classes="path-container"):
+                yield Label("Output Path:")
+                yield Input(id="output-path-input", placeholder="Enter output path...")
             with Vertical():
                 with Horizontal(id="lists-container"):
                     with Vertical(id="form-selection-container"):
                         yield Label("Select Form Set:")
                         yield SelectionList[str](id="form-sets")
                     with Vertical(id="form-files-container"):
-                        yield MultiSelectDirectoryTree(".", id="form-files")
+                        initial_path = config.core.template_directory or "."
+                        yield MultiSelectDirectoryTree(initial_path, id="form-files")
                 with Horizontal(classes="button-bar"):
                     yield Button("Fill Form(s)", variant="primary", id="fill-button")
                     yield Button("Cancel", id="cancel-button")
@@ -149,6 +159,10 @@ class FillForm(Widget):
         path_input = self.query_one("#path-input", Input)
         tree = self.query_one(MultiSelectDirectoryTree)
         path_input.value = str(Path(tree.path).resolve())
+
+        output_path_input = self.query_one("#output-path-input", Input)
+        if config.core.output_directory:
+            output_path_input.value = str(config.core.output_directory.resolve())
 
     @on(Input.Submitted, "#path-input")
     def on_path_submitted(self, event: Input.Submitted) -> None:
@@ -233,7 +247,10 @@ class FillForm(Widget):
             # Deduplicate paths
             form_paths = sorted(dict.fromkeys(form_paths))
 
-            self.post_message(self.StartFill(self.client_ids, form_paths))
+            out_dir = self.query_one("#output-path-input", Input).value or None
+            self.post_message(
+                self.StartFill(self.client_ids, form_paths, out_dir=out_dir),
+            )
 
         elif event.button.id == "cancel-button":
             self.post_message(self.Cancel())

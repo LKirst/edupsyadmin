@@ -28,6 +28,7 @@ from edupsyadmin.tui.editconfig import (
     FormSetEditor,
     LgvtEditor,
     PasswordEditor,
+    PathIsDirValidator,
     SchoolEditor,
 )
 
@@ -89,9 +90,25 @@ class ConfigEditorApp(App[None]):
             # Core section
             yield Static("App-Einstellungen", classes="section-header")
             core_config = self.config_dict.get("core", {})
-            for key in ("logging", "app_uid", "app_username", "kdf_iterations"):
+            for key in (
+                "logging",
+                "app_uid",
+                "app_username",
+                "kdf_iterations",
+                "template_directory",
+                "output_directory",
+            ):
                 if key in core_config:
-                    yield ConfigInput(key, core_config[key], id=f"core-{key}")
+                    validators = []
+                    if key in ("template_directory", "output_directory"):
+                        validators = [PathIsDirValidator]
+                    yield ConfigInput(
+                        key,
+                        core_config[key],
+                        id=f"core-{key}",
+                        validators=validators,
+                        valid_empty=True if validators else None,
+                    )
 
             # Password
             yield PasswordEditor(id="password-section")
@@ -131,21 +148,30 @@ class ConfigEditorApp(App[None]):
 
     def _get_core_config_from_ui(self) -> dict[str, Any]:
         """Rebuild core configuration from UI."""
-        config = {}
-        for key in ("logging", "app_uid", "app_username", "kdf_iterations"):
+        config_data = {}
+        for key in (
+            "logging",
+            "app_uid",
+            "app_username",
+            "kdf_iterations",
+            "template_directory",
+            "output_directory",
+        ):
             inp = self.query_one(f"#core-{key}", Input)
             if key == "kdf_iterations":
-                config[key] = int(inp.value) if inp.value else None
+                config_data[key] = int(inp.value) if inp.value else None
+            elif key in ("template_directory", "output_directory"):
+                config_data[key] = inp.value or None
             else:
-                config[key] = inp.value or ""
-        return config
+                config_data[key] = inp.value or ""
+        return config_data
 
     def _get_schoolpsy_config_from_ui(self) -> dict[str, str]:
         """Rebuild schoolpsy configuration from UI."""
-        config = {}
+        config_data = {}
         for key in ("schoolpsy_name", "schoolpsy_street", "schoolpsy_city"):
-            config[key] = self.query_one(f"#schoolpsy-{key}", Input).value or ""
-        return config
+            config_data[key] = self.query_one(f"#schoolpsy-{key}", Input).value or ""
+        return config_data
 
     def _get_dynamic_section_data(
         self,
@@ -330,7 +356,8 @@ class ConfigEditorApp(App[None]):
         self.notify("Neuer Verschlüsselungsschlüssel wird generiert...")
 
         # Get kdf_iterations_value from UI before starting worker
-        kdf_iterations_value = self.query_one("#core-kdf_iterations", Input).value
+        kdf_iterations_input = self.query_one("#core-kdf_iterations", Input)
+        kdf_iterations_value = kdf_iterations_input.value
 
         # Await the worker to complete the blocking operation
         self._key_derivation_worker(

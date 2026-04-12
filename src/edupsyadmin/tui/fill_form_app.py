@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 from textual import work
@@ -66,7 +67,12 @@ class FillFormApp(App[None]):
         fill_form_widget.update_clients(clients_data)
 
     @work(exclusive=True, thread=True)
-    def fill_forms_worker(self, client_ids: list[int], form_paths: list[str]) -> None:
+    def fill_forms_worker(
+        self,
+        client_ids: list[int],
+        form_paths: list[str],
+        out_dir: str | None = None,
+    ) -> None:
         """Worker to fill forms for multiple clients."""
         from edupsyadmin.api.add_convenience_data import add_convenience_data
         from edupsyadmin.api.fill_form import fill_form
@@ -78,11 +84,16 @@ class FillFormApp(App[None]):
 
         try:
             form_paths_normalized = [normalize_path(p) for p in form_paths]
+            out_dir_path = Path(out_dir) if out_dir else None
             for client_id in client_ids:
                 try:
                     client_data = self.clients_manager.get_decrypted_client(client_id)
                     client_data_with_convenience = add_convenience_data(client_data)
-                    fill_form(client_data_with_convenience, form_paths_normalized)
+                    fill_form(
+                        client_data_with_convenience,
+                        form_paths_normalized,
+                        out_dir=out_dir_path,
+                    )
                     success_count += 1
                 except ClientNotFoundError:
                     failed_clients.append(client_id)
@@ -123,7 +134,11 @@ class FillFormApp(App[None]):
         """Handle the start fill message from the FillForm widget."""
         self.query_one(LoadingIndicator).display = True
         self.query_one(FillForm).disabled = True
-        self.fill_forms_worker(message.client_ids, message.form_paths)
+        self.fill_forms_worker(
+            message.client_ids,
+            message.form_paths,
+            out_dir=message.out_dir,
+        )
 
     async def on_fill_form_cancel(self, message: FillForm.Cancel) -> None:
         """Handle the cancel message from the FillForm widget."""

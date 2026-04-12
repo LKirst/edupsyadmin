@@ -71,7 +71,7 @@ def change_wd(tmp_path):
         "delete-client --help",
         "edit-config --help",
         "rotate-key --help",
-    )
+    ),
 )
 def command(request):
     """Return the command to run."""
@@ -86,7 +86,6 @@ class TestBasicSanityCheck:
         except SystemExit as ex:
             status = ex.code
         assert status == 0
-        return
 
     def test_main_none(self):
         """Test the main() function with no arguments."""
@@ -100,7 +99,6 @@ class TestBasicSanityCheck:
         # This creates a new Python interpreter instance that doesn't inherit mocks.
         cmdl = f"{executable} -m edupsyadmin.cli {command} --help"
         assert call(cmdl.split()) == 0
-        return
 
 
 def test_defaults_are_used(mock_config):
@@ -156,8 +154,7 @@ def test_new_client(mock_config, mock_webuntis, tmp_path):
     )
     new_client_command.execute(args)
 
-    clients_manager = managers.ClientsManager(database_url)
-    client = clients_manager.get_decrypted_client(client_id=1)
+    client = managers.ClientsManager(database_url).get_decrypted_client(client_id=1)
     assert client["first_name_encr"] == "Erika"
     assert client["last_name_encr"] == "Mustermann"
 
@@ -271,7 +268,11 @@ def test_set_client(capsys, mock_config, mock_webuntis, tmp_path):
 
 # TODO: test inject_data
 def test_create_documentation(
-    tmp_path, mock_webuntis, mock_config, pdf_forms, change_wd
+    tmp_path,
+    mock_webuntis,
+    mock_config,
+    pdf_forms,
+    change_wd,
 ):
     testing_logger.start(level="DEBUG")
     testing_logger.debug(f"config path: {mock_config}")
@@ -281,8 +282,7 @@ def test_create_documentation(
 
     # Arrange
     upgrade_db(database_url)
-    clients_manager = managers.ClientsManager(database_url)
-    client_id = clients_manager.add_client(
+    client_id = managers.ClientsManager(database_url).add_client(
         school="FirstSchool",
         gender_encr="f",
         class_name_encr="11TKKG",
@@ -298,6 +298,7 @@ def test_create_documentation(
         form_set="lrst",
         form_paths=None,
         inject_data=None,
+        out_dir=None,
         tui=False,
     )
     create_documentation_command.execute(args)
@@ -355,7 +356,10 @@ def test_edit_config_command(mock_config):
 
         # Assert that the app was initialized with the correct config path
         mock_lazy_import.return_value.ConfigEditorApp.assert_called_once_with(
-            mock_config, TEST_UID, TEST_USERNAME, database_url="sqlite:///test.db"
+            mock_config,
+            TEST_UID,
+            TEST_USERNAME,
+            database_url="sqlite:///test.db",
         )
 
         # Assert that the app was run
@@ -378,7 +382,7 @@ def test_create_documentation_tui(mock_config, tmp_path):
     set_keys_in_keyring(APP_UID, username, [key])
 
     with patch(
-        "edupsyadmin.cli.commands.create_documentation.lazy_import"
+        "edupsyadmin.cli.commands.create_documentation.lazy_import",
     ) as mock_lazy_import:
         # Prevent the app from actually running
         mock_app_instance = mock_lazy_import.return_value.FillFormApp.return_value
@@ -394,7 +398,7 @@ def test_create_documentation_tui(mock_config, tmp_path):
                 "create-documentation",
                 "1",
                 "--tui",
-            ]
+            ],
         )
 
         # Assert that the app was initialized
@@ -430,8 +434,7 @@ class TestRotateKey:
 
         # 2. Add some encrypted data
         upgrade_db(database_url)
-        clients_manager = managers.ClientsManager(database_url)
-        client_id = clients_manager.add_client(
+        client_id = managers.ClientsManager(database_url).add_client(
             school="FirstSchool",
             gender_encr="f",
             class_name_encr="11TKKG",
@@ -460,8 +463,7 @@ class TestRotateKey:
         # 5. Verify: Data should be decryptable with ONLY the new key now
         encr.set_keys([new_key])
         # Need a new manager to ensure we aren't using any cached state
-        new_manager = managers.ClientsManager(database_url)
-        client = new_manager.get_decrypted_client(client_id)
+        client = managers.ClientsManager(database_url).get_decrypted_client(client_id)
         assert client["first_name_encr"] == "RotateMe"
 
         # Check keyring: should ONLY have the new key now
@@ -482,7 +484,7 @@ class TestRotateKey:
         with (
             patch("builtins.input", return_value="no"),
             patch(
-                "edupsyadmin.cli.commands.rotate_key.re_encrypt_all_data"
+                "edupsyadmin.cli.commands.rotate_key.re_encrypt_all_data",
             ) as mock_re_encrypt,
         ):
             args = argparse.Namespace(

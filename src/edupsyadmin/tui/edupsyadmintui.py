@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from textual import work
@@ -113,7 +114,12 @@ class EdupsyadminTui(App[None]):
             self.post_message(self._ClientDataSaveResult(error=e))
 
     @work(exclusive=True, thread=True)
-    def fill_forms_worker(self, client_id: int, form_paths: list[str]) -> None:
+    def fill_forms_worker(
+        self,
+        client_id: int,
+        form_paths: list[str],
+        out_dir: str | None = None,
+    ) -> None:
         """Worker to fill forms."""
         try:
             from edupsyadmin.api.add_convenience_data import add_convenience_data
@@ -122,7 +128,12 @@ class EdupsyadminTui(App[None]):
             client_data = self.manager.get_decrypted_client(client_id)
             client_data_with_convenience = add_convenience_data(client_data)
             form_paths_normalized = [normalize_path(p) for p in form_paths]
-            fill_form(client_data_with_convenience, form_paths_normalized)
+            out_dir_path = Path(out_dir) if out_dir else None
+            fill_form(
+                client_data_with_convenience,
+                form_paths_normalized,
+                out_dir=out_dir_path,
+            )
             self.post_message(self._FormsFilledResult())
         except Exception as e:
             self.post_message(self._FormsFilledResult(error=e))
@@ -228,7 +239,11 @@ class EdupsyadminTui(App[None]):
         self.is_busy = True
         self.query_one("#main-loading-indicator").display = True
         self.notify("Fülle Formulare aus...")
-        self.fill_forms_worker(message.client_ids, message.form_paths)
+        self.fill_forms_worker(
+            message.client_ids[0],
+            message.form_paths,
+            out_dir=message.out_dir,
+        )
 
     async def on_fill_form_cancel(self, message: FillForm.Cancel) -> None:
         """Handle the cancel message from the FillForm widget."""

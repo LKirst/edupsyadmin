@@ -9,6 +9,8 @@ from edupsyadmin.core.config import AppConfig, config
 valid_config_content = """
 core:
   app_username: "testuser"
+  template_directory: "/path/to/templates"
+  output_directory: "/path/to/output"
 schoolpsy:
   schoolpsy_name: "Test Psy"
   schoolpsy_street: "123 Street"
@@ -71,6 +73,8 @@ def test_successful_load_minimal(tmp_path):
     assert isinstance(config._instance, AppConfig)
     # Check attribute access
     assert config.core.app_username == "testuser"
+    assert str(config.core.template_directory) == "/path/to/templates"
+    assert str(config.core.output_directory) == "/path/to/output"
     assert config.school["TestSchool"].nstudents == 500
     # Check default value
     assert config.core.logging == "WARN"

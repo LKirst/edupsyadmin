@@ -19,7 +19,10 @@ async def test_app_loads_config(mock_config_snapshots, tmp_path):
     db_url = f"sqlite:///{db_path}"
     upgrade_db(db_url)
     app = ConfigEditorApp(
-        mock_config_snapshots, TEST_UID, TEST_USERNAME, database_url=db_url
+        mock_config_snapshots,
+        TEST_UID,
+        TEST_USERNAME,
+        database_url=db_url,
     )
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -36,7 +39,10 @@ def test_editconfig_initial_layout(mock_config_snapshots, snap_compare, tmp_path
     db_url = f"sqlite:///{db_path}"
     upgrade_db(db_url)
     app = ConfigEditorApp(
-        mock_config_snapshots, TEST_UID, TEST_USERNAME, database_url=db_url
+        mock_config_snapshots,
+        TEST_UID,
+        TEST_USERNAME,
+        database_url=db_url,
     )
     assert snap_compare(app, terminal_size=(80, 250))
 
@@ -46,7 +52,10 @@ def test_add_new_school_container(mock_config_snapshots, snap_compare, tmp_path)
     db_url = f"sqlite:///{db_path}"
     upgrade_db(db_url)
     app = ConfigEditorApp(
-        mock_config_snapshots, TEST_UID, TEST_USERNAME, database_url=db_url
+        mock_config_snapshots,
+        TEST_UID,
+        TEST_USERNAME,
+        database_url=db_url,
     )
 
     async def run_before(pilot):
@@ -64,7 +73,10 @@ def test_edit_new_school_container(mock_config_snapshots, snap_compare, tmp_path
     db_url = f"sqlite:///{db_path}"
     upgrade_db(db_url)
     app = ConfigEditorApp(
-        mock_config_snapshots, TEST_UID, TEST_USERNAME, database_url=db_url
+        mock_config_snapshots,
+        TEST_UID,
+        TEST_USERNAME,
+        database_url=db_url,
     )
 
     async def run_before(pilot):
@@ -103,12 +115,20 @@ async def test_app_saves_config_changes(mock_config, tmp_path):
 
     new_logging_level = "INFO"
     new_schoolpsy_name = "Dr. New Name"
+    new_template_directory = "/home/test/templates"
+    new_output_directory = "/home/test/output"
     test_password = "test_password_12345"
 
     async with app.run_test() as pilot:
         # Change values in the input fields
         logging_input = app.query_exactly_one("#core-logging", Input)
         logging_input.value = new_logging_level
+
+        template_dir_input = app.query_exactly_one("#core-template_directory", Input)
+        template_dir_input.value = new_template_directory
+
+        output_dir_input = app.query_exactly_one("#core-output_directory", Input)
+        output_dir_input.value = new_output_directory
 
         schoolpsy_name_input = app.query_exactly_one("#schoolpsy-schoolpsy_name", Input)
         schoolpsy_name_input.value = new_schoolpsy_name
@@ -139,4 +159,6 @@ async def test_app_saves_config_changes(mock_config, tmp_path):
 
     # Assert that the changes were saved
     assert saved_config["core"]["logging"] == new_logging_level
+    assert saved_config["core"]["template_directory"] == new_template_directory
+    assert saved_config["core"]["output_directory"] == new_output_directory
     assert saved_config["schoolpsy"]["schoolpsy_name"] == new_schoolpsy_name

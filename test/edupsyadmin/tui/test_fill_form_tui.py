@@ -61,6 +61,32 @@ def test_fill_form_initial_layout(snap_compare, mock_clients_manager, tmp_path):
 
 
 @pytest.mark.asyncio
+@patch("edupsyadmin.tui.fill_form_widget.config")
+async def test_path_input_uses_template_directory(
+    mock_config_local,
+    mock_clients_manager,
+    tmp_path,
+):
+    """Test that the DirectoryTree starts at template_directory if set."""
+    template_dir = tmp_path / "templates"
+    template_dir.mkdir()
+    mock_config_local.core.template_directory = template_dir
+    mock_config_local.form_set = {}
+
+    app = FillFormApp(clients_manager=mock_clients_manager, client_ids=[CLIENT_ID])
+    async with app.run_test() as pilot:
+        fill_form_widget = pilot.app.query_one(FillForm)
+        path_input = fill_form_widget.query_one("#path-input", Input)
+        dir_tree = fill_form_widget.query_one(
+            "MultiSelectDirectoryTree",
+            MultiSelectDirectoryTree,
+        )
+
+        assert dir_tree.path == template_dir
+        assert path_input.value == str(template_dir.resolve())
+
+
+@pytest.mark.asyncio
 async def test_path_input_valid(mock_clients_manager, tmp_path):
     """Test entering a valid path in the path input updates the DirectoryTree."""
     app = FillFormApp(clients_manager=mock_clients_manager, client_ids=[CLIENT_ID])
@@ -68,11 +94,12 @@ async def test_path_input_valid(mock_clients_manager, tmp_path):
         fill_form_widget = pilot.app.query_one(FillForm)
         path_input = fill_form_widget.query_one("#path-input", Input)
         dir_tree = fill_form_widget.query_one(
-            "MultiSelectDirectoryTree", MultiSelectDirectoryTree
+            "MultiSelectDirectoryTree",
+            MultiSelectDirectoryTree,
         )
 
         # Initially, the path input should show the current working directory
-        assert path_input.value == str(Path().resolve())
+        assert path_input.value == str(Path.cwd())
         assert dir_tree.path == Path()
 
         # Simulate selecting a file before changing path
@@ -86,7 +113,7 @@ async def test_path_input_valid(mock_clients_manager, tmp_path):
         new_path.mkdir()
         path_input.value = str(new_path)
         fill_form_widget.post_message(
-            Input.Submitted(input=path_input, value=path_input.value)
+            Input.Submitted(input=path_input, value=path_input.value),
         )
         await pilot.pause()
 
@@ -109,7 +136,8 @@ async def test_path_input_invalid(mock_clients_manager, tmp_path):
         fill_form_widget = pilot.app.query_one(FillForm)
         path_input = fill_form_widget.query_one("#path-input", Input)
         dir_tree = fill_form_widget.query_one(
-            "MultiSelectDirectoryTree", MultiSelectDirectoryTree
+            "MultiSelectDirectoryTree",
+            MultiSelectDirectoryTree,
         )
 
         original_path_value = path_input.value  # Current working directory
@@ -120,13 +148,13 @@ async def test_path_input_invalid(mock_clients_manager, tmp_path):
         with patch.object(FillForm, "notify") as mock_notify:
             path_input.value = str(invalid_path)
             fill_form_widget.post_message(
-                Input.Submitted(input=path_input, value=path_input.value)
+                Input.Submitted(input=path_input, value=path_input.value),
             )
             await pilot.pause()
 
             # Verify notification is shown
             mock_notify.assert_called_once_with(
-                f"Error: Path '{invalid_path}' is not a valid directory."
+                f"Error: Path '{invalid_path}' is not a valid directory.",
             )
 
             # Verify DirectoryTree's path is NOT updated
@@ -145,14 +173,17 @@ async def test_fill_button_no_forms_notification(mock_clients_manager):
             await pilot.pause()
 
     mock_notify.assert_called_once_with(
-        "Please select at least one form or form set.", severity="error"
+        "Please select at least one form or form set.",
+        severity="error",
     )
 
 
 @pytest.mark.asyncio
 @patch("edupsyadmin.tui.fill_form_widget.config")
 async def test_fill_button_emits_start_fill_message(
-    mock_config, mock_clients_manager, tmp_path
+    mock_config,
+    mock_clients_manager,
+    tmp_path,
 ):
     """Test that the 'Fill Form(s)' button emits the StartFill message."""
     mock_config.form_set = {"MySet": ["/path/to/set_form.pdf"]}
@@ -170,7 +201,8 @@ async def test_fill_button_emits_start_fill_message(
 
         # 2. Select a file from DirectoryTree
         dir_tree = fill_form_widget.query_one(
-            "MultiSelectDirectoryTree", MultiSelectDirectoryTree
+            "MultiSelectDirectoryTree",
+            MultiSelectDirectoryTree,
         )
         dir_tree.selected_paths = {form_path}
 
@@ -232,7 +264,8 @@ async def test_select_directory_and_file_nodes(mock_clients_manager, tmp_path):
         # Find the nodes for the directory and file
         # Use str() to handle both rich.Text and str types safely
         dir_node = next(
-            (n for n in tree.root.children if str(n.label) == "my_test_dir"), None
+            (n for n in tree.root.children if str(n.label) == "my_test_dir"),
+            None,
         )
         file_node = next(
             (n for n in tree.root.children if str(n.label) == "my_test_file.pdf"),
