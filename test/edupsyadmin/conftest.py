@@ -109,7 +109,9 @@ def mock_keyring(monkeypatch):
 
 @pytest.fixture(scope="function")
 def mock_config(
-    tmp_path_factory: pytest.TempPathFactory, pdf_forms, request
+    tmp_path_factory: pytest.TempPathFactory,
+    pdf_forms,
+    request,
 ) -> Generator[Path]:
     template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
     conf_path = tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml"
@@ -138,7 +140,8 @@ def mock_config(
 
 @pytest.fixture(scope="function")
 def mock_config_snapshots(
-    tmp_path_factory: pytest.TempPathFactory, request
+    tmp_path_factory: pytest.TempPathFactory,
+    request,
 ) -> Generator[Path]:
     """
     If I use the mock_config from above, shapshots are different on every
@@ -272,7 +275,7 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
 @pytest.fixture(
     params=[
         {
-            "client_id": None,
+            "client_id": 1,
             "school": "FirstSchool",
             "gender_encr": "m",
             "entry_date_encr": date(2021, 6, 30),
@@ -367,20 +370,15 @@ def pdf_forms(tmp_path_factory: pytest.TempPathFactory) -> list[Path]:
     manage their own `tmp_path`.
     """
     forms_dir = tmp_path_factory.mktemp("pdf_forms")
-    sample_files = [
-        Path("test/edupsyadmin/data/sample_form_mantelbogen.pdf").resolve(),
-        Path("test/edupsyadmin/data/sample_form_anschreiben.pdf").resolve(),
-        Path("test/edupsyadmin/data/sample_form_stellungnahme.pdf").resolve(),
-    ]
-    testing_logger.debug(f"cwd: {Path.cwd()}")
-    pdf_form_paths = []
 
     reportlab_form_filename = "sample_form_reportlab.pdf"
     reportlab_form_path = forms_dir / reportlab_form_filename
     create_pdf_form(str(reportlab_form_path))
-    pdf_form_paths.append(reportlab_form_path)
 
-    pdf_form_paths.extend(sample_files)
+    libreoffice_form_file = Path(
+        "test/edupsyadmin/data/sample_form_libreoffice.pdf",
+    ).resolve()
+    pdf_form_paths = [libreoffice_form_file, reportlab_form_path]
     testing_logger.debug(f"PDF forms fixture created at {pdf_form_paths}")
 
     return pdf_form_paths
