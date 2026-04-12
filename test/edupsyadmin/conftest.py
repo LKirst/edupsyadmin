@@ -1,3 +1,4 @@
+import contextlib
 import importlib.resources
 import io
 import shutil
@@ -384,12 +385,21 @@ def pdf_forms(tmp_path_factory: pytest.TempPathFactory) -> list[Path]:
     return pdf_form_paths
 
 
+actual_snapshot_path_key = pytest.StashKey[Path]()
+
+
 class PDFSnapshotExtension(PNGImageSnapshotExtension):
     """Extension for syrupy to handle PDF snapshots by converting them to PNG."""
+
+    current_item: pytest.Item | None = None
 
     def serialize(self, data: Any, **_kwargs: Any) -> Any:
         if isinstance(data, (str, Path)):
             # It's a path to a PDF
+            actual_png_path = Path(data).with_suffix(".png")
+            if self.current_item:
+                self.current_item.stash[actual_snapshot_path_key] = actual_png_path
+
             images = convert_from_path(data)
             if not images:
                 return super().serialize(b"")
@@ -407,10 +417,46 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
 
             img_byte_arr = io.BytesIO()
             combined.save(img_byte_arr, format="PNG")
-            return super().serialize(img_byte_arr.getvalue())
+            png_bytes = img_byte_arr.getvalue()
+
+            # Save the PNG next to the PDF for easy comparison
+            with contextlib.suppress(Exception):
+                actual_png_path.write_bytes(png_bytes)
+
+            return super().serialize(png_bytes)
         return super().serialize(data)
 
 
 @pytest.fixture
 def pdf_snapshot(snapshot):
     return snapshot.use_extension(PDFSnapshotExtension)
+
+
+@pytest.fixture(autouse=True)
+def _set_snapshot_item(request):
+    """Set the current item for PDFSnapshotExtension."""
+    PDFSnapshotExtension.current_item = request.node
+    yield
+    PDFSnapshotExtension.current_item = None
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """Hook to add comparison info to the failure report."""
+    outcome = yield
+    report = outcome.get_result()
+
+    if report.when == "call" and report.failed:
+        actual_path = item.stash.get(actual_snapshot_path_key, None)
+        if actual_path:
+            # Syrupy stores image snapshots in:
+            # __snapshots__/<test_file_stem>/<test_name>[<params>].png
+            snapshot_dir = item.path.parent / "__snapshots__" / item.path.stem
+            expected_path = snapshot_dir / f"{item.name}.png"
+
+            msg = (
+                f"\nTo compare results, use:\n"
+                f"Actual PNG:   {actual_path}\n"
+                f"Expected PNG: {expected_path}\n"
+            )
+            report.sections.append(("Snapshot Comparison", msg))
