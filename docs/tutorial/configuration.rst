@@ -35,10 +35,13 @@ Gehen wir die Felder nun Schritt für Schritt durch:
 #.  **Passwort**: Lege hier *einmalig* ein sicheres Passwort für die
     Verschlüsselung fest.
 
-    .. warning::
-       Ändere dieses Passwort später nicht mehr, wenn du bereits Daten in
-       der Datenbank hast! Sonst können die Daten nicht mehr entschlüsselt
-       werden.
+    .. tip::
+       Du kannst dieses Passwort später jederzeit ändern. ``edupsyadmin``
+       unterstützt Schlüssel-Rotation (Key Rotation), sodass bestehende
+       Daten weiterhin entschlüsselt werden können. Wenn du dein Passwort
+       änderst, empfiehlt es sich jedoch, anschließend den Befehl
+       ``edupsyadmin rotate-key`` auszuführen, um alle Daten in der
+       Datenbank auf das neue Passwort zu migrieren.
 
 **Schulpsychologie-Einstellungen**
 

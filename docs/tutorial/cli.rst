@@ -151,6 +151,26 @@ Löscht einen (oder mehrere) Klienten unwiderruflich aus der Datenbank.
 
     $ edupsyadmin delete-client 1 2
 
+Verschlüsselung aktualisieren (``rotate-key``)
+----------------------------------------------
+
+Wenn du dein Passwort in der Konfiguration (``edit-config``) geändert hast,
+werden neue Daten mit dem neuen Passwort verschlüsselt. Bestehende Daten
+bleiben mit dem alten Passwort verschlüsselt, aber weiterhin lesbar.
+
+Mit dem Befehl ``rotate-key`` kannst du alle Daten in der Datenbank
+vollständig auf das aktuellste Passwort umstellen. Dies ist eine gute
+Sicherheitspraxis.
+
+.. code-block:: console
+
+    $ edupsyadmin rotate-key
+
+Nach der Re-Verschlüsselung wirst du gefragt, ob alte, nun nicht mehr
+benötigte Schlüssel aus deinem Schlüsselspeicher (Keyring) gelöscht werden
+sollen. Wenn du dies bestätigst, wird nur noch dein aktuelles Passwort
+benötigt, um auf alle Daten zuzugreifen.
+
 PDF-Formulare für den Druck vorbereiten (``flatten-pdfs``)
 ----------------------------------------------------------
 
