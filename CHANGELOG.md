@@ -1,3 +1,60 @@
+## 9.0.0a0 (2026-04-16)
+
+### BREAKING CHANGE
+
+- Form field names need to change, for example: birthday_encr_de > birthday_de and lrst_last_test_date_encr_de > lrst_last_test_date_de
+
+### Feat
+
+- **api.add_convenience_data**: mark changing the _add_dates function change in 9fb38da as breaking change
+- add configurable template and output directories
+- log number of entries in database before get_clients and tui
+- **api**: replace pyfpdf with reportlab and unify report output code
+- **api.fill_form**: add aliases for encrypted fields during form filling
+- **db.clients**: encrypt nta and nos string fields
+- **info**: show the backup path in info
+- migrate to version-less stable paths for config and data
+- move encryption salt to database metadata
+- encrypt all client date fields and standardize presentation
+- encrypt class_name and class_int columns
+
+### Fix
+
+- **db.clients**: set encrypted text fields to non-nullable in clients model
+- **api.setup_demo**: use the same school as in sampleconfig.yml to prevent tui crash
+- **api.migration**: ensure database migrations respect custom salt and encryption is ready for migrations
+- **alembic**: support custom paths in salt migration
+- **alembic**: modify migrations to handle NULL values more robustly
+- **api.migration**: stamp legacy databases correctly with the initial migration
+- secure database schema by enforcing NOT NULL on encrypted columns
+- standardise encrypted field types and null handling
+- **cli**: scrub sensitive data from logs
+
+### Refactor
+
+- **api.flatten_pdf**: refactor for readability and easier testing
+- make the code more pythonic
+- **tui.editconfig**: split application logic from the UI component definitions
+- **tui.editconfig**: refactor for readability
+- **tui**: remove duplicate code and standardize name of ctrl+q binding
+- **api.managers**: allow single column strings as an argument to get_clients_overview
+- **api.fill_form**: refactor fill_form for readability
+- **core.logger**: update type hints to reflect recent changes
+- replace hardcoded srings with StrEnum for type safety
+- **core.logger**: properly register custom Logger class
+- **db.clients**: remove validators that did nothing
+- **py.typed**: move py.typed to the intended location
+- add some new pre-commit hooks and fix issues the hooks raise
+- **api.managers**: consolidate client data retrieval
+- **api.managers**: optimize get_all_clients_df using sqlalchemy core
+- **api.managers**: remove redundant code
+- **taetigkeitsbericht_from_db**: query only required columns
+- remove deprecated v7 to v8 encryption migration command
+
+### Perf
+
+- **api.migration**: only create db backup when a migration is required
+
 ## 8.2.1 (2026-03-08)
 
 ### Refactor
