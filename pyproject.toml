@@ -96,6 +96,7 @@ lint.select = [
   "UP",   # pyupgrade – rewrite to modern Python syntax (f-strings, walrus, etc.)
   "W",
 ]
+lint.ignore = [ "COM812" ]
 lint.per-file-ignores."src/edupsyadmin/db/clients.py" = [ "ARG002" ]
 lint.per-file-ignores."src/edupsyadmin/tui/*" = [ "A002", "ARG" ]
 lint.per-file-ignores."test/*" = [ "ARG" ]
