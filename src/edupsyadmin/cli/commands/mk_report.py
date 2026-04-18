@@ -4,8 +4,8 @@ from argparse import ArgumentParser, Namespace
 from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.core.logger import logger
 
-COMMAND_DESCRIPTION = "Create a report for a given test type. (experimental)"
-COMMAND_HELP = "Create a report for a given test type. (experimental)"
+COMMAND_DESCRIPTION = "Create a report for a given test type."
+COMMAND_HELP = "Create a report for a given test type."
 COMMAND_EPILOG = textwrap.dedent("""\
     Example:
       # Create a CFT report for client with ID 1

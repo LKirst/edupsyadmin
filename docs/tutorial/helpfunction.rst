@@ -45,7 +45,7 @@ anzeigen. Im Beispiel unten, sind die möglichen Unterbefehle markiert.
         flatten-pdfs        Flatten pdf forms (experimental)
         get-clients         Show clients overview or single client
         info                Get useful information for debugging
-        mk-report           Create a report for a given test type. (experimental)
+        mk-report           Create a report for a given test type.
         new-client          Add a new client
         set-client          Change values for one or more clients
         setup-demo          Create a sandboxed demo environment.
