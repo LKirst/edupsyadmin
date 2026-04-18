@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from edupsyadmin.api.lgvt import mk_report
-from edupsyadmin.core.config import LgvtConfig, config
+from edupsyadmin.core.config import config
 
 
 @pytest.fixture
@@ -31,9 +31,7 @@ def test_lgvt_report_grade_11_snapshot(
 ):
     """Snapshot test for LGVT report (Grade 11+)."""
     # Configure mock CSV path in global config
-    if config._instance.lgvtcsv is None:
-        config._instance.lgvtcsv = LgvtConfig()
-    monkeypatch.setattr(config._instance.lgvtcsv, "Rosenkohl", str(mock_lgvt_csv))
+    monkeypatch.setattr(config.instance.lgvtcsv, "Rosenkohl", str(mock_lgvt_csv))
 
     # Add a stable client
     client_data = {
@@ -82,9 +80,7 @@ def test_lgvt_report_grade_9_snapshot(
 ):
     """Snapshot test for LGVT report (Grade < 11)."""
     # Configure mock CSV path in global config
-    if config._instance.lgvtcsv is None:
-        config._instance.lgvtcsv = LgvtConfig()
-    monkeypatch.setattr(config._instance.lgvtcsv, "Rosenkohl", str(mock_lgvt_csv))
+    monkeypatch.setattr(config.instance.lgvtcsv, "Rosenkohl", str(mock_lgvt_csv))
 
     # Add a stable client
     client_data = {

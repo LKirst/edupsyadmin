@@ -129,6 +129,9 @@ def mk_report(
     directory: str | os.PathLike[str] = ".",
 ) -> None:
     fn_csv = getattr(config.lgvtcsv, version)
+    if fn_csv is None:
+        raise ValueError(f"LGVT CSV path for version '{version}' is not configured.")
+
     t_day = datetime.strptime(test_date, "%Y-%m-%d").date()
 
     client_dict = ClientsManager(

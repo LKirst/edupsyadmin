@@ -185,12 +185,9 @@ class ConfigEditorApp(App[None]):
                 data[key] = editor_data
         return data
 
-    def _get_lgvt_config_from_ui(self) -> dict[str, str | None] | None:
+    def _get_lgvt_config_from_ui(self) -> dict[str, str | None]:
         """Rebuild LGVT CSV configuration from UI."""
-        lgvt_data = self.query_one(LgvtEditor).get_data()
-        if any(lgvt_data.values()):
-            return lgvt_data
-        return None
+        return self.query_one(LgvtEditor).get_data()
 
     def _rebuild_config_from_ui(self) -> dict[str, Any]:
         """Reconstructs the entire config from the current state of all UI widgets."""

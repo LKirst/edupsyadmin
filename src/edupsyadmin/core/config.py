@@ -69,7 +69,7 @@ class AppConfig(BaseModel):
     school: dict[str, SchoolConfig]
     form_set: dict[str, list[str]] = Field(default_factory=dict)
     csv_import: dict[str, CsvImportConfig] = Field(default_factory=dict)
-    lgvtcsv: LgvtConfig | None = None
+    lgvtcsv: LgvtConfig = Field(default_factory=LgvtConfig)
 
 
 class Settings:
@@ -79,6 +79,13 @@ class Settings:
     """
 
     _instance: AppConfig | None = None
+
+    @property
+    def instance(self) -> AppConfig:
+        """Get the loaded AppConfig instance or raise RuntimeError."""
+        if self._instance is None:
+            raise RuntimeError("Configuration not loaded. Call config.load() first.")
+        return self._instance
 
     def load(self, path: Path) -> None:
         """
