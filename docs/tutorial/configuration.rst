@@ -17,7 +17,7 @@ Konfigurations-TUI mit diesem Befehl:
 
 Die Oberfläche, die du jetzt siehst, sollte so aussehen:
 
-.. image:: ../../test/edupsyadmin/tui/__snapshots__/test_editconfig/test_initial_layout.svg
+.. image:: ../../test/edupsyadmin/tui/__snapshots__/test_editconfig/test_editconfig_initial_layout.svg
    :alt: Konfiguration in der TUI bearbeiten
    :width: 100%
    :align: center
