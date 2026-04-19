@@ -51,7 +51,7 @@ exportiert:
 
 #. Ein Textfeld hinzugen für den Vornamen mit dem Feldnamen ``first_name_encr``.
 
-#. Ein Textfeld hinzufügen für das Geburtsdatum: ``birthday_encr``.
+#. Ein Textfeld hinzufügen für das Geburtsdatum: ``birthday_de``.
 
 #. Über Datei - Expoertieren als - Als PDF exportieren ... die Datei als PDF
    exportieren. In dem Fenster das sich öffnet, die Option aktivieren
@@ -65,4 +65,4 @@ Variable in doppelten geschwungenen Klammern:
    # Protokoll
 
    **Name**: {{ last_name_encr }}, {{ first_name_encr }}
-   **Geboren am**: {{ birthday_encr }}
+   **Geboren am**: {{ birthday_de }}

@@ -41,11 +41,12 @@ die Sitzung entschlüsselt wird. Dafür musst du:
 
 - ein Bitwarden-Konto anlegen: `<https://bitwarden.com>`_
 - die Bitwarden CLI installieren: `<https://bitwarden.com/help/cli/>`_
-- edupsyadmin mit dem optionalen Paket bitwarden-keyring installieren:
+- edupsyadmin mit der optionalen Abhängigkeit (Extra) ``bwbackend``
+  installieren:
 
 .. code-block :: console
 
-  uv tool install --with bitwarden-keyring edupsyadmin
+  uv tool install edupsyadmin[bwbackend] --python 3.14
 
 - dich einmalig in der Shell (z.B. Powershell über das Windows Terminal)
   einloggen:

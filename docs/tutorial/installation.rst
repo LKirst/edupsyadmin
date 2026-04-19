@@ -177,8 +177,15 @@ benötigen zusätzliche Programme, die nicht automatisch mitinstalliert werden.
 Poppler (für ``flatten-pdfs``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Die Funktion ``flatten-pdfs`` mit der ``pdf2image`` Bibliothek benötigt
-**Poppler**.
+Die Funktion ``flatten-pdfs`` benötigt das Programm **Poppler** und die
+Python-Bibliothek ``pdf2image``. Letztere wird über die optionale Abhängigkeit
+(Extra) ``flattenpdf`` installiert.
+
+.. code-block:: console
+
+    $ uv tool upgrade edupsyadmin --with flattenpdf
+
+Zur Installation von Poppler:
 
 .. tab-set::
     :sync-group: installation-os
@@ -205,6 +212,18 @@ Die Funktion ``flatten-pdfs`` mit der ``pdf2image`` Bibliothek benötigt
         **Linux**: Die meisten Distributionen haben poppler vorinstalliert.
         Wenn poppler nicht installiert ist, installiere `poppler-utils` oder
         `poppler-tools` je nach Distribution.
+
+
+Berichte und Tätigkeitsbericht (für ``mk-report`` und ``taetigkeitsbericht``)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Um grafische Berichte und den Tätigkeitsbericht als PDF zu erstellen, müssen
+zusätzliche Bibliotheken installiert werden. Dies geschieht über die optionale
+Abhängigkeit (Extra) ``reportsandtaetigkeitsber``:
+
+.. code-block:: console
+
+    $ uv tool upgrade edupsyadmin --with reportsandtaetigkeitsber
 
 
 Verschlüsselung

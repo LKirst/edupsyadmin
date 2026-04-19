@@ -32,8 +32,7 @@ Gehen wir die Felder nun Schritt für Schritt durch:
 #.  **Benutzername**: Ersetze den Platzhalternutzername ``sample.username``
     durch deinen eigenen Benutzernamen. Wähle etwas Kurzes ohne Leerzeichen
     oder Sonderzeichen.
-#.  **Passwort**: Lege hier *einmalig* ein sicheres Passwort für die
-    Verschlüsselung fest.
+#.  **Passwort**: Lege hier ein sicheres Passwort für die Verschlüsselung fest.
 
     .. tip::
        Du kannst dieses Passwort später jederzeit ändern. ``edupsyadmin``
