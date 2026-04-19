@@ -6,6 +6,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
 from textual.widgets import Footer, Header, LoadingIndicator
 
+from edupsyadmin.api.fill_form import batch_fill_forms
 from edupsyadmin.api.managers import ClientNotFoundError
 from edupsyadmin.tui.fill_form_widget import FillForm
 
@@ -64,7 +65,7 @@ class FillFormApp(App[None]):
             self.exit()
             return
 
-        fill_form_widget.update_clients(clients_data)
+        fill_form_widget.display_client_info(clients_data)
 
     @work(exclusive=True, thread=True)
     def fill_forms_worker(
@@ -74,33 +75,16 @@ class FillFormApp(App[None]):
         out_dir: str | None = None,
     ) -> None:
         """Worker to fill forms for multiple clients."""
-        from edupsyadmin.api.add_convenience_data import add_convenience_data
-        from edupsyadmin.api.fill_form import fill_form
-        from edupsyadmin.utils.path_utils import normalize_path
-
-        success_count = 0
-        failed_clients = []
-        error_messages = []
-
         try:
-            form_paths_normalized = [normalize_path(p) for p in form_paths]
-            out_dir_path = Path(out_dir) if out_dir else None
-            for client_id in client_ids:
-                try:
-                    client_data = self.clients_manager.get_decrypted_client(client_id)
-                    client_data_with_convenience = add_convenience_data(client_data)
-                    fill_form(
-                        client_data_with_convenience,
-                        form_paths_normalized,
-                        out_dir=out_dir_path,
-                    )
-                    success_count += 1
-                except ClientNotFoundError:
-                    failed_clients.append(client_id)
-                    error_messages.append(f"Client {client_id} not found")
-                except Exception as e:
-                    failed_clients.append(client_id)
-                    error_messages.append(f"Client {client_id}: {e!s}")
+            results = batch_fill_forms(
+                self.clients_manager,
+                client_ids,
+                form_paths,
+                out_dir=Path(out_dir) if out_dir else None,
+            )
+
+            success_count = sum(1 for res in results if res["success"])
+            failed_clients = [res["client_id"] for res in results if not res["success"]]
 
             # Build final notification message
             if success_count > 0 and not failed_clients:
@@ -114,6 +98,9 @@ class FillFormApp(App[None]):
                 )
                 severity = "warning"
             else:
+                error_messages = [
+                    str(res["error"]) for res in results if not res["success"]
+                ]
                 msg = "Failed to fill forms for all clients. Errors:\n" + "\n".join(
                     error_messages,
                 )

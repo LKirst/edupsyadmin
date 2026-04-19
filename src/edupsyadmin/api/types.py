@@ -82,3 +82,11 @@ class ClientData(TypedDict, total=True):
     nta_nos_end_schoolyear: NotRequired[str]
     lrst_schpsy: NotRequired[int]
     school_subjects: NotRequired[str]
+
+
+class FillFormResult(TypedDict, total=True):
+    """Result of filling forms for a single client."""
+
+    client_id: int
+    success: bool
+    error: Exception | None

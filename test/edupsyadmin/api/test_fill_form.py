@@ -1,9 +1,10 @@
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pypdf
 
 from edupsyadmin.api.add_convenience_data import add_convenience_data
-from edupsyadmin.api.fill_form import fill_form
+from edupsyadmin.api.fill_form import batch_fill_forms, fill_form
 
 
 def test_fill_form(
@@ -39,3 +40,34 @@ def test_fill_form(
                 assert (
                     checkbox_data["nachteilsausgleich"].get("/V", None) == expected_nta
                 ), f"nachteilsausgleich was not filled correctly for client {clientd}"
+
+
+def test_batch_fill_forms(
+    mock_config, pdf_forms: list, tmp_path: Path, client_dict_internal: dict
+) -> None:
+    """Test the batch_fill_forms function."""
+    clients_manager = MagicMock()
+
+    def get_client(cid):
+        data = client_dict_internal.copy()
+        data["client_id"] = cid
+        return data
+
+    clients_manager.get_decrypted_client.side_effect = get_client
+
+    client_ids = [1, 2]
+    results = batch_fill_forms(
+        clients_manager,
+        client_ids,
+        pdf_forms,
+        out_dir=tmp_path,
+    )
+
+    assert len(results) == 2
+    assert all(res["success"] for res in results)
+    assert clients_manager.get_decrypted_client.call_count == 2
+
+    for client_id in client_ids:
+        for form in pdf_forms:
+            output_pdf_path = tmp_path / f"{client_id}_{form.name}"
+            assert output_pdf_path.exists()

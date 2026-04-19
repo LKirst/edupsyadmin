@@ -180,22 +180,8 @@ class FillForm(Widget):
             current_path = Path(tree.path).resolve()
             event.input.value = str(current_path)
 
-    # TODO: improve confusing function name
-    def update_client(self, client_id: int, client_data: ClientData) -> None:
-        """Update the widget with data for a specific client."""
-        self.client_id = client_id
-        info = self.query_one("#client-info", Static)
-        first_name = client_data.get("first_name_encr", "")
-        last_name = client_data.get("last_name_encr", "")
-        info.update(
-            f"Fülle Formulare für Klient*in: {first_name} {last_name} "
-            f"(ID: {self.client_id})",
-        )
-
-    # TODO: improve confusing function name
-    # TODO: remove redundancy
-    def update_clients(self, clients_data: dict[int, ClientData]) -> None:
-        """Update the widget with data for multiple clients."""
+    def display_client_info(self, clients_data: dict[int, ClientData]) -> None:
+        """Update the widget with data for the clients whose forms should be filled."""
         self.client_ids = list(clients_data.keys())
         info = self.query_one("#client-info", Static)
 
@@ -205,17 +191,19 @@ class FillForm(Widget):
             client_data = clients_data[client_id]
             first_name = client_data.get("first_name_encr", "")
             last_name = client_data.get("last_name_encr", "")
-            info.update(
+            label_text = (
                 f"Fülle Formulare für Klient*in: {first_name} {last_name} "
-                f"(ID: {client_id})",
+                f"(ID: {client_id})"
             )
         else:
             # Multiple clients - show count and IDs
             ids_str = ", ".join(str(cid) for cid in self.client_ids)
-            info.update(
+            label_text = (
                 f"Fülle Formulare für {len(self.client_ids)} Klient*innen "
-                f"(IDs: {ids_str})",
+                f"(IDs: {ids_str})"
             )
+
+        info.update(label_text)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
@@ -284,4 +272,4 @@ class FillFormScreen(Screen):
                 client_id,
             )
 
-        self.query_one(FillForm).update_clients(clients_data)
+        self.query_one(FillForm).display_client_info(clients_data)

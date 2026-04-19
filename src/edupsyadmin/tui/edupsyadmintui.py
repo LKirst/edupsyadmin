@@ -8,8 +8,8 @@ from textual.containers import Horizontal
 from textual.message import Message
 from textual.widgets import Footer, Header, LoadingIndicator
 
-from edupsyadmin.api.fill_form import fill_form
-from edupsyadmin.api.types import ClientData
+from edupsyadmin.api.fill_form import batch_fill_forms
+from edupsyadmin.api.types import ClientData, FillFormResult
 from edupsyadmin.tui.clients_overview import ClientsOverview
 from edupsyadmin.tui.edit_client import EditClient
 from edupsyadmin.tui.fill_form_widget import FillForm, FillFormScreen
@@ -116,25 +116,19 @@ class EdupsyadminTui(App[None]):
     @work(exclusive=True, thread=True)
     def fill_forms_worker(
         self,
-        client_id: int,
+        client_ids: list[int],
         form_paths: list[str],
         out_dir: str | None = None,
     ) -> None:
         """Worker to fill forms."""
         try:
-            from edupsyadmin.api.add_convenience_data import add_convenience_data
-            from edupsyadmin.utils.path_utils import normalize_path
-
-            client_data = self.manager.get_decrypted_client(client_id)
-            client_data_with_convenience = add_convenience_data(client_data)
-            form_paths_normalized = [normalize_path(p) for p in form_paths]
-            out_dir_path = Path(out_dir) if out_dir else None
-            fill_form(
-                client_data_with_convenience,
-                form_paths_normalized,
-                out_dir=out_dir_path,
+            results = batch_fill_forms(
+                self.manager,
+                client_ids,
+                form_paths,
+                out_dir=Path(out_dir) if out_dir else None,
             )
-            self.post_message(self._FormsFilledResult())
+            self.post_message(self._FormsFilledResult(results=results))
         except Exception as e:
             self.post_message(self._FormsFilledResult(error=e))
 
@@ -240,7 +234,7 @@ class EdupsyadminTui(App[None]):
         self.query_one("#main-loading-indicator").display = True
         self.notify("Fülle Formulare aus...")
         self.fill_forms_worker(
-            message.client_ids[0],
+            message.client_ids,
             message.form_paths,
             out_dir=message.out_dir,
         )
@@ -257,13 +251,45 @@ class EdupsyadminTui(App[None]):
         self.query_one("#main-loading-indicator").display = False
         self.is_busy = False
         self.pop_screen()
+
         if message.error:
+            # Critical/Unhandled error
             self.notify(
-                f"Fehler beim Ausfüllen der Formulare: {message.error}",
+                f"Kritischer Fehler beim Ausfüllen der Formulare: {message.error}",
                 severity="error",
             )
+            return
+
+        if message.results:
+            success_count = sum(1 for res in message.results if res["success"])
+            failed_ids = [
+                res["client_id"] for res in message.results if not res["success"]
+            ]
+
+            if success_count > 0 and not failed_ids:
+                msg = (
+                    f"Formulare für {success_count} Klient*in(nen) "
+                    "erfolgreich ausgefüllt."
+                )
+                severity = "information"
+            elif success_count > 0 and failed_ids:
+                msg = (
+                    f"Formulare für {success_count} Klient*in(nen) ausgefüllt. "
+                    f"Fehler bei {len(failed_ids)} Klient*in(nen): "
+                    f"{', '.join(map(str, failed_ids))}"
+                )
+                severity = "warning"
+            else:
+                msg = (
+                    f"Fehler: Formulare konnten für keine der {len(failed_ids)} "
+                    "Klient*in(nen) ausgefüllt werden."
+                )
+                severity = "error"
+
+            self.notify(msg, severity=severity)
         else:
-            self.notify("Formulare erfolgreich ausgefüllt.", severity="information")
+            # Fallback for unexpected empty results
+            self.notify("Formular-Aktion abgeschlossen.", severity="information")
 
     def action_new_client(self) -> None:
         """Action to create a new client."""
@@ -315,6 +341,11 @@ class EdupsyadminTui(App[None]):
             super().__init__()
 
     class _FormsFilledResult(Message):
-        def __init__(self, error: Exception | None = None) -> None:
+        def __init__(
+            self,
+            results: list[FillFormResult] | None = None,
+            error: Exception | None = None,
+        ) -> None:
+            self.results = results
             self.error = error
             super().__init__()

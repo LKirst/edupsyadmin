@@ -3,11 +3,16 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+from fillpdf import fillpdfs
 from liquid import parse
 from liquid.exceptions import LiquidError
+from pypdf import PdfReader, PdfWriter
 
-from edupsyadmin.api.types import ClientData
+from edupsyadmin.api.add_convenience_data import add_convenience_data
+from edupsyadmin.api.managers import ClientsManager
+from edupsyadmin.api.types import ClientData, FillFormResult
 from edupsyadmin.core.logger import logger
+from edupsyadmin.utils.path_utils import normalize_path
 
 
 def _ensure_output_not_exists(out_fn: Path) -> None:
@@ -64,8 +69,6 @@ def write_form_pypdf(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) 
     :param data: the data to fill the pdf with
     :raises FileExistsError: FileExistsError
     """
-    from pypdf import PdfReader, PdfWriter
-
     _ensure_output_not_exists(out_fn)
 
     data_wo_bool = _modify_bool_and_none_for_pdf_form(data)
@@ -118,8 +121,6 @@ def write_form_fillpdf(
     :param out_fn: filename for the output
     :param data: the data to fill the pdf with
     """
-    from fillpdf import fillpdfs
-
     _ensure_output_not_exists(out_fn)
 
     data_wo_bool = _modify_bool_and_none_for_pdf_form(data)
@@ -208,3 +209,43 @@ def fill_form(
             write_form_fillpdf(fp, out_fp, aliased_data)
         else:
             write_form_pypdf(fp, out_fp, aliased_data)
+
+
+def batch_fill_forms(
+    clients_manager: ClientsManager,
+    client_ids: Sequence[int],
+    form_paths: Sequence[str | Path],
+    out_dir: Path | None = None,
+) -> list[FillFormResult]:
+    """
+    Fill forms for multiple clients.
+
+    Returns a list of FillFormResult objects.
+
+    :param clients_manager: an instance of ClientsManager
+    :param client_ids: a list of client IDs
+    :param form_paths: a list of paths to forms or templates
+    :param out_dir: optional output directory
+    :return: list of FillFormResult
+    """
+    results: list[FillFormResult] = []
+    form_paths_normalized = [normalize_path(p) for p in form_paths]
+    out_dir_path = Path(out_dir) if out_dir else None
+
+    for client_id in client_ids:
+        try:
+            client_data = clients_manager.get_decrypted_client(client_id)
+            client_data_with_convenience = add_convenience_data(client_data)
+            fill_form(
+                client_data_with_convenience,
+                form_paths_normalized,
+                out_dir=out_dir_path,
+            )
+            results.append(
+                {"client_id": client_id, "success": True, "error": None},
+            )
+        except Exception as e:
+            results.append(
+                {"client_id": client_id, "success": False, "error": e},
+            )
+    return results
