@@ -4,12 +4,44 @@ Konfiguration
 Nach der Installation ist der nächste Schritt die Konfiguration von
 ``edupsyadmin``.
 
-Die Konfiguration wird in einer Textdatei (YAML-Format) gespeichert. Darin
-stehen wichtige Einstellungen wie deine Schulen oder Vorlagen-Sets.
-Standardmäßig liegt diese Datei unter ``~/.config/edupsyadmin/config.yml``.
+Die Konfiguration wird in einer Textdatei (im YAML-Format, einem einfachen
+Textformat für Einstellungen) gespeichert. Darin stehen wichtige Einstellungen
+wie deine Schulen oder Vorlagen-Sets. Standardmäßig liegt diese Datei unter
+``~/.config/edupsyadmin/config.yml``.
+
+.. tip::
+   **Pfade zu Ordnern und Dateien kopieren**
+
+   In dieser Konfiguration musst du mehrfach Pfade zu Ordnern oder Dateien
+   angeben. So kopierst du einen Pfad:
+
+   .. tab-set::
+
+      .. tab-item:: Windows
+
+         #. Rechtsklick auf die Datei oder den Ordner im Explorer
+         #. Wähle "Als Pfad kopieren"
+         #. Der Pfad wird mit Anführungszeichen kopiert – diese kannst du
+            beim Einfügen entfernen
+
+      .. tab-item:: macOS
+
+         #. Rechtsklick auf den Ordner oder die Datei im Finder
+         #. Halte die :kbd:`Alt`-Taste (⌥) gedrückt
+         #. Wähle "... als Pfadname kopieren"
+
+      .. tab-item:: Linux
+
+         #. Rechtsklick auf den Ordner oder die Datei im Dateimanager
+         #. Wähle "Pfad kopieren" oder "Adresse kopieren"
+            (je nach Dateimanager)
+
+         *Hinweis: Die genaue Bezeichnung kann je nach verwendetem
+         Dateimanager variieren.*
+
 
 Wir müssen diese Datei aber nicht von Hand bearbeiten. Starte einfach die
-Konfigurations-TUI mit diesem Befehl:
+Konfigurations-Oberfläche (Text User Interface, kurz TUI) mit diesem Befehl:
 
 .. code-block:: console
 
@@ -32,15 +64,24 @@ Gehen wir die Felder nun Schritt für Schritt durch:
 #.  **Benutzername**: Ersetze den Platzhalternutzername ``sample.username``
     durch deinen eigenen Benutzernamen. Wähle etwas Kurzes ohne Leerzeichen
     oder Sonderzeichen.
-#.  **Passwort**: Lege hier ein sicheres Passwort für die Verschlüsselung fest.
+#.  **template_directory**: Pfad zum Ordner, in dem du die leeren
+    Formular-Vorlagen abgelegt hast (siehe Tipp oben zum Kopieren von Pfaden).
+#.  **output_directory** (optional): Ordner, in dem ausgefüllte Formulare
+    standardmäßig gespeichert werden sollen (siehe Tipp oben zum Kopieren von
+    Pfaden).
 
-    .. tip::
-       Du kannst dieses Passwort später jederzeit ändern. ``edupsyadmin``
-       unterstützt Schlüssel-Rotation (Key Rotation), sodass bestehende
-       Daten weiterhin entschlüsselt werden können. Wenn du dein Passwort
-       änderst, empfiehlt es sich jedoch, anschließend den Befehl
-       ``edupsyadmin rotate-key`` auszuführen, um alle Daten in der
-       Datenbank auf das neue Passwort zu migrieren.
+**Passwort**
+
+Lege hier ein sicheres Passwort für die Verschlüsselung fest.
+
+
+.. tip::
+   Du kannst dieses Passwort später jederzeit ändern. ``edupsyadmin``
+   unterstützt Schlüssel-Rotation, sodass bestehende Daten weiterhin
+   entschlüsselt werden können. Wenn du dein Passwort änderst, empfiehlt
+   es sich jedoch, anschließend den Befehl ``edupsyadmin rotate-key``
+   auszuführen, um alle Daten in der Datenbank auf das neue Passwort
+   zu migrieren.
 
 **Schulpsychologie-Einstellungen**
 
@@ -75,10 +116,9 @@ bestehenden Beispiel-Formularsätze und lege ein neues an:
     - `sample_form_mantelbogen.pdf`_
     - `sample_form_stellungnahme.pdf`_
 
-#.  **Pfade kopieren**: Klicke im Datei-Explorer mit der rechten Maustaste auf
-    eine der heruntergeladenen Dateien und wähle "Als Pfad kopieren". Füge
-    diesen Pfad in ein Feld unter deinem ``lrst`` Set ein. Wiederhole das für
-    die zweite Datei.
+#.  **Pfade eintragen**: Kopiere den Pfad zur ersten heruntergeladenen Datei
+    (siehe Tipp oben). Füge diesen Pfad in ein Feld unter deinem ``lrst``
+    Set ein. Wiederhole das für die zweite Datei.
 
 Abschließend klicke auf **Speichern**, um die Konfiguration zu sichern.
 
