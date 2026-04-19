@@ -13,7 +13,7 @@ Ablauf
 #.  **Dialog öffnen**: Drücke das Tastenkürzel :kbd:`Strg+f`. Es öffnet sich der
     Dialog "Formulare ausfüllen".
 
-    .. image:: ../../test/edupsyadmin/tui/__snapshots__/test_fill_form_tui/test_initial_layout.svg
+    .. image:: ../../test/edupsyadmin/tui/__snapshots__/test_fill_form_tui/test_fill_form_initial_layout.svg
        :alt: Dialog zum Ausfüllen von Formularen
 
 #.  **Formulare auswählen**: In diesem Dialog hast du zwei Möglichkeiten,
