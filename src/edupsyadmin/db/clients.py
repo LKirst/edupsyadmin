@@ -8,13 +8,13 @@ from sqlalchemy import (
     event,
 )
 from sqlalchemy.orm import Mapped, mapped_column, validates
-from sqlalchemy.types import TypeDecorator
 
 from edupsyadmin.core.config import config
-from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.enums import Gender, LrstDiagnosis, LrstTesterType
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db import Base
+from edupsyadmin.db.column_types import EncryptedDate, EncryptedInteger, EncryptedString
+from edupsyadmin.db.converters import to_bool_or_none, to_date_or_none, to_int_or_none
 from edupsyadmin.utils.academic_year import (
     get_date_destroy_records,
     get_estimated_end_of_academic_year,
@@ -24,86 +24,6 @@ from edupsyadmin.utils.taetigkeitsbericht_check_key import check_keyword
 
 LRST_DIAG: frozenset[LrstDiagnosis] = frozenset(LrstDiagnosis)
 LRST_TEST_BY: frozenset[LrstTesterType] = frozenset(LrstTesterType)
-
-
-class EncryptedString(TypeDecorator):
-    """Stores base-64 ciphertext in a TEXT/VARCHAR column;
-    Presents plain str values to the application."""
-
-    impl = String
-    cache_ok = True
-
-    @property
-    def python_type(self) -> type:
-        return str
-
-    def process_bind_param(self, value: str | None, dialect) -> str | None:
-        return encr.encrypt(value or "")
-
-    def process_result_value(self, value: str | None, dialect) -> str | None:
-        """
-        Note to self: This should never receive value=None!
-        I just handle it here to silence the type checker.
-        """
-        if value is None:
-            return None
-        return encr.decrypt(value)
-
-
-class EncryptedInteger(TypeDecorator):
-    """Stores base-64 ciphertext in a TEXT column;
-    Presents plain int values to the application."""
-
-    impl = String
-    cache_ok = True
-
-    @property
-    def python_type(self) -> type:
-        return int
-
-    def process_bind_param(self, value: int | None, dialect) -> str | None:
-        if value is None:
-            return encr.encrypt("")
-        return encr.encrypt(str(value))
-
-    def process_result_value(self, value: str | None, dialect) -> int | None:
-        if value is None:
-            return None
-        decrypted = encr.decrypt(value)
-        try:
-            return int(decrypted) if decrypted else None
-        except ValueError, TypeError:
-            logger.error(f"Could not convert decrypted value '{decrypted}' to int")
-            return None
-
-
-class EncryptedDate(TypeDecorator):
-    """Stores base-64 ciphertext in a TEXT column;
-    Presents plain date objects to the application."""
-
-    impl = String
-    cache_ok = True
-
-    @property
-    def python_type(self) -> type:
-        return date
-
-    def process_bind_param(self, value: date | None, dialect) -> str | None:
-        if value is None:
-            return encr.encrypt("")
-        return encr.encrypt(value.isoformat())
-
-    def process_result_value(self, value: str | None, dialect) -> date | None:
-        if value is None:
-            return None
-        decrypted = encr.decrypt(value)
-        if not decrypted:
-            return None
-        try:
-            return datetime.strptime(decrypted, "%Y-%m-%d").date()
-        except ValueError, TypeError:
-            logger.error(f"Could not convert decrypted value '{decrypted}' to date")
-            return None
 
 
 class SystemMetadata(Base):
@@ -612,7 +532,11 @@ class Client(Base):
         self.nta_nos_end = bool(self.nta_nos_end_grade is not None)
 
     @validates("lrst_diagnosis_encr")
-    def validate_lrst_diagnosis(self, key: str, value: str | None) -> str:
+    def validate_lrst_diagnosis(
+        self,
+        key: str,  # noqa: ARG002
+        value: str | None,
+    ) -> str:
         value = value or ""
         if value and value not in LRST_DIAG:
             raise ValueError(
@@ -622,7 +546,11 @@ class Client(Base):
         return value
 
     @validates("keyword_taet_encr")
-    def validate_keyword_taet_encr(self, key: str, value: str) -> str:
+    def validate_keyword_taet_encr(
+        self,
+        key: str,  # noqa: ARG002
+        value: str,
+    ) -> str:
         return check_keyword(value) or ""
 
     @validates("min_sessions", "n_sessions")
@@ -635,7 +563,7 @@ class Client(Base):
     @validates("nta_zeitv_vieltext", "nta_zeitv_wenigtext")
     def validate_nta_zeitv_percentage(
         self,
-        key: str,
+        key: str,  # noqa: ARG002
         value: str | int | None,
     ) -> int | None:
         return to_int_or_none(value)
@@ -651,13 +579,17 @@ class Client(Base):
         "nos_les",
         "case_active",
     )
-    def validate_bool(self, key: str, value: bool | str | int) -> bool:
+    def validate_bool(
+        self,
+        key: str,  # noqa: ARG002
+        value: bool | str | int,
+    ) -> bool:
         return to_bool_or_none(value) or False
 
     @validates("nta_nos_end_grade")
     def validate_nta_nos_end_grade(
         self,
-        key: str,
+        key: str,  # noqa: ARG002
         value: str | int | None,
     ) -> int | None:
         return to_int_or_none(value)
@@ -665,7 +597,7 @@ class Client(Base):
     @validates("lrst_last_test_date_encr")
     def validate_lrst_last_test_date_encr(
         self,
-        key: str,
+        key: str,  # noqa: ARG002
         value: str | date | None,
     ) -> str:
         dt = to_date_or_none(value)
@@ -682,7 +614,11 @@ class Client(Base):
         return value
 
     @validates("birthday_encr")
-    def validate_birthday(self, key: str, value: str | date | None) -> date:
+    def validate_birthday(
+        self,
+        key: str,  # noqa: ARG002
+        value: str | date | None,
+    ) -> date:
         dt = to_date_or_none(value)
         if dt is None:
             raise ValueError("Das Geburtsdatum ist ein Pflichtfeld.")
@@ -695,7 +631,7 @@ class Client(Base):
     )
     def validate_optional_dates(
         self,
-        key: str,
+        key: str,  # noqa: ARG002
         value: str | date | None,
     ) -> date | None:
         return to_date_or_none(value)
@@ -717,79 +653,3 @@ def receive_before_update(_mapper, _connection, target: Client) -> None:
     """Update timestamp and recalculate derived fields on update."""
     target.datetime_lastmodified = datetime.now()
     target._recalculate_derived_fields()
-
-
-def to_bool_or_none(value: str | bool | int | None) -> bool | None:
-    """
-    Convert a string, int, or None to a boolean or None.
-    - '1', 1, True -> True
-    - '0', 0, False -> False
-    - None, '' -> None
-    - Any other string raises ValueError.
-    """
-    if value is None or (isinstance(value, str) and not value.strip()):
-        return None
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, int):
-        if value == 1:
-            return True
-        if value == 0:
-            return False
-        raise ValueError(
-            f"Integer value {value} cannot be converted to a boolean "
-            "(expected 0 or 1).",
-        )
-    if isinstance(value, str):
-        lower_value = value.lower().strip()
-        if lower_value in ("true", "1"):
-            return True
-        if lower_value in ("false", "0"):
-            return False
-        raise ValueError(
-            f"String value '{value}' cannot be converted to a boolean "
-            f"(expected 'true', 'false', '0', or '1').",
-        )
-    raise TypeError(f"Value of type {type(value)} cannot be converted to a boolean.")
-
-
-def to_int_or_none(value: str | int | None) -> int | None:
-    """
-    Convert a string or int to an int or None.
-    - '123', 123 -> 123
-    - None, '' -> None
-    - Any other string raises ValueError.
-    """
-    if value is None or (isinstance(value, str) and not value.strip()):
-        return None
-    if isinstance(value, int):
-        return value
-    if isinstance(value, str):
-        try:
-            return int(value)
-        except ValueError as e:
-            raise ValueError(
-                f"String value '{value}' cannot be converted to an integer.",
-            ) from e
-    raise TypeError(f"Value of type {type(value)} cannot be converted to an integer.")
-
-
-def to_date_or_none(value: str | date | None) -> date | None:
-    """
-    Convert a string (YYYY-MM-DD) or date object to a date object or None.
-    - '2023-01-01', date(2023, 1, 1) -> date(2023, 1, 1)
-    - None, '' -> None
-    - Invalid string format raises ValueError.
-    """
-    if value is None or (isinstance(value, str) and not value.strip()):
-        return None
-    if isinstance(value, date):
-        return value
-    if isinstance(value, str):
-        try:
-            return datetime.strptime(value, "%Y-%m-%d").date()
-        except ValueError as e:
-            raise ValueError(
-                f"Invalid date format for '{value}'. Use YYYY-MM-DD.",
-            ) from e
-    raise TypeError(f"Value of type {type(value)} cannot be converted to a date.")
