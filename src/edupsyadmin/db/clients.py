@@ -393,16 +393,10 @@ class Client(Base):
         client_id_int_or_none = to_int_or_none(client_id)
         if client_id_int_or_none is not None:
             self.client_id = client_id_int_or_none
+
         self.first_name_encr = first_name_encr
         self.last_name_encr = last_name_encr
-        if gender_encr in ("w", "f"):
-            self.gender_encr = Gender.FEMALE
-        elif gender_encr in ("d", "x"):
-            self.gender_encr = Gender.DIVERSE
-        elif gender_encr == "m":
-            self.gender_encr = Gender.MALE
-        else:
-            self.gender_encr = gender_encr
+        self.gender_encr = gender_encr
         dt_birthday = to_date_or_none(birthday_encr)
         if dt_birthday is None:
             raise ValueError("Das Geburtsdatum ist ein Pflichtfeld.")
@@ -444,6 +438,7 @@ class Client(Base):
         self.nta_nos_notes_encr = nta_nos_notes_encr
         self.nta_nos_end_grade = to_int_or_none(nta_nos_end_grade)
 
+        # Session tracking
         self.min_sessions = to_int_or_none(min_sessions) or 45
         self.n_sessions = to_int_or_none(n_sessions) or 1
         self.case_active = to_bool_or_none(case_active) or False
@@ -465,21 +460,21 @@ class Client(Base):
 
         self._recalculate_derived_fields()  # Call the new method at the end of init
 
+    def _class_int_or_none(self) -> int | None:
+        # TODO: Is it possible to override class_int_encr? E.g. Vorklasse -> 10
+        if not self.class_name_encr:
+            return None
+        try:
+            return extract_number(self.class_name_encr)
+        except TypeError, ValueError:
+            return None
+
     def _recalculate_derived_fields(self) -> None:
         """
         Calculates and updates all derived fields based on current attribute values.
         This method should be called after initial assignment or any attribute change.
         """
-        # Handle gender conversion (if not already done by __init__)
-
-        # Calculate class_int_encr
-        if self.class_name_encr:
-            try:
-                self.class_int_encr = extract_number(self.class_name_encr)
-            except TypeError, ValueError:
-                self.class_int_encr = None
-        else:
-            self.class_int_encr = None
+        self.class_int_encr = self._class_int_or_none()
 
         # Calculate estimated_graduation_date_encr and document_shredding_date_encr
         self.estimated_graduation_date_encr = None
@@ -530,6 +525,16 @@ class Client(Base):
             or self.nta_other
         )
         self.nta_nos_end = bool(self.nta_nos_end_grade is not None)
+
+    @validates("gender_encr")
+    def validate_gender(self, _key, value: str) -> Gender:
+        if value in ("w", "f"):
+            return Gender.FEMALE
+        if value in ("d", "x"):
+            return Gender.DIVERSE
+        if value == "m":
+            return Gender.MALE
+        raise ValueError("Der Wert für gender_encr ist nicht zulässig.")
 
     @validates("lrst_diagnosis_encr")
     def validate_lrst_diagnosis(
