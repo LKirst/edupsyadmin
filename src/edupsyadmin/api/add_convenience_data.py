@@ -1,6 +1,5 @@
 from datetime import date
 from importlib.resources import files
-from typing import Any, cast
 
 from dateutil.parser import parse
 
@@ -128,33 +127,31 @@ def _add_lrst_diagnosis(data: ClientData) -> None:
 
 def _add_dates(data: ClientData) -> None:
     """Add various formatted dates to data."""
-    data["today_date"] = date.today()
-    dates_to_convert: list[tuple[str, str]] = [
-        ("birthday_encr", "birthday_de"),
-        ("today_date", "today_date_de"),
-        ("entry_date_encr", "entry_date_de"),
-        ("lrst_last_test_date_encr", "lrst_last_test_date_de"),
-        ("document_shredding_date_encr", "document_shredding_date_de"),
-    ]
-
-    for idate, gdate in dates_to_convert:
-        # TypedDict doesn't support dynamic key access with variables
-        cast(Any, data)[gdate] = _date_to_german_string(data.get(cast(Any, idate)))
-
+    today = date.today()
+    data["today_date"] = today
+    data["today_date_de"] = _date_to_german_string(today)
+    data["birthday_de"] = _date_to_german_string(data.get("birthday_encr"))
+    data["entry_date_de"] = _date_to_german_string(data.get("entry_date_encr"))
+    data["lrst_last_test_date_de"] = _date_to_german_string(
+        data.get("lrst_last_test_date_encr"),
+    )
+    data["document_shredding_date_de"] = _date_to_german_string(
+        data.get("document_shredding_date_encr"),
+    )
     data["school_year"] = get_this_academic_year_string()
 
 
 def _add_nta_schoolyear(data: ClientData) -> None:
     """Add NTA/NOS end schoolyear to data."""
-    if (
-        data.get("nta_nos_end")
-        and data.get("class_int_encr")
-        and data.get("nta_nos_end_grade")
-    ):
+    nta_nos_end = data.get("nta_nos_end")
+    class_int = data.get("class_int_encr")
+    nta_nos_end_grade = data.get("nta_nos_end_grade")
+
+    if nta_nos_end and class_int is not None and nta_nos_end_grade is not None:
         data["nta_nos_end_schoolyear"] = get_academic_year_string(
             get_estimated_end_of_academic_year(
-                grade_current=cast(int, data["class_int_encr"]),
-                grade_target=cast(int, data["nta_nos_end_grade"]),
+                grade_current=class_int,
+                grade_target=nta_nos_end_grade,
             ),
         )
 
