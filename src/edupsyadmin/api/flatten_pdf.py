@@ -7,32 +7,16 @@ or fillpdf libraries, each with different trade-offs.
 
 import argparse
 import sys
-import warnings
 from pathlib import Path
 
-try:
-    from pdf2image import convert_from_path
+from edupsyadmin.api.flattening import (
+    flatten_with_fillpdf,
+    flatten_with_pdf2image,
+    flatten_with_pypdf,
+)
 
-    INSTALLED_PDF2IMAGE = True
-except ModuleNotFoundError:
-    INSTALLED_PDF2IMAGE = False
-
-try:
-    from fillpdf import fillpdfs
-
-    INSTALLED_FILLPDF = True
-except ModuleNotFoundError:
-    INSTALLED_FILLPDF = False
-
-DEFAULT_LIBRARY = "pdf2image"
+DEFAULT_LIBRARY = "pypdf"
 DEFAULT_PREFIX = "print_"
-PDF_RESOLUTION = 100.0
-
-
-class LibraryNotInstalledError(Exception):
-    """Raised when the requested PDF library is not installed."""
-
-    pass
 
 
 class InvalidPDFError(Exception):
@@ -69,7 +53,6 @@ def flatten_pdf(
                     Defaults to DEFAULT_LIBRARY.
     :param output_prefix: Prefix to add to the output filename.
     :return: Path to the flattened PDF file.
-    :raises LibraryNotInstalledError: If the chosen library is not installed.
     :raises InvalidPDFError: If the input file doesn't exist or isn't a PDF.
     :raises FileNotFoundError: If the input file doesn't exist.
     """
@@ -84,71 +67,22 @@ def flatten_pdf(
 
     fn_out = add_prefix(fn_in, prefix=output_prefix)
 
-    if library == "pdf2image":
-        if not INSTALLED_PDF2IMAGE:
-            raise LibraryNotInstalledError(
-                "pdf2image is not installed. Install it with: pip install pdf2image",
-            )
-        _flatten_with_pdf2image(fn_in, fn_out)
+    if library == "pypdf":
+        flatten_with_pypdf(fn_in, fn_out)
+
+    elif library == "pdf2image":
+        flatten_with_pdf2image(fn_in, fn_out)
 
     elif library == "fillpdf":
-        if not INSTALLED_FILLPDF:
-            raise LibraryNotInstalledError(
-                "fillpdf is not installed. Install it with: pip install fillpdf",
-            )
-        _flatten_with_fillpdf(fn_in, fn_out)
+        flatten_with_fillpdf(fn_in, fn_out)
 
     else:
         raise ValueError(
-            f"Unknown library: {library}. Choose 'pdf2image' or 'fillpdf'.",
+            f"Unknown library: {library}. Choose pdf2image, fillpdf or pypdf.",
         )
 
     print(f"Flattened {fn_in} to {fn_out}")
     return fn_out
-
-
-def _flatten_with_pdf2image(fn_in: Path, fn_out: Path) -> None:
-    """Flatten PDF using pdf2image library.
-
-    :param fn_in: Input PDF path.
-    :param fn_out: Output PDF path.
-    """
-    images = convert_from_path(fn_in)
-    if not images:
-        raise InvalidPDFError(f"Could not convert PDF to images: {fn_in}")
-
-    first_image = images[0]
-    remaining_images = images[1:]
-
-    first_image.save(
-        fn_out,
-        "PDF",
-        resolution=PDF_RESOLUTION,
-        save_all=True,
-        append_images=remaining_images,
-    )
-
-    warnings.warn(
-        "pdf2image may fail for tick-boxes and radio buttons.",
-        UserWarning,
-        stacklevel=3,
-    )
-    # TODO: find solution for tick-boxes and radio buttons (only an issue on Windows?)
-
-
-def _flatten_with_fillpdf(fn_in: Path, fn_out: Path) -> None:
-    """Flatten PDF using fillpdf library.
-
-    :param fn_in: Input PDF path.
-    :param fn_out: Output PDF path.
-    """
-    fillpdfs.flatten_pdf(str(fn_in), str(fn_out), as_images=False)
-
-    warnings.warn(
-        "fillpdf does not correctly render multiline text input fields.",
-        UserWarning,
-        stacklevel=3,
-    )
 
 
 def flatten_pdfs(
@@ -168,7 +102,7 @@ def flatten_pdfs(
         try:
             output_path = flatten_pdf(fn_in, library, output_prefix)
             output_paths.append(output_path)
-        except (FileNotFoundError, InvalidPDFError, LibraryNotInstalledError) as e:
+        except (FileNotFoundError, InvalidPDFError) as e:
             print(f"Error processing {fn_in}: {e}", file=sys.stderr)
             continue
 
@@ -199,7 +133,7 @@ def main() -> None:
     parser.add_argument(
         "--library",
         default=DEFAULT_LIBRARY,
-        choices=["fillpdf", "pdf2image"],
+        choices=["fillpdf", "pdf2image", "pypdf"],
         help=f"Library to use for flattening (default: {DEFAULT_LIBRARY}).",
     )
     parser.add_argument(
@@ -209,15 +143,6 @@ def main() -> None:
     )
 
     args = parser.parse_args()
-
-    # Check if at least one library is installed
-    if not INSTALLED_PDF2IMAGE and not INSTALLED_FILLPDF:
-        print(
-            "Error: Neither pdf2image nor fillpdf is installed. "
-            "Please install at least one library.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
 
     flatten_pdfs(args.inpaths, args.library, args.prefix)
 

@@ -3,8 +3,6 @@ import pytest
 from edupsyadmin.api.add_convenience_data import add_convenience_data
 from edupsyadmin.api.fill_form import fill_form
 from edupsyadmin.api.flatten_pdf import (
-    INSTALLED_FILLPDF,
-    INSTALLED_PDF2IMAGE,
     flatten_pdf,
 )
 
@@ -25,7 +23,6 @@ def get_filled_pdf(tmp_path, form_path, client_data):
     return tmp_path / f"{client_data.get('client_id')}_{form_path.name}"
 
 
-@pytest.mark.skipif(not INSTALLED_PDF2IMAGE, reason="pdf2image not installed")
 @pytest.mark.parametrize("form_name", ["libreoffice", "reportlab"])
 def test_flatten_pdf_pdf2image_snapshot(
     pdf_snapshot,
@@ -52,7 +49,32 @@ def test_flatten_pdf_pdf2image_snapshot(
     assert pdf_snapshot == flattened_pdf
 
 
-@pytest.mark.skipif(not INSTALLED_FILLPDF, reason="fillpdf not installed")
+@pytest.mark.parametrize("form_name", ["libreoffice", "reportlab"])
+def test_flatten_pdf_pypdf_snapshot(
+    pdf_snapshot,
+    pdf_forms,
+    tmp_path,
+    form_name,
+    filled_client_data,
+    mock_config,
+):
+    """Snapshot test for flattening a filled PDF with pdf2image."""
+    # Find the requested form in pdf_forms
+    form_path = next(f for f in pdf_forms if form_name in f.name)
+
+    # Fill the form first
+    filled_pdf = get_filled_pdf(tmp_path, form_path, filled_client_data)
+
+    # Flatten the filled PDF
+    flattened_pdf = flatten_pdf(
+        filled_pdf,
+        library="pypdf",
+        output_prefix="flat_pypdf_",
+    )
+
+    assert pdf_snapshot == flattened_pdf
+
+
 @pytest.mark.parametrize("form_name", ["libreoffice", "reportlab"])
 def test_flatten_pdf_fillpdf_snapshot(
     pdf_snapshot,
