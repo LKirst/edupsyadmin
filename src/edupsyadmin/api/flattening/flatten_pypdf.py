@@ -870,8 +870,11 @@ def _clone_object(obj: PdfObject, writer: PdfWriter) -> PdfObject:
     :param writer: Target PdfWriter.
     :return: Cloned object.
     """
-    if hasattr(obj, "get_object"):
+    if isinstance(obj, IndirectObject):
         return _clone_indirect_object(obj, writer)
+
+    if _is_stream_object(obj):
+        return writer._add_object(obj)
 
     if isinstance(obj, DictionaryObject):
         # Direct dictionary - clone recursively WITHOUT making it indirect
@@ -888,7 +891,7 @@ def _clone_object(obj: PdfObject, writer: PdfWriter) -> PdfObject:
 
 
 def _clone_resources_for_writer(
-    resources: DictionaryObject | None,
+    resources: DictionaryObject | IndirectObject | None,
     writer: PdfWriter,
 ) -> DictionaryObject | None:
     """Deep-clone a resources dictionary, copying all indirect objects to writer.
@@ -899,7 +902,14 @@ def _clone_resources_for_writer(
     """
     if resources is None:
         return None
-    cloned = _clone_object(resources, writer)
+
+    # Dereference to ensure we are working with the actual dictionary content
+    obj = resources.get_object() if hasattr(resources, "get_object") else resources
+
+    if not isinstance(obj, DictionaryObject):
+        return None
+
+    cloned = _clone_object(obj, writer)
     if not isinstance(cloned, DictionaryObject):
         raise TypeError(f"Expected DictionaryObject, got {type(cloned)}")
     return cloned
