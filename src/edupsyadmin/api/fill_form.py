@@ -22,7 +22,7 @@ def _ensure_output_not_exists(out_fn: Path) -> None:
 
 def _add_aliases(data: ClientData | dict[str, Any]) -> dict[str, Any]:
     """
-    For every key ending in '_encr', create an alias without that suffix.
+    Create aliases for keys ending in '_encr' by removing the suffix.
 
     :param data: original dictionary
     :return: modified dictionary with aliases
@@ -31,8 +31,7 @@ def _add_aliases(data: ClientData | dict[str, Any]) -> dict[str, Any]:
     for key, value in data.items():
         if key.endswith("_encr"):
             alias = key.removesuffix("_encr")
-            if alias not in aliased_data:
-                aliased_data[alias] = value
+            aliased_data.setdefault(alias, value)
     return aliased_data
 
 
@@ -48,16 +47,14 @@ def _modify_bool_and_none_for_pdf_form(
     :return: a modified dictionary where booleans are replaced
         with string values and None values are replaced with an empty string
     """
-    updated_data: dict[str, Any] = {}
-    logger.debug("Replacing True with 'Yes' and False with 'Off'")
-    for key, value in data.items():
-        if isinstance(value, bool):
-            updated_data[key] = "Yes" if value else "Off"
-        elif value is None:
-            updated_data[key] = ""
-        else:
-            updated_data[key] = value
-    return updated_data
+    logger.debug("Formatting bool values for PDF form compatibility")
+
+    def transform(val: Any) -> Any:
+        if isinstance(val, bool):
+            return "Yes" if val else "Off"
+        return "" if val is None else val
+
+    return {key: transform(value) for key, value in data.items()}
 
 
 def write_form_pypdf(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) -> None:
