@@ -1,4 +1,6 @@
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -17,26 +19,14 @@ except ImportError:
 pd.set_option("display.precision", 1)
 
 
-def get_subcategories(
-    categorykey: str,
-    extrcategories: list[str] | None = None,
-) -> list[str]:
+def get_subcategories(category_key: str) -> list[str]:
     """
     Extract all hierarchical subcategories from a dot-separated category key.
 
-    :param categorykey: Dot-separated category string
-    :param extrcategories: Accumulated list of categories (used in recursion)
-    :return: List of categories
+    Example: 'a.b.c' -> ['a.b.c', 'a.b', 'a']
     """
-    if extrcategories is None:
-        extrcategories = []
-    extrcategories.append(categorykey)
-
-    if "." not in categorykey:
-        return extrcategories
-
-    parent_category = categorykey.rsplit(".", 1)[0]
-    return get_subcategories(parent_category, extrcategories)
+    parts = category_key.split(".")
+    return [".".join(parts[:i]) for i in range(len(parts), 0, -1)]
 
 
 def add_categories_to_df(
@@ -44,59 +34,41 @@ def add_categories_to_df(
     category_colnm: str,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Take a df with columns keyword_taet_encr, h_sessions, n_sessions
-    and create a table with an estimated count of sessions
-
-    :param df: DataFrame with keyword_taet_encr, h_sessions, n_sessions
-    :param category_colnm: name of the category column (e.g. keyword_taet_encr)
-    :return: A tuple containing the modified DataFrame and a summary DataFrame
+    Process hierarchical categories and generate summary statistics.
     """
+    # Identify all unique categories and their superordinate parents
+    all_categories = set()
+    for key in df[category_colnm].unique():
+        if pd.notna(key):
+            all_categories.update(get_subcategories(str(key)))
 
-    # get a set of unique keys from the category column
-    # (keyword_taet_encr; not yet accounting for the hierarchy of
-    # categories)
-    category_keys = sorted(set(df.loc[:, category_colnm].unique()))
+    sorted_categories = sorted(all_categories)
 
-    # for every category (keys and their superordinate categories) add a column;
-    # if the row belongs to that category, set the value of the category column to
-    # the value of h_sessions
-    categories_all = []
-    for key in category_keys:
-        subcategories = get_subcategories(key)
-        df.loc[df[category_colnm] == key, subcategories] = df.loc[
-            df[category_colnm] == key,
-            "h_sessions",
-        ]
-        categories_all.extend(subcategories)
-
-    # create a df  with only the category columns
-    categories_all_set = sorted(set(categories_all))
-    categories_df = df[categories_all_set]
-
-    # create a temporary DataFrame for counting based on n_sessions
-    # This aligns the n_sessions with the categories for accurate counting
-    count_df = df[["n_sessions", *categories_all_set]].copy()
-    # Fill non-relevant category cells with 0 so we can group by them
-    count_df[categories_all_set] = count_df[categories_all_set].notna().astype(int)
-
-    summary_categories = categories_df.describe()
-    summary_categories.loc["sum", :] = categories_df.agg("sum", axis=0)
-
-    for cat in categories_all_set:
-        # Filter for rows belonging to the current category
-        cat_specific_counts = count_df[count_df[cat] == 1]["n_sessions"]
-
-        summary_categories.loc["count_mt3_sessions", cat] = (
-            cat_specific_counts > 3
-        ).sum()
-        summary_categories.loc["count_2to3_sessions", cat] = (
-            cat_specific_counts.between(2, 3).sum()
+    # For each category, create a column containing h_sessions if the row matches
+    for cat in sorted_categories:
+        # A row matches a category if its specific key starts with that category
+        # (and is followed by a dot or is the exact key)
+        mask = df[category_colnm].apply(
+            lambda k, cat=cat: str(k) == cat or str(k).startswith(f"{cat}."),
         )
-        summary_categories.loc["count_1_session", cat] = (
-            cat_specific_counts == 1
-        ).sum()
+        df.loc[mask, cat] = df.loc[mask, "h_sessions"]
 
-    return df, summary_categories
+    categories_df = df[sorted_categories]
+
+    # Create summary DataFrame
+    summary = categories_df.describe()
+    summary.loc["sum", :] = categories_df.sum()
+
+    # Add counts for session brackets
+    for cat in sorted_categories:
+        mask = df[cat].notna()
+        cat_sessions = df.loc[mask, "n_sessions"]
+
+        summary.loc["count_mt3_sessions", cat] = (cat_sessions > 3).sum()
+        summary.loc["count_2to3_sessions", cat] = cat_sessions.between(2, 3).sum()
+        summary.loc["count_1_session", cat] = (cat_sessions == 1).sum()
+
+    return df, summary
 
 
 def summary_statistics_h_sessions(df: pd.DataFrame) -> pd.DataFrame:
@@ -109,76 +81,137 @@ def summary_statistics_h_sessions(df: pd.DataFrame) -> pd.DataFrame:
     return h_sessions
 
 
-def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> pd.DataFrame:
-    """Create a dataframe of Wochenstunden and Zeitstunden for school
-    psychology.
+@dataclass
+class ActivitySummary:
+    """Encapsulates all calculations for activity report statistics."""
 
-    Parameters
-    ----------
     wstd_spsy: int
-        n Wochenstunden insgesamt (Anrechnungsstunden und Unterricht)
-    wstd_total: int
-        n Wochenstunden Schulpsychologie (Anrechnungsstunden)
+    wstd_total: int = 23
+    days_per_week: int = 5
+    vacation_days: int = 30
+    hours_per_week_std: float = 40.0
+    school_students: dict[str, int] = field(default_factory=dict)
+    zstd_spsy_year_actual: float | None = None
 
-    Returns
-    -------
-    pd.DataFrame
-        A dataframe with values for the conversion of Wochenstunden to
-        Zeitstunden.
+    @property
+    def work_days_per_year(self) -> int:
+        """Total work days in a year after deducting vacation."""
+        return 251 - self.vacation_days
+
+    @property
+    def work_weeks_per_year(self) -> float:
+        """Total work weeks in a year."""
+        return self.work_days_per_year / self.days_per_week
+
+    @property
+    def hours_per_day(self) -> float:
+        """Standard working hours per day."""
+        return self.hours_per_week_std / self.days_per_week
+
+    @property
+    def hours_per_year_total(self) -> float:
+        """Total working hours in a year for a full position."""
+        return self.hours_per_day * self.work_days_per_year
+
+    @property
+    def hours_per_wstd(self) -> float:
+        """Hours per year corresponding to one 'Wochenstunde'."""
+        return (
+            self.hours_per_year_total / self.wstd_total if self.wstd_total > 0 else 0.0
+        )
+
+    @property
+    def target_hours_year(self) -> float:
+        """Target working hours per year based on school psychology hours."""
+        return self.hours_per_wstd * self.wstd_spsy
+
+    @property
+    def target_hours_week(self) -> float:
+        """Target working hours per week."""
+        return self.target_hours_year / self.work_weeks_per_year
+
+    @property
+    def n_students_all(self) -> int:
+        """Total number of students across all schools."""
+        return sum(self.school_students.values())
+
+    @property
+    def ratio_nstudents_wstd_spsy(self) -> float:
+        """Ratio of total students to school psychology hours."""
+        return self.n_students_all / self.wstd_spsy if self.wstd_spsy > 0 else 0.0
+
+    @property
+    def zstd_spsy_week_actual(self) -> float | None:
+        """Actual working hours per week based on recorded sessions."""
+        if self.zstd_spsy_year_actual is None:
+            return None
+        return self.zstd_spsy_year_actual / self.work_weeks_per_year
+
+    @property
+    def perc_spsy_year_actual(self) -> float | None:
+        """Percentage of target hours actually worked."""
+        if self.zstd_spsy_year_actual is None or self.target_hours_year <= 0:
+            return None
+        return (self.zstd_spsy_year_actual / self.target_hours_year) * 100
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """Convert the summary to a DataFrame for report generation."""
+        stats_data: dict[str, list[Any]] = {
+            "wd_week": [self.days_per_week, "Arbeitstage/Woche"],
+            "wd_year": [
+                self.work_days_per_year,
+                "Arbeitstage/Jahr nach Abzug von 30 Tagen Urlaub",
+            ],
+            "ww_year": [self.work_weeks_per_year, "Arbeitswochen/Jahr"],
+            "zstd_week": [self.hours_per_week_std, "h/Woche"],
+            "zstd_day": [self.hours_per_day, "h/Arbeitstag"],
+            "zstd_year": [self.hours_per_year_total, "h/Jahr"],
+            "wstd_total_target": [
+                self.wstd_total,
+                "n Wochenstunden insgesamt (Anrechnungsstunden und Unterricht)",
+            ],
+            "wstd_spsy": [
+                self.wstd_spsy,
+                "n Wochenstunden Schulpsychologie (Anrechnungsstunden)",
+            ],
+            "zstd_spsy_1wstd_target": [
+                self.hours_per_wstd,
+                "h Arbeit / Jahr, die einer Wochenstunde entsprächen",
+            ],
+            "zstd_spsy_year_target": [
+                self.target_hours_year,
+                "h Arbeit / Jahr, die den angegebenen Wochenstunden "
+                "Schulpsychologie entsprächen",
+            ],
+            "zstd_spsy_week_target": [
+                self.target_hours_week,
+                "h Arbeit in der Woche, die den angegebenen Wochenstunden "
+                "Schulpsychologie entsprächen",
+            ],
+            "nstudents_all": [self.n_students_all, ""],
+            "ratio_nstudens_wstd_spsy": [self.ratio_nstudents_wstd_spsy, ""],
+        }
+
+        for school_name, student_count in self.school_students.items():
+            stats_data[f"nstudents_{school_name}"] = [student_count, ""]
+
+        if self.zstd_spsy_year_actual is not None:
+            stats_data["zstd_spsy_year_actual"] = [self.zstd_spsy_year_actual, ""]
+            stats_data["zstd_spsy_week_actual"] = [self.zstd_spsy_week_actual, ""]
+            stats_data["perc_spsy_year_actual"] = [self.perc_spsy_year_actual, ""]
+
+        return pd.DataFrame.from_dict(
+            stats_data,
+            orient="index",
+            columns=["value", "description"],
+        )
+
+
+def wstd_in_zstd(wstd_spsy: int, wstd_total: int = 23) -> pd.DataFrame:
     """
-    wstds = pd.DataFrame(columns=["value", "description"])
-
-    wstds.loc["wd_week", :] = [5, "Arbeitstage/Woche"]
-    wstds.loc["wd_year", :] = [
-        251 - 30,
-        "Arbeitstage/Jahr nach Abzug von 30 Tagen Urlaub",
-    ]
-    wstds.loc["ww_year", :] = [
-        pd.to_numeric(wstds.at["wd_year", "value"])
-        / pd.to_numeric(wstds.at["wd_week", "value"]),
-        "Arbeitswochen/Jahr",
-    ]
-    wstds.loc["zstd_week", :] = [40, "h/Woche"]
-    wstds.loc["zstd_day", :] = [
-        pd.to_numeric(wstds.at["zstd_week", "value"])
-        / pd.to_numeric(wstds.at["wd_week", "value"]),
-        "h/Arbeitstag",
-    ]
-    wstds.loc["zstd_year", :] = [
-        pd.to_numeric(wstds.at["zstd_day", "value"])
-        * pd.to_numeric(wstds.at["wd_year", "value"]),
-        "h/Jahr",
-    ]
-    wstds.loc["wstd_total_target", :] = [
-        wstd_total,
-        ("n Wochenstunden insgesamt (Anrechnungsstunden und Unterricht)"),
-    ]
-    wstds.loc["wstd_spsy", :] = [
-        wstd_spsy,
-        "n Wochenstunden Schulpsychologie (Anrechnungsstunden)",
-    ]
-    wstds.loc["zstd_spsy_1wstd_target", :] = [
-        pd.to_numeric(wstds.at["zstd_year", "value"]) / wstd_total
-        if wstd_total > 0
-        else 0,
-        ("h Arbeit / Jahr, die einer Wochenstunde entsprächen"),
-    ]
-    wstds.loc["zstd_spsy_year_target", :] = [
-        pd.to_numeric(wstds.at["zstd_spsy_1wstd_target", "value"]) * wstd_spsy,
-        (
-            "h Arbeit / Jahr, die den angegebenen Wochenstunden "
-            "Schulpsychologie entsprächen"
-        ),
-    ]
-    wstds.loc["zstd_spsy_week_target", :] = [
-        pd.to_numeric(wstds.at["zstd_spsy_year_target", "value"])
-        / pd.to_numeric(wstds.at["ww_year", "value"]),
-        (
-            "h Arbeit in der Woche, die den angegebenen Wochenstunden "
-            "Schulpsychologie entsprächen"
-        ),
-    ]
-    return wstds
+    Create a dataframe of Wochenstunden and Zeitstunden for school psychology.
+    """
+    return ActivitySummary(wstd_spsy=wstd_spsy, wstd_total=wstd_total).to_dataframe()
 
 
 def summary_statistics_wstd(
@@ -187,47 +220,13 @@ def summary_statistics_wstd(
     zstd_spsy_year_actual: float,
     school_students: dict[str, int],
 ) -> pd.DataFrame:
-    """Calculate Wochenstunden summary statistics
-
-    Parameters
-    ----------
-    wstd_spsy : int
-        n Wochenstunden school psychology
-    wstd_total : int, optional
-        total n Wochenstunden (not just school psychology), by default 23
-    zst_spsy_year_actual: float
-        actual Zeitstunden school psychology
-    school_students:
-        a dictionary mapping school names to their number of students
-        e.g. {'Schulname': 100, 'SchulnameB': 200}
-
-    Returns
-    -------
-    pd.DataFrame
-        Wochenstunden summary statistics
-    """
-    summarystats_wstd = wstd_in_zstd(wstd_spsy, wstd_total)
-
-    for school_name, student_count in school_students.items():
-        summarystats_wstd.loc["nstudents_" + school_name, "value"] = student_count
-
-    nstudents_total = sum(school_students.values())
-    summarystats_wstd.loc["nstudents_all", "value"] = nstudents_total
-    summarystats_wstd.loc["ratio_nstudens_wstd_spsy", "value"] = (
-        nstudents_total / wstd_spsy if wstd_spsy > 0 else 0
-    )
-
-    if zstd_spsy_year_actual is not None:
-        summarystats_wstd.loc["zstd_spsy_year_actual", "value"] = zstd_spsy_year_actual
-        summarystats_wstd.loc["zstd_spsy_week_actual", "value"] = (
-            zstd_spsy_year_actual
-            / pd.to_numeric(summarystats_wstd.at["ww_year", "value"])
-        )
-        target = pd.to_numeric(summarystats_wstd.at["zstd_spsy_year_target", "value"])
-        summarystats_wstd.loc["perc_spsy_year_actual", "value"] = (
-            zstd_spsy_year_actual / target if target > 0 else 0
-        ) * 100
-    return summarystats_wstd
+    """Calculate Wochenstunden summary statistics."""
+    return ActivitySummary(
+        wstd_spsy=wstd_spsy,
+        wstd_total=wstd_total,
+        zstd_spsy_year_actual=zstd_spsy_year_actual,
+        school_students=school_students,
+    ).to_dataframe()
 
 
 def create_taetigkeitsbericht_report(

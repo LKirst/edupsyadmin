@@ -40,10 +40,15 @@ class TestReportData:
     plot_path: str | os.PathLike[str]
 
 
-class TestReport:
-    def __init__(self, data: TestReportData) -> None:
-        self.data = data
+class BasePDFReport:
+    """Base class for PDF reports with shared styles and infrastructure."""
+
+    def __init__(self) -> None:
         self.styles = getSampleStyleSheet()
+        self._setup_styles()
+
+    def _setup_styles(self) -> None:
+        """Initialize custom styles for reports."""
         self.styles.add(
             ParagraphStyle(
                 name="SectionHeader",
@@ -65,13 +70,40 @@ class TestReport:
             ),
         )
 
-    def _header_footer(self, canvas, _doc) -> None:
+    def _header_footer(self, canvas: Canvas, _doc: BaseDocTemplate) -> None:
+        """Draw header and footer on the page."""
         canvas.saveState()
-        # Footer
+        self._draw_footer(canvas)
+        self._draw_header(canvas)
+        canvas.restoreState()
+
+    def _draw_footer(self, canvas: Canvas) -> None:
+        """Draw the default footer."""
         canvas.setFont("Helvetica-Oblique", 8)
         canvas.setStrokeColor(colors.grey)
         canvas.drawCentredString(A4[0] / 2.0, 1 * cm, f"Seite {canvas.getPageNumber()}")
-        canvas.restoreState()
+
+    def _draw_header(self, canvas: Canvas) -> None:
+        """Draw the header (to be overridden if needed)."""
+        pass
+
+    def _scale_image(self, img: Image, available_width: float) -> Image:
+        """
+        Scale an image to fit within the available width while maintaining
+        aspect ratio.
+        """
+        aspect = img.imageHeight / float(img.imageWidth)
+        img.drawWidth = available_width
+        img.drawHeight = available_width * aspect
+        return img
+
+
+class TestReport(BasePDFReport):
+    """Report class for psychological tests like CFT and LGVT."""
+
+    def __init__(self, data: TestReportData) -> None:
+        super().__init__()
+        self.data = data
 
     def build(self, output_path: str | os.PathLike[str]) -> None:
         doc = SimpleDocTemplate(
@@ -133,7 +165,7 @@ class TestReport:
         # Plot
         if Path(self.data.plot_path).exists():
             img = Image(str(self.data.plot_path))
-            img = _scale_image(img, available_width=A4[0] - 3 * cm)
+            img = self._scale_image(img, available_width=A4[0] - 3 * cm)
             flowables.append(img)
 
         doc.build(
@@ -143,22 +175,17 @@ class TestReport:
         )
 
 
-class TaetigkeitsberichtReport:
+class TaetigkeitsberichtReport(BasePDFReport):
+    """Report class for activity reports."""
+
     def __init__(self, name: str) -> None:
+        super().__init__()
         self.name = name
-        self.styles = getSampleStyleSheet()
         self.header_text = f"Tätigkeitsbericht {date.today()} ({name})"
 
-    def _header_footer(self, canvas: Canvas, _doc: BaseDocTemplate) -> None:
-        canvas.saveState()
-        # Header
+    def _draw_header(self, canvas: Canvas) -> None:
         canvas.setFont("Helvetica-Bold", 11)
         canvas.drawCentredString(A4[0] / 2.0, A4[1] - 1.5 * cm, self.header_text)
-
-        # Footer
-        canvas.setFont("Helvetica-Oblique", 8)
-        canvas.drawCentredString(A4[0] / 2.0, 1 * cm, f"Seite {canvas.getPageNumber()}")
-        canvas.restoreState()
 
     def build(
         self,
@@ -207,12 +234,12 @@ class TaetigkeitsberichtReport:
 
         if summary_h_sessions_img and Path(summary_h_sessions_img).exists():
             img = Image(summary_h_sessions_img)
-            img = _scale_image(img, available_width=A4[0] - 3 * cm)
+            img = self._scale_image(img, available_width=A4[0] - 3 * cm)
             flowables.extend((Spacer(1, 20), img))
 
         if Path(summary_wstd_img).exists():
             img = Image(summary_wstd_img)
-            img = _scale_image(img, available_width=A4[0] - 3 * cm)
+            img = self._scale_image(img, available_width=A4[0] - 3 * cm)
             flowables.extend((Spacer(1, 20), img))
 
         doc.build(
@@ -220,13 +247,6 @@ class TaetigkeitsberichtReport:
             onFirstPage=self._header_footer,
             onLaterPages=self._header_footer,
         )
-
-
-def _scale_image(img: Image, available_width: float) -> Image:
-    aspect = img.imageHeight / float(img.imageWidth)
-    img.drawWidth = available_width
-    img.drawHeight = available_width * aspect
-    return img
 
 
 def normal_distribution_plot(
