@@ -34,7 +34,6 @@ dependencies = [
 optional-dependencies.bwbackend = [ "bitwarden-keyring>=0.3.1" ]
 optional-dependencies.flattenpdf = [ "pdf2image>=1.17" ]
 optional-dependencies.reportsandtaetigkeitsber = [
-  "dataframe-image>=0.2.6",
   "matplotlib>=3.9.2",
   "numpy>=2.4.4",
   "reportlab>=4.2.5",
@@ -46,6 +45,7 @@ scripts.edupsyadmin = "edupsyadmin.cli:main"
 [dependency-groups]
 dev = [
   "commitizen>=3.31",
+  "dataframe-image>=0.2.6",
   "deptry>=0.25.1",
   "pandas-stubs>=2.2.3.241009",
   "prek>=0.3.8",

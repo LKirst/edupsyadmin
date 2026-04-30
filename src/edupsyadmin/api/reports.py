@@ -2,10 +2,10 @@ import os
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import scipy.stats as stats
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -22,14 +22,12 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-if TYPE_CHECKING:
-    import pandas as pd
-
 ResultsItem = str | tuple[str, str]
 
 
 @dataclass
 class TestReportData:
+    __test__ = False
     heading: str
     client_name_or_id: str
     grade: str | int | None
@@ -97,9 +95,64 @@ class BasePDFReport:
         img.drawHeight = available_width * aspect
         return img
 
+    def _df_to_table(
+        self, df: pd.DataFrame, col_widths: list[float] | None = None
+    ) -> Table:
+        """Convert a pandas DataFrame to a ReportLab Table."""
+        # Include index as first column
+        header = ["", *df.columns.tolist()]
+        data = []
+
+        if col_widths:
+            # If col_widths is provided, use Paragraphs to enable wrapping
+            h_row = [
+                Paragraph(f"<b>{h}</b>", self.styles["Normal"]) if h else ""
+                for h in header
+            ]
+            data.append(h_row)
+            for index, row in df.iterrows():
+                formatted_row = [Paragraph(str(index), self.styles["Normal"])]
+                for val in row:
+                    if isinstance(val, (float, np.float64, np.float32)):
+                        s = f"{val:.1f}"
+                    else:
+                        s = str(val)
+                    formatted_row.append(Paragraph(s, self.styles["Normal"]))
+                data.append(formatted_row)
+        else:
+            data.append(header)
+            for index, row in df.iterrows():
+                formatted_row = [str(index)]
+                for val in row:
+                    if isinstance(val, (float, np.float64, np.float32)):
+                        formatted_row.append(f"{val:.1f}")
+                    else:
+                        formatted_row.append(str(val))
+                data.append(formatted_row)
+
+        t = Table(data, colWidths=col_widths)
+        t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                ],
+            ),
+        )
+        return t
+
 
 class TestReport(BasePDFReport):
     """Report class for psychological tests like CFT and LGVT."""
+
+    __test__ = False
 
     def __init__(self, data: TestReportData) -> None:
         super().__init__()
@@ -190,18 +243,20 @@ class TaetigkeitsberichtReport(BasePDFReport):
     def build(
         self,
         output_path: str | os.PathLike[str],
-        summary_wstd_img: str,
-        summary_h_sessions_img: str | None = None,
+        summary_wstd: pd.DataFrame,
+        summary_h_sessions: pd.DataFrame | None = None,
         summary_categories: pd.DataFrame | None = None,
     ) -> None:
+        left_margin = right_margin = 1.5 * cm
         doc = SimpleDocTemplate(
             str(output_path),
             pagesize=A4,
-            rightMargin=1.5 * cm,
-            leftMargin=1.5 * cm,
+            rightMargin=right_margin,
+            leftMargin=left_margin,
             topMargin=2.5 * cm,
             bottomMargin=2 * cm,
         )
+        avail_width = A4[0] - left_margin - right_margin
         flowables = []
 
         if summary_categories is not None:
@@ -232,15 +287,32 @@ class TaetigkeitsberichtReport(BasePDFReport):
                     ),
                 )
 
-        if summary_h_sessions_img and Path(summary_h_sessions_img).exists():
-            img = Image(summary_h_sessions_img)
-            img = self._scale_image(img, available_width=A4[0] - 3 * cm)
-            flowables.extend((Spacer(1, 20), img))
+        if summary_h_sessions is not None:
+            n_cols = len(summary_h_sessions.columns) + 1
+            col_w = avail_width / (n_cols + 1)
+            h_sessions_colwidths = [col_w * 2] + [col_w] * (n_cols - 1)
+            flowables.extend(
+                (
+                    Paragraph("<b>Zeitstunden:</b>", self.styles["Normal"]),
+                    Spacer(1, 6),
+                    self._df_to_table(
+                        summary_h_sessions, col_widths=h_sessions_colwidths
+                    ),
+                    Spacer(1, 18),
+                )
+            )
 
-        if Path(summary_wstd_img).exists():
-            img = Image(summary_wstd_img)
-            img = self._scale_image(img, available_width=A4[0] - 3 * cm)
-            flowables.extend((Spacer(1, 20), img))
+        flowables.extend(
+            (
+                Paragraph("<b>Wochenstunden:</b>", self.styles["Normal"]),
+                Spacer(1, 6),
+                self._df_to_table(
+                    summary_wstd,
+                    col_widths=[3.5 * cm, 2.0 * cm, avail_width - 5.5 * cm],
+                ),
+                Spacer(1, 18),
+            )
+        )
 
         doc.build(
             flowables,

@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -7,14 +6,6 @@ import pandas as pd
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.api.reports import TaetigkeitsberichtReport
 from edupsyadmin.core.config import config
-from edupsyadmin.core.logger import logger
-
-try:
-    import dataframe_image as dfi
-
-    dfi_imported = True
-except ImportError:
-    dfi_imported = False
 
 pd.set_option("display.precision", 1)
 
@@ -236,28 +227,13 @@ def create_taetigkeitsbericht_report(
     summary_categories: pd.DataFrame | None = None,
     summary_h_sessions: pd.DataFrame | None = None,
 ) -> None:
-    if dfi_imported:
-        Path("resources").mkdir(parents=True, exist_ok=True)
-        wstd_img = "resources/summary_wstd.png"
-        dfi.export(summary_wstd, wstd_img, table_conversion="matplotlib")
-        h_sessions_img = None
-        if summary_h_sessions is not None:
-            h_sessions_img = "resources/summary_h_sessions.png"
-            dfi.export(
-                summary_h_sessions,
-                h_sessions_img,
-                table_conversion="matplotlib",
-            )
-
-        report = TaetigkeitsberichtReport(name)
-        report.build(
-            basename_out + "_report.pdf",
-            summary_wstd_img=wstd_img,
-            summary_h_sessions_img=h_sessions_img,
-            summary_categories=summary_categories,
-        )
-    else:
-        logger.warning("dataframe_image is not installed to generate a pdf output.")
+    report = TaetigkeitsberichtReport(name)
+    report.build(
+        basename_out + "_report.pdf",
+        summary_wstd=summary_wstd,
+        summary_h_sessions=summary_h_sessions,
+        summary_categories=summary_categories,
+    )
 
 
 def taetigkeitsbericht(
