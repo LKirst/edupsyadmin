@@ -422,16 +422,36 @@ def _word_wrap_to_lines(text: str, chars_per_line: int) -> list[str]:
 def _escape_pdf_string(text: str) -> str:
     """Escape special characters for use inside a PDF literal string ``(...)``.
 
+    Non-ASCII characters are converted to octal escapes using the CP1252
+    encoding, which is the standard for most PDF viewers when using
+    built-in fonts like Helvetica.
+
     :param text: Plain text.
     :return: Escaped text safe for embedding between parentheses.
     """
-    return (
-        text.replace("\\", "\\\\")
-        .replace("(", r"\(")
-        .replace(")", r"\)")
-        .replace("\r", "\\r")
-        .replace("\n", "\\n")
-    )
+    result = []
+    for char in text:
+        if char == "\\":
+            result.append("\\\\")
+        elif char == "(":
+            result.append("\\(")
+        elif char == ")":
+            result.append("\\)")
+        elif char == "\r":
+            result.append("\\r")
+        elif char == "\n":
+            result.append("\\n")
+        elif ord(char) > 126:
+            # Octal escape for WinAnsi (cp1252).
+            try:
+                # Most standard fonts use an encoding close to CP1252.
+                result.extend(f"\\{byte:03o}" for byte in char.encode("cp1252"))
+            except UnicodeEncodeError:
+                # Fallback for characters not in CP1252
+                result.append("?")
+        else:
+            result.append(char)
+    return "".join(result)
 
 
 def _calculate_padding(width: float, height: float) -> tuple[float, float]:
