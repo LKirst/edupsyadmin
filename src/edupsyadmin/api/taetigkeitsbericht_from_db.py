@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any
 
 import pandas as pd
@@ -226,8 +227,9 @@ def create_taetigkeitsbericht_report(
     summary_wstd: pd.DataFrame,
     summary_categories: pd.DataFrame | None = None,
     summary_h_sessions: pd.DataFrame | None = None,
+    report_date: date | None = None,
 ) -> None:
-    report = TaetigkeitsberichtReport(name)
+    report = TaetigkeitsberichtReport(name, report_date=report_date)
     report.build(
         basename_out + "_report.pdf",
         summary_wstd=summary_wstd,
@@ -242,6 +244,7 @@ def taetigkeitsbericht(
     out_basename: str = "Taetigkeitsbericht_Out",
     wstd_total: int = 23,
     name: str = "Schulpsychologie",
+    report_date: date | None = None,
 ) -> None:
     """
     Create a PDF for the Taetigkeitsbericht. This function assumes your db
@@ -256,6 +259,9 @@ def taetigkeitsbericht(
     )
     param name [str]: name for the header of the pdf report.
         Defaults to "Schulpsychologie".
+    )
+    param report_date [date]: date for the header of the pdf report.
+        Defaults to date.today().
     )
     """
 
@@ -301,4 +307,5 @@ def taetigkeitsbericht(
         summarystats_wstd,
         summary_categories,
         summarystats_h_sessions,
+        report_date=report_date,
     )

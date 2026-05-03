@@ -231,10 +231,11 @@ class TestReport(BasePDFReport):
 class TaetigkeitsberichtReport(BasePDFReport):
     """Report class for activity reports."""
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, report_date: date | None = None) -> None:
         super().__init__()
         self.name = name
-        self.header_text = f"Tätigkeitsbericht {date.today()} ({name})"
+        report_date = report_date or date.today()
+        self.header_text = f"Tätigkeitsbericht {report_date} ({name})"
 
     def _draw_header(self, canvas: Canvas) -> None:
         canvas.setFont("Helvetica-Bold", 11)

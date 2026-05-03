@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 
@@ -172,58 +173,9 @@ def test_summary_statistics_wstd_zero_wstd():
     assert pd.to_numeric(result.loc["ratio_nstudens_wstd_spsy", "value"]) == 0
 
 
-def test_normal_distribution_plot_creates_file(tmp_path):
-    from edupsyadmin.api.reports import normal_distribution_plot
-
-    plot_path = tmp_path / "test_plot.png"
-    normal_distribution_plot([0.0, 1.0, -1.0], plot_path)
-    assert plot_path.exists()
-    assert plot_path.stat().st_size > 0
-
-
-def test_test_report_build_creates_pdf(tmp_path):
-    """TestReport.build() should produce a non-empty PDF file."""
-    from datetime import date
-
-    from edupsyadmin.api.reports import (
-        TestReport,
-        TestReportData,
-        normal_distribution_plot,
-    )
-
-    plot_path = tmp_path / "plot.png"
-    normal_distribution_plot([0.0, 1.0], plot_path)
-
-    data = TestReportData(
-        heading="Test Heading",
-        client_name_or_id="Test Client",
-        grade=10,
-        test_date=date(2024, 3, 1),
-        birthday=date(2000, 5, 15),
-        age_str="23 Jahre, 9 Monate",
-        results=[
-            "Section A",
-            ("Label 1", "Value 1"),
-            ("Label 2", "Value 2"),
-            "Section B",
-            ("Label 3", "Value 3"),
-        ],
-        plot_path=plot_path,
-    )
-
-    output_path = tmp_path / "test_report.pdf"
-    TestReport(data).build(output_path)
-
-    assert output_path.exists()
-    assert output_path.stat().st_size > 0
-
-
-@patch("edupsyadmin.api.taetigkeitsbericht_from_db.dfi_imported", True)
-@patch("edupsyadmin.api.taetigkeitsbericht_from_db.dfi")
 @patch("edupsyadmin.api.taetigkeitsbericht_from_db.TaetigkeitsberichtReport")
 def test_create_taetigkeitsbericht_report_calls_build(
     mock_report_cls,
-    mock_dfi,
     tmp_path,
     summary_wstd_df,
     summary_categories_df,
@@ -239,26 +191,13 @@ def test_create_taetigkeitsbericht_report_calls_build(
         summary_h_sessions_df,
     )
 
-    mock_dfi.export.assert_called()
     mock_report_instance = mock_report_cls.return_value
     mock_report_instance.build.assert_called_once_with(
         output_file + "_report.pdf",
-        summary_wstd_img="resources/summary_wstd.png",
-        summary_h_sessions_img="resources/summary_h_sessions.png",
+        summary_wstd=summary_wstd_df,
+        summary_h_sessions=summary_h_sessions_df,
         summary_categories=summary_categories_df,
     )
-
-
-@patch("edupsyadmin.api.taetigkeitsbericht_from_db.dfi_imported", False)
-@patch("edupsyadmin.api.taetigkeitsbericht_from_db.logger")
-def test_create_taetigkeitsbericht_report_warns_without_dfi(
-    mock_logger,
-    summary_wstd_df,
-):
-    create_taetigkeitsbericht_report("out", "Name", summary_wstd_df)
-    mock_logger.warning.assert_called_once()
-    warning_message = mock_logger.warning.call_args[0][0]
-    assert "dataframe_image" in warning_message
 
 
 @patch("edupsyadmin.api.taetigkeitsbericht_from_db.ClientsManager")
@@ -318,3 +257,59 @@ def test_taetigkeitsbericht_writes_csv_files(
     assert Path(output_basename + "_categories.csv").exists()
     assert Path(output_basename + "_h_sessions.csv").exists()
     assert Path(output_basename + "_wstd.csv").exists()
+
+
+def test_taetigkeitsbericht_snapshot(
+    pdf_snapshot,
+    clients_manager,
+    mock_config_snapshots,
+    tmp_path,
+):
+    """Snapshot test for the full taetigkeitsbericht function."""
+    # Add sample data to the database
+    clients_manager.add_client(
+        school="FirstSchool",
+        keyword_taet_encr="slbb.slb.sonstige",
+        min_sessions=120,
+        n_sessions=3,
+        gender_encr="m",
+        class_name_encr="10",
+        first_name_encr="John",
+        last_name_encr="Doe",
+        birthday_encr=date(2010, 1, 1),
+    )
+    clients_manager.add_client(
+        school="FirstSchool",
+        keyword_taet_encr="slbb.slb.sonstige",
+        min_sessions=60,
+        n_sessions=1,
+        gender_encr="f",
+        class_name_encr="10",
+        first_name_encr="Jane",
+        last_name_encr="Doe",
+        birthday_encr=date(2010, 2, 1),
+    )
+    clients_manager.add_client(
+        school="FirstSchool",
+        keyword_taet_encr="superv.kollegfb",
+        min_sessions=300,
+        n_sessions=1,
+        gender_encr="m",
+        class_name_encr="11",
+        first_name_encr="Bob",
+        last_name_encr="Builder",
+        birthday_encr=date(2009, 3, 1),
+    )
+
+    output_basename = str(tmp_path / "Taetigkeitsbericht_Snapshot")
+    taetigkeitsbericht(
+        database_url=clients_manager.database_url,
+        wstd_psy=5,
+        out_basename=output_basename,
+        name="Snapshot Test",
+        report_date=date(2026, 12, 24),
+    )
+
+    report_path = Path(output_basename + "_report.pdf")
+    assert report_path.exists()
+    assert pdf_snapshot == report_path
