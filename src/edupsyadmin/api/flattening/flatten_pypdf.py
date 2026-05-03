@@ -37,6 +37,7 @@ from pypdf.generic import (
     FloatObject,
     IndirectObject,
     NameObject,
+    NumberObject,
     PdfObject,
     RectangleObject,
     StreamObject,
@@ -135,7 +136,12 @@ class _DefaultAppearance:
         if match:
             self.font_name = match.group(1)
             self.font_size = float(match.group(2))
-            self.extra_ops = da_string[: match.start()].strip()
+            # Capture all operators EXCEPT the font setting itself
+            self.extra_ops = (
+                da_string[: match.start()].strip()
+                + " "
+                + da_string[match.end() :].strip()
+            ).strip()
         else:
             self._set_defaults()
 
@@ -347,6 +353,8 @@ def _ap_stream_bytes_and_resources(
 
     ap = ap_raw.get_object()
     if not isinstance(ap, DictionaryObject):
+        # Some malformed PDFs might have /AP as a string. Treat this as having
+        # no usable appearance so we synthesise one.
         return None
 
     n_obj = _get_appearance_state_stream(ap, annot)
@@ -946,8 +954,13 @@ def _field_flags(annot: DictionaryObject) -> int:
     :param annot: Widget annotation or merged field dictionary.
     :return: Integer flag value, or 0 if absent.
     """
-    ff = annot.get("/Ff")
-    return int(ff) if ff is not None else 0
+    ff = _resolve_field_attribute(annot, "/Ff")
+    if ff is None:
+        return 0  # no flags are set = basic, editable, optional field
+    if isinstance(ff, NumberObject):
+        return int(ff)
+    # Fallback for unexpected types
+    return 0  # no flags are set = basic, editable, optional field
 
 
 def _is_multiline(annot: DictionaryObject) -> bool:
@@ -965,11 +978,18 @@ def _quadding(annot: DictionaryObject) -> int:
     :param annot: Widget annotation dictionary.
     :return: 0 (left), 1 (centre), or 2 (right).
     """
-    q = annot.get("/Q")
-    return int(q) if q is not None else _ALIGN_LEFT
+    q = _resolve_field_attribute(annot, "/Q")
+    if q is None:
+        return _ALIGN_LEFT
+    if isinstance(q, NumberObject):
+        return int(q)
+    # Fallback for unexpected types
+    return _ALIGN_LEFT
 
 
-def _resolve_field_attribute(annot: DictionaryObject, key: str) -> object | None:
+def _resolve_field_attribute(
+    annot: DictionaryObject, key: str
+) -> DictionaryObject | None:
     """Walk the ``/Parent`` chain to find an inherited field attribute.
 
     PDF forms allow attributes like ``/DA``, ``/V``, and ``/Ff`` to be
@@ -977,17 +997,18 @@ def _resolve_field_attribute(annot: DictionaryObject, key: str) -> object | None
 
     :param annot: Starting annotation dictionary.
     :param key: The PDF dictionary key to look up, e.g. ``"/DA"``.
-    :return: The found object, or *None*.
+    :return: The found DictionaryObject, or *None*.
     """
     node: DictionaryObject | None = annot
     while node is not None:
         val = node.get(key)
         if val is not None:
-            return val.get_object() if hasattr(val, "get_object") else val
+            return val.get_object()
         parent_raw = node.get("/Parent")
         if parent_raw is None:
             break
-        node = parent_raw.get_object()
+        parent = parent_raw.get_object()
+        node = parent if isinstance(parent, DictionaryObject) else None
     return None
 
 
@@ -1093,6 +1114,7 @@ def _synthesise_text_field_appearance(
     rect: _Rect,
     acroform_da: str,
     dr: DictionaryObject | None,
+    writer: PdfWriter,
 ) -> DecodedStreamObject:
     """Synthesise an appearance for a text field.
 
@@ -1101,6 +1123,7 @@ def _synthesise_text_field_appearance(
     :param rect: Annotation rectangle.
     :param acroform_da: Default appearance string from AcroForm.
     :param dr: Default resources from AcroForm.
+    :param writer: PdfWriter instance for resource cloning.
     :return: Form XObject with synthesised appearance.
     """
     da_str = _get_default_appearance_string(annot, acroform_da)
@@ -1109,7 +1132,8 @@ def _synthesise_text_field_appearance(
     q = _quadding(annot)
 
     ap_bytes = _synthesise_text_appearance(value, rect, da, multiline, q)
-    return _build_form_xobject(ap_bytes, rect, dr)
+    final_resources = _clone_resources_for_writer(dr, writer)
+    return _build_form_xobject(ap_bytes, rect, final_resources)
 
 
 def _process_widget_annotation(
@@ -1160,7 +1184,9 @@ def _process_widget_annotation(
     if value is None:
         return xobj_counter
 
-    xobj = _synthesise_text_field_appearance(annot, value, rect, acroform_da, dr)
+    xobj = _synthesise_text_field_appearance(
+        annot, value, rect, acroform_da, dr, writer
+    )
     _stamp_xobject_onto_page(writer_page, writer, xobj_name, xobj, rect)
     return xobj_counter
 
