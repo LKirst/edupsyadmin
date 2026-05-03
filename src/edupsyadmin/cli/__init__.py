@@ -231,7 +231,7 @@ def _run_db_migrations(args: argparse.Namespace) -> int:
 
 def _setup_app_encryption(args: argparse.Namespace) -> None:
     """Set up encryption for commands that require it."""
-    no_encryption_commands = ["info", "edit-config", "setup-demo"]
+    no_encryption_commands = ["info", "edit-config", "setup-demo", "flatten-pdfs"]
     if args.command_name not in no_encryption_commands:
         _setup_encryption(args.app_uid, args.app_username)
 
