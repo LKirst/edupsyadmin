@@ -243,7 +243,7 @@ def client_dict_all_str() -> dict[str, str]:
                 "lrst_last_test_by_encr": "schpsy",
                 "keyword_taet_encr": "slbb.slb.sonstige",
             },
-            id="nos_nta",
+            id="nos_nta_user",
         ),
         pytest.param(
             {
@@ -268,7 +268,7 @@ def client_dict_all_str() -> dict[str, str]:
                 "lrst_last_test_by_encr": "",
                 "keyword_taet_encr": "",
             },
-            id="umlaut",
+            id="umlaut_user",
         ),
     ],
     scope="session",
@@ -311,7 +311,7 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
                 "document_shredding_date_encr": date(2025, 12, 24),
                 "keyword_taet_encr": "slbb.slb.sonstige",
             },
-            id="nos_nta",
+            id="nos_nta_internal",
         ),
         pytest.param(
             {
@@ -342,7 +342,7 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
                 "document_shredding_date_encr": date(2025, 12, 24),
                 "keyword_taet_encr": "",
             },
-            id="umlaut",
+            id="umlaut_internal",
         ),
     ],
     scope="session",
