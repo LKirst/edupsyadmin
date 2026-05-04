@@ -4,7 +4,7 @@ requires = [ "hatchling" ]
 
 [project]
 name = "edupsyadmin"
-version = "9.0.0a0"
+version = "9.0.0"
 description = "edupsyadmin provides tools to help school psychologists with their documentation"
 readme = "README.md"
 license = { text = "MIT" }

@@ -1,3 +1,27 @@
+## 9.0.0 (2026-05-04)
+
+### Feat
+
+- **api.flatten_pdf**: add a pypdf flattening implementation that works with checkboxes, multiline text input and radio buttons
+
+### Fix
+
+- **cli**: do not access keyring for flatten-pdfs
+- **api.flattening.flatten_pypdf**: improve field attribute resolution and resource cloning
+- **api.flattening.flatten_pypdf**: convert non-ASCII characters into octal escapes for flattening
+- **api.flattening**: fix issue with type checks and with lazy import
+- **config**: resolve LGVT configuration type errors
+
+### Refactor
+
+- **api**: replace dataframe_image with native ReportLab tables
+- **api**: improve PDF reports and Tätigkeitsbericht report type safety
+- **api.fill_form**: refactor for better readability
+- **api.add_convenience_data**: remove unnecessary casts and simplify date conversions
+- **db.clients**: extract gender validation and class int extraction into functions
+- **db**: move custom types and converters out of clients.py
+- refactor: consolidate batch form-filling logic and improve TUI reporting
+
 ## 9.0.0a0 (2026-04-16)
 
 ### BREAKING CHANGE
