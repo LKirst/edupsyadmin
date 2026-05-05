@@ -151,7 +151,7 @@ Generate a "Tätigkeitsbericht" PDF with 3 Anrechnungsstunden (experimental):
 edupsyadmin taetigkeitsbericht 3
 ```
 
-Flatten filled PDF forms (experimental):
+Flatten filled PDF forms:
 
 ```text
 edupsyadmin flatten-pdfs ./path/to/filled_form.pdf

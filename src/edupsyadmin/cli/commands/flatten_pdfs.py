@@ -4,8 +4,8 @@ from pathlib import Path
 
 from edupsyadmin.cli.utils import lazy_import
 
-COMMAND_DESCRIPTION = "Flatten pdf forms (experimental)"
-COMMAND_HELP = "Flatten pdf forms (experimental)"
+COMMAND_DESCRIPTION = "Flatten pdf forms"
+COMMAND_HELP = "Flatten pdf forms"
 COMMAND_EPILOG = textwrap.dedent(
     r"""         Examples:
           # Flatten a single PDF form using the default library

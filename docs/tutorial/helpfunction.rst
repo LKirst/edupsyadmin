@@ -42,7 +42,7 @@ anzeigen. Im Beispiel unten, sind die möglichen Unterbefehle markiert.
                             Fill a pdf form or a text file with a liquid template
         delete-client       Delete a client in the database
         edit-config         Edit app configuration
-        flatten-pdfs        Flatten pdf forms (experimental)
+        flatten-pdfs        Flatten pdf forms
         get-clients         Show clients overview or single client
         info                Get useful information for debugging
         mk-report           Create a report for a given test type.

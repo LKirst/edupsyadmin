@@ -171,52 +171,6 @@ Wenn eine Hilfe-Nachricht erscheint, ist die Installation gelungen.
 Optionale Abhängigkeiten
 ------------------------
 
-Einige Funktionen von ``edupsyadmin``, wie das Bearbeiten von PDFs,
-benötigen zusätzliche Programme, die nicht automatisch mitinstalliert werden.
-
-Poppler (für ``flatten-pdfs``)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Die Funktion ``flatten-pdfs`` benötigt das Programm **Poppler** und die
-Python-Bibliothek ``pdf2image``. Letztere wird über die optionale Abhängigkeit
-(Extra) ``flattenpdf`` installiert.
-
-.. code-block:: console
-
-    $ uv tool upgrade edupsyadmin --with flattenpdf
-
-Zur Installation von Poppler:
-
-.. tab-set::
-    :sync-group: installation-os
-
-    .. tab-item:: Windows
-        :sync: windows-os
-
-        .. code-block:: console
-
-            $ winget install -e --id oschwartz10612.Poppler
-
-    .. tab-item:: macOS und Linux
-        :sync: macos-linux-os
-
-        **macOS**:
-
-        Um ``poppler`` zu installieren, wird der Paketmanager `Homebrew <https://brew.sh/>`__ benötigt.
-
-        .. code-block:: console
-
-            $ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-            $ brew install poppler
-
-        **Linux**: Die meisten Distributionen haben poppler vorinstalliert.
-        Wenn poppler nicht installiert ist, installiere `poppler-utils` oder
-        `poppler-tools` je nach Distribution.
-
-
-Berichte und Tätigkeitsbericht (für ``mk-report`` und ``taetigkeitsbericht``)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 Um grafische Berichte und den Tätigkeitsbericht als PDF zu erstellen, müssen
 zusätzliche Bibliotheken installiert werden. Dies geschieht über die optionale
 Abhängigkeit (Extra) ``reportsandtaetigkeitsber``:
