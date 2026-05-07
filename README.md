@@ -1,5 +1,7 @@
 # edupsyadmin
 
+![edupsyadmin logo](./resources/edupsyadmin_logo_readme.svg)
+
 edupsyadmin provides tools to help school psychologists with their
 documentation
 
