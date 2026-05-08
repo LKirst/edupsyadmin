@@ -30,6 +30,14 @@ def safe_iq_to_t(iq_value: int | None) -> float | None:
     return round(iq_to_t(iq_value), 2)
 
 
+def calculate_raw_totals(
+    raw_part1_min: int | None, raw_part1_max: int | None, raw_part2: int
+) -> tuple[int | None, int | None]:
+    raw_total_min = raw_part1_min + raw_part2 if raw_part1_min is not None else None
+    raw_total_max = raw_part1_max + raw_part2 if raw_part1_max is not None else None
+    return raw_total_min, raw_total_max
+
+
 def generate_cft_report(
     client_dict: ClientData,
     client_id: int,
@@ -70,8 +78,9 @@ def generate_cft_report(
     age_str = mydatediff(birthday, testdate)
     grade = client_dict.get("class_int_encr")
 
-    raw_total_min = raw_part1_min + raw_part2 if raw_part1_min is not None else None
-    raw_total_max = raw_part1_max + raw_part2 if raw_part1_max is not None else None
+    raw_total_min, raw_total_max = calculate_raw_totals(
+        raw_part1_min, raw_part1_max, raw_part2
+    )
 
     differenz = None if iq_part1_max is None else iq_part1_max - iq_part2
 
@@ -151,8 +160,14 @@ def create_report(
     iq_part1_min = input_int_or_none("IQ Teil 1 min: ")
     iq_part1_max = input_int_or_none("IQ Teil 1 max: ")
     iq_part2 = int(input("IQ Teil 2: "))
-    iq_total_min = input_int_or_none("IQ Total min: ")
-    iq_total_max = input_int_or_none("IQ Total max: ")
+
+    # I don't want to have to calculate the total raw scores in my head
+    raw_total_min, raw_total_max = calculate_raw_totals(
+        raw_part1_min, raw_part1_max, raw_part2
+    )
+
+    iq_total_min = input_int_or_none(f"IQ Total min (Rohw. = {raw_total_min}): ")
+    iq_total_max = input_int_or_none(f"IQ Total max (Rohw. = {raw_total_max}): ")
 
     generate_cft_report(
         client_dict=client_dict,
