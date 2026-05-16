@@ -6,7 +6,7 @@ import pytest
 from liquid.exceptions import LiquidError
 from liquid.template import BoundTemplate
 
-from edupsyadmin.api.add_convenience_data import add_convenience_data
+from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.fill_form import fill_form, write_form_md
 from edupsyadmin.api.types import ClientData
 
@@ -35,7 +35,7 @@ def test_fill_form_md_integration(
 ) -> None:
     """End-to-end test for fill_form with a multiline markdown template."""
     # Prepare data with convenience fields
-    client_data = add_convenience_data(client_dict_internal)
+    client_data = ClientView(client_dict_internal).to_dict()
 
     # Create a multiline template
     template_path = tmp_path / "report.md"

@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from edupsyadmin.api.add_convenience_data import add_convenience_data
+from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.types import ClientData
 from edupsyadmin.utils.academic_year import get_this_academic_year_string
 
@@ -19,14 +19,15 @@ def _is_valid_german_date(date_str: str | None) -> bool:
         return False
 
 
-@patch(
-    "edupsyadmin.api.add_convenience_data._get_subjects"
-)  # Mock the get_subjects function
-def test_add_convenience_data(mock_get_subjects, mock_config, client_dict_internal):
+@patch("edupsyadmin.api.client_view._get_subjects")  # Mock the get_subjects function
+def test_client_view_convenience_data(
+    mock_get_subjects, mock_config, client_dict_internal
+):
+    """Test that ClientView correctly generates convenience data."""
     # Mock the return value of get_subjects
     mock_get_subjects.return_value = "Math, Science, History"
 
-    result = add_convenience_data(client_dict_internal)
+    result = ClientView(client_dict_internal).to_dict()
 
     # client data
     assert (
@@ -91,7 +92,6 @@ def test_add_convenience_data(mock_get_subjects, mock_config, client_dict_intern
         "lrst_last_test_date_de",
         "document_shredding_date_de",
     ]
-    from typing import cast
 
     for d in expected_dates:
         assert _is_valid_german_date(cast(dict, result)[d])
@@ -115,34 +115,37 @@ def test_add_convenience_data(mock_get_subjects, mock_config, client_dict_intern
         assert "lrst_schpsy" not in result
 
 
-@patch("edupsyadmin.api.add_convenience_data._get_subjects")
-def test_add_convenience_data_invalid_lrst_diagnosis(mock_get_subjects, mock_config):
+@patch("edupsyadmin.api.client_view._get_subjects")
+def test_client_view_invalid_lrst_diagnosis(mock_get_subjects, mock_config):
     mock_get_subjects.return_value = "Math"
     client_data = {"lrst_diagnosis_encr": "invalid_diagnosis", "school": "FirstSchool"}
+    view = ClientView(cast(ClientData, client_data))
     with pytest.raises(ValueError, match="lrst_diagnosis can be only one of"):
-        add_convenience_data(cast(ClientData, client_data))
+        view.to_dict()
 
 
-@patch("edupsyadmin.api.add_convenience_data._get_subjects")
-def test_add_convenience_data_missing_address_parts(mock_get_subjects, mock_config):
+@patch("edupsyadmin.api.client_view._get_subjects")
+def test_client_view_missing_address_parts(mock_get_subjects, mock_config):
     mock_get_subjects.return_value = "Math"
     client_data = {
         "first_name_encr": "John",
         "last_name_encr": "Doe",
         "school": "FirstSchool",
     }
-    result = add_convenience_data(cast(ClientData, client_data))
+    result = ClientView(cast(ClientData, client_data)).to_dict()
     assert "addr_s_nname" not in result
     assert "addr_m_wname" not in result
 
 
-@patch("edupsyadmin.api.add_convenience_data._get_subjects")
-def test_add_convenience_data_invalid_lrst_test_by(
-    mock_get_subjects, mock_config, caplog
-):
+@patch("edupsyadmin.api.client_view.logger")
+@patch("edupsyadmin.api.client_view._get_subjects")
+def test_client_view_invalid_lrst_test_by(mock_get_subjects, mock_logger, mock_config):
     mock_get_subjects.return_value = "Math"
     client_data = {"lrst_last_test_by_encr": "invalid_tester", "school": "FirstSchool"}
-    with caplog.at_level("ERROR", logger="edupsyadmin"):
-        result = add_convenience_data(cast(ClientData, client_data))
+
+    result = ClientView(cast(ClientData, client_data)).to_dict()
+
     assert "lrst_schpsy" not in result
-    assert "Value for lrst_last_test_by must be in" in caplog.text
+    mock_logger.error.assert_called()
+    args, _ = mock_logger.error.call_args
+    assert "Value for lrst_last_test_by must be in" in args[0]

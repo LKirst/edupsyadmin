@@ -68,9 +68,19 @@ def test_client_data_typeddict_synced_with_client_orm_model() -> None:
 
 
 def _extract_assigned_keys(node: ast.AST) -> set[str]:
-    """Helper to extract keys assigned to the 'data' dict or via dates_to_convert."""
+    """Helper to extract keys assigned to the 'data' dict in ClientView.to_dict."""
     keys = set()
-    # Look for data["key"] = ...
+    # Handle data: ClientData = { "key": value, ... }
+    if isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(
+        node.value, ast.Dict
+    ):
+        target = node.targets[0] if isinstance(node, ast.Assign) else node.target
+        if isinstance(target, ast.Name) and target.id == "data":
+            for k in node.value.keys:
+                if isinstance(k, ast.Constant):
+                    keys.add(k.value)
+
+    # Handle data["key"] = ...
     if (
         isinstance(node, ast.Assign)
         and isinstance(node.targets[0], ast.Subscript)
@@ -81,52 +91,37 @@ def _extract_assigned_keys(node: ast.AST) -> set[str]:
         if isinstance(slc, ast.Constant):
             keys.add(slc.value)
 
-    # Look for gdate in dates_to_convert list (Assign or AnnAssign)
-    is_dates_conv = False
-    val = None
-    if (
-        isinstance(node, ast.Assign)
-        and any(
-            isinstance(t, ast.Name) and t.id == "dates_to_convert" for t in node.targets
-        )
-    ) or (
-        isinstance(node, ast.AnnAssign)
-        and isinstance(node.target, ast.Name)
-        and node.target.id == "dates_to_convert"
-    ):
-        is_dates_conv = True
-        val = node.value
-
-    if is_dates_conv and isinstance(val, ast.List):
-        for elt in val.elts:
-            if (
-                isinstance(elt, ast.Tuple)
-                and len(elt.elts) == 2
-                and isinstance(elt.elts[1], ast.Constant)
-            ):
-                keys.add(elt.elts[1].value)
     return keys
 
 
-def test_client_data_typeddict_synced_with_convenience_data() -> None:
+def test_client_data_typeddict_synced_with_client_view() -> None:
     """
-    Statically analyzes add_convenience_data.py to ensure all keys assigned
-    to the data dict are present in ClientData TypedDict.
+    Statically analyzes client_view.py to ensure all keys assigned
+    in ClientView.to_dict are present in ClientData TypedDict.
     """
     api_dir = Path(__file__).parent.parent.parent / "src" / "edupsyadmin" / "api"
-    conv_file = api_dir / "add_convenience_data.py"
+    view_file = api_dir / "client_view.py"
 
-    tree = ast.parse(conv_file.read_text())
+    tree = ast.parse(view_file.read_text())
+
+    # Find the to_dict method
+    to_dict_node = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "to_dict":
+            to_dict_node = node
+            break
+
+    assert to_dict_node is not None, "Could not find to_dict method in client_view.py"
 
     assigned_keys = set()
-    for node in ast.walk(tree):
+    for node in ast.walk(to_dict_node):
         assigned_keys.update(_extract_assigned_keys(node))
 
     typed_dict_hints = get_type_hints(ClientData)
     missing_in_typeddict = assigned_keys - set(typed_dict_hints.keys())
 
     assert not missing_in_typeddict, (
-        f"The following keys are assigned in add_convenience_data.py but "
+        f"The following keys are assigned in ClientView.to_dict but "
         f"are missing in ClientData TypedDict: {sorted(missing_in_typeddict)}"
     )
 
@@ -138,6 +133,6 @@ def test_client_data_typeddict_synced_with_convenience_data() -> None:
     extra_in_typeddict = convenience_fields_in_td - assigned_keys
     assert not extra_in_typeddict, (
         f"The following fields in ClientData TypedDict are neither in the "
-        f"ORM model nor assigned in add_convenience_data.py: "
+        f"ORM model nor assigned in ClientView.to_dict: "
         f"{sorted(extra_in_typeddict)}"
     )

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pypdf
 
-from edupsyadmin.api.add_convenience_data import add_convenience_data
+from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.fill_form import batch_fill_forms, fill_form
 
 
@@ -15,7 +15,7 @@ def test_fill_form(
 
     from edupsyadmin.api.types import ClientData
 
-    clientd = add_convenience_data(cast(ClientData, client_dict_internal))
+    clientd = ClientView(cast(ClientData, client_dict_internal)).to_dict()
     fill_form(clientd, pdf_forms, out_dir=tmp_path, use_fillpdf=True)
 
     for i, form in enumerate(pdf_forms):
@@ -46,14 +46,20 @@ def test_batch_fill_forms(
     mock_config, pdf_forms: list, tmp_path: Path, client_dict_internal: dict
 ) -> None:
     """Test the batch_fill_forms function."""
+    from edupsyadmin.api.client_view import ClientView
+
     clients_manager = MagicMock()
 
-    def get_client(cid):
+    def get_view(cid):
+        from typing import cast
+
+        from edupsyadmin.api.types import ClientRecord
+
         data = client_dict_internal.copy()
         data["client_id"] = cid
-        return data
+        return ClientView(cast(ClientRecord, data))
 
-    clients_manager.get_decrypted_client.side_effect = get_client
+    clients_manager.get_client_view.side_effect = get_view
 
     client_ids = [1, 2]
     results = batch_fill_forms(
@@ -65,7 +71,7 @@ def test_batch_fill_forms(
 
     assert len(results) == 2
     assert all(res["success"] for res in results)
-    assert clients_manager.get_decrypted_client.call_count == 2
+    assert clients_manager.get_client_view.call_count == 2
 
     for client_id in client_ids:
         for form in pdf_forms:

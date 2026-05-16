@@ -1,6 +1,6 @@
 import pytest
 
-from edupsyadmin.api.add_convenience_data import add_convenience_data
+from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.fill_form import fill_form
 from edupsyadmin.api.flatten_pdf import (
     flatten_pdf,
@@ -10,7 +10,7 @@ from edupsyadmin.api.flatten_pdf import (
 @pytest.fixture
 def filled_client_data(client_dict_internal, mock_config):
     """Prepare stable client data for snapshots."""
-    clientd = add_convenience_data(client_dict_internal)
+    clientd = ClientView(client_dict_internal).to_dict()
     # Override dynamic dates for stable snapshots
     clientd["today_date_de"] = "16.10.2025"
     clientd["school_year"] = "2025/2026"

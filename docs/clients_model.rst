@@ -8,9 +8,10 @@ entschlüsselt ("_encr" für *encrypted*, verschlüsselt).
 .. autoclass:: edupsyadmin.db.clients.Client
    :members:
 
-Auf Grundlage der Daten der Datenbank werden mit der Funktion
-``add_convenience_data`` folgende  weitere Variablen zusammengesetzt, die
+Auf Grundlage der Daten der Datenbank werden mit der Klasse
+``ClientView`` folgende weitere Variablen zusammengesetzt, die
 auch in Formularen verwendet werden können:
 
-.. automodule:: edupsyadmin.api.add_convenience_data
-   :members: add_convenience_data
+.. autoclass:: edupsyadmin.api.client_view.ClientView
+   :members:
+   :exclude-members: record

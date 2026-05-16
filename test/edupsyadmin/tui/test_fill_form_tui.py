@@ -18,8 +18,13 @@ CLIENT_DATA = {
 @pytest.fixture
 def mock_clients_manager(mock_config):
     """A mock clients manager for the fill form TUI."""
+    from edupsyadmin.api.client_view import ClientView
+
     manager = MagicMock()
     manager.get_decrypted_client.return_value = CLIENT_DATA
+    manager.get_client_view.side_effect = lambda cid: ClientView(
+        manager.get_decrypted_client(cid),
+    )
     return manager
 
 
