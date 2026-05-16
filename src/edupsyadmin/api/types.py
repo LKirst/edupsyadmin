@@ -1,10 +1,10 @@
 from datetime import date, datetime
-from typing import NotRequired, TypedDict
+from typing import TypedDict
 
 from edupsyadmin.core.enums import Gender, LrstDiagnosis, LrstTesterType
 
 
-class ClientData(TypedDict, total=True):
+class ClientRecord(TypedDict, total=True):
     # Base fields from Client model
     client_id: int
     first_name_encr: str
@@ -56,32 +56,34 @@ class ClientData(TypedDict, total=True):
     n_sessions: int
     case_active: bool
 
-    # Convenience fields added by add_convenience_data
-    name: NotRequired[str]
-    addr_s_nname: NotRequired[str]
-    addr_m_wname: NotRequired[str]
-    schoolpsy_name: NotRequired[str]
-    schoolpsy_street: NotRequired[str]
-    schoolpsy_city: NotRequired[str]
-    schoolpsy_addr_m_wname: NotRequired[str]
-    schoolpsy_addr_s_wname: NotRequired[str]
-    school_name: NotRequired[str]
-    school_street: NotRequired[str]
-    school_city: NotRequired[str]
-    school_head_w_school: NotRequired[str]
-    school_addr_m_wname: NotRequired[str]
-    school_addr_s_wname: NotRequired[str]
-    lrst_diagnosis_long: NotRequired[str]
-    today_date: NotRequired[date]
-    birthday_de: NotRequired[str]
-    today_date_de: NotRequired[str]
-    entry_date_de: NotRequired[str]
-    lrst_last_test_date_de: NotRequired[str]
-    document_shredding_date_de: NotRequired[str]
-    school_year: NotRequired[str]
-    nta_nos_end_schoolyear: NotRequired[str]
-    lrst_schpsy: NotRequired[int]
-    school_subjects: NotRequired[str]
+
+class ClientData(ClientRecord, total=False):
+    # Convenience fields added by ClientView.to_dict()
+    name: str
+    addr_s_nname: str
+    addr_m_wname: str
+    schoolpsy_name: str
+    schoolpsy_street: str
+    schoolpsy_city: str
+    schoolpsy_addr_m_wname: str
+    schoolpsy_addr_s_wname: str
+    school_name: str
+    school_street: str
+    school_city: str
+    school_head_w_school: str
+    school_addr_m_wname: str
+    school_addr_s_wname: str
+    lrst_diagnosis_long: str
+    today_date: date
+    birthday_de: str
+    today_date_de: str
+    entry_date_de: str
+    lrst_last_test_date_de: str
+    document_shredding_date_de: str
+    school_year: str
+    nta_nos_end_schoolyear: str
+    lrst_schpsy: int
+    school_subjects: str
 
 
 class FillFormResult(TypedDict, total=True):

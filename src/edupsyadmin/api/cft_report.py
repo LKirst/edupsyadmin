@@ -9,7 +9,7 @@ from edupsyadmin.api.reports import (
     TestReportData,
     normal_distribution_plot,
 )
-from edupsyadmin.api.types import ClientData
+from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.utils.convert_measures import iq_to_t, iq_to_z
 from edupsyadmin.utils.datediff import mydatediff
 
@@ -39,7 +39,7 @@ def calculate_raw_totals(
 
 
 def generate_cft_report(
-    client_dict: ClientData,
+    client_dict: ClientRecord,
     client_id: int,
     test_date: str,
     raw_part1_min: int | None,

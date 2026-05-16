@@ -18,7 +18,7 @@ from textual.widgets import (
 )
 from textual.widgets._select import NoSelection
 
-from edupsyadmin.api.types import ClientData
+from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.core.config import config
 from edupsyadmin.core.enums import Gender, LrstDiagnosis, LrstTesterType
 from edupsyadmin.db.clients import Client
@@ -303,7 +303,7 @@ class EditClient(Container):
 
     def _normalize_original_data(
         self,
-        data: ClientData,
+        data: ClientRecord,
     ) -> dict[str, str | bool | None]:
         return {k: _to_str_or_bool(v) for k, v in data.items()}
 
@@ -415,7 +415,7 @@ class EditClient(Container):
         widget.tooltip = tooltip
         return widget
 
-    def update_client(self, client_id: int | None, data: ClientData | None) -> None:
+    def update_client(self, client_id: int | None, data: ClientRecord | None) -> None:
         self.client_id = client_id
         data = data or _get_empty_client_dict()
 
@@ -540,7 +540,7 @@ class EditClient(Container):
 
 
 # TODO: make defaults configurable
-def _get_empty_client_dict() -> ClientData:
+def _get_empty_client_dict() -> ClientRecord:
     defaults = {
         "min_sessions": 45,
         "n_sessions": 1,
@@ -556,4 +556,4 @@ def _get_empty_client_dict() -> ClientData:
             empty_client_dict[name] = False
         else:
             empty_client_dict[name] = ""
-    return cast(ClientData, empty_client_dict)
+    return cast(ClientRecord, empty_client_dict)

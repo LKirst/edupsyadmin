@@ -14,7 +14,7 @@ from edupsyadmin.api.reports import (
     TestReportData,
     normal_distribution_plot,
 )
-from edupsyadmin.api.types import ClientData
+from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.core.config import config
 from edupsyadmin.utils.convert_measures import percentile_to_t, t_to_z
 from edupsyadmin.utils.datediff import mydatediff
@@ -103,7 +103,7 @@ def get_indices(
 
 
 def generate_lgvt_report(
-    client_dict: ClientData,
+    client_dict: ClientRecord,
     client_id: int,
     test_date: str,
     results: list[ResultsItem],

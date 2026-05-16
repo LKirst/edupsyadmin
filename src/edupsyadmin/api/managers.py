@@ -5,7 +5,8 @@ import pandas as pd
 from sqlalchemy import create_engine, func, inspect, or_, select
 from sqlalchemy.orm import sessionmaker
 
-from edupsyadmin.api.types import ClientData
+from edupsyadmin.api.client_view import ClientView
+from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db import clients as clients_db
@@ -50,7 +51,7 @@ class ClientsManager:
             logger.info(f"added client: {new_client}")
             return new_client.client_id
 
-    def get_decrypted_client(self, client_id: int) -> ClientData:
+    def get_decrypted_client(self, client_id: int) -> ClientRecord:
         logger.debug(f"trying to access client (client_id = {client_id})")
         with self.Session() as session:
             client = session.get(clients_db.Client, client_id)
@@ -58,7 +59,11 @@ class ClientsManager:
                 raise ClientNotFoundError(client_id)
             # Create a clean dictionary using the cached mapper
             data = {c.key: getattr(client, c.key) for c in self._mapper.column_attrs}
-            return cast(ClientData, data)
+            return cast(ClientRecord, data)
+
+    def get_client_view(self, client_id: int) -> ClientView:
+        """Get a ClientView for the given client_id."""
+        return ClientView(self.get_decrypted_client(client_id))
 
     def get_clients_overview(
         self,

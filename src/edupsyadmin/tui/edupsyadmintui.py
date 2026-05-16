@@ -9,7 +9,7 @@ from textual.message import Message
 from textual.widgets import Footer, Header, LoadingIndicator
 
 from edupsyadmin.api.fill_form import batch_fill_forms
-from edupsyadmin.api.types import ClientData, FillFormResult
+from edupsyadmin.api.types import ClientRecord, FillFormResult
 from edupsyadmin.tui.clients_overview import ClientsOverview
 from edupsyadmin.tui.edit_client import EditClient
 from edupsyadmin.tui.fill_form_widget import FillForm, FillFormScreen
@@ -313,14 +313,13 @@ class EdupsyadminTui(App[None]):
         if client_id is None:
             self.notify("Bitte zuerst eine*n Klient*in auswählen.", severity="warning")
             return
-
         self.push_screen(FillFormScreen(self.manager, [client_id]))
 
     class _ClientDataResult(Message):
         def __init__(
             self,
             client_id: int,
-            client_data: ClientData | None,
+            client_data: ClientRecord | None,
             error: Exception | None = None,
         ) -> None:
             self.client_id = client_id
@@ -332,7 +331,7 @@ class EdupsyadminTui(App[None]):
         def __init__(
             self,
             client_id: int | None = None,
-            client_data: ClientData | None = None,
+            client_data: ClientRecord | None = None,
             error: Exception | None = None,
         ) -> None:
             self.client_id = client_id
