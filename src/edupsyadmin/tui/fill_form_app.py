@@ -8,6 +8,7 @@ from textual.widgets import Footer, Header, LoadingIndicator
 
 from edupsyadmin.api.fill_form import batch_fill_forms
 from edupsyadmin.api.managers import ClientNotFoundError
+from edupsyadmin.api.types import ClientData
 from edupsyadmin.tui.fill_form_widget import FillForm
 
 if TYPE_CHECKING:
@@ -42,14 +43,14 @@ class FillFormApp(App[None]):
         fill_form_widget = self.query_one(FillForm)
 
         # Load all clients with error handling
-        clients_data = {}
+        clients_data: dict[int, ClientData] = {}
         failed_ids = []
 
         for client_id in self.client_ids:
             try:
-                clients_data[client_id] = self.clients_manager.get_decrypted_client(
+                clients_data[client_id] = self.clients_manager.get_client_view(
                     client_id,
-                )
+                ).to_dict()
             except ClientNotFoundError:
                 failed_ids.append(client_id)
 

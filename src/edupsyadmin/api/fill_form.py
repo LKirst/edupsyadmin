@@ -1,5 +1,5 @@
 import shutil
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -8,7 +8,7 @@ from liquid import parse
 from liquid.exceptions import LiquidError
 from pypdf import PdfReader, PdfWriter
 
-from edupsyadmin.api.add_convenience_data import add_convenience_data
+from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.api.types import ClientData, FillFormResult
 from edupsyadmin.core.logger import logger
@@ -20,14 +20,14 @@ def _ensure_output_not_exists(out_fn: Path) -> None:
         raise FileExistsError(f"Output file already exists: {out_fn}")
 
 
-def _add_aliases(data: ClientData | dict[str, Any]) -> dict[str, Any]:
+def _add_aliases(data: Mapping[str, Any]) -> dict[str, Any]:
     """
     Create aliases for keys ending in '_encr' by removing the suffix.
 
-    :param data: original dictionary
+    :param data: original mapping
     :return: modified dictionary with aliases
     """
-    aliased_data: dict[str, Any] = {**data}
+    aliased_data: dict[str, Any] = dict(data)
     for key, value in data.items():
         if key.endswith("_encr"):
             alias = key.removesuffix("_encr")
@@ -36,7 +36,7 @@ def _add_aliases(data: ClientData | dict[str, Any]) -> dict[str, Any]:
 
 
 def _modify_bool_and_none_for_pdf_form(
-    data: ClientData | dict[str, Any],
+    data: Mapping[str, Any],
 ) -> dict[str, Any]:
     """
     Replace every boolean True with 'Yes' and False with 'Off', which are the
@@ -57,7 +57,7 @@ def _modify_bool_and_none_for_pdf_form(
     return {key: transform(value) for key, value in data.items()}
 
 
-def write_form_pypdf(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) -> None:
+def write_form_pypdf(fn: Path, out_fn: Path, data: Mapping[str, Any]) -> None:
     """
     Fill a pdf form with data using pypdf.
 
@@ -109,7 +109,7 @@ def write_form_pypdf(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) 
 def write_form_fillpdf(
     fn: Path,
     out_fn: Path,
-    data: ClientData | dict[str, Any],
+    data: Mapping[str, Any],
 ) -> None:
     """
     Fill a pdf form with data using fillpdf.
@@ -134,7 +134,7 @@ def write_form_fillpdf(
         shutil.copyfile(fn, out_fn)
 
 
-def write_form_md(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) -> None:
+def write_form_md(fn: Path, out_fn: Path, data: Mapping[str, Any]) -> None:
     """
     Render a liquid template with data passed to the function.
 
@@ -171,7 +171,7 @@ def write_form_md(fn: Path, out_fn: Path, data: ClientData | dict[str, Any]) -> 
 
 
 def fill_form(
-    client_data: ClientData,
+    client_data: ClientView | ClientData,
     form_paths: Sequence[Path],
     out_dir: Path | None = None,
     use_fillpdf: bool = True,
@@ -180,8 +180,8 @@ def fill_form(
     A wrapper function for different functions to fill out forms and
     templates based on client data.
 
-    :param client_data: value key pairs where the key is the name of the form
-        field or liquid variable
+    :param client_data: ClientView instance or value key pairs where the key is
+        the name of the form field or liquid variable
     :param form_paths: a list of paths to pdf forms or liquid templates
     :param use_fillpdf: there are two options for pdf-forms - either a function
         that uses the library fillpdf or a function that uses pypdf2, defaults
@@ -190,7 +190,13 @@ def fill_form(
     if out_dir is None:
         out_dir = Path()
 
-    aliased_data = _add_aliases(client_data)
+    # Convert to dict if it's a ClientView to ensure all dynamic fields are available
+    # for the template/form filling logic which might not know the field names.
+    data_dict = (
+        client_data.to_dict() if isinstance(client_data, ClientView) else client_data
+    )
+
+    aliased_data = _add_aliases(data_dict)
 
     for fp in form_paths:
         logger.info(f"Using the template {fp}")
@@ -198,7 +204,7 @@ def fill_form(
             raise FileNotFoundError(
                 f"The template file does not exist: {fp}; cwd is: {Path.cwd()}",
             )
-        out_fp = Path(out_dir, f"{client_data.get('client_id')}_{fp.name}")
+        out_fp = Path(out_dir, f"{data_dict.get('client_id')}_{fp.name}")
         logger.info(f"Writing to {out_fp.resolve()}")
         if fp.suffix == ".md":
             write_form_md(fp, out_fp, aliased_data)
@@ -231,10 +237,9 @@ def batch_fill_forms(
 
     for client_id in client_ids:
         try:
-            client_data = clients_manager.get_decrypted_client(client_id)
-            client_data_with_convenience = add_convenience_data(client_data)
+            view = clients_manager.get_client_view(client_id)
             fill_form(
-                client_data_with_convenience,
+                view,
                 form_paths_normalized,
                 out_dir=out_dir_path,
             )

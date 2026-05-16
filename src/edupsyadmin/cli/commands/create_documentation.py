@@ -88,9 +88,6 @@ def execute(args: Namespace) -> None:
         ).run()
         return
 
-    add_convenience_data = lazy_import(
-        "edupsyadmin.api.add_convenience_data",
-    ).add_convenience_data
     fill_form = lazy_import("edupsyadmin.api.fill_form").fill_form
 
     form_paths: list[Path] = []
@@ -116,16 +113,16 @@ def execute(args: Namespace) -> None:
     out_dir = args.out_dir or config.core.output_directory
 
     for cid in args.client_id:
-        client_dict = clients_manager.get_decrypted_client(cid)
-        client_dict_w_convdat = add_convenience_data(client_dict)
+        client_view = clients_manager.get_client_view(cid)
+        client_data = client_view.to_dict()
         if args.inject_data:
             inject_dict = parse_key_value_pairs(
                 args.inject_data,
                 option_name="--inject_data",
             )
-            client_dict_w_convdat = client_dict_w_convdat | inject_dict
+            client_data.update(inject_dict)
         fill_form(
-            client_dict_w_convdat,
+            client_data,
             form_paths_normalized,
             out_dir=out_dir,
         )

@@ -19,6 +19,7 @@ from textual.widgets import (
     Static,
 )
 
+from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.types import ClientData
 from edupsyadmin.core.config import config
 
@@ -189,12 +190,8 @@ class FillForm(Widget):
             # Single client - show name
             client_id = self.client_ids[0]
             client_data = clients_data[client_id]
-            first_name = client_data.get("first_name_encr", "")
-            last_name = client_data.get("last_name_encr", "")
-            label_text = (
-                f"Fülle Formulare für Klient*in: {first_name} {last_name} "
-                f"(ID: {client_id})"
-            )
+            view = ClientView(client_data)
+            label_text = f"Fülle Formulare für Klient*in: {view.name} (ID: {client_id})"
         else:
             # Multiple clients - show count and IDs
             ids_str = ", ".join(str(cid) for cid in self.client_ids)
@@ -268,8 +265,8 @@ class FillFormScreen(Screen):
         """Load the client data and update the FillForm widget."""
         clients_data: dict[int, ClientData] = {}
         for client_id in self.client_ids:
-            clients_data[client_id] = self.clients_manager.get_decrypted_client(
+            clients_data[client_id] = self.clients_manager.get_client_view(
                 client_id,
-            )
+            ).to_dict()
 
         self.query_one(FillForm).display_client_info(clients_data)
