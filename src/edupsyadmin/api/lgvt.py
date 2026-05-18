@@ -3,7 +3,6 @@ import math
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, cast
 
 import pandas as pd
 
@@ -116,12 +115,10 @@ def generate_lgvt_report(
     """Pure logic to generate the LGVT report PDF."""
     t_day = datetime.strptime(test_date, "%Y-%m-%d").date()
     name = (
-        (client_dict.get("first_name_encr", "") or "")
-        + " "
-        + (client_dict.get("last_name_encr", "") or "")
+        (client_dict.first_name_encr or "") + " " + (client_dict.last_name_encr or "")
     ).strip() or str(client_id)
-    schoolyear = int(cast(Any, client_dict.get("class_int_encr", 0)))
-    birthday = client_dict.get("birthday_encr")
+    schoolyear = int(client_dict.class_int_encr or 0)
+    birthday = client_dict.birthday_encr
 
     if birthday is None:
         raise ValueError(f"No birthday found for client {client_id}")
@@ -170,7 +167,7 @@ def mk_report(
     client_dict = ClientsManager(
         database_url=database_url,
     ).get_decrypted_client(client_id)
-    schoolyear = int(cast(Any, client_dict.get("class_int_encr", 0)))
+    schoolyear = int(client_dict.class_int_encr or 0)
 
     csv = pd.read_csv(fn_csv)
     correct_answ = 0

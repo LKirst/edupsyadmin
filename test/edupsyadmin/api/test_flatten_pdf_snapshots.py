@@ -10,7 +10,7 @@ from edupsyadmin.api.flatten_pdf import (
 @pytest.fixture
 def filled_client_data(client_dict_internal, mock_config):
     """Prepare stable client data for snapshots."""
-    clientd = ClientView(client_dict_internal).to_dict()
+    clientd = ClientView.model_validate(client_dict_internal).model_dump()
     # Override dynamic dates for stable snapshots
     clientd["today_date_de"] = "16.10.2025"
     clientd["school_year"] = "2025/2026"

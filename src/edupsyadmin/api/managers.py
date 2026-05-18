@@ -1,5 +1,5 @@
 import logging  # just for interaction with the sqlalchemy logger
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 from sqlalchemy import create_engine, func, inspect, or_, select
@@ -57,13 +57,16 @@ class ClientsManager:
             client = session.get(clients_db.Client, client_id)
             if client is None:
                 raise ClientNotFoundError(client_id)
-            # Create a clean dictionary using the cached mapper
-            data = {c.key: getattr(client, c.key) for c in self._mapper.column_attrs}
-            return cast(ClientRecord, data)
+            return ClientRecord.model_validate(client)
 
     def get_client_view(self, client_id: int) -> ClientView:
         """Get a ClientView for the given client_id."""
-        return ClientView(self.get_decrypted_client(client_id))
+        logger.debug(f"trying to access client view (client_id = {client_id})")
+        with self.Session() as session:
+            client = session.get(clients_db.Client, client_id)
+            if client is None:
+                raise ClientNotFoundError(client_id)
+            return ClientView.model_validate(client)
 
     def get_clients_overview(
         self,

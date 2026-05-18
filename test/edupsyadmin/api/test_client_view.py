@@ -5,7 +5,6 @@ from unittest.mock import patch
 import pytest
 
 from edupsyadmin.api.client_view import ClientView
-from edupsyadmin.api.types import ClientData
 from edupsyadmin.utils.academic_year import get_this_academic_year_string
 
 
@@ -27,31 +26,29 @@ def test_client_view_convenience_data(
     # Mock the return value of get_subjects
     mock_get_subjects.return_value = "Math, Science, History"
 
-    result = ClientView(client_dict_internal).to_dict()
+    result = ClientView.model_validate(client_dict_internal).model_dump()
 
     # client data
     assert (
         result["name"]
-        == client_dict_internal["first_name_encr"]
+        == client_dict_internal.first_name_encr
         + " "
-        + client_dict_internal["last_name_encr"]
+        + client_dict_internal.last_name_encr
     )
     assert (
         result["addr_s_nname"]
-        == client_dict_internal["street_encr"]
-        + ", "
-        + client_dict_internal["city_encr"]
+        == client_dict_internal.street_encr + ", " + client_dict_internal.city_encr
     )
     assert result["addr_m_wname"] == (
         result["name"]
         + "\n"
-        + client_dict_internal["street_encr"]
+        + client_dict_internal.street_encr
         + "\n"
-        + client_dict_internal["city_encr"]
+        + client_dict_internal.city_encr
     )
 
     # school data
-    is_1st_school = client_dict_internal["school"] == "FirstSchool"
+    is_1st_school = client_dict_internal.school == "FirstSchool"
     assert (
         result["school_name"] == "Berufsfachschule Kinderpflege"
         if is_1st_school
@@ -97,31 +94,31 @@ def test_client_view_convenience_data(
         assert _is_valid_german_date(cast(dict, result)[d])
 
     # Verify that the school subjects were fetched
-    mock_get_subjects.assert_called_once_with(client_dict_internal["school"])
+    mock_get_subjects.assert_called_once_with(client_dict_internal.school)
 
     # Check school_year
     assert result["school_year"] == get_this_academic_year_string()
 
     # Check nta_nos_end_schoolyear
-    if client_dict_internal.get("nta_nos_end"):
+    if client_dict_internal.nta_nos_end:
         assert result["nta_nos_end_schoolyear"] == get_this_academic_year_string()
     else:
-        assert "nta_nos_end_schoolyear" not in result
+        assert result["nta_nos_end_schoolyear"] == ""
 
     # Check lrst_schpsy
-    if client_dict_internal.get("lrst_last_test_by_encr") == "schpsy":
+    if client_dict_internal.lrst_last_test_by_encr == "schpsy":
         assert result["lrst_schpsy"] == 1
-    elif not client_dict_internal.get("lrst_last_test_by_encr"):
-        assert "lrst_schpsy" not in result
+    else:
+        assert result["lrst_schpsy"] is None
 
 
 @patch("edupsyadmin.api.client_view._get_subjects")
 def test_client_view_invalid_lrst_diagnosis(mock_get_subjects, mock_config):
     mock_get_subjects.return_value = "Math"
     client_data = {"lrst_diagnosis_encr": "invalid_diagnosis", "school": "FirstSchool"}
-    view = ClientView(cast(ClientData, client_data))
+    view = ClientView.model_validate(client_data)
     with pytest.raises(ValueError, match="lrst_diagnosis can be only one of"):
-        view.to_dict()
+        view.model_dump()
 
 
 @patch("edupsyadmin.api.client_view._get_subjects")
@@ -132,9 +129,9 @@ def test_client_view_missing_address_parts(mock_get_subjects, mock_config):
         "last_name_encr": "Doe",
         "school": "FirstSchool",
     }
-    result = ClientView(cast(ClientData, client_data)).to_dict()
-    assert "addr_s_nname" not in result
-    assert "addr_m_wname" not in result
+    result = ClientView.model_validate(client_data).model_dump()
+    assert result["addr_s_nname"] == ""
+    assert result["addr_m_wname"] == ""
 
 
 @patch("edupsyadmin.api.client_view.logger")
@@ -143,9 +140,9 @@ def test_client_view_invalid_lrst_test_by(mock_get_subjects, mock_logger, mock_c
     mock_get_subjects.return_value = "Math"
     client_data = {"lrst_last_test_by_encr": "invalid_tester", "school": "FirstSchool"}
 
-    result = ClientView(cast(ClientData, client_data)).to_dict()
+    result = ClientView.model_validate(client_data).model_dump()
 
-    assert "lrst_schpsy" not in result
+    assert result["lrst_schpsy"] is None
     mock_logger.error.assert_called()
     args, _ = mock_logger.error.call_args
     assert "Value for lrst_last_test_by must be in" in args[0]

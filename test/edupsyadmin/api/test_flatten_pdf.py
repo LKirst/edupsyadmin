@@ -1,11 +1,10 @@
 from pathlib import Path
-from typing import cast
 
 from pypdf import PdfReader
 
+from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.fill_form import fill_form
 from edupsyadmin.api.flatten_pdf import flatten_pdf
-from edupsyadmin.api.types import ClientData
 
 # Sample client data
 client_data = {
@@ -18,9 +17,12 @@ client_data = {
 }
 
 
-def test_flatten_form(pdf_forms: list, tmp_path: Path) -> None:
+def test_flatten_form(pdf_forms: list, tmp_path: Path, mock_config: Path) -> None:
     fill_form(
-        cast(ClientData, client_data), pdf_forms, out_dir=tmp_path, use_fillpdf=True
+        ClientView.model_validate(client_data),
+        pdf_forms,
+        out_dir=tmp_path,
+        use_fillpdf=True,
     )
     for form in pdf_forms:
         # fill a form

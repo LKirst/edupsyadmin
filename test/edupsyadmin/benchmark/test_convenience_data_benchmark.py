@@ -1,15 +1,12 @@
-from typing import cast
-
 import pytest
 
 from edupsyadmin.api.client_view import ClientView
-from edupsyadmin.api.types import ClientData
+from edupsyadmin.api.types import ClientRecord
 
 
 @pytest.fixture
-def sample_client_data() -> ClientData:
-    return cast(
-        ClientData,
+def sample_client_data() -> ClientRecord:
+    return ClientRecord.model_validate(
         {
             "client_id": 1,
             "first_name_encr": "Erika",
@@ -26,16 +23,16 @@ def sample_client_data() -> ClientData:
             "lrst_last_test_date_encr": "2023-01-01",
             "entry_date_encr": "2022-09-01",
             "document_shredding_date_encr": "2030-01-01",
-        },
+        }
     )
 
 
-def test_benchmark_client_view_to_dict(benchmark, mock_config, sample_client_data):
-    """Benchmark ClientView.to_dict()."""
+def test_benchmark_client_view_model_dump(benchmark, mock_config, sample_client_data):
+    """Benchmark ClientView.model_dump()."""
 
     def run():
-        view = ClientView(sample_client_data)
-        view.to_dict()
+        view = ClientView.model_validate(sample_client_data)
+        view.model_dump()
 
     benchmark(run)
 
@@ -44,7 +41,7 @@ def test_benchmark_client_view_property_access(
     benchmark, mock_config, sample_client_data
 ):
     """Benchmark repeated property access on ClientView (caching effect)."""
-    view = ClientView(sample_client_data)
+    view = ClientView.model_validate(sample_client_data)
     # Warm up cache
     _ = view.school_year
     _ = view.schoolpsy_addr_s_wname

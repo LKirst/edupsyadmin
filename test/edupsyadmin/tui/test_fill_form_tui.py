@@ -23,7 +23,7 @@ def mock_clients_manager(mock_config):
     manager = MagicMock()
     manager.get_decrypted_client.return_value = CLIENT_DATA
     manager.get_client_view.side_effect = lambda cid: ClientView(
-        manager.get_decrypted_client(cid),
+        **manager.get_decrypted_client(cid),
     )
     return manager
 

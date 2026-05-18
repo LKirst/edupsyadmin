@@ -28,7 +28,9 @@ def mock_clients_manager(client_dict_set_by_user, mock_config):
             )
         except ValueError, TypeError:
             client_data["birthday_encr"] = None
-    manager.get_decrypted_client.return_value = client_data
+    from edupsyadmin.api.types import ClientRecord
+
+    manager.get_decrypted_client.return_value = ClientRecord.model_validate(client_data)
     return manager
 
 
@@ -123,6 +125,20 @@ def _update_widget_value(edit_client: EditClient, key: str, value: Any) -> type 
     return None
 
 
+def _get_expected_save_data(
+    typed_values: dict, widget_types: dict, defaults: Any
+) -> dict:
+    """Extract data that differs from defaults for comparison."""
+    expected_data = {}
+    for k, v in typed_values.items():
+        if not v:
+            continue
+        val_to_check = v == "1" if widget_types.get(k) is Checkbox else v
+        if val_to_check != getattr(defaults, k):
+            expected_data[k] = val_to_check
+    return expected_data
+
+
 @pytest.mark.asyncio
 async def test_save_new_client_triggers_add(client_dict_all_str, mock_config):
     """Test that saving a new client triggers the `add_client` method on the manager."""
@@ -142,10 +158,7 @@ async def test_save_new_client_triggers_add(client_dict_all_str, mock_config):
 
         edit_client = pilot.app.query_one(EditClient)
         for key, value in typed_values.items():
-            if not value:
-                continue
-            w_type = _update_widget_value(edit_client, key, value)
-            if w_type:
+            if value and (w_type := _update_widget_value(edit_client, key, value)):
                 widget_types[key] = w_type
 
         await edit_client.action_save()
@@ -158,19 +171,16 @@ async def test_save_new_client_triggers_add(client_dict_all_str, mock_config):
     # The data sent to add_client should only be the data that differs
     # from a default new client.
     defaults = _get_empty_client_dict()
+    expected_data = _get_expected_save_data(typed_values, widget_types, defaults)
 
-    expected_data = {}
-    for k, v in typed_values.items():
-        if not v:
-            continue
+    for k, v in expected_data.items():
+        assert called_kwargs[k] == v
 
-        val_to_check = None
-        val_to_check = v == "1" if widget_types.get(k) is Checkbox else v
-
-        if val_to_check != defaults.get(k):
-            expected_data[k] = val_to_check
-
-    assert called_kwargs == expected_data
+    # Check that any extra fields in called_kwargs are "empty"
+    for k, v in called_kwargs.items():
+        if k not in expected_data:
+            # v should be "empty" as per TUI logic
+            assert v in ("", None, False) or v == getattr(defaults, k)
 
 
 @pytest.mark.asyncio
@@ -211,7 +221,7 @@ async def test_edit_client_triggers_edit(
 
     edited_client = clients_manager.get_decrypted_client(client_id)
     for key, value in change_values.items():
-        retrieved_value = edited_client[key]
+        retrieved_value = getattr(edited_client, key)
         if isinstance(retrieved_value, date):
             assert retrieved_value.isoformat() == value
         elif isinstance(retrieved_value, bool):

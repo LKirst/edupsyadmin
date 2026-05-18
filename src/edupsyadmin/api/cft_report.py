@@ -70,13 +70,13 @@ def generate_cft_report(
     :return: Path to the generated PDF.
     """
     testdate = datetime.strptime(test_date, "%Y-%m-%d").date()
-    birthday = client_dict.get("birthday_encr")
+    birthday = client_dict.birthday_encr
 
     if birthday is None:
         raise ValueError(f"No birthday found for client {client_id}")
 
     age_str = mydatediff(birthday, testdate)
-    grade = client_dict.get("class_int_encr")
+    grade = client_dict.class_int_encr
 
     raw_total_min, raw_total_max = calculate_raw_totals(
         raw_part1_min, raw_part1_max, raw_part2
@@ -115,9 +115,7 @@ def generate_cft_report(
 
     # create the pdf
     name = (
-        (client_dict.get("first_name_encr", "") or "")
-        + " "
-        + (client_dict.get("last_name_encr", "") or "")
+        (client_dict.first_name_encr or "") + " " + (client_dict.last_name_encr or "")
     ).strip() or str(client_id)
 
     data = TestReportData(

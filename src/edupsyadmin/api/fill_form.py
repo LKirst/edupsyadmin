@@ -10,7 +10,7 @@ from pypdf import PdfReader, PdfWriter
 
 from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.managers import ClientsManager
-from edupsyadmin.api.types import ClientData, FillFormResult
+from edupsyadmin.api.types import FillFormResult
 from edupsyadmin.core.logger import logger
 from edupsyadmin.utils.path_utils import normalize_path
 
@@ -171,7 +171,7 @@ def write_form_md(fn: Path, out_fn: Path, data: Mapping[str, Any]) -> None:
 
 
 def fill_form(
-    client_data: ClientView | ClientData,
+    client_data: ClientView | dict[str, Any],
     form_paths: Sequence[Path],
     out_dir: Path | None = None,
     use_fillpdf: bool = True,
@@ -193,7 +193,7 @@ def fill_form(
     # Convert to dict if it's a ClientView to ensure all dynamic fields are available
     # for the template/form filling logic which might not know the field names.
     data_dict = (
-        client_data.to_dict() if isinstance(client_data, ClientView) else client_data
+        client_data.model_dump() if isinstance(client_data, ClientView) else client_data
     )
 
     aliased_data = _add_aliases(data_dict)

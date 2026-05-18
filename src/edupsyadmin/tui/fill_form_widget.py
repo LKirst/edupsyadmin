@@ -20,7 +20,7 @@ from textual.widgets import (
 )
 
 from edupsyadmin.api.client_view import ClientView
-from edupsyadmin.api.types import ClientData
+from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.core.config import config
 
 if TYPE_CHECKING:
@@ -181,7 +181,7 @@ class FillForm(Widget):
             current_path = Path(tree.path).resolve()
             event.input.value = str(current_path)
 
-    def display_client_info(self, clients_data: dict[int, ClientData]) -> None:
+    def display_client_info(self, clients_data: dict[int, ClientRecord]) -> None:
         """Update the widget with data for the clients whose forms should be filled."""
         self.client_ids = list(clients_data.keys())
         info = self.query_one("#client-info", Static)
@@ -190,7 +190,7 @@ class FillForm(Widget):
             # Single client - show name
             client_id = self.client_ids[0]
             client_data = clients_data[client_id]
-            view = ClientView(client_data)
+            view = ClientView.model_validate(client_data)
             label_text = f"Fülle Formulare für Klient*in: {view.name} (ID: {client_id})"
         else:
             # Multiple clients - show count and IDs
@@ -263,10 +263,10 @@ class FillFormScreen(Screen):
 
     def on_mount(self) -> None:
         """Load the client data and update the FillForm widget."""
-        clients_data: dict[int, ClientData] = {}
+        clients_data: dict[int, ClientRecord] = {}
         for client_id in self.client_ids:
             clients_data[client_id] = self.clients_manager.get_client_view(
                 client_id,
-            ).to_dict()
+            ).model_dump()
 
         self.query_one(FillForm).display_client_info(clients_data)

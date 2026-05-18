@@ -4,17 +4,11 @@ from unittest.mock import patch
 from edupsyadmin.api.cft_report import create_report
 
 
-def test_cft_report_snapshot(pdf_snapshot, clients_manager, tmp_path):
+def test_cft_report_snapshot(
+    pdf_snapshot, clients_manager, tmp_path, client_dict_set_by_user
+):
     """Standard report with all values provided."""
-    client_data = {
-        "first_name_encr": "Max",
-        "last_name_encr": "Mustermann",
-        "birthday_encr": date(2010, 5, 15),
-        "class_name_encr": "8",
-        "school": "FirstSchool",
-        "gender_encr": "m",
-    }
-    client_id = clients_manager.add_client(**client_data)
+    client_id = clients_manager.add_client(**client_dict_set_by_user)
 
     test_date = "2026-04-18"
 

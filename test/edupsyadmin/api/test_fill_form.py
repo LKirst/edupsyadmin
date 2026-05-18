@@ -5,17 +5,14 @@ import pypdf
 
 from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.fill_form import batch_fill_forms, fill_form
+from edupsyadmin.api.types import ClientRecord
 
 
 def test_fill_form(
-    mock_config, pdf_forms: list, tmp_path: Path, client_dict_internal: dict
+    mock_config, pdf_forms: list, tmp_path: Path, client_dict_internal: ClientRecord
 ) -> None:
     """Test the fill_form function."""
-    from typing import cast
-
-    from edupsyadmin.api.types import ClientData
-
-    clientd = ClientView(cast(ClientData, client_dict_internal)).to_dict()
+    clientd = ClientView.model_validate(client_dict_internal).model_dump()
     fill_form(clientd, pdf_forms, out_dir=tmp_path, use_fillpdf=True)
 
     for i, form in enumerate(pdf_forms):
@@ -43,7 +40,7 @@ def test_fill_form(
 
 
 def test_batch_fill_forms(
-    mock_config, pdf_forms: list, tmp_path: Path, client_dict_internal: dict
+    mock_config, pdf_forms: list, tmp_path: Path, client_dict_internal: ClientRecord
 ) -> None:
     """Test the batch_fill_forms function."""
     from edupsyadmin.api.client_view import ClientView
@@ -51,13 +48,9 @@ def test_batch_fill_forms(
     clients_manager = MagicMock()
 
     def get_view(cid):
-        from typing import cast
 
-        from edupsyadmin.api.types import ClientRecord
-
-        data = client_dict_internal.copy()
-        data["client_id"] = cid
-        return ClientView(cast(ClientRecord, data))
+        data = client_dict_internal.model_copy(update={"client_id": cid})
+        return ClientView.model_validate(data)
 
     clients_manager.get_client_view.side_effect = get_view
 

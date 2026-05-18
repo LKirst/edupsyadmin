@@ -114,7 +114,7 @@ def execute(args: Namespace) -> None:
 
     for cid in args.client_id:
         client_view = clients_manager.get_client_view(cid)
-        client_data = client_view.to_dict()
+        client_data = client_view.model_dump()
         if args.inject_data:
             inject_dict = parse_key_value_pairs(
                 args.inject_data,

@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar
 
 from textual import on
 from textual.app import ComposeResult
@@ -77,7 +77,7 @@ def _to_str_or_bool(value: object) -> str | bool | None:
         return None
     if isinstance(value, bool):
         return value
-    if isinstance(value, (date, datetime)):
+    if isinstance(value, date | datetime):
         return value.isoformat()
     return str(value)
 
@@ -305,7 +305,7 @@ class EditClient(Container):
         self,
         data: ClientRecord,
     ) -> dict[str, str | bool | None]:
-        return {k: _to_str_or_bool(v) for k, v in data.items()}
+        return {k: _to_str_or_bool(v) for k, v in data.model_dump().items()}
 
     def _visible_db_columns(self):
         for db_column in Client.__table__.columns:
@@ -541,19 +541,4 @@ class EditClient(Container):
 
 # TODO: make defaults configurable
 def _get_empty_client_dict() -> ClientRecord:
-    defaults = {
-        "min_sessions": 45,
-        "n_sessions": 1,
-    }
-    empty_client_dict: dict[str, Any] = {}
-    for db_column in Client.__table__.columns:
-        field_type = get_python_type(db_column.type)
-        name = db_column.name
-
-        if name in defaults:
-            empty_client_dict[name] = defaults[name]
-        if field_type is bool:
-            empty_client_dict[name] = False
-        else:
-            empty_client_dict[name] = ""
-    return cast(ClientRecord, empty_client_dict)
+    return ClientRecord()

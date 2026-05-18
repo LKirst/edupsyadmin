@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 from textual.widgets import DataTable, Input
 
+from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.tui.edit_client import EditClient
 from edupsyadmin.tui.edupsyadmintui import EdupsyadminTui
 from edupsyadmin.tui.fill_form_widget import FillForm
@@ -32,8 +33,8 @@ def mock_clients_manager():
     manager = MagicMock()
     df = pd.DataFrame(ROWS, columns=COLUMNS)
     manager.get_clients_overview.return_value = df
-    manager.get_decrypted_client.return_value = dict(
-        zip(COLUMNS, ROWS[0], strict=False)
+    manager.get_decrypted_client.return_value = ClientRecord.model_validate(
+        dict(zip(COLUMNS, ROWS[0], strict=False))
     )
     return manager
 
@@ -55,7 +56,9 @@ def test_edupsyadmintui_initial_layout(snap_compare, mock_config, mock_clients_m
 @pytest.mark.asyncio
 async def test_select_client_populates_edit_form(mock_config, mock_clients_manager):
     """Test that selecting a client in the overview populates the edit form."""
-    client_to_select = dict(zip(COLUMNS, ROWS[1], strict=False))
+    client_to_select = ClientRecord.model_validate(
+        dict(zip(COLUMNS, ROWS[1], strict=False))
+    )
     mock_clients_manager.get_decrypted_client.return_value = client_to_select
 
     app = EdupsyadminTui(manager=mock_clients_manager)
@@ -73,11 +76,11 @@ async def test_select_client_populates_edit_form(mock_config, mock_clients_manag
 
         # Wait for edit form to populate
         edit_client_widget = pilot.app.query_one(EditClient)
-        while edit_client_widget.client_id != client_to_select["client_id"]:
+        while edit_client_widget.client_id != client_to_select.client_id:
             await pilot.pause(0.01)
 
         first_name_input = edit_client_widget.query_one("#first_name_encr", Input)
-        assert first_name_input.value == client_to_select["first_name_encr"]
+        assert first_name_input.value == client_to_select.first_name_encr
 
 
 @pytest.mark.asyncio

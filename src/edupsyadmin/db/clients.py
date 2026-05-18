@@ -114,12 +114,9 @@ class Client(Base):
             f"{', '.join(LRST_DIAG)}"
         ),
     )
-    lrst_last_test_date_encr: Mapped[str] = mapped_column(
-        EncryptedString,
-        doc=(
-            "Datum (YYYY-MM-DD) der letzten Testung im Zusammenhang "
-            "einer Überprüfung von LRSt"
-        ),
+    lrst_last_test_date_encr: Mapped[date | None] = mapped_column(
+        EncryptedDate,
+        doc=("Datum der letzten Testung im Zusammenhang einer Überprüfung von LRSt"),
     )
     lrst_last_test_by_encr: Mapped[str] = mapped_column(
         EncryptedString,
@@ -313,7 +310,7 @@ class Client(Base):
     nta_nos_notes_encr: Mapped[str] = mapped_column(
         EncryptedString,
         nullable=False,
-        doc="Verschlüsselte Notizen zu Notenschutz und Nachteilsausgleich",
+        doc="Verschlüsselte Notizen zu Notenschutz and Nachteilsausgleich",
     )
     nta_nos_end: Mapped[bool] = mapped_column(
         Boolean,
@@ -412,10 +409,7 @@ class Client(Base):
         self.entry_date_encr = to_date_or_none(entry_date_encr)
         self.class_name_encr = class_name_encr
         self.lrst_diagnosis_encr = lrst_diagnosis_encr
-        _lrst_date_dt = to_date_or_none(lrst_last_test_date_encr)
-        self.lrst_last_test_date_encr = (
-            _lrst_date_dt.isoformat() if _lrst_date_dt else ""
-        )
+        self.lrst_last_test_date_encr = to_date_or_none(lrst_last_test_date_encr)
         self.lrst_last_test_by_encr = lrst_last_test_by_encr
         self.keyword_taet_encr = keyword_taet_encr
 
@@ -604,9 +598,8 @@ class Client(Base):
         self,
         key: str,  # noqa: ARG002
         value: str | date | None,
-    ) -> str:
-        dt = to_date_or_none(value)
-        return dt.isoformat() if dt else ""
+    ) -> date | None:
+        return to_date_or_none(value)
 
     @validates("lrst_last_test_by_encr")
     def validate_lrst_last_test_by_encr(self, key: str, value: str | None) -> str:

@@ -155,8 +155,8 @@ def test_new_client(mock_config, mock_webuntis, tmp_path):
     new_client_command.execute(args)
 
     client = managers.ClientsManager(database_url).get_decrypted_client(client_id=1)
-    assert client["first_name_encr"] == "Erika"
-    assert client["last_name_encr"] == "Mustermann"
+    assert client.first_name_encr == "Erika"
+    assert client.last_name_encr == "Mustermann"
 
 
 def test_get_clients_all(capsys, mock_config, mock_webuntis, tmp_path):
@@ -262,8 +262,8 @@ def test_set_client(capsys, mock_config, mock_webuntis, tmp_path):
 
     # Assert
     client = clients_manager.get_decrypted_client(client_id=1)
-    assert client["street_encr"] == "Veränderte Straße 5"
-    assert client["class_name_encr"] == "42ab"
+    assert client.street_encr == "Veränderte Straße 5"
+    assert client.class_name_encr == "42ab"
 
 
 # TODO: test inject_data
@@ -464,7 +464,7 @@ class TestRotateKey:
         encr.set_keys([new_key])
         # Need a new manager to ensure we aren't using any cached state
         client = managers.ClientsManager(database_url).get_decrypted_client(client_id)
-        assert client["first_name_encr"] == "RotateMe"
+        assert client.first_name_encr == "RotateMe"
 
         # Check keyring: should ONLY have the new key now
         # (if cleanup worked as expected)

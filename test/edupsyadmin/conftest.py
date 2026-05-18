@@ -3,7 +3,7 @@ import importlib.resources
 import io
 import shutil
 from collections.abc import Generator
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
@@ -22,7 +22,7 @@ from syrupy.extensions.image import PNGImageSnapshotExtension
 
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.api.migration import upgrade_db
-from edupsyadmin.api.types import ClientData
+from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.core.config import config
 from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import Logger, logger
@@ -91,10 +91,7 @@ def mock_keyring(monkeypatch):
 
     def delete_password(service, username):
         key = f"{service}:{username}"
-        if key in store:
-            del store[key]
-        else:
-            raise keyring.errors.PasswordDeleteError("Password not found")
+        store.pop(key, None)
 
     # Mock the main functions used by the app
     monkeypatch.setattr(keyring, "get_credential", get_credential)
@@ -295,13 +292,30 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
                 "birthday_encr": date(1990, 1, 1),
                 "street_encr": "123 Main St",
                 "city_encr": "New York",
+                "parent_encr": "",
                 "telephone1_encr": "555-1234",
+                "telephone2_encr": "",
                 "email_encr": "john.doe@example.com",
+                "notes_encr": "",
                 "nos_rs": True,
                 "nos_les": False,
+                "nos_rs_ausn": False,
+                "nos_rs_ausn_faecher_encr": "",
+                "nos_other": False,
+                "nos_other_details_encr": "",
                 "notenschutz": True,
                 "nta_zeitv_vieltext": 10,
+                "nta_zeitv_wenigtext": None,
                 "nta_zeitv": True,
+                "nta_font": False,
+                "nta_aufg": False,
+                "nta_struktur": False,
+                "nta_arbeitsm": False,
+                "nta_ersgew": False,
+                "nta_vorlesen": False,
+                "nta_other": False,
+                "nta_other_details_encr": "",
+                "nta_nos_notes_encr": "",
                 "nachteilsausgleich": True,
                 "nta_nos_end": True,
                 "nta_nos_end_grade": 11,
@@ -309,7 +323,13 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
                 "lrst_last_test_date_encr": date(2025, 5, 11),
                 "lrst_last_test_by_encr": "schpsy",
                 "document_shredding_date_encr": date(2025, 12, 24),
+                "estimated_graduation_date_encr": None,
+                "datetime_created": datetime.now(),
+                "datetime_lastmodified": datetime.now(),
                 "keyword_taet_encr": "slbb.slb.sonstige",
+                "min_sessions": 45,
+                "n_sessions": 1,
+                "case_active": True,
             },
             id="nos_nta_internal",
         ),
@@ -326,13 +346,30 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
                 "birthday_encr": date(1990, 1, 1),
                 "street_encr": "Umlautstraße 5ä",
                 "city_encr": "München",
+                "parent_encr": "",
                 "telephone1_encr": "+555-1234",
+                "telephone2_encr": "",
                 "email_encr": "example@example.com",
+                "notes_encr": "",
                 "nos_rs": False,
                 "nos_les": False,
+                "nos_rs_ausn": False,
+                "nos_rs_ausn_faecher_encr": "",
+                "nos_other": False,
+                "nos_other_details_encr": "",
                 "notenschutz": False,
                 "nta_zeitv_vieltext": None,
+                "nta_zeitv_wenigtext": None,
                 "nta_zeitv": False,
+                "nta_font": False,
+                "nta_aufg": False,
+                "nta_struktur": False,
+                "nta_arbeitsm": False,
+                "nta_ersgew": False,
+                "nta_vorlesen": False,
+                "nta_other": False,
+                "nta_other_details_encr": "",
+                "nta_nos_notes_encr": "",
                 "nachteilsausgleich": False,
                 "nta_nos_end": False,
                 "nta_nos_end_grade": None,
@@ -340,19 +377,25 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
                 "lrst_last_test_date_encr": "",
                 "lrst_last_test_by_encr": "",
                 "document_shredding_date_encr": date(2025, 12, 24),
+                "estimated_graduation_date_encr": None,
+                "datetime_created": datetime.now(),
+                "datetime_lastmodified": datetime.now(),
                 "keyword_taet_encr": "",
+                "min_sessions": 45,
+                "n_sessions": 1,
+                "case_active": True,
             },
             id="umlaut_internal",
         ),
     ],
     scope="session",
 )
-def client_dict_internal(request) -> ClientData:
+def client_dict_internal(request) -> ClientRecord:
     """
     The attributes of a clients object. Includes data that the clients object
     sets internally.
     """
-    return request.param
+    return ClientRecord(**request.param)
 
 
 @pytest.fixture

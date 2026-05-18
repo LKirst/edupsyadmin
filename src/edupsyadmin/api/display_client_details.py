@@ -1,16 +1,19 @@
+from typing import Any
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from edupsyadmin.api.types import ClientData
+from edupsyadmin.api.types import ClientRecord
 
 
-def display_client_details(client_data: ClientData) -> None:
+def display_client_details(client_data: ClientRecord) -> None:
     """Displays client details in a formatted way using rich."""
     console = Console()
+    data_dict = client_data.model_dump()
 
     # Helper to print a table for a group of fields
-    def print_group_table(data: ClientData, title: str, fields: list[str]) -> None:
+    def print_group_table(data: dict[str, Any], title: str, fields: list[str]) -> None:
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column(style="cyan")
         table.add_column()
@@ -36,11 +39,11 @@ def display_client_details(client_data: ClientData) -> None:
         "n_sessions",
         "estimated_graduation_date_encr",
     ]
-    print_group_table(client_data, "Person", person_fields)
+    print_group_table(data_dict, "Person", person_fields)
 
     # Notizen
     notes_field = ["notes_encr"]
-    print_group_table(client_data, "Notizen", notes_field)
+    print_group_table(data_dict, "Notizen", notes_field)
 
     # Kontaktdaten
     kontaktdaten_fields = [
@@ -51,7 +54,7 @@ def display_client_details(client_data: ClientData) -> None:
         "telephone2_encr",
         "email_encr",
     ]
-    print_group_table(client_data, "Kontaktdaten", kontaktdaten_fields)
+    print_group_table(data_dict, "Kontaktdaten", kontaktdaten_fields)
 
     # Notenschutz
     notenschutz_fields = [
@@ -63,7 +66,7 @@ def display_client_details(client_data: ClientData) -> None:
         "nos_other",
         "nos_other_details_encr",
     ]
-    print_group_table(client_data, "Notenschutz", notenschutz_fields)
+    print_group_table(data_dict, "Notenschutz", notenschutz_fields)
 
     # Nachteilsausgleich
     nta_fields = [
@@ -83,7 +86,7 @@ def display_client_details(client_data: ClientData) -> None:
         "nta_nos_end",
         "nta_nos_end_grade",
     ]
-    print_group_table(client_data, "Nachteilsausgleich", nta_fields)
+    print_group_table(data_dict, "Nachteilsausgleich", nta_fields)
 
     # LRSt
     lrst_fields = [
@@ -91,7 +94,7 @@ def display_client_details(client_data: ClientData) -> None:
         "lrst_last_test_by_encr",
         "lrst_last_test_date_encr",
     ]
-    print_group_table(client_data, "LRSt", lrst_fields)
+    print_group_table(data_dict, "LRSt", lrst_fields)
 
     # Dates
     dates_fields = [
@@ -99,4 +102,4 @@ def display_client_details(client_data: ClientData) -> None:
         "datetime_created",
         "datetime_lastmodified",
     ]
-    print_group_table(client_data, "Daten Dokumentation", dates_fields)
+    print_group_table(data_dict, "Daten Dokumentation", dates_fields)
