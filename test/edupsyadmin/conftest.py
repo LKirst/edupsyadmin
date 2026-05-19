@@ -374,7 +374,7 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
                 "nta_nos_end": False,
                 "nta_nos_end_grade": None,
                 "lrst_diagnosis_encr": "",
-                "lrst_last_test_date_encr": "",
+                "lrst_last_test_date_encr": None,
                 "lrst_last_test_by_encr": "",
                 "document_shredding_date_encr": date(2025, 12, 24),
                 "estimated_graduation_date_encr": None,

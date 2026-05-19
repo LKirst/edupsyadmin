@@ -1,15 +1,9 @@
 from datetime import date, datetime
-from typing import Any, TypedDict
+from typing import TypedDict
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from edupsyadmin.core.enums import Gender, LrstDiagnosis, LrstTesterType
-
-
-def _empty_str_to_none(v: Any) -> Any:
-    if v == "":
-        return None
-    return v
 
 
 class ClientRecord(BaseModel):
@@ -69,18 +63,6 @@ class ClientRecord(BaseModel):
     min_sessions: int = 45
     n_sessions: int = 1
     case_active: bool = True
-
-    @field_validator(
-        "birthday_encr",
-        "lrst_last_test_date_encr",
-        "entry_date_encr",
-        "estimated_graduation_date_encr",
-        "document_shredding_date_encr",
-        mode="before",
-    )
-    @classmethod
-    def validate_date(cls, v: Any) -> Any:
-        return _empty_str_to_none(v)
 
 
 class FillFormResult(TypedDict, total=True):
