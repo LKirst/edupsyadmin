@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 from textual.widgets import Checkbox, Input
 
+from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.tui.edit_client import EditClient, _get_empty_client_dict
 from edupsyadmin.tui.edit_client_app import EditClientApp
 
@@ -21,14 +22,27 @@ def mock_clients_manager(client_dict_set_by_user, mock_config):
     """A mock clients manager that uses mock_config to ensure config is loaded."""
     manager = MagicMock()
     client_data = client_dict_set_by_user.copy()
-    if "birthday_encr" in client_data and isinstance(client_data["birthday_encr"], str):
-        try:
-            client_data["birthday_encr"] = date.fromisoformat(
-                client_data["birthday_encr"]
-            )
-        except ValueError, TypeError:
-            client_data["birthday_encr"] = None
-    from edupsyadmin.api.types import ClientRecord
+
+    # We must manually sanitize date fields here because this mock bypasses the
+    # SQLAlchemy 'Client' model (which uses 'to_date_or_none' to convert "" to None)
+    # and goes straight to Pydantic validation. Pydantic is stricter and won't
+    # accept "" for a date field.
+    date_fields = [
+        "birthday_encr",
+        "entry_date_encr",
+        "lrst_last_test_date_encr",
+        "estimated_graduation_date_encr",
+        "document_shredding_date_encr",
+    ]
+    for field in date_fields:
+        if field in client_data and isinstance(client_data[field], str):
+            if not client_data[field].strip():
+                client_data[field] = None
+            else:
+                try:
+                    client_data[field] = date.fromisoformat(client_data[field])
+                except ValueError, TypeError:
+                    client_data[field] = None
 
     manager.get_decrypted_client.return_value = ClientRecord.model_validate(client_data)
     return manager
