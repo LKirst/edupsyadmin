@@ -1,7 +1,6 @@
 import logging  # just for interaction with the sqlalchemy logger
 from typing import Any
 
-import pandas as pd
 from sqlalchemy import create_engine, func, inspect, or_, select
 from sqlalchemy.orm import sessionmaker
 
@@ -68,7 +67,7 @@ class ClientsManager:
         nta_nos: bool = False,
         schools: list[str] | None = None,
         columns: list[str] | str | None = None,
-    ) -> pd.DataFrame:
+    ) -> list[dict[str, Any]]:
         logger.debug("trying to query client data for overview")
 
         # Always-present base columns
@@ -132,7 +131,7 @@ class ClientsManager:
 
         with self.Session() as session:
             result = session.execute(stmt, execution_options={"yield_per": 100})
-            return pd.DataFrame(result.fetchall(), columns=list(result.keys()))
+            return [dict(row) for row in result.mappings()]
 
     def edit_client(self, client_ids: list[int], new_data: dict[str, Any]) -> None:
         logger.debug(f"editing clients (ids = {client_ids})")

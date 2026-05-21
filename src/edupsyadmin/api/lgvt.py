@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
+import csv
 import math
 import os
 from datetime import datetime
 from pathlib import Path
-
-import pandas as pd
 
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.api.reports import (
@@ -62,11 +61,13 @@ def get_indices(
     lgs_rw_korr: int,
 ) -> tuple[list[ResultsItem], float, float, float]:
     """Pure logic to calculate LGVT indices and results list."""
-    csv = pd.read_csv(fn_csv)
+    with Path(fn_csv).open(encoding="utf-8") as f:
+        csv_data = list(csv.DictReader(f))
+
     if num_processed == 0:
         raise ValueError("No items were processed.")
 
-    words_until_last_item = int(csv.Wortzahl.iloc[num_processed - 1])
+    words_until_last_item = int(csv_data[num_processed - 1]["Wortzahl"])
     lv_rw = correct_answ * 2 - incorrect_answ
     lgs_rw = words_until_last_item + words_after_last_item
     lg_rw = round((correct_answ / num_processed) * 100)
@@ -169,14 +170,16 @@ def mk_report(
     ).get_decrypted_client(client_id)
     schoolyear = int(client_dict.class_int_encr or 0)
 
-    csv = pd.read_csv(fn_csv)
+    with Path(fn_csv).open(encoding="utf-8") as f:
+        csv_data = list(csv.DictReader(f))
+
     correct_answ = 0
     incorrect_answ = 0
 
     print("Press quit for the first item, the subject did not respond to.")
     num_processed = 0
-    for i, item in enumerate(csv.RichtigeAntwort):
-        answ = askyn(f"{item}?(y|n|q): ")
+    for i, item in enumerate(csv_data):
+        answ = askyn(f"{item['RichtigeAntwort']}?(y|n|q): ")
         if answ == 1:
             correct_answ += 1
         elif answ == 0:
@@ -185,12 +188,12 @@ def mk_report(
             num_processed = i
             break
     else:
-        num_processed = len(csv)
+        num_processed = len(csv_data)
 
     if num_processed == 0:
         raise ValueError("No items were processed.")
 
-    words_until_last_item = int(csv.Wortzahl.iloc[num_processed - 1])
+    words_until_last_item = int(csv_data[num_processed - 1]["Wortzahl"])
     words_after_last_item = int(input("Words read after the last item: "))
 
     lv_rw = correct_answ * 2 - incorrect_answ

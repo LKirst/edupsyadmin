@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock, patch
 
-import pandas as pd
 import pytest
 from textual.widgets import DataTable, Input
 
@@ -26,13 +25,14 @@ COLUMNS = [
     "keyword_taet_encr",
 ]
 
+DATA = [dict(zip(COLUMNS, row, strict=True)) for row in ROWS]
+
 
 @pytest.fixture
 def mock_clients_manager():
     """Provides a mock ClientsManager."""
     manager = MagicMock()
-    df = pd.DataFrame(ROWS, columns=COLUMNS)
-    manager.get_clients_overview.return_value = df
+    manager.get_clients_overview.return_value = DATA
     manager.get_decrypted_client.return_value = ClientRecord.model_validate(
         dict(zip(COLUMNS, ROWS[0], strict=False))
     )

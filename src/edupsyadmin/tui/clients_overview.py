@@ -1,6 +1,5 @@
-from typing import ClassVar
+from typing import Any, ClassVar
 
-import pandas as pd
 from rich.text import Text
 from textual import on, work
 from textual.app import ComposeResult
@@ -14,11 +13,11 @@ from edupsyadmin.tui.dialogs import YesNoDialog
 
 def _format_cell(value: str | bool | float | int) -> Text | str | bool | float | int:
     """Format a cell value with colors:
-    - NaN → grey
+    - None → grey
     - True → bold green "True"
     - False → bold red "False"
     """
-    if pd.isna(value):
+    if value is None:
         return Text("—", style="dim")
 
     if value is True:
@@ -80,11 +79,11 @@ class ClientsOverview(Static):
             self.client_id = client_id
             super().__init__()
 
-    class _DfLoaded(Message):
-        """Internal message to signal dataframe is loaded."""
+    class _DataLoaded(Message):
+        """Internal message to signal data is loaded."""
 
-        def __init__(self, df: pd.DataFrame) -> None:
-            self.df = df
+        def __init__(self, data: list[dict[str, Any]]) -> None:
+            self.data = data
             super().__init__()
 
     class _ClientDeleted(Message):
@@ -130,14 +129,14 @@ class ClientsOverview(Static):
         return self._reverse_states[sort_key]
 
     @work(exclusive=True, thread=True)
-    def get_clients_df(self) -> None:
-        """Get clients overview as a pandas DataFrame."""
-        df = self.manager.get_clients_overview(
+    def get_clients_data(self) -> None:
+        """Get clients overview data."""
+        data = self.manager.get_clients_overview(
             nta_nos=self.nta_nos,
             schools=self.schools,
             columns=self.columns,
         )
-        self.post_message(self._DfLoaded(df))
+        self.post_message(self._DataLoaded(data))
 
     @work(exclusive=True, thread=True)
     def delete_client(self, client_id: int) -> None:
@@ -157,17 +156,22 @@ class ClientsOverview(Static):
                 width = 20 if col in ("first_name_encr", "last_name_encr") else None
                 table.add_column(col, key=col, width=width)
 
-    def _add_rows_to_table(self, table: DataTable, df: pd.DataFrame) -> None:
-        """Formats and adds rows from the DataFrame to the DataTable."""
+    def _add_rows_to_table(self, table: DataTable, data: list[dict[str, Any]]) -> None:
+        """Formats and adds rows from the data to the DataTable."""
+        if not data:
+            return
+
+        columns = list(data[0].keys())
+        self._setup_table_columns(table, columns)
+
         skip_formatting = {"client_id"}
         formatted_rows = []
-        for row_tuple in df.itertuples(index=False, name=None):
-            row_dict = dict(zip(df.columns, row_tuple, strict=True))
+        for row_dict in data:
             case_active = row_dict.get("case_active", True)
             client_id_style = "bold green" if case_active else "bold red"
 
             formatted_row = []
-            for col in df.columns:
+            for col in columns:
                 if col == "case_active":
                     continue
                 val = row_dict[col]
@@ -181,18 +185,17 @@ class ClientsOverview(Static):
 
         table.add_rows(formatted_rows)
 
-    def on_clients_overview__df_loaded(self, message: _DfLoaded) -> None:
+    def on_clients_overview__data_loaded(self, message: _DataLoaded) -> None:
         table = self.query_one(DataTable)
         table.clear()
 
-        df = message.df
-        if df.empty:
+        data = message.data
+        if not data:
             table.loading = False
             self.notify("Tabelle neu geladen.")
             return
 
-        self._setup_table_columns(table, list(df.columns))
-        self._add_rows_to_table(table, df)
+        self._add_rows_to_table(table, data)
 
         if self._last_applied_sort[0]:
             table.sort(
@@ -215,7 +218,7 @@ class ClientsOverview(Static):
         """Reloads the data in the table from the database."""
         table = self.query_one(DataTable)
         table.loading = True
-        self.get_clients_df()
+        self.get_clients_data()
 
     def action_request_delete_client(self) -> None:
         """Action to request deleting a client."""

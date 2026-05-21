@@ -159,7 +159,8 @@ def test_new_client(mock_config, mock_webuntis, tmp_path):
     assert client.last_name_encr == "Mustermann"
 
 
-def test_get_clients_all(capsys, mock_config, mock_webuntis, tmp_path):
+def test_get_clients_all(capsys, mock_config, mock_webuntis, tmp_path, monkeypatch):
+    monkeypatch.setenv("COLUMNS", "200")
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
 
@@ -484,7 +485,7 @@ class TestRotateKey:
         with (
             patch("builtins.input", return_value="no"),
             patch(
-                "edupsyadmin.cli.commands.rotate_key.re_encrypt_all_data",
+                "edupsyadmin.api.migration.re_encrypt_all_data",
             ) as mock_re_encrypt,
         ):
             args = argparse.Namespace(

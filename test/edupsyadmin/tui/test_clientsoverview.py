@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock
 
-import pandas as pd
 import pytest
 from textual.widgets import DataTable
 
@@ -68,13 +67,14 @@ COLUMNS = [
     "keyword_taet_encr",
 ]
 
+DATA = [dict(zip(COLUMNS, row, strict=True)) for row in ROWS]
+
 
 def test_clients_overview(snap_compare) -> None:
     """Test that the clients overview table is correctly populated."""
     mock_manager = MagicMock()
-    df = pd.DataFrame(ROWS, columns=COLUMNS)
     # The manager's method is called in a worker thread in on_mount
-    mock_manager.get_clients_overview.return_value = df
+    mock_manager.get_clients_overview.return_value = DATA
 
     app = ClientsOverviewApp(clients_manager=mock_manager)
 
@@ -112,8 +112,8 @@ def test_clients_overview_long_names(snap_compare) -> None:
         ),
     ]
 
-    df = pd.DataFrame(long_rows, columns=COLUMNS)
-    mock_manager.get_clients_overview.return_value = df
+    long_data = [dict(zip(COLUMNS, row, strict=True)) for row in long_rows]
+    mock_manager.get_clients_overview.return_value = long_data
 
     app = ClientsOverviewApp(clients_manager=mock_manager)
 
@@ -137,13 +137,13 @@ async def test_delete_client_confirmed(mock_config):
     mock_manager = MagicMock()
 
     # Initial data
-    initial_df = pd.DataFrame(ROWS, columns=COLUMNS)
+    initial_data = DATA
 
     # Data after deleting the first client (ID 1)
-    df_after_delete = pd.DataFrame(ROWS[1:], columns=COLUMNS)
+    data_after_delete = DATA[1:]
 
-    # Set up the mock to return different dataframes on subsequent calls
-    mock_manager.get_clients_overview.side_effect = [initial_df, df_after_delete]
+    # Set up the mock to return different data on subsequent calls
+    mock_manager.get_clients_overview.side_effect = [initial_data, data_after_delete]
 
     app = ClientsOverviewApp(clients_manager=mock_manager)
 
@@ -180,8 +180,7 @@ async def test_delete_client_confirmed(mock_config):
 async def test_delete_client_cancelled(mock_config):
     """Test cancelling the client deletion."""
     mock_manager = MagicMock()
-    df = pd.DataFrame(ROWS, columns=COLUMNS)
-    mock_manager.get_clients_overview.return_value = df
+    mock_manager.get_clients_overview.return_value = DATA
 
     app = ClientsOverviewApp(clients_manager=mock_manager)
 

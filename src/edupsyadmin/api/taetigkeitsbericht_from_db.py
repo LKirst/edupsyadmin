@@ -266,11 +266,12 @@ def taetigkeitsbericht(
     """
 
     # Only fetch required columns
-    df = ClientsManager(
+    data = ClientsManager(
         database_url=database_url,
     ).get_clients_overview(
         columns=["keyword_taet_encr", "min_sessions", "n_sessions"],
     )
+    df = pd.DataFrame(data)
     df["h_sessions"] = df["min_sessions"] / 60.0
 
     df, summary_categories = add_categories_to_df(df, "keyword_taet_encr")

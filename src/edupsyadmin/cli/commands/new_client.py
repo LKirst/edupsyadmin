@@ -6,8 +6,6 @@ from inspect import signature
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from sqlalchemy import inspect as sa_inspect
-
 from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
@@ -137,6 +135,8 @@ def _enter_client_csv(
     if school is None:
         school = next(iter(config.school.keys()))
     client_data["school"] = school
+
+    from sqlalchemy import inspect as sa_inspect
 
     # Filter data to only include valid columns for the Client model
     valid_keys = {c.key for c in sa_inspect(client_cls).column_attrs}

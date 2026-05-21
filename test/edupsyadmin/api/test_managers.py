@@ -234,8 +234,8 @@ class TestManagers:
         )
 
         # 1. Default overview
-        df = clients_manager.get_clients_overview()
-        assert len(df) == 3
+        data = clients_manager.get_clients_overview()
+        assert len(data) == 3
         expected_base = {
             "client_id",
             "case_active",
@@ -244,40 +244,38 @@ class TestManagers:
             "first_name_encr",
             "class_name_encr",
         }
-        assert expected_base.issubset(df.columns)
+        assert expected_base.issubset(data[0].keys())
 
         # 2. Filter by school
-        df_school = clients_manager.get_clients_overview(schools=["FirstSchool"])
-        assert len(df_school) == 2
-        assert all(df_school["school"] == "FirstSchool")
+        data_school = clients_manager.get_clients_overview(schools=["FirstSchool"])
+        assert len(data_school) == 2
+        assert all(row["school"] == "FirstSchool" for row in data_school)
 
         # 3. Filter by nta_nos
-        df_nta_nos = clients_manager.get_clients_overview(nta_nos=True)
-        assert len(df_nta_nos) == 2  # A (nos_rs) and B (nta_zeitv)
-        assert set(df_nta_nos["client_id"]) == {c1_id, c2_id}
+        data_nta_nos = clients_manager.get_clients_overview(nta_nos=True)
+        assert len(data_nta_nos) == 2  # A (nos_rs) and B (nta_zeitv)
+        assert {row["client_id"] for row in data_nta_nos} == {c1_id, c2_id}
 
         # 4. Custom columns
-        df_cols = clients_manager.get_clients_overview(
+        data_cols = clients_manager.get_clients_overview(
             columns=["birthday_encr", "city_encr"]
         )
-        assert "birthday_encr" in df_cols.columns
-        assert "city_encr" in df_cols.columns
-        assert (
-            "first_name_encr" in df_cols.columns
-        )  # should still be there as it's required
+        assert "birthday_encr" in data_cols[0]
+        assert "city_encr" in data_cols[0]
+        assert "first_name_encr" in data_cols[0]
 
         # 5. columns="all"
-        df_all = clients_manager.get_clients_overview(columns="all")
-        assert len(df_all.columns) >= len(EXPECTED_KEYS)
+        data_all = clients_manager.get_clients_overview(columns="all")
+        assert len(data_all[0].keys()) >= len(EXPECTED_KEYS)
 
         # 6. Invalid columns
         with pytest.raises(ValueError, match="Invalid column names"):
             clients_manager.get_clients_overview(columns=["non_existent_column"])
 
         # 7. Single column as string
-        df_single = clients_manager.get_clients_overview(columns="birthday_encr")
-        assert "birthday_encr" in df_single.columns
-        assert "first_name_encr" in df_single.columns
+        data_single = clients_manager.get_clients_overview(columns="birthday_encr")
+        assert "birthday_encr" in data_single[0]
+        assert "first_name_encr" in data_single[0]
 
     def test_edit_client_partial_not_found(
         self, clients_manager, client_dict_set_by_user

@@ -1,5 +1,10 @@
+import csv
 import textwrap
 from argparse import ArgumentParser, Namespace
+from pathlib import Path
+
+from rich.console import Console
+from rich.table import Table
 
 from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.core.logger import logger
@@ -41,7 +46,7 @@ def add_arguments(parser: ArgumentParser) -> None:
         default=[],
         help="filter by school name",
     )
-    parser.add_argument("--out", help="path for an output file")
+    parser.add_argument("--out", help="path for an output file", type=Path)
     parser.add_argument(
         "--client_id",
         type=int,
@@ -79,33 +84,37 @@ def execute(args: Namespace) -> None:
         display_client_details = lazy_import(
             "edupsyadmin.api.display_client_details",
         ).display_client_details
-        pd = lazy_import("pandas")
 
         if args.client_id:
             client_data = clients_manager.get_decrypted_client(args.client_id)
             display_client_details(client_data)
-            df = pd.DataFrame([client_data]).T
+            data_to_export = [client_data.model_dump()]
         else:
-            df = clients_manager.get_clients_overview(
+            data = clients_manager.get_clients_overview(
                 nta_nos=args.nta_nos,
                 schools=args.school,
                 columns=args.columns,
             )
+            # Sort manually
+            data.sort(key=lambda x: (x.get("school", ""), x.get("last_name_encr", "")))
+            data_to_export = data
 
-            original_df = df.sort_values(["school", "last_name_encr"])
-            df = original_df.set_index("client_id")
+            if data:
+                table = Table(title="Clients Overview")
+                # Use keys from first dict as columns
+                cols = [c for c in data[0] if c != "case_active"]
+                for col in cols:
+                    table.add_column(col, no_wrap=True)
 
-            with pd.option_context(
-                "display.max_columns",
-                None,
-                "display.width",
-                None,
-                "display.max_colwidth",
-                None,
-                "display.expand_frame_repr",
-                False,
-            ):
-                print(df)
+                for row in data:
+                    table.add_row(*(str(row.get(c, "")) for c in cols))
 
-        if args.out:
-            df.to_csv(args.out)
+                Console().print(table)
+            else:
+                print("No clients found.")
+
+        if args.out and data_to_export:
+            with args.out.open(mode="w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=data_to_export[0].keys())
+                writer.writeheader()
+                writer.writerows(data_to_export)

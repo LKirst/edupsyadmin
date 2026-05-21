@@ -2,11 +2,11 @@ import os
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+from statistics import NormalDist
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy.stats as stats
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -329,14 +329,15 @@ def normal_distribution_plot(
     mu = 0
     variance = 1
     sigma = np.sqrt(variance)
+    dist = NormalDist(mu, sigma)
     x = np.linspace(mu - 3 * sigma, mu + 3 * sigma, 100)
     plt.figure(figsize=(8, 4))
-    plt.plot(x, stats.norm.pdf(x, mu, sigma))
+    plt.plot(x, [dist.pdf(val) for val in x])
 
     normal_area = np.arange(-1, 1, 1 / 20)
     plt.fill_between(
         normal_area,
-        stats.norm.pdf(normal_area, mu, sigma),
+        [dist.pdf(val) for val in normal_area],
         alpha=0.3,
         color="grey",
     )

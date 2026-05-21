@@ -12,11 +12,12 @@ def test_get_all_clients_returns_decrypted_data(
     client_id = clients_manager.add_client(**client_dict_set_by_user)
 
     # 2. Retrieve data via get_clients_overview(columns=["all"])
-    df = clients_manager.get_clients_overview(columns=["all"])
+    data = clients_manager.get_clients_overview(columns=["all"])
 
-    # 3. Check if the value in the DataFrame is decrypted
-    # We use .iloc[0] because we only added one client to the fresh test DB
-    retrieved_name = df.loc[df["client_id"] == client_id, "first_name_encr"].iloc[0]
+    # 3. Check if the value in the list of dicts is decrypted
+    retrieved_name = next(
+        row["first_name_encr"] for row in data if row["client_id"] == client_id
+    )
     expected_name = client_dict_set_by_user["first_name_encr"]
 
     assert retrieved_name == expected_name, (

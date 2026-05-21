@@ -209,14 +209,26 @@ def test_taetigkeitsbericht_calls_create_report(
     tmp_path,
 ):
     mock_manager_instance = mock_clients_manager.return_value
-    mock_manager_instance.get_clients_overview.return_value = pd.DataFrame(
+    mock_manager_instance.get_clients_overview.return_value = [
         {
-            "school": ["FirstSchool", "FirstSchool", "SecondSchool"],
-            "keyword_taet_encr": ["cat1", "cat2", "cat2"],
-            "min_sessions": [300, 180, 132],
-            "n_sessions": [4, 2, 1],
-        }
-    )
+            "school": "FirstSchool",
+            "keyword_taet_encr": "cat1",
+            "min_sessions": 300,
+            "n_sessions": 4,
+        },
+        {
+            "school": "FirstSchool",
+            "keyword_taet_encr": "cat2",
+            "min_sessions": 180,
+            "n_sessions": 2,
+        },
+        {
+            "school": "SecondSchool",
+            "keyword_taet_encr": "cat2",
+            "min_sessions": 132,
+            "n_sessions": 1,
+        },
+    ]
 
     output_basename = str(tmp_path / "Taetigkeitsbericht_Out")
     taetigkeitsbericht(
@@ -241,14 +253,20 @@ def test_taetigkeitsbericht_writes_csv_files(
 ):
     """taetigkeitsbericht() should write three CSV files regardless of PDF output."""
     mock_manager_instance = mock_clients_manager.return_value
-    mock_manager_instance.get_clients_overview.return_value = pd.DataFrame(
+    mock_manager_instance.get_clients_overview.return_value = [
         {
-            "school": ["FirstSchool", "SecondSchool"],
-            "keyword_taet_encr": ["cat1", "cat2"],
-            "min_sessions": [300, 180],
-            "n_sessions": [4, 2],
-        }
-    )
+            "school": "FirstSchool",
+            "keyword_taet_encr": "cat1",
+            "min_sessions": 300,
+            "n_sessions": 4,
+        },
+        {
+            "school": "SecondSchool",
+            "keyword_taet_encr": "cat2",
+            "min_sessions": 180,
+            "n_sessions": 2,
+        },
+    ]
 
     output_basename = str(tmp_path / "Taetigkeitsbericht_Out")
     taetigkeitsbericht(database_url="url", wstd_psy=5, out_basename=output_basename)

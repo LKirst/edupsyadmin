@@ -1,4 +1,4 @@
-from scipy.stats import norm
+from statistics import NormalDist
 
 IQ_MEAN = 100
 IQ_SD = 15
@@ -13,7 +13,7 @@ def percentile_to_z(percentile: int) -> float:
     :param percentile: a percentile
     :return: the Z-score which corresponds to the percentile
     """
-    z: float = norm.ppf(percentile / 100)
+    z: float = NormalDist().inv_cdf(percentile / 100)
     return z
 
 

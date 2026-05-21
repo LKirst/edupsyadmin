@@ -1,6 +1,5 @@
+import csv
 from importlib.resources import files
-
-import pandas as pd
 
 
 def get_taet_categories() -> set[str]:
@@ -12,10 +11,10 @@ def get_taet_categories() -> set[str]:
     with (
         files("edupsyadmin.data")
         .joinpath("taetigkeitsbericht_categories.csv")
-        .open("r") as categoryfile
+        .open("r", encoding="utf-8") as categoryfile
     ):
-        categories = pd.read_csv(categoryfile)["taetkey"]
-    return set(categories)
+        reader = csv.DictReader(categoryfile)
+        return {row["taetkey"] for row in reader if row.get("taetkey")}
 
 
 def check_keyword(keyword: str | None) -> str | None:

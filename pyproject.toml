@@ -19,7 +19,6 @@ dependencies = [
   "cryptography>=43.0.3",
   "fillpdf>=0.7.3",
   "keyring>=25.5",
-  "pandas>=2.2.3",
   "platformdirs>=4.3.6",
   "pydantic>=2.12.3",
   "pypdf>=5.1",
@@ -27,7 +26,6 @@ dependencies = [
   "python-liquid>=1.12.1",
   "pyyaml>=6.0.2",
   "rich>=14.3.3",
-  "scipy>=1.14.1",
   "sqlalchemy>=2.0.36",
   "textual>=8",
 ]
@@ -35,6 +33,7 @@ optional-dependencies.bwbackend = [ "bitwarden-keyring>=0.3.1" ]
 optional-dependencies.reportsandtaetigkeitsber = [
   "matplotlib>=3.9.2",
   "numpy>=2.4.4",
+  "pandas>=2.2.3",
   "reportlab>=4.2.5",
 ]
 urls.documentation = "https://edupsyadmin.readthedocs.io"
