@@ -6,16 +6,11 @@ from sqlalchemy import create_engine, func, inspect, or_, select
 from sqlalchemy.orm import sessionmaker
 
 from edupsyadmin.api.client_view import ClientView
+from edupsyadmin.api.exceptions import ClientNotFoundError
 from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db import clients as clients_db
-
-
-class ClientNotFoundError(Exception):
-    def __init__(self, client_id: int) -> None:
-        self.client_id = client_id
-        super().__init__(f"Client with ID {client_id} not found.")
 
 
 class ClientsManager:

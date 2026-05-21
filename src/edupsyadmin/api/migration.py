@@ -13,18 +13,11 @@ from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
+from edupsyadmin.api.exceptions import MigrationError
 from edupsyadmin.api.migration_fs import create_db_backup
 from edupsyadmin.core.encrypt import encr
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db.clients import Client
-
-
-class MigrationError(Exception):
-    """Raised when migration encounters an error."""
-
-    def __init__(self, message: str) -> None:
-        super().__init__(message)
-        self.message = message
 
 
 def upgrade_db(database_url: str, salt_path: Path | None = None) -> None:

@@ -2,8 +2,8 @@ import sys
 import textwrap
 from argparse import ArgumentParser, Namespace
 
-from edupsyadmin.api.managers import ClientsManager
-from edupsyadmin.api.migration import MigrationError, re_encrypt_all_data
+from edupsyadmin.api.exceptions import MigrationError
+from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.core.logger import logger
 
 COMMAND_DESCRIPTION = textwrap.dedent(
@@ -52,7 +52,12 @@ def execute(args: Namespace) -> None:
         return
 
     try:
-        clients_manager = ClientsManager(database_url=args.database_url)
+        clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
+        re_encrypt_all_data = lazy_import(
+            "edupsyadmin.api.migration"
+        ).re_encrypt_all_data
+
+        clients_manager = clients_manager_cls(database_url=args.database_url)
         with clients_manager.Session() as session:
             re_encrypt_all_data(session)
 
