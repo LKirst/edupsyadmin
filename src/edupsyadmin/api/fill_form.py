@@ -74,9 +74,7 @@ def write_form_pypdf(fn: Path, out_fn: Path, data: Mapping[str, Any]) -> None:
 
     with fn.open("rb") as pdf_file:
         reader = PdfReader(pdf_file, strict=False)
-
-        for page in reader.pages:
-            writer.add_page(page)
+        writer.append(reader)
 
         fields = reader.get_fields()
         if not fields:
