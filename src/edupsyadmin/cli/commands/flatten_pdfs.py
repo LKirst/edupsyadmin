@@ -19,14 +19,7 @@ COMMAND_EPILOG = textwrap.dedent(
 
 def add_arguments(parser: ArgumentParser) -> None:
     """CLI adaptor for the flatten-pdfs command."""
-    default_library = lazy_import("edupsyadmin.api.flatten_pdf").DEFAULT_LIBRARY
     parser.set_defaults(command=execute)
-    parser.add_argument(
-        "--library",
-        type=str,
-        default=default_library,
-        choices=["pdf2image", "fillpdf"],
-    )
     parser.add_argument("form_paths", nargs="+", type=Path)
 
 
