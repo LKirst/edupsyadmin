@@ -17,7 +17,6 @@ classifiers = [
 dependencies = [
   "alembic>=1.14.1",
   "cryptography>=43.0.3",
-  "fillpdf>=0.7.3",
   "keyring>=25.5",
   "platformdirs>=4.3.6",
   "pydantic>=2.12.3",

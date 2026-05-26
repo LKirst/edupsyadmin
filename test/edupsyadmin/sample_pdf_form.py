@@ -45,40 +45,37 @@ def create_pdf_form(pdf_filename: str) -> None:
         borderColor=colors.black,
     )
 
-    # Radio buttons for gender selection
-    # TODO: test whether the correct value was set
-    c.drawString(100, 500, "Gender:")
-    c.acroForm.radio(
-        name="gender",
-        value="f",
-        x=100,
-        y=480,
-        size=20,
-        borderWidth=1,
-        borderColor=colors.black,
-        fillColor=colors.white,
-        forceBorder=True,
-    )
-    c.drawString(130, 480, "f")
-    c.acroForm.radio(
-        name="gender",
-        value="m",
-        x=100,
-        y=450,
-        size=20,
-        borderWidth=1,
-        borderColor=colors.black,
-        fillColor=colors.white,
-        forceBorder=True,
-    )
-    c.drawString(130, 450, "m")
+    # Radio buttons for lrst_schpsy selection
+    c.drawString(100, 500, "lrst_schpsy:")
+    options = [
+        ("schpsy", "1", 450),
+        ("psychia", "2", 420),
+        ("psychoth", "3", 390),
+        ("spz", "4", 360),
+        ("other", "5", 330),
+    ]
+    for label, value, y_pos in options:
+        c.acroForm.radio(
+            name="lrst_schpsy",
+            tooltip=label,
+            value=value,
+            selected=False,
+            x=100,
+            y=y_pos,
+            size=20,
+            borderWidth=1,
+            borderColor=colors.black,
+            fillColor=colors.white,
+            forceBorder=True,
+        )
+        c.drawString(130, y_pos, label)
 
     # multiline text field
-    c.drawString(100, 350, "address_multiline:")
+    c.drawString(100, 280, "address_multiline:")
     c.acroForm.textfield(
         name="addr_m_wname",
         x=100,
-        y=150,
+        y=60,
         width=400,
         height=200,
         borderColor=colors.black,

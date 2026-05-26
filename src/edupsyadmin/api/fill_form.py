@@ -1,12 +1,11 @@
-import shutil
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from fillpdf import fillpdfs
 from liquid import parse
 from liquid.exceptions import LiquidError
 from pypdf import PdfReader, PdfWriter
+from pypdf.generic import NameObject
 
 from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.managers import ClientsManager
@@ -35,26 +34,128 @@ def _add_aliases(data: Mapping[str, Any]) -> dict[str, Any]:
     return aliased_data
 
 
-def _modify_bool_and_none_for_pdf_form(
+def _transform_value_for_pdf(val: Any, field: dict[str, Any]) -> NameObject | str:
+    """
+    Transform a value for PDF form compatibility.
+
+    - Radio buttons: convert to NameObject with matching export value
+    - Checkboxes: convert to NameObject (/Yes, /Off, or custom export)
+    - Text fields: convert to string
+    - None/False: convert to empty string or /Off
+
+    :param val: the value to transform
+    :param field: the field dictionary from pypdf
+    :return: the transformed value
+    """
+    field_type = field.get("/FT")
+
+    # Handle button fields (checkboxes and radio buttons)
+    if field_type == "/Btn":
+        if not val:
+            return NameObject("/Off")
+
+        exports = _get_export_values(field)
+        val_str = str(val)
+
+        # 1. Match explicit export value
+        if val_str in exports:
+            return NameObject(f"/{val_str}")
+
+        # 2. Handle radio buttons (must match exactly)
+        if _is_radio_button(field):
+            logger.warning(
+                f"Value '{val_str}' not in radio options {exports}. Setting to /Off."
+            )
+            return NameObject("/Off")
+
+        # 3. Handle checkboxes (truthy fallback)
+        # Use first export value (usually 'Yes') or default to 'Yes'
+        best_guess = next(iter(exports)) if exports else "Yes"
+        return NameObject(f"/{best_guess}")
+
+    # Text and other field types
+    return "" if val is None else str(val)
+
+
+def _is_radio_button(field: dict[str, Any]) -> bool:
+    """
+    Check if a button field is a radio button (vs checkbox).
+
+    Radio buttons have the /Ff (field flags) bit 15 set (0x8000).
+
+    :param field: field dictionary from pypdf
+    :return: True if radio button, False otherwise
+    """
+    if field.get("/FT") != "/Btn":
+        return False
+
+    ff = field.get("/Ff", 0)
+    try:
+        ff = int(ff)
+    except TypeError, ValueError:
+        ff = 0
+
+    # Bit 15 (0x8000) indicates radio button
+    return (ff & 0x8000) != 0
+
+
+def _get_export_values(field: dict[str, Any]) -> set[str]:
+    """Get all unique valid export values for a button field (radio/checkbox)."""
+    values: set[str] = set()
+
+    def extract(obj: Any) -> None:
+        if isinstance(obj, list):
+            for item in obj:
+                s = str(item)
+                values.add(s.removeprefix("/"))
+        elif isinstance(obj, dict):
+            for key in obj:
+                s = str(key)[1:] if isinstance(key, NameObject) else str(key)
+                values.add(s)
+
+    # Strategies for extracting export values from different PDF structures
+    extract(field.get("/_States_"))
+    extract(field.get("/Opt"))
+
+    ap = field.get("/AP")
+    if isinstance(ap, dict):
+        extract(ap.get("/N"))
+
+    for kid in field.get("/Kids", []):
+        kid_obj = kid.get_object() if hasattr(kid, "get_object") else kid
+        if isinstance(kid_obj, dict):
+            kid_ap = kid_obj.get("/AP")
+            if isinstance(kid_ap, dict):
+                extract(kid_ap.get("/N"))
+
+    # Remove 'Off' (case-insensitive) as it represents the de-selected state
+    return {v for v in values if v.lower() != "off"}
+
+
+def _get_fields_to_update(
+    fields: dict[str, Any],
     data: Mapping[str, Any],
 ) -> dict[str, Any]:
     """
-    Replace every boolean True with 'Yes' and False with 'Off', which are the
-    values checkboxes accept in most PDF forms. Replace None with empty
-    strings.
+    Determine which fields to update and with what values.
 
-    :param data: a dictionary of data
-    :return: a modified dictionary where booleans are replaced
-        with string values and None values are replaced with an empty string
+    For radio buttons, this ensures only one widget in a group is selected.
+
+    :param fields: dictionary of form fields from pypdf
+    :param data: data to fill the form with
+    :return: dictionary of fields to update
     """
-    logger.debug("Formatting bool values for PDF form compatibility")
+    fields_to_update: dict[str, Any] = {}
 
-    def transform(val: Any) -> Any:
-        if isinstance(val, bool):
-            return "Yes" if val else "Off"
-        return "" if val is None else val
+    for key, field in fields.items():
+        if key in data:
+            val = data[key]
+            value = _transform_value_for_pdf(val, field)
 
-    return {key: transform(value) for key, value in data.items()}
+            if value:
+                fields_to_update[key] = value
+
+    return fields_to_update
 
 
 def write_form_pypdf(fn: Path, out_fn: Path, data: Mapping[str, Any]) -> None:
@@ -68,8 +169,6 @@ def write_form_pypdf(fn: Path, out_fn: Path, data: Mapping[str, Any]) -> None:
     """
     _ensure_output_not_exists(out_fn)
 
-    data_wo_bool = _modify_bool_and_none_for_pdf_form(data)
-
     writer = PdfWriter()
 
     with fn.open("rb") as pdf_file:
@@ -80,15 +179,10 @@ def write_form_pypdf(fn: Path, out_fn: Path, data: Mapping[str, Any]) -> None:
         if not fields:
             logger.debug(f"The file {fn} is not a form.")
         else:
-            logger.debug(f"\nForm fields:\n{fields.keys()}")
-            logger.debug(f"\nData keys:\n{data_wo_bool.keys()}")
+            logger.debug(f"Form fields: {fields.keys()}")
+            logger.debug(f"Data keys: {data.keys()}")
 
-            fields_to_update: dict[str, Any] = {}
-            for key in fields:
-                if key in data_wo_bool:
-                    value = data_wo_bool[key]
-                    if value:
-                        fields_to_update[key] = value
+            fields_to_update = _get_fields_to_update(fields, data)
 
             # update all fields at once for each page
             if fields_to_update:
@@ -102,34 +196,6 @@ def write_form_pypdf(fn: Path, out_fn: Path, data: Mapping[str, Any]) -> None:
 
     with out_fn.open("wb") as output_stream:
         writer.write(output_stream)
-
-
-def write_form_fillpdf(
-    fn: Path,
-    out_fn: Path,
-    data: Mapping[str, Any],
-) -> None:
-    """
-    Fill a pdf form with data using fillpdf.
-
-    :param fn: filename of the empty pdf form
-    :param out_fn: filename for the output
-    :param data: the data to fill the pdf with
-    """
-    _ensure_output_not_exists(out_fn)
-
-    data_wo_bool = _modify_bool_and_none_for_pdf_form(data)
-
-    fields = fillpdfs.get_form_fields(fn)
-    logger.debug(f"\nForm fields:\n{fields}")
-    logger.debug(f"\nData keys:\n{data_wo_bool.keys()}")
-    if fields:
-        fillpdfs.write_fillable_pdf(fn, out_fn, data_wo_bool)
-    else:
-        logger.info(
-            f"The pdf {fn} has no form fields. Copying the file without any changes",
-        )
-        shutil.copyfile(fn, out_fn)
 
 
 def write_form_md(fn: Path, out_fn: Path, data: Mapping[str, Any]) -> None:
@@ -172,7 +238,6 @@ def fill_form(
     client_data: ClientView | dict[str, Any],
     form_paths: Sequence[Path],
     out_dir: Path | None = None,
-    use_fillpdf: bool = True,
 ) -> None:
     """
     A wrapper function for different functions to fill out forms and
@@ -181,9 +246,7 @@ def fill_form(
     :param client_data: ClientView instance or value key pairs where the key is
         the name of the form field or liquid variable
     :param form_paths: a list of paths to pdf forms or liquid templates
-    :param use_fillpdf: there are two options for pdf-forms - either a function
-        that uses the library fillpdf or a function that uses pypdf2, defaults
-        to True
+    :param out_dir: optional output directory
     """
     if out_dir is None:
         out_dir = Path()
@@ -206,8 +269,6 @@ def fill_form(
         logger.info(f"Writing to {out_fp.resolve()}")
         if fp.suffix == ".md":
             write_form_md(fp, out_fp, aliased_data)
-        elif use_fillpdf:
-            write_form_fillpdf(fp, out_fp, aliased_data)
         else:
             write_form_pypdf(fp, out_fp, aliased_data)
 
