@@ -22,7 +22,7 @@ jobs:
         uses: astral-sh/setup-uv@v2
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync --all-extras
 
       - name: Run tests with coverage
         run: uv run pytest --cov --cov-branch --cov-report=xml
