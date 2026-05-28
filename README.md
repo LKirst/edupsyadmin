@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/github/LKirst/edupsyadmin/graph/badge.svg?token=VLD3GE5YA3)](https://codecov.io/github/LKirst/edupsyadmin)
+
 # edupsyadmin
 
 ![edupsyadmin logo](./resources/edupsyadmin_logo_readme.svg)
