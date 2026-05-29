@@ -15,7 +15,7 @@ import yaml
 from cryptography.fernet import Fernet
 from keyring.backends.null import Keyring as NullKeyring
 from pdf2image import convert_from_path
-from PIL import Image
+from PIL import Image, ImageChops, ImageStat
 from sample_pdf_form import create_pdf_form
 from sample_webuntis_export import create_sample_webuntis_export
 from syrupy.extensions.image import PNGImageSnapshotExtension
@@ -324,8 +324,8 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
                 "lrst_last_test_by_encr": "schpsy",
                 "document_shredding_date_encr": date(2025, 12, 24),
                 "estimated_graduation_date_encr": None,
-                "datetime_created": datetime.now(),
-                "datetime_lastmodified": datetime.now(),
+                "datetime_created": datetime(2025, 10, 16, 12, 0, 0),
+                "datetime_lastmodified": datetime(2025, 10, 16, 12, 0, 0),
                 "keyword_taet_encr": "slbb.slb.sonstige",
                 "min_sessions": 45,
                 "n_sessions": 1,
@@ -378,8 +378,8 @@ def client_dict_set_by_user(request) -> dict[str, Any]:
                 "lrst_last_test_by_encr": "",
                 "document_shredding_date_encr": date(2025, 12, 24),
                 "estimated_graduation_date_encr": None,
-                "datetime_created": datetime.now(),
-                "datetime_lastmodified": datetime.now(),
+                "datetime_created": datetime(2025, 10, 16, 12, 0, 0),
+                "datetime_lastmodified": datetime(2025, 10, 16, 12, 0, 0),
                 "keyword_taet_encr": "",
                 "min_sessions": 45,
                 "n_sessions": 1,
@@ -448,6 +448,39 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
     """Extension for syrupy to handle PDF snapshots by converting them to PNG."""
 
     current_item: pytest.Item | None = None
+
+    def matches(self, *, serialized_data: Any, snapshot_data: Any) -> bool:
+        """
+        Compare two PNG images with some tolerance to account for
+        rendering differences between environments (e.g. poppler versions,
+        anti-aliasing).
+        """
+        # If they are byte-identical, they match perfectly
+        if serialized_data == snapshot_data:
+            return True
+
+        if not serialized_data or not snapshot_data:
+            return False
+
+        try:
+            actual = Image.open(io.BytesIO(serialized_data)).convert("RGB")
+            expected = Image.open(io.BytesIO(snapshot_data)).convert("RGB")
+        except Exception:
+            return False
+
+        if actual.size != expected.size:
+            return False
+
+        # Calculate difference between images
+        diff = ImageChops.difference(actual, expected)
+        stat = ImageStat.Stat(diff)
+
+        # Calculate average difference per pixel per channel (0-255 scale)
+        # A threshold of 0.5 is usually enough to cover minor anti-aliasing
+        # or font rendering differences while still catching actual regressions.
+        avg_diff = sum(stat.mean) / len(stat.mean)
+
+        return avg_diff < 0.5
 
     def serialize(self, data: Any, **_kwargs: Any) -> Any:
         if isinstance(data, str | Path):

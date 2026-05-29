@@ -70,7 +70,9 @@ def _transform_value_for_pdf(val: Any, field: dict[str, Any]) -> NameObject | st
 
         # 3. Handle checkboxes (truthy fallback)
         # Use first export value (usually 'Yes') or default to 'Yes'
-        best_guess = next(iter(exports)) if exports else "Yes"
+        # Sort to ensure deterministic behavior across different environments
+        sorted_exports = sorted(exports)
+        best_guess = sorted_exports[0] if sorted_exports else "Yes"
         return NameObject(f"/{best_guess}")
 
     # Text and other field types
