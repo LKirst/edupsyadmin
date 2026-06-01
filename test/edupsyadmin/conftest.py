@@ -480,7 +480,14 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
         # or font rendering differences while still catching actual regressions.
         avg_diff = sum(stat.mean) / len(stat.mean)
 
-        return avg_diff < 0.5
+        matches = avg_diff < 0.5
+        if not matches:
+            testing_logger.info(
+                f"Snapshot mismatch: avg_diff={avg_diff:.4f}, "
+                f"actual_size={actual.size}, expected_size={expected.size}",
+            )
+
+        return matches
 
     def serialize(self, data: Any, **_kwargs: Any) -> Any:
         if isinstance(data, str | Path):
