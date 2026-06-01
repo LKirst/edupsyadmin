@@ -1,0 +1,5 @@
+[formatting]
+array_trailing_comma = true
+array_auto_expand = true
+compact_arrays = false
+compact_inline_tables = false
