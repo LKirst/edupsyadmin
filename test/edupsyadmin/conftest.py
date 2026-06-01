@@ -473,22 +473,39 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
 
         # Calculate difference between images
         diff = ImageChops.difference(actual, expected)
-        stat = ImageStat.Stat(diff)
 
-        # Calculate average difference per pixel per channel (0-255 scale)
-        avg_diff = sum(stat.mean) / len(stat.mean)
+        # Pixel count strategy:
+        # 1. OS Noise: many pixels with tiny differences (anti-aliasing).
+        # 2. Content Regression: small clusters of pixels with large differences.
 
-        # Calculate maximum difference in any single pixel channel
-        max_diff = max(stat.extrema[0][1], stat.extrema[1][1], stat.extrema[2][1])
+        # Create a mask of pixels with significant differences (>100 on 0-255 scale)
+        # Convert to grayscale first to get a single channel difference
+        diff_gray = diff.convert("L")
+        # Threshold: 1 if difference > 100, else 0
+        significant_diff_mask = diff_gray.point(lambda p: 1 if p > 100 else 0, mode="1")
 
-        # A threshold of 0.5 avg and 150 max allows for minor anti-aliasing
-        # while catching high-intensity localized changes like a wrong digit.
-        matches = avg_diff < 0.5 and max_diff < 150
+        # Count significant pixels
+        stat = ImageStat.Stat(significant_diff_mask)
+        changed_pixels = stat.sum[0]
+        total_pixels = actual.size[0] * actual.size[1]
+        percent_changed = (changed_pixels / total_pixels) * 100
+
+        # avg_diff for general visual consistency
+        avg_stat = ImageStat.Stat(diff)
+        avg_diff = sum(avg_stat.mean) / len(avg_stat.mean)
+
+        # Thresholds:
+        # - avg_diff < 1.0 (general noise floor)
+        # - percent_changed < 0.001% (localized content floor)
+        # 0.001% is approx 20-30 pixels on an A4 page at 150dpi,
+        # which is enough to catch a toggled radio button (~100 pixels).
+        matches = avg_diff < 1.0 and percent_changed < 0.001
 
         if not matches:
             testing_logger.info(
-                f"Snapshot mismatch: avg_diff={avg_diff:.4f}, max_diff={max_diff}, "
-                f"actual_size={actual.size}, expected_size={expected.size}",
+                f"Snapshot mismatch: avg_diff={avg_diff:.4f}, "
+                f"changed_pixels={int(changed_pixels)} ({percent_changed:.4f}%), "
+                f"actual_size={actual.size}",
             )
 
         return matches
