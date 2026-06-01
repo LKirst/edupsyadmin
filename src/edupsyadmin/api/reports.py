@@ -96,57 +96,146 @@ class BasePDFReport:
         return img
 
     def _df_to_table(
-        self, df: pd.DataFrame, col_widths: list[float] | None = None
+        self,
+        df: pd.DataFrame,
+        col_widths: list[float] | None = None,
+        float_precision: int = 1,
     ) -> Table:
-        """Convert a pandas DataFrame to a ReportLab Table."""
-        # Include index as first column
+        """
+        Convert a pandas DataFrame to a ReportLab Table with proper alignment.
+
+        Numeric columns are right-aligned for visual alignment of decimal points.
+        Text columns remain left-aligned. The index column is always left-aligned.
+
+        :param df: DataFrame to convert
+        :param col_widths: Optional column widths; enables text wrapping via Paragraphs
+        :param float_precision: Decimal places for float formatting (default: 1)
+        :return: Configured ReportLab Table
+        """
+        # Detect numeric columns (excluding index)
+        numeric_cols = self._get_numeric_column_indices(df)
+
+        # Build table data
         header = ["", *df.columns.tolist()]
-        data = []
+        data = self._build_table_data(df, header, col_widths, float_precision)
 
-        if col_widths:
-            # If col_widths is provided, use Paragraphs to enable wrapping
-            h_row = [
-                Paragraph(f"<b>{h}</b>", self.styles["Normal"]) if h else ""
-                for h in header
-            ]
-            data.append(h_row)
-            for index, row in df.iterrows():
-                formatted_row = [Paragraph(str(index), self.styles["Normal"])]
-                for val in row:
-                    if isinstance(val, (float, np.float64, np.float32)):
-                        s = f"{val:.1f}"
-                    else:
-                        s = str(val)
-                    formatted_row.append(Paragraph(s, self.styles["Normal"]))
-                data.append(formatted_row)
-        else:
-            data.append(header)
-            for index, row in df.iterrows():
-                formatted_row = [str(index)]
-                for val in row:
-                    if isinstance(val, (float, np.float64, np.float32)):
-                        formatted_row.append(f"{val:.1f}")
-                    else:
-                        formatted_row.append(str(val))
-                data.append(formatted_row)
+        # Create and style table
+        table = Table(data, colWidths=col_widths)
+        table.setStyle(self._create_table_style(numeric_cols))
 
-        t = Table(data, colWidths=col_widths)
-        t.setStyle(
-            TableStyle(
+        return table
+
+    def _get_numeric_column_indices(self, df: pd.DataFrame) -> set[int]:
+        """
+        Identify column indices containing numeric data.
+
+        :param df: DataFrame to analyze
+        :return: Set of 1-based column indices (accounting for index column at 0)
+        """
+        numeric_cols = set()
+        for col_idx, col_name in enumerate(df.columns, start=1):
+            if pd.api.types.is_numeric_dtype(df[col_name]):
+                numeric_cols.add(col_idx)
+        return numeric_cols
+
+    def _build_table_data(
+        self,
+        df: pd.DataFrame,
+        header: list[str],
+        col_widths: list[float] | None,
+        float_precision: int,
+    ) -> list[list[str | Paragraph]]:
+        """
+        Build table data with optional Paragraph wrapping.
+
+        :param df: Source DataFrame
+        :param header: Header row including index column
+        :param col_widths: If provided, wrap cells in Paragraphs
+        :param float_precision: Decimal places for floats
+        :return: 2D list of table cells
+        """
+        use_paragraphs = col_widths is not None
+
+        # Initialize with proper type
+        data: list[list[str | Paragraph]] = []
+
+        # Header row
+        if use_paragraphs:
+            data.append(
                 [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-                ],
-            ),
+                    Paragraph(f"<b>{h}</b>", self.styles["Normal"]) if h else ""
+                    for h in header
+                ]
+            )
+        else:
+            data.append(list(header))
+
+        # Data rows
+        for index, row in df.iterrows():
+            formatted_row: list[str | Paragraph] = [
+                self._format_cell(str(index), use_paragraphs)
+            ]
+
+            for val in row:
+                cell_value = self._format_value(val, float_precision)
+                formatted_row.append(self._format_cell(cell_value, use_paragraphs))
+
+            data.append(formatted_row)
+
+        return data
+
+    def _format_value(self, val: object, precision: int) -> str:
+        """
+        Format a cell value with appropriate precision for numerics.
+
+        :param val: Value to format
+        :param precision: Decimal places for floats
+        :return: Formatted string
+        """
+        if val is None or val is pd.NA:
+            return ""
+        if isinstance(val, int | np.integer):
+            return str(val)
+        if isinstance(val, float | np.floating):
+            return f"{val:.{precision}f}"
+        return str(val)
+
+    def _format_cell(self, value: str, use_paragraph: bool) -> str | Paragraph:
+        """
+        Wrap cell value in Paragraph if needed.
+
+        :param value: Cell content
+        :param use_paragraph: Whether to wrap in Paragraph for text wrapping
+        :return: Raw string or Paragraph object
+        """
+        return Paragraph(value, self.styles["Normal"]) if use_paragraph else value
+
+    def _create_table_style(self, numeric_cols: set[int]) -> TableStyle:
+        """
+        Create TableStyle with right-alignment for numeric columns.
+
+        :param numeric_cols: Set of column indices to right-align
+        :return: Configured TableStyle
+        """
+        style_commands = [
+            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 6),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+            # Default left alignment for all columns
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ]
+
+        # Right-align numeric columns (data rows only, not header)
+        style_commands.extend(
+            ("ALIGN", (col_idx, 1), (col_idx, -1), "RIGHT") for col_idx in numeric_cols
         )
-        return t
+
+        return TableStyle(style_commands)
 
 
 class TestReport(BasePDFReport):
