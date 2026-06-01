@@ -476,14 +476,18 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
         stat = ImageStat.Stat(diff)
 
         # Calculate average difference per pixel per channel (0-255 scale)
-        # A threshold of 0.5 is usually enough to cover minor anti-aliasing
-        # or font rendering differences while still catching actual regressions.
         avg_diff = sum(stat.mean) / len(stat.mean)
 
-        matches = avg_diff < 0.5
+        # Calculate maximum difference in any single pixel channel
+        max_diff = max(stat.extrema[0][1], stat.extrema[1][1], stat.extrema[2][1])
+
+        # A threshold of 0.5 avg and 150 max allows for minor anti-aliasing
+        # while catching high-intensity localized changes like a wrong digit.
+        matches = avg_diff < 0.5 and max_diff < 150
+
         if not matches:
             testing_logger.info(
-                f"Snapshot mismatch: avg_diff={avg_diff:.4f}, "
+                f"Snapshot mismatch: avg_diff={avg_diff:.4f}, max_diff={max_diff}, "
                 f"actual_size={actual.size}, expected_size={expected.size}",
             )
 
