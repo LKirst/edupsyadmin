@@ -192,5 +192,9 @@ Build documentation:
 
 This project is licensed under the terms of the MIT License. Portions of this
 project are derived from the python application project cookiecutter template
-by Michael Klatt, which is also licensed under the MIT license. See the
-LICENSE.txt file for details.
+by Michael Klatt, which is also licensed under the MIT license.
+
+This project also bundles the Liberation Sans font family, which is licensed
+under the SIL Open Font License, Version 1.1.
+
+See the LICENSE.txt file for details.

@@ -495,11 +495,11 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
         avg_diff = sum(avg_stat.mean) / len(avg_stat.mean)
 
         # Thresholds:
-        # - avg_diff < 1.0 (general noise floor)
+        # - avg_diff < 0.5 (general noise floor)
         # - percent_changed < 0.001% (localized content floor)
         # 0.001% is approx 20-30 pixels on an A4 page at 150dpi,
         # which is enough to catch a toggled radio button (~100 pixels).
-        matches = avg_diff < 1.0 and percent_changed < 0.001
+        matches = avg_diff < 0.5 and percent_changed < 0.001
 
         if not matches:
             testing_logger.info(

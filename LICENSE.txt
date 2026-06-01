@@ -28,3 +28,12 @@ License.
 
 Cookiecutter Template:
 Copyright (c) 2015-2023, Michael Klatt
+
+---
+
+This project bundles the Liberation Sans font family, which is licensed
+under the SIL Open Font License, Version 1.1.
+
+Liberation Sans:
+Copyright © 2012 Red Hat, Inc.
+The full text of the license is included in src/edupsyadmin/data/OFL.txt.

@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass
 from datetime import date
+from importlib.resources import files
 from pathlib import Path
 from statistics import NormalDist
 
@@ -12,6 +13,8 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import (
     BaseDocTemplate,
@@ -24,6 +27,13 @@ from reportlab.platypus import (
 )
 
 ResultsItem = str | tuple[str, str]
+
+# Register bundled fonts for consistent cross-platform rendering
+_REGULAR_FONT = files("edupsyadmin.data").joinpath("LiberationSans-Regular.ttf")
+_BOLD_FONT = files("edupsyadmin.data").joinpath("LiberationSans-Bold.ttf")
+
+pdfmetrics.registerFont(TTFont("LiberationSans", str(_REGULAR_FONT)))
+pdfmetrics.registerFont(TTFont("LiberationSans-Bold", str(_BOLD_FONT)))
 
 
 @dataclass
@@ -44,6 +54,21 @@ class BasePDFReport:
 
     def __init__(self) -> None:
         self.styles = getSampleStyleSheet()
+        for style_name in self.styles.byName:
+            style = self.styles[style_name]
+            # Only modify ParagraphStyle objects (skip ListStyle, etc.)
+            if isinstance(style, ParagraphStyle) and style.fontName in (
+                "Helvetica",
+                "Helvetica-Bold",
+                "Helvetica-Oblique",
+                "Helvetica-BoldOblique",
+            ):
+                # Map Helvetica variants to Liberation Sans
+                if "Bold" in style.fontName:
+                    style.fontName = "LiberationSans-Bold"
+                else:
+                    style.fontName = "LiberationSans"
+
         self._setup_styles()
 
     def _setup_styles(self) -> None:
@@ -52,7 +77,7 @@ class BasePDFReport:
             ParagraphStyle(
                 name="SectionHeader",
                 parent=self.styles["Normal"],
-                fontName="Helvetica-Bold",
+                fontName="LiberationSans-Bold",
                 fontSize=11,
                 spaceBefore=12,
                 spaceAfter=6,
@@ -62,7 +87,7 @@ class BasePDFReport:
             ParagraphStyle(
                 name="MainHeading",
                 parent=self.styles["Normal"],
-                fontName="Helvetica-Bold",
+                fontName="LiberationSans-Bold",
                 fontSize=14,
                 alignment=TA_CENTER,
                 spaceAfter=20,
@@ -92,7 +117,7 @@ class BasePDFReport:
 
     def _draw_footer(self, canvas: Canvas) -> None:
         """Draw the default footer."""
-        canvas.setFont("Helvetica-Oblique", 8)
+        canvas.setFont("LiberationSans", 8)
         canvas.setStrokeColor(colors.grey)
         canvas.drawCentredString(A4[0] / 2.0, 1 * cm, f"Seite {canvas.getPageNumber()}")
 
@@ -256,8 +281,8 @@ class BasePDFReport:
         style_commands = [
             ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+            ("FONTNAME", (0, 0), (-1, 0), "LiberationSans-Bold"),
+            ("FONTNAME", (0, 1), (-1, -1), "LiberationSans"),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ("LEFTPADDING", (0, 0), (-1, -1), 6),
@@ -309,8 +334,8 @@ class TestReport(BasePDFReport):
         t.setStyle(
             TableStyle(
                 [
-                    ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-                    ("FONTNAME", (1, 0), (1, -1), "Helvetica"),
+                    ("FONTNAME", (0, 0), (0, -1), "LiberationSans-Bold"),
+                    ("FONTNAME", (1, 0), (1, -1), "LiberationSans"),
                     ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
                     ("TOPPADDING", (0, 0), (-1, -1), 3),
@@ -329,8 +354,8 @@ class TestReport(BasePDFReport):
                 res_t.setStyle(
                     TableStyle(
                         [
-                            ("FONTNAME", (0, 0), (0, 0), "Helvetica"),
-                            ("FONTNAME", (1, 0), (1, 0), "Helvetica"),
+                            ("FONTNAME", (0, 0), (0, 0), "LiberationSans"),
+                            ("FONTNAME", (1, 0), (1, 0), "LiberationSans"),
                             ("ALIGN", (0, 0), (0, 0), "LEFT"),
                             ("ALIGN", (1, 0), (1, 0), "LEFT"),
                         ],
@@ -363,7 +388,7 @@ class TaetigkeitsberichtReport(BasePDFReport):
         self.header_text = f"Tätigkeitsbericht {report_date} ({name})"
 
     def _draw_header(self, canvas: Canvas) -> None:
-        canvas.setFont("Helvetica-Bold", 11)
+        canvas.setFont("LiberationSans-Bold", 11)
         canvas.drawCentredString(A4[0] / 2.0, A4[1] - 1.5 * cm, self.header_text)
 
     def build(
@@ -399,7 +424,7 @@ class TaetigkeitsberichtReport(BasePDFReport):
                 t.setStyle(
                     TableStyle(
                         [
-                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica"),
+                            ("FONTNAME", (0, 0), (-1, 0), "LiberationSans"),
                             ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                         ],
                     ),
