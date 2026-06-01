@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
@@ -63,8 +64,22 @@ class BasePDFReport:
                 parent=self.styles["Normal"],
                 fontName="Helvetica-Bold",
                 fontSize=14,
-                alignment=1,  # Centered
+                alignment=TA_CENTER,
                 spaceAfter=20,
+            ),
+        )
+        self.styles.add(
+            ParagraphStyle(
+                name="NormalRight",
+                parent=self.styles["Normal"],
+                alignment=TA_RIGHT,
+            ),
+        )
+        self.styles.add(
+            ParagraphStyle(
+                name="NormalCenter",
+                parent=self.styles["Normal"],
+                alignment=TA_CENTER,
             ),
         )
 
@@ -104,39 +119,42 @@ class BasePDFReport:
         """
         Convert a pandas DataFrame to a ReportLab Table with proper alignment.
 
-        Numeric columns are right-aligned for visual alignment of decimal points.
-        Text columns remain left-aligned. The index column is always left-aligned.
+        Float columns are right-aligned for visual alignment of decimal points.
+        Integer and text columns remain left-aligned. The index column is
+        always left-aligned.
 
         :param df: DataFrame to convert
         :param col_widths: Optional column widths; enables text wrapping via Paragraphs
         :param float_precision: Decimal places for float formatting (default: 1)
         :return: Configured ReportLab Table
         """
-        # Detect numeric columns (excluding index)
-        numeric_cols = self._get_numeric_column_indices(df)
+        # Detect float columns (excluding index)
+        float_cols = self._get_float_column_indices(df)
 
         # Build table data
         header = ["", *df.columns.tolist()]
-        data = self._build_table_data(df, header, col_widths, float_precision)
+        data = self._build_table_data(
+            df, header, col_widths, float_precision, float_cols
+        )
 
         # Create and style table
         table = Table(data, colWidths=col_widths)
-        table.setStyle(self._create_table_style(numeric_cols))
+        table.setStyle(self._create_table_style(float_cols))
 
         return table
 
-    def _get_numeric_column_indices(self, df: pd.DataFrame) -> set[int]:
+    def _get_float_column_indices(self, df: pd.DataFrame) -> set[int]:
         """
-        Identify column indices containing numeric data.
+        Identify column indices containing float data.
 
         :param df: DataFrame to analyze
         :return: Set of 1-based column indices (accounting for index column at 0)
         """
-        numeric_cols = set()
+        float_cols = set()
         for col_idx, col_name in enumerate(df.columns, start=1):
-            if pd.api.types.is_numeric_dtype(df[col_name]):
-                numeric_cols.add(col_idx)
-        return numeric_cols
+            if pd.api.types.is_float_dtype(df[col_name]):
+                float_cols.add(col_idx)
+        return float_cols
 
     def _build_table_data(
         self,
@@ -144,6 +162,7 @@ class BasePDFReport:
         header: list[str],
         col_widths: list[float] | None,
         float_precision: int,
+        float_cols: set[int] | None = None,
     ) -> list[list[str | Paragraph]]:
         """
         Build table data with optional Paragraph wrapping.
@@ -152,9 +171,11 @@ class BasePDFReport:
         :param header: Header row including index column
         :param col_widths: If provided, wrap cells in Paragraphs
         :param float_precision: Decimal places for floats
+        :param float_cols: Indices of columns containing floats
         :return: 2D list of table cells
         """
         use_paragraphs = col_widths is not None
+        float_cols = float_cols or set()
 
         # Initialize with proper type
         data: list[list[str | Paragraph]] = []
@@ -176,9 +197,12 @@ class BasePDFReport:
                 self._format_cell(str(index), use_paragraphs)
             ]
 
-            for val in row:
+            for col_idx, val in enumerate(row, start=1):
                 cell_value = self._format_value(val, float_precision)
-                formatted_row.append(self._format_cell(cell_value, use_paragraphs))
+                alignment = TA_RIGHT if col_idx in float_cols else TA_LEFT
+                formatted_row.append(
+                    self._format_cell(cell_value, use_paragraphs, alignment=alignment)
+                )
 
             data.append(formatted_row)
 
@@ -200,21 +224,33 @@ class BasePDFReport:
             return f"{val:.{precision}f}"
         return str(val)
 
-    def _format_cell(self, value: str, use_paragraph: bool) -> str | Paragraph:
+    def _format_cell(
+        self, value: str, use_paragraph: bool, alignment: int = TA_LEFT
+    ) -> str | Paragraph:
         """
         Wrap cell value in Paragraph if needed.
 
         :param value: Cell content
         :param use_paragraph: Whether to wrap in Paragraph for text wrapping
+        :param alignment: Alignment (TA_LEFT, TA_RIGHT, TA_CENTER)
         :return: Raw string or Paragraph object
         """
-        return Paragraph(value, self.styles["Normal"]) if use_paragraph else value
+        if not use_paragraph:
+            return value
 
-    def _create_table_style(self, numeric_cols: set[int]) -> TableStyle:
+        style = self.styles["Normal"]
+        if alignment == TA_RIGHT:
+            style = self.styles["NormalRight"]
+        elif alignment == TA_CENTER:
+            style = self.styles["NormalCenter"]
+
+        return Paragraph(value, style)
+
+    def _create_table_style(self, float_cols: set[int]) -> TableStyle:
         """
-        Create TableStyle with right-alignment for numeric columns.
+        Create TableStyle with right-alignment for float columns.
 
-        :param numeric_cols: Set of column indices to right-align
+        :param float_cols: Set of column indices to right-align
         :return: Configured TableStyle
         """
         style_commands = [
@@ -230,9 +266,9 @@ class BasePDFReport:
             ("ALIGN", (0, 0), (-1, -1), "LEFT"),
         ]
 
-        # Right-align numeric columns (data rows only, not header)
+        # Right-align float columns (data rows only, not header)
         style_commands.extend(
-            ("ALIGN", (col_idx, 1), (col_idx, -1), "RIGHT") for col_idx in numeric_cols
+            ("ALIGN", (col_idx, 1), (col_idx, -1), "RIGHT") for col_idx in float_cols
         )
 
         return TableStyle(style_commands)

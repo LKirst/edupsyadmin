@@ -152,7 +152,7 @@ class ActivitySummary:
             "wd_week": [self.days_per_week, "Arbeitstage/Woche"],
             "wd_year": [
                 self.work_days_per_year,
-                "Arbeitstage/Jahr nach Abzug von 30 Tagen Urlaub",
+                "Arbeitstage/Jahr (abzgl. 30 Tage Urlaub)",
             ],
             "ww_year": [self.work_weeks_per_year, "Arbeitswochen/Jahr"],
             "zstd_week": [self.hours_per_week_std, "h/Woche"],
@@ -160,31 +160,31 @@ class ActivitySummary:
             "zstd_year": [self.hours_per_year_total, "h/Jahr"],
             "wstd_total_target": [
                 self.wstd_total,
-                "n Wochenstunden insgesamt (Anrechnungsstunden und Unterricht)",
+                "Wstdn gesamt (Anrechn. + Unterr.)",
             ],
             "wstd_spsy": [
                 self.wstd_spsy,
-                "n Wochenstunden Schulpsychologie (Anrechnungsstunden)",
+                "Wstdn Schulps. (Anrechn.)",
             ],
             "zstd_spsy_1wstd_target": [
                 self.hours_per_wstd,
-                "h Arbeit / Jahr, die einer Wochenstunde entsprächen",
+                "h Arbeit/Jahr pro Wstd (Soll)",
             ],
             "zstd_spsy_year_target": [
                 self.target_hours_year,
-                "h Arbeit / Jahr, die den angegebenen Wochenstunden "
-                "Schulpsychologie entsprächen",
+                "h Arbeit/Jahr für alle Wstd Schulps. (Soll)",
             ],
             "zstd_spsy_week_target": [
                 self.target_hours_week,
-                "h Arbeit in der Woche, die den angegebenen Wochenstunden "
-                "Schulpsychologie entsprächen",
+                "h Arbeit/Woche für Wstd Schulps. (Soll)",
             ],
             "nstudents_all": [self.n_students_all, ""],
             "ratio_nstudens_wstd_spsy": [self.ratio_nstudents_wstd_spsy, ""],
         }
 
-        for school_name, student_count in self.school_students.items():
+        # Sort school students by name for deterministic report layout
+        for school_name in sorted(self.school_students.keys()):
+            student_count = self.school_students[school_name]
             stats_data[f"nstudents_{school_name}"] = [student_count, ""]
 
         if self.zstd_spsy_year_actual is not None:
