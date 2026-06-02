@@ -173,11 +173,11 @@ Optionale Abhängigkeiten
 
 Um grafische Berichte und den Tätigkeitsbericht als PDF zu erstellen, müssen
 zusätzliche Bibliotheken installiert werden. Dies geschieht über die optionale
-Abhängigkeit (Extra) ``reportsandtaetigkeitsber``:
+Abhängigkeit (Extra) ``reports``:
 
 .. code-block:: console
 
-    $ uv tool upgrade edupsyadmin --with reportsandtaetigkeitsber
+    $ uv tool upgrade edupsyadmin --with reports
 
 
 Verschlüsselung

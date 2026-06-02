@@ -15,25 +15,25 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-  "alembic>=1.14.1",
-  "cryptography>=43.0.3",
-  "keyring>=25.5",
-  "platformdirs>=4.3.6",
-  "pydantic>=2.12.3",
-  "pypdf>=5.1",
-  "python-dateutil>=2.9.0.post0",
-  "python-liquid>=1.12.1",
-  "pyyaml>=6.0.2",
-  "rich>=14.3.3",
-  "sqlalchemy>=2.0.36",
-  "textual>=8",
+  "alembic>=1.18",
+  "cryptography>=48",
+  "keyring>=25.7",
+  "platformdirs>=4.10",
+  "pydantic>=2.13",
+  "pypdf>=6.12",
+  "python-dateutil>=2.9",
+  "python-liquid>=2",
+  "pyyaml>=6.0.3",
+  "rich>=15",
+  "sqlalchemy>=2",
+  "textual>=8.2",
 ]
-optional-dependencies.bwbackend = [ "bitwarden-keyring>=0.3.1" ]
-optional-dependencies.reportsandtaetigkeitsber = [
-  "matplotlib>=3.9.2",
+optional-dependencies.bwbackend = [ "bitwarden-keyring>=0.3.2" ]
+optional-dependencies.reports = [
+  "matplotlib>=3.10",
   "numpy>=2.4.4",
-  "pandas>=2.2.3",
-  "reportlab>=4.2.5",
+  "pandas>=3",
+  "reportlab>=4.5",
 ]
 urls.documentation = "https://edupsyadmin.readthedocs.io"
 urls.homepage = "https://github.com/LKirst/edupsyadmin.git"
@@ -55,7 +55,7 @@ dev = [
   "sphinx-design>=0.6.1",
   "sphinx-rtd-theme>=3.0.2",
   "textual-dev>=1.7",
-  "ty>=0.0.20",
+  "ty>=0.0.40",
   "types-greenlet>=3.1.0.20241221",
   "types-python-dateutil>=2.9.0.20241206",
   "types-pyyaml>=6.0.12.20241221",
@@ -99,26 +99,19 @@ lint.flake8-tidy-imports.ban-relative-imports = "all"
 terminal.error-on-warning = true
 
 [tool.pytest]
-ini_options.addopts = "--benchmark-skip"
 ini_options.testpaths = [ "test" ]
 ini_options.python_files = "test_*.py"
 ini_options.python_classes = "Test*"
 ini_options.python_functions = "test_*"
-
-[tool.coverage]
-run.omit = [
-  "src/edupsyadmin/api/cft_report.py",
-  "src/edupsyadmin/api/lgvt.py",
-  "src/edupsyadmin/api/reports.py",
-]
+ini_options.addopts = "--benchmark-skip"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-tag_format = "$version"
 version_scheme = "pep440"
 version_provider = "pep621"
-update_changelog_on_bump = true
 version_files = [ "src/edupsyadmin/__version__.py" ]
+tag_format = "$version"
+update_changelog_on_bump = true
 
 [tool.rstcheck]
 ignore_directives = [ "tab-set", "dropdown", "automodule", "autoclass" ]
