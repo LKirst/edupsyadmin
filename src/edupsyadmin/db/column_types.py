@@ -71,8 +71,19 @@ class EncryptedInteger(TypeDecorator):
         decrypted = encr.decrypt(value)
         try:
             return int(decrypted) if decrypted else None
-        except ValueError, TypeError:
-            logger.error(f"Could not convert decrypted value '{decrypted}' to int")
+        except ValueError:
+            logger.error(
+                "Failed to parse decrypted value as integer: "
+                f"type={type(decrypted).__name__}, "
+                f"length={len(decrypted) if isinstance(decrypted, str) else 'N/A'}, "
+                f"empty={not decrypted}"
+            )
+            return None
+        except TypeError:
+            logger.error(
+                f"Decrypted value has unexpected type {type(decrypted).__name__}, "
+                "expected str for integer conversion"
+            )
             return None
 
 
@@ -108,6 +119,17 @@ class EncryptedDate(TypeDecorator):
             return None
         try:
             return datetime.strptime(decrypted, "%Y-%m-%d").date()
-        except ValueError, TypeError:
-            logger.error(f"Could not convert decrypted value '{decrypted}' to date")
+        except ValueError:
+            logger.error(
+                "Failed to parse decrypted value as date (expected YYYY-MM-DD): "
+                f"type={type(decrypted).__name__}, "
+                f"length={len(decrypted) if isinstance(decrypted, str) else 'N/A'}, "
+                f"empty={not decrypted}"
+            )
+            return None
+        except TypeError:
+            logger.error(
+                f"Decrypted value has unexpected type {type(decrypted).__name__}, "
+                "expected str for date parsing"
+            )
             return None

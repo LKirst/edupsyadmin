@@ -88,9 +88,27 @@ def test_encrypted_integer_none(db_session):
 @pytest.mark.parametrize(
     "decrypted_value,expected_error",
     [
-        ("not-an-int", "Could not convert decrypted value 'not-an-int' to int"),
-        ("12.5", "Could not convert decrypted value '12.5' to int"),
-        ("abc123", "Could not convert decrypted value 'abc123' to int"),
+        (
+            "not-an-int",
+            (
+                "Failed to parse decrypted value as integer: "
+                "type=str, length=10, empty=False"
+            ),
+        ),
+        (
+            "12.5",
+            (
+                "Failed to parse decrypted value as integer: "
+                "type=str, length=4, empty=False"
+            ),
+        ),
+        (
+            "abc123",
+            (
+                "Failed to parse decrypted value as integer: "
+                "type=str, length=6, empty=False"
+            ),
+        ),
     ],
     ids=["text", "float_string", "mixed"],
 )
@@ -155,10 +173,34 @@ def test_encrypted_date_none(db_session):
 @pytest.mark.parametrize(
     "decrypted_value,expected_error",
     [
-        ("not-a-date", "Could not convert decrypted value 'not-a-date' to date"),
-        ("2023-13-01", "Could not convert decrypted value '2023-13-01' to date"),
-        ("2023/05/20", "Could not convert decrypted value '2023/05/20' to date"),
-        ("20-05-2023", "Could not convert decrypted value '20-05-2023' to date"),
+        (
+            "not-a-date",
+            (
+                "Failed to parse decrypted value as date "
+                "(expected YYYY-MM-DD): type=str, length=10, empty=False"
+            ),
+        ),
+        (
+            "2023-13-01",
+            (
+                "Failed to parse decrypted value as date "
+                "(expected YYYY-MM-DD): type=str, length=10, empty=False"
+            ),
+        ),
+        (
+            "2023/05/20",
+            (
+                "Failed to parse decrypted value as date "
+                "(expected YYYY-MM-DD): type=str, length=10, empty=False"
+            ),
+        ),
+        (
+            "20-05-2023",
+            (
+                "Failed to parse decrypted value as date "
+                "(expected YYYY-MM-DD): type=str, length=10, empty=False"
+            ),
+        ),
     ],
     ids=["text", "invalid_month", "wrong_separator", "wrong_format"],
 )
