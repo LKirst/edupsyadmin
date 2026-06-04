@@ -1,78 +1,134 @@
-from pdf2image import convert_from_path
-from PIL import Image, ImageChops, ImageStat
+from snapshot_utils import PDFSnapshotExtension
 
 from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.fill_form import fill_form
+from edupsyadmin.api.flatten_pdf import flatten_pdf
+
+
+def test_snapshot_sensitivity_checkbox(
+    mock_config, pdf_forms, tmp_path, client_dict_internal
+):
+    """
+    Verify that the snapshot comparison logic is strict enough to detect
+    a single toggled checkbox (notenschutz).
+    """
+    # Use the ReportLab form
+    form_path = next(f for f in pdf_forms if "reportlab" in f.name)
+
+    # 1. Fill correctly (notenschutz = True)
+    client_view_1 = ClientView.model_validate(client_dict_internal)
+    client_view_1.notenschutz = True
+    correct_dir = tmp_path / "cb_true"
+    correct_dir.mkdir(parents=True, exist_ok=True)
+    fill_form(client_view_1, [form_path], out_dir=correct_dir)
+    pdf_1 = correct_dir / f"{client_view_1.client_id}_{form_path.name}"
+    flat_pdf_1 = flatten_pdf(pdf_1, output_prefix="flat_")
+
+    # 2. Fill incorrectly (notenschutz = False)
+    client_view_2 = ClientView.model_validate(client_dict_internal)
+    client_view_2.notenschutz = False
+    incorrect_dir = tmp_path / "cb_false"
+    incorrect_dir.mkdir(parents=True, exist_ok=True)
+    fill_form(client_view_2, [form_path], out_dir=incorrect_dir)
+    pdf_2 = incorrect_dir / f"{client_view_2.client_id}_{form_path.name}"
+    flat_pdf_2 = flatten_pdf(pdf_2, output_prefix="flat_")
+
+    # 3. Compare
+    extension = PDFSnapshotExtension()
+
+    # Convert PDFs to PNG bytes using the extension's serialize method
+    png_bytes_1 = extension.serialize(flat_pdf_1)
+    png_bytes_2 = extension.serialize(flat_pdf_2)
+
+    # The extension's matches method should return False (i.e., it should
+    # DETECT the change)
+    matches = extension.matches(serialized_data=png_bytes_1, snapshot_data=png_bytes_2)
+
+    assert not matches, (
+        f"Checkbox toggle was NOT detected. "
+        f"The threshold ({extension.PERCENT_CHANGED_THRESHOLD}%) is likely too lax."
+    )
 
 
 def test_snapshot_sensitivity_radio_button(
     mock_config, pdf_forms, tmp_path, client_dict_internal
 ):
     """
-    Verify that the snapshot comparison logic in conftest.py is strict enough
-    to detect a single toggled radio button, even if the rest of the
-    document is identical.
-
-    Expected behavior:
-    - Radio button toggle: ~100 pixels (~0.005%) → FAIL (detected)
-    - OS rendering noise: ~1500 pixels (~0.035%) → PASS (tolerated)
+    Verify that the snapshot comparison logic is strict enough to detect
+    a single toggled radio button (lrst_schpsy).
     """
     # Use the ReportLab form
     form_path = next(f for f in pdf_forms if "reportlab" in f.name)
 
-    # 1. Fill correctly (notenschutz = True)
-    client_data_1 = ClientView.model_validate(client_dict_internal).model_dump()
-    client_data_1["notenschutz"] = True
-    correct_dir = tmp_path / "correct"
-    correct_dir.mkdir(parents=True, exist_ok=True)
-    fill_form(client_data_1, [form_path], out_dir=correct_dir)
-    pdf_1 = correct_dir / f"{client_data_1['client_id']}_{form_path.name}"
+    # 1. Fill with first radio option (lrst_last_test_by_encr = "schpsy" -> 1)
+    client_view_1 = ClientView.model_validate(client_dict_internal)
+    client_view_1.lrst_last_test_by_encr = "schpsy"
+    dir_1 = tmp_path / "radio_1"
+    dir_1.mkdir(parents=True, exist_ok=True)
+    fill_form(client_view_1, [form_path], out_dir=dir_1)
+    pdf_1 = dir_1 / f"{client_view_1.client_id}_{form_path.name}"
+    flat_pdf_1 = flatten_pdf(pdf_1, output_prefix="flat_")
 
-    # 2. Fill incorrectly (notenschutz = False)
-    client_data_2 = client_data_1.copy()
-    client_data_2["notenschutz"] = False
-    incorrect_dir = tmp_path / "incorrect"
-    incorrect_dir.mkdir(parents=True, exist_ok=True)
-    fill_form(client_data_2, [form_path], out_dir=incorrect_dir)
-    pdf_2 = incorrect_dir / f"{client_data_2['client_id']}_{form_path.name}"
+    # 2. Fill with second radio option (lrst_last_test_by_encr = "psychia" -> 2)
+    client_view_2 = ClientView.model_validate(client_dict_internal)
+    client_view_2.lrst_last_test_by_encr = "psychia"
+    dir_2 = tmp_path / "radio_2"
+    dir_2.mkdir(parents=True, exist_ok=True)
+    fill_form(client_view_2, [form_path], out_dir=dir_2)
+    pdf_2 = dir_2 / f"{client_view_2.client_id}_{form_path.name}"
+    flat_pdf_2 = flatten_pdf(pdf_2, output_prefix="flat_")
 
-    # 3. Compare using the same logic as PDFSnapshotExtension.matches in conftest.py
-    def get_png(pdf_path):
-        images = convert_from_path(pdf_path, dpi=150)
-        widths, heights = zip(*(i.size for i in images), strict=False)
-        max_width = max(widths)
-        total_height = sum(heights)
-        combined = Image.new("RGB", (max_width, total_height))
-        y_offset = 0
-        for im in images:
-            combined.paste(im, (0, y_offset))
-            y_offset += im.size[1]
-        return combined
+    # 3. Compare using the actual extension logic
+    extension = PDFSnapshotExtension()
 
-    img1 = get_png(pdf_1)
-    img2 = get_png(pdf_2)
+    png_bytes_1 = extension.serialize(flat_pdf_1)
+    png_bytes_2 = extension.serialize(flat_pdf_2)
 
-    diff = ImageChops.difference(img1, img2)
-    diff_gray = diff.convert("L")
-    significant_diff_mask = diff_gray.point(lambda p: 1 if p > 100 else 0, mode="1")
+    matches = extension.matches(serialized_data=png_bytes_1, snapshot_data=png_bytes_2)
 
-    stat = ImageStat.Stat(significant_diff_mask)
-    changed_pixels = stat.sum[0]
-    total_pixels = img1.size[0] * img1.size[1]
-    percent_changed = (changed_pixels / total_pixels) * 100
-
-    # Updated threshold: radio button toggle should exceed 0.05% detection floor
-    # Observed: ~111 pixels = ~0.005% (well below 0.05%, so test will fail)
-    # This test verifies the threshold is LOW ENOUGH to catch regressions
-    assert percent_changed < 0.05, (
-        f"Radio button toggle changed {percent_changed:.4f}% of pixels "
-        f"({int(changed_pixels)} pixels), which exceeds the 0.05% tolerance. "
-        f"This is expected—the test verifies detection sensitivity."
+    assert not matches, (
+        f"Radio button toggle was NOT detected. "
+        f"The threshold ({extension.PERCENT_CHANGED_THRESHOLD}%) is likely too lax."
     )
 
-    # Additional check: ensure the change is significant enough to be detected
-    # (i.e., not just 1-2 pixels of noise)
-    assert changed_pixels > 50, (
-        f"Radio button toggle only changed {int(changed_pixels)} pixels, "
-        f"which is too small to reliably detect content changes."
+
+def test_snapshot_sensitivity_text_field(
+    mock_config, pdf_forms, tmp_path, client_dict_internal
+):
+    """
+    Verify that the snapshot comparison logic is strict enough to detect
+    a change in a text field (first_name_encr).
+    """
+    # Use the ReportLab form
+    form_path = next(f for f in pdf_forms if "reportlab" in f.name)
+
+    # 1. Fill with one name
+    client_view_1 = ClientView.model_validate(client_dict_internal)
+    client_view_1.first_name_encr = "Alice"
+    dir_1 = tmp_path / "text_1"
+    dir_1.mkdir(parents=True, exist_ok=True)
+    fill_form(client_view_1, [form_path], out_dir=dir_1)
+    pdf_1 = dir_1 / f"{client_view_1.client_id}_{form_path.name}"
+    flat_pdf_1 = flatten_pdf(pdf_1, output_prefix="flat_")
+
+    # 2. Fill with another name
+    client_view_2 = ClientView.model_validate(client_dict_internal)
+    client_view_2.first_name_encr = "Bob"
+    dir_2 = tmp_path / "text_2"
+    dir_2.mkdir(parents=True, exist_ok=True)
+    fill_form(client_view_2, [form_path], out_dir=dir_2)
+    pdf_2 = dir_2 / f"{client_view_2.client_id}_{form_path.name}"
+    flat_pdf_2 = flatten_pdf(pdf_2, output_prefix="flat_")
+
+    # 3. Compare using the actual extension logic
+    extension = PDFSnapshotExtension()
+
+    png_bytes_1 = extension.serialize(flat_pdf_1)
+    png_bytes_2 = extension.serialize(flat_pdf_2)
+
+    matches = extension.matches(serialized_data=png_bytes_1, snapshot_data=png_bytes_2)
+
+    assert not matches, (
+        f"Text field change was NOT detected. "
+        f"The threshold ({extension.PERCENT_CHANGED_THRESHOLD}%) is likely too lax."
     )
