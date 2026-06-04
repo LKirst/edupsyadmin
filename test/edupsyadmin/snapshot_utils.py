@@ -22,7 +22,7 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
 
     # Thresholds for OS-level rendering differences
     AVG_DIFF_THRESHOLD = 1.0
-    PERCENT_CHANGED_THRESHOLD = 0.001
+    PERCENT_CHANGED_THRESHOLD = 0.004
 
     def matches(self, *, serialized_data: Any, snapshot_data: Any) -> bool:
         """

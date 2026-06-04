@@ -17,6 +17,7 @@ from sample_webuntis_export import create_sample_webuntis_export
 from snapshot_utils import (
     PDFSnapshotExtension,
     actual_snapshot_path_key,
+    snapshot_logger,
 )
 
 from edupsyadmin.api.managers import ClientsManager
@@ -56,6 +57,7 @@ def setup_logging() -> Generator[None]:
     """
     logger.start(level="DEBUG")
     testing_logger.start(level="DEBUG")
+    snapshot_logger.start(level="DEBUG")
     yield
     logger.stop()
 
