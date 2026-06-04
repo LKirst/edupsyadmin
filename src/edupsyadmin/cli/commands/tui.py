@@ -12,6 +12,12 @@ COMMAND_EPILOG = textwrap.dedent(
     Example:
       # Start the TUI
       edupsyadmin tui
+
+      # Filter by school name
+      edupsyadmin --school MySchool
+
+      # Show columns min_session and n_sessions
+      edupsyadmin --columns min_sessions n_sessions
 """,
 )
 

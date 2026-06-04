@@ -27,6 +27,10 @@ COMMAND_EPILOG = textwrap.dedent(
           # Fill a form for client with ID 3, injecting custom data
           edupsyadmin create-documentation 3 --form_paths "./path/to/form.pdf" \
             --inject_data "key1=value1" "key2=value2"
+
+          # Process multiple forms for client with ID 3 with different form paths
+          edupsyadmin create-documentation 2 --form_paths "./path/to/form1.pdf" \
+            "./path/to/form2.pdf"
           """,
 )
 
