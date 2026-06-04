@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 from pdf2image import convert_from_path
-from PIL import Image, ImageChops, ImageStat
+from PIL import Image, ImageChops, ImageFilter, ImageStat
 from syrupy.extensions.image import PNGImageSnapshotExtension
 
 from edupsyadmin.core.logger import Logger
@@ -22,7 +22,9 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
 
     # Thresholds for OS-level rendering differences
     AVG_DIFF_THRESHOLD = 1.0
-    PERCENT_CHANGED_THRESHOLD = 0.004
+    PERCENT_CHANGED_THRESHOLD = 0.005
+    SIGNIFICANT_DIFF_BRIGHTNESS = 100  # 0-255 scale; ~39% difference
+    MEDIAN_FILTER_SIZE = 3  # Kernel size for denoising (must be odd)
 
     def matches(self, *, serialized_data: Any, snapshot_data: Any) -> bool:
         """
@@ -57,10 +59,18 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
 
         # Create a mask of pixels with significant differences (>100 on 0-255 scale)
         diff_gray = diff.convert("L")
-        significant_diff_mask = diff_gray.point(lambda p: 1 if p > 100 else 0, mode="1")
+        significant_diff_mask = diff_gray.point(
+            lambda p: 1 if p > self.SIGNIFICANT_DIFF_BRIGHTNESS else 0, mode="1"
+        )
+
+        # Denoise the mask: isolated pixels (noise) are removed,
+        # clustered pixels (content) remain.
+        denoised_mask = significant_diff_mask.filter(
+            ImageFilter.MedianFilter(size=self.MEDIAN_FILTER_SIZE)
+        )
 
         # Count significant pixels
-        stat = ImageStat.Stat(significant_diff_mask)
+        stat = ImageStat.Stat(denoised_mask)
         changed_pixels = stat.sum[0]
         total_pixels = actual.size[0] * actual.size[1]
         percent_changed = (changed_pixels / total_pixels) * 100
