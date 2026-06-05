@@ -23,16 +23,15 @@ def test_flatten_form(pdf_forms: list, tmp_path: Path, mock_config: Path) -> Non
         pdf_forms,
         out_dir=tmp_path,
     )
-    for form in pdf_forms:
-        # fill a form
-        filled_pdf_path = tmp_path / f"{client_data['client_id']}_{form.name}"
-        assert filled_pdf_path.is_file()
+    # Since len(pdf_forms) > 1, we expect a merged file
+    filled_pdf_path = tmp_path / f"{client_data['client_id']}_merged.pdf"
+    assert filled_pdf_path.is_file()
 
-        # flatten the form
-        flattened_pdf_path = tmp_path / f"print_{client_data['client_id']}_{form.name}"
-        flatten_pdf(filled_pdf_path)
-        assert flattened_pdf_path.is_file()
-        with flattened_pdf_path.open("rb") as f:
-            reader = PdfReader(f)
-            form_data = reader.get_fields()
-            assert form_data is None, "pdf form was not flattened"
+    # flatten the form
+    flattened_pdf_path = tmp_path / f"print_{client_data['client_id']}_merged.pdf"
+    flatten_pdf(filled_pdf_path)
+    assert flattened_pdf_path.is_file()
+    with flattened_pdf_path.open("rb") as f:
+        reader = PdfReader(f)
+        form_data = reader.get_fields()
+        assert form_data is None, "pdf form was not flattened"

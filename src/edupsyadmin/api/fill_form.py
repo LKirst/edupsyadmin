@@ -160,11 +160,15 @@ def _get_fields_to_update(
     return fields_to_update
 
 
-def write_form_pypdf(fn: Path, out_fn: Path, data: Mapping[str, Any]) -> None:
+def write_form_pypdf(
+    fns: Sequence[Path],
+    out_fn: Path,
+    data: Mapping[str, Any],
+) -> None:
     """
-    Fill a pdf form with data using pypdf.
+    Fill one or more pdf forms with data and merge them into a single output.
 
-    :param fn: filename of the empty pdf form
+    :param fns: sequence of filenames of the empty pdf forms
     :param out_fn: filename for the output
     :param data: the data to fill the pdf with
     :raises FileExistsError: FileExistsError
@@ -173,24 +177,27 @@ def write_form_pypdf(fn: Path, out_fn: Path, data: Mapping[str, Any]) -> None:
 
     writer = PdfWriter()
 
-    with fn.open("rb") as pdf_file:
-        reader = PdfReader(pdf_file, strict=False)
-        writer.append(reader)
+    for fn in fns:
+        with fn.open("rb") as pdf_file:
+            reader = PdfReader(pdf_file, strict=False)
+            start_page_idx = len(writer.pages)
+            writer.append(reader)
 
-        fields = reader.get_fields()
-        if not fields:
-            logger.debug(f"The file {fn} is not a form.")
-        else:
-            logger.debug(f"Form fields: {fields.keys()}")
-            logger.debug(f"Data keys: {data.keys()}")
+            fields = reader.get_fields()
+            if not fields:
+                logger.debug(f"The file {fn} is not a form.")
+                continue
 
+            logger.debug(f"Form fields in {fn.name}: {fields.keys()}")
             fields_to_update = _get_fields_to_update(fields, data)
 
-            # update all fields at once for each page
             if fields_to_update:
-                for i, page in enumerate(writer.pages):
+                for i in range(start_page_idx, len(writer.pages)):
                     try:
-                        writer.update_page_form_field_values(page, fields_to_update)
+                        writer.update_page_form_field_values(
+                            writer.pages[i],
+                            fields_to_update,
+                        )
                     except KeyError as e:
                         raise KeyError(
                             f"Bulk update of fields failed on p. {i + 1} of {fn.name}",
@@ -261,18 +268,33 @@ def fill_form(
 
     aliased_data = _add_aliases(data_dict)
 
-    for fp in form_paths:
+    pdf_paths = [fp for fp in form_paths if fp.suffix.lower() != ".md"]
+    md_paths = [fp for fp in form_paths if fp.suffix.lower() == ".md"]
+
+    client_id = data_dict.get("client_id", "unknown")
+
+    if pdf_paths:
+        if len(pdf_paths) == 1:
+            fp = pdf_paths[0]
+            logger.info(f"Using the template {fp}")
+            out_fp = Path(out_dir, f"{client_id}_{fp.name}")
+            write_form_pypdf([fp], out_fp, aliased_data)
+        else:
+            for fp in pdf_paths:
+                logger.info(f"Using the template {fp}")
+            out_fp = Path(out_dir, f"{client_id}_merged.pdf")
+            logger.info(f"Merging {len(pdf_paths)} PDFs into {out_fp}")
+            write_form_pypdf(pdf_paths, out_fp, aliased_data)
+
+    for fp in md_paths:
         logger.info(f"Using the template {fp}")
         if not fp.is_file():
             raise FileNotFoundError(
                 f"The template file does not exist: {fp}; cwd is: {Path.cwd()}",
             )
-        out_fp = Path(out_dir, f"{data_dict.get('client_id')}_{fp.name}")
+        out_fp = Path(out_dir, f"{client_id}_{fp.name}")
         logger.info(f"Writing to {out_fp.resolve()}")
-        if fp.suffix == ".md":
-            write_form_md(fp, out_fp, aliased_data)
-        else:
-            write_form_pypdf(fp, out_fp, aliased_data)
+        write_form_md(fp, out_fp, aliased_data)
 
 
 def batch_fill_forms(

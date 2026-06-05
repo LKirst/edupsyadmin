@@ -9,48 +9,51 @@ from edupsyadmin.api.types import ClientRecord
 
 
 def test_fill_form(
-    mock_config, pdf_forms: list, tmp_path: Path, client_dict_internal: ClientRecord
+    mock_config,
+    pdf_forms: list,
+    tmp_path: Path,
+    client_dict_internal: ClientRecord,
 ) -> None:
     """Test the fill_form function."""
     clientd = ClientView.model_validate(client_dict_internal).model_dump()
     fill_form(clientd, pdf_forms, out_dir=tmp_path)
 
-    for i, form in enumerate(pdf_forms):
-        output_pdf_path = tmp_path / f"{clientd['client_id']}_{form.name}"
-        assert output_pdf_path.exists(), "Output PDF was not created."
+    # We expect ONE merged file since len(pdf_forms) > 1
+    output_pdf_path = tmp_path / f"{clientd['client_id']}_merged.pdf"
+    assert output_pdf_path.exists(), "Merged output PDF was not created."
 
-        if i == 0:
-            with output_pdf_path.open("rb") as f:
-                reader = pypdf.PdfReader(f)
-                form_data = reader.get_form_text_fields()
-                assert form_data["first_name_encr"] == clientd["first_name_encr"], (
-                    f"first_name_encr was not filled correctly for client {clientd}"
-                )
+    with output_pdf_path.open("rb") as f:
+        reader = pypdf.PdfReader(f)
+        # Check if we have multiple pages (each form in fixture has at least 1 page)
+        assert len(reader.pages) >= len(pdf_forms)
 
-                btn_data = reader.get_fields()
-                assert btn_data is not None
-                expected_nos = "/Yes" if clientd["notenschutz"] else "/Off"
-                expected_nta = "/Yes" if clientd["nachteilsausgleich"] else "/Off"
-                assert btn_data["notenschutz"].get("/V", None) == expected_nos, (
-                    f"notenschutz was not filled correctly for client {clientd}"
-                )
-                assert btn_data["nachteilsausgleich"].get("/V", None) == expected_nta, (
-                    f"nachteilsausgleich was not filled correctly for client {clientd}"
-                )
+        form_data = reader.get_form_text_fields()
+        assert form_data["first_name_encr"] == clientd["first_name_encr"], (
+            f"first_name_encr was not filled correctly for client {clientd}"
+        )
 
-                expected_lrst_last_test_by = (
-                    f"/{clientd['lrst_schpsy']}"
-                    if clientd.get("lrst_schpsy")
-                    else "/Off"
-                )
-                assert (
-                    btn_data["lrst_schpsy"].get("/V", None)
-                    == expected_lrst_last_test_by
-                )
+        btn_data = reader.get_fields()
+        assert btn_data is not None
+        expected_nos = "/Yes" if clientd["notenschutz"] else "/Off"
+        expected_nta = "/Yes" if clientd["nachteilsausgleich"] else "/Off"
+        assert btn_data["notenschutz"].get("/V", None) == expected_nos, (
+            f"notenschutz was not filled correctly for client {clientd}"
+        )
+        assert btn_data["nachteilsausgleich"].get("/V", None) == expected_nta, (
+            f"nachteilsausgleich was not filled correctly for client {clientd}"
+        )
+
+        expected_lrst_last_test_by = (
+            f"/{clientd['lrst_schpsy']}" if clientd.get("lrst_schpsy") else "/Off"
+        )
+        assert btn_data["lrst_schpsy"].get("/V", None) == expected_lrst_last_test_by
 
 
 def test_batch_fill_forms(
-    mock_config, pdf_forms: list, tmp_path: Path, client_dict_internal: ClientRecord
+    mock_config,
+    pdf_forms: list,
+    tmp_path: Path,
+    client_dict_internal: ClientRecord,
 ) -> None:
     """Test the batch_fill_forms function."""
 
@@ -74,6 +77,5 @@ def test_batch_fill_forms(
     assert clients_manager.get_client_view.call_count == 2
 
     for client_id in client_ids:
-        for form in pdf_forms:
-            output_pdf_path = tmp_path / f"{client_id}_{form.name}"
-            assert output_pdf_path.exists()
+        output_pdf_path = tmp_path / f"{client_id}_merged.pdf"
+        assert output_pdf_path.exists()

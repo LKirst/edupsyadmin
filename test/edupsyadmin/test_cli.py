@@ -305,11 +305,10 @@ def test_create_documentation(
     create_documentation_command.execute(args)
 
     # Assert
-    output_paths = [f"{client_id}_{Path(path).name}" for path in pdf_forms]
-    for path in output_paths:
-        assert Path(path).exists(), (
-            f"Output file {path} was not created in {Path.cwd()}"
-        )
+    output_pdf_path = Path(f"{client_id}_merged.pdf")
+    assert output_pdf_path.exists(), (
+        f"Output file {output_pdf_path} was not created in {Path.cwd()}"
+    )
 
 
 def test_delete_client(mock_config, tmp_path):
