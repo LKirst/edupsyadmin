@@ -23,9 +23,9 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
 
     # Thresholds for OS-level rendering differences
     AVG_DIFF_THRESHOLD = 1.0
-    PERCENT_CHANGED_THRESHOLD = 0.005
-    SIGNIFICANT_DIFF_BRIGHTNESS = 100  # 0-255 scale; ~39% difference
-    MEDIAN_FILTER_SIZE = 3  # Kernel size for denoising (must be odd)
+    PERCENT_CHANGED_THRESHOLD = 0.003
+    SIGNIFICANT_DIFF_BRIGHTNESS = 128  # 0-255 scale
+    MEDIAN_FILTER_SIZE = 5  # Kernel size for denoising (must be odd)
 
     def matches(self, *, serialized_data: Any, snapshot_data: Any) -> bool:
         """
