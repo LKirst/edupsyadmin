@@ -25,6 +25,7 @@ Limitations
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from textwrap import wrap
 
@@ -43,15 +44,7 @@ from pypdf.generic import (
     StreamObject,
 )
 
-# ---------------------------------------------------------------------------
-# Type aliases
-# ---------------------------------------------------------------------------
-
 _Rect = tuple[float, float, float, float]  # x0, y0, x1, y1
-
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
 
 # Matches the font-setting operator in a /DA string, e.g. "/Helv 12 Tf"
 _DA_FONT_RE = re.compile(r"/(\S+)\s+([\d.]+)\s+Tf")
@@ -81,9 +74,62 @@ _ALIGN_CENTER = 1
 _ALIGN_RIGHT = 2
 
 
-# ---------------------------------------------------------------------------
-# Geometry helpers
-# ---------------------------------------------------------------------------
+@dataclass(frozen=True, slots=True)
+class _FieldContext:
+    """Immutable bundle of document-level flattening parameters.
+
+    Parsed once from the reader at the start of :func:`flatten_with_pypdf`
+    and threaded read-only through every page and annotation helper.
+
+    :param writer: The :class:`~pypdf.PdfWriter` accumulating output pages.
+    :param need_ap: Value of ``/NeedAppearances`` (default *False*).
+    :param dr: Default resource dictionary (``/DR``), or *None*.
+    :param da: Default appearance string (``/DA``), or empty string.
+    """
+
+    writer: PdfWriter
+    need_ap: bool
+    dr: DictionaryObject | None
+    da: str
+
+    @classmethod
+    def _default(cls, writer: PdfWriter) -> _FieldContext:
+        return cls(writer=writer, need_ap=False, dr=None, da="")
+
+    @classmethod
+    def from_reader(cls, reader: PdfReader, writer: PdfWriter) -> _FieldContext:
+        """Build a :class:`_FieldContext` from an open reader and writer.
+
+        Walks ``/Root → /AcroForm`` exactly once and snapshots the three
+        entries needed for flattening.  Returns safe defaults when any
+        part of the chain is absent or malformed.
+
+        :param reader: An open :class:`~pypdf.PdfReader`.
+        :param writer: The :class:`~pypdf.PdfWriter` that will receive pages.
+        :return: Populated context object.
+        """
+        root_obj = reader.trailer["/Root"].get_object()
+        if not isinstance(root_obj, DictionaryObject):
+            return cls._default(writer)
+
+        acroform_raw = root_obj.get("/AcroForm")
+        if acroform_raw is None:
+            return cls._default(writer)
+
+        acroform = acroform_raw.get_object()
+        if not isinstance(acroform, DictionaryObject):
+            return cls._default(writer)
+
+        flag_raw = acroform.get("/NeedAppearances")
+        need_ap = bool(flag_raw) if flag_raw is not None else False
+
+        dr_raw = acroform.get("/DR")
+        dr = dr_raw.get_object() if dr_raw is not None else None
+
+        da_raw = acroform.get("/DA")
+        da = str(da_raw) if da_raw is not None else ""
+
+        return cls(writer=writer, need_ap=need_ap, dr=dr, da=da)
 
 
 def _rect_to_floats(rect_obj: object) -> _Rect:
@@ -114,11 +160,6 @@ def _calculate_rect_dimensions(rect: _Rect) -> tuple[float, float]:
     """
     x0, y0, x1, y1 = rect
     return x1 - x0, y1 - y0
-
-
-# ---------------------------------------------------------------------------
-# Default appearance parsing
-# ---------------------------------------------------------------------------
 
 
 class _DefaultAppearance:
@@ -159,141 +200,9 @@ class _DefaultAppearance:
         """
         if self.font_size > 0:
             return self.font_size
-        # Auto-size: ~75% of the field height, capped for readability
         auto_size = field_height * _AUTO_SIZE_RATIO
+        # Cap for readability
         return min(auto_size, _MAX_AUTO_FONT_SIZE)
-
-
-# ---------------------------------------------------------------------------
-# AcroForm helpers
-# ---------------------------------------------------------------------------
-
-
-def _get_acroform(reader: PdfReader) -> DictionaryObject | None:
-    """Return the ``/AcroForm`` dictionary from the document catalog.
-
-    :param reader: An open :class:`~pypdf.PdfReader`.
-    :return: The ``/AcroForm`` dictionary, or *None* if absent.
-    """
-    root_obj = reader.trailer["/Root"].get_object()
-    if not isinstance(root_obj, DictionaryObject):
-        return None
-    acroform_raw = root_obj.get("/AcroForm")
-    if acroform_raw is None:
-        return None
-    acroform = acroform_raw.get_object()
-    return acroform if isinstance(acroform, DictionaryObject) else None
-
-
-def _get_acroform_dr(reader: PdfReader) -> DictionaryObject | None:
-    """Return the ``/DR`` (default resources) dictionary from ``/AcroForm``.
-
-    :param reader: An open :class:`~pypdf.PdfReader`.
-    :return: The ``/DR`` dictionary, or *None* if absent.
-    """
-    acroform = _get_acroform(reader)
-    if acroform is None:
-        return None
-    dr_raw = acroform.get("/DR")
-    if dr_raw is None:
-        return None
-    return dr_raw.get_object()
-
-
-def _need_appearances(reader: PdfReader) -> bool:
-    """Return *True* if ``/AcroForm /NeedAppearances`` is set.
-
-    :param reader: An open :class:`~pypdf.PdfReader`.
-    :return: Boolean flag value.
-    """
-    acroform = _get_acroform(reader)
-    if acroform is None:
-        return False
-    flag = acroform.get("/NeedAppearances")
-    return bool(flag) if flag is not None else False
-
-
-def _get_acroform_da(reader: PdfReader) -> str:
-    """Return the default appearance string from ``/AcroForm /DA``.
-
-    :param reader: An open :class:`~pypdf.PdfReader`.
-    :return: The ``/DA`` string, or empty string if absent.
-    """
-    acroform = _get_acroform(reader)
-    if acroform is None:
-        return ""
-    da_raw = acroform.get("/DA")
-    return str(da_raw) if da_raw is not None else ""
-
-
-# ---------------------------------------------------------------------------
-# Resource merging
-# ---------------------------------------------------------------------------
-
-
-def _merge_subdictionaries(
-    base_dict: DictionaryObject,
-    extra_dict: DictionaryObject,
-    key: str,
-) -> None:
-    """Merge a subdictionary from extra into base (base takes priority).
-
-    :param base_dict: Primary dictionary to merge into (modified in-place).
-    :param extra_dict: Secondary dictionary to pull missing keys from.
-    :param key: The subdictionary key to merge (e.g., "/Font").
-    """
-    if key not in base_dict:
-        base_dict[NameObject(key)] = extra_dict[key]
-        return
-
-    existing = base_dict[key].get_object()
-    incoming = extra_dict[key].get_object()
-
-    if not isinstance(existing, DictionaryObject):
-        return
-    if not isinstance(incoming, DictionaryObject):
-        return
-
-    sub = DictionaryObject(existing)
-    for sub_key, sub_val in incoming.items():
-        if sub_key not in sub:
-            sub[NameObject(sub_key)] = sub_val
-    base_dict[NameObject(key)] = sub
-
-
-def _merge_resources(
-    base: DictionaryObject | None,
-    extra: DictionaryObject | None,
-) -> DictionaryObject | None:
-    """Shallow-merge two PDF resource dictionaries.
-
-    Sub-dictionaries (``/Font``, ``/XObject``, …) are merged key-by-key;
-    *base* values take priority.
-
-    :param base: Primary resource dictionary (may be *None*).
-    :param extra: Secondary resource dictionary to pull missing keys from.
-    :return: Merged dictionary, or *None* if both inputs are *None*.
-    """
-    if base is extra is None:
-        return None
-    if base is None:
-        return extra
-    if extra is None:
-        return base
-
-    merged = DictionaryObject(base)
-    for key, value in extra.items():
-        if key not in merged:
-            merged[NameObject(key)] = value
-        else:
-            _merge_subdictionaries(merged, extra, key)
-
-    return merged
-
-
-# ---------------------------------------------------------------------------
-# Appearance stream extraction
-# ---------------------------------------------------------------------------
 
 
 def _is_empty_stream(data: bytes) -> bool:
@@ -369,9 +278,7 @@ def _ap_stream_bytes_and_resources(
     if _is_empty_stream(data):
         return None
 
-    resources = None
-    if isinstance(n_obj, DictionaryObject):
-        resources = n_obj.get("/Resources")
+    resources = n_obj.get("/Resources") if isinstance(n_obj, DictionaryObject) else None
     return data, resources
 
 
@@ -393,7 +300,7 @@ def _get_ap_bbox(annot: DictionaryObject) -> ArrayObject | None:
         return None
 
     n_obj = _get_appearance_state_stream(ap, annot)
-    if (n_obj is None) or not isinstance(n_obj, DictionaryObject):
+    if n_obj is None or not isinstance(n_obj, DictionaryObject):
         return None
 
     bbox_raw = n_obj.get("/BBox")
@@ -402,11 +309,6 @@ def _get_ap_bbox(annot: DictionaryObject) -> ArrayObject | None:
 
     result = bbox_raw.get_object()
     return result if isinstance(result, ArrayObject) else None
-
-
-# ---------------------------------------------------------------------------
-# Text appearance synthesis
-# ---------------------------------------------------------------------------
 
 
 def _word_wrap_to_lines(text: str, chars_per_line: int) -> list[str]:
@@ -681,11 +583,6 @@ def _synthesise_text_appearance(
     return "\n".join(parts).encode()
 
 
-# ---------------------------------------------------------------------------
-# XObject construction and page stamping
-# ---------------------------------------------------------------------------
-
-
 def _create_bbox_array(rect: _Rect) -> ArrayObject:
     """Create a PDF BBox array from a rectangle.
 
@@ -828,93 +725,67 @@ def _stamp_xobject_onto_page(
     page[NameObject("/Contents")] = writer._add_object(new_content)
 
 
-# ---------------------------------------------------------------------------
-# Resource cloning
-# ---------------------------------------------------------------------------
-
-
 def _is_stream_object(obj: object) -> bool:
     """Check if an object is a stream object.
 
     :param obj: Object to check.
     :return: True if the object is a stream.
     """
-    return isinstance(obj, (StreamObject, EncodedStreamObject, DecodedStreamObject))
+    return isinstance(obj, StreamObject | EncodedStreamObject | DecodedStreamObject)
 
 
-def _clone_dictionary(obj: DictionaryObject, writer: PdfWriter) -> IndirectObject:
-    """Recursively clone a dictionary object.
+def _clone_object(
+    obj: PdfObject,
+    writer: PdfWriter,
+    *,
+    indirect: bool = False,
+) -> PdfObject:
+    """Recursively clone a PDF object, registering indirect objects with *writer*.
 
-    :param obj: Dictionary to clone.
-    :param writer: Target PdfWriter.
-    :return: Cloned dictionary with writer-owned references.
+    The *indirect* flag controls whether container types (dict, array) are
+    registered as indirect objects in the writer (``True``) or returned as
+    inline direct objects (``False``).  Streams are always registered as
+    indirect objects regardless of the flag.
+
+    When *obj* is an :class:`~pypdf.generic.IndirectObject` the referent is
+    dereferenced first and the result is always registered as an indirect
+    object (equivalent to the old ``_clone_indirect_object`` behaviour).
+
+    :param obj: PDF object to clone.
+    :param writer: Target :class:`~pypdf.PdfWriter` that will own any new
+        indirect objects.
+    :param indirect: If *True*, register cloned dicts and arrays as indirect
+        objects in *writer* (equivalent to the old ``_clone_dictionary`` /
+        ``_clone_array`` helpers).  Defaults to *False*.
+    :return: Cloned object, possibly an
+        :class:`~pypdf.generic.IndirectObject` reference when registered.
+    :raises ValueError: If an :class:`~pypdf.generic.IndirectObject`
+        dereferences to *None*.
     """
-    cloned_dict = DictionaryObject()
-    for key, value in obj.items():
-        cloned_dict[NameObject(key)] = _clone_object(value, writer)
-    return writer._add_object(cloned_dict)
-
-
-def _clone_array(obj: ArrayObject, writer: PdfWriter) -> IndirectObject:
-    """Recursively clone an array object.
-
-    :param obj: Array to clone.
-    :param writer: Target PdfWriter.
-    :return: Cloned array with writer-owned references.
-    """
-    cloned_array = ArrayObject(_clone_object(item, writer) for item in obj)
-    return writer._add_object(cloned_array)
-
-
-def _clone_indirect_object(obj: PdfObject, writer: PdfWriter) -> PdfObject:
-    """Clone an indirect object by dereferencing and processing it.
-
-    :param obj: Indirect object to clone.
-    :param writer: Target PdfWriter.
-    :return: Cloned object reference.
-    """
-    dereferenced = obj.get_object()
-
-    if dereferenced is None:  # cannot clone a None
-        raise ValueError("Indirect object dereferenced to None")
-
-    if _is_stream_object(dereferenced):
-        return writer._add_object(dereferenced)
-
-    if isinstance(dereferenced, DictionaryObject):
-        return _clone_dictionary(dereferenced, writer)
-
-    if isinstance(dereferenced, ArrayObject):
-        return _clone_array(dereferenced, writer)
-
-    # Primitive types: return as-is
-    return dereferenced
-
-
-def _clone_object(obj: PdfObject, writer: PdfWriter) -> PdfObject:
-    """Recursively clone an object, dereferencing and adding indirect objects.
-
-    :param obj: Object to clone.
-    :param writer: Target PdfWriter.
-    :return: Cloned object.
-    """
+    # IndirectObject: dereference, then clone the referent as indirect.
     if isinstance(obj, IndirectObject):
-        return _clone_indirect_object(obj, writer)
+        referent = obj.get_object()
+        if referent is None:
+            raise ValueError("IndirectObject dereferenced to None")
+        return _clone_object(referent, writer, indirect=True)
 
+    # Streams: always registered as indirect objects.
     if _is_stream_object(obj):
         return writer._add_object(obj)
 
+    # DictionaryObject: clone entries, optionally register as indirect.
     if isinstance(obj, DictionaryObject):
-        # Direct dictionary - clone recursively WITHOUT making it indirect
-        cloned = DictionaryObject()
+        cloned: DictionaryObject = DictionaryObject()
         for key, value in obj.items():
             cloned[NameObject(key)] = _clone_object(value, writer)
-        return cloned
+        return writer._add_object(cloned) if indirect else cloned
 
+    # ArrayObject: clone items, optionally register as indirect.
     if isinstance(obj, ArrayObject):
-        return ArrayObject(_clone_object(item, writer) for item in obj)
+        cloned_array = ArrayObject(_clone_object(item, writer) for item in obj)
+        return writer._add_object(cloned_array) if indirect else cloned_array
 
-    # Primitive types (numbers, names, strings) - return as-is
+    # Primitives (NameObject, NumberObject, …): return as-is.
     return obj
 
 
@@ -922,11 +793,12 @@ def _clone_resources_for_writer(
     resources: DictionaryObject | IndirectObject | None,
     writer: PdfWriter,
 ) -> DictionaryObject | None:
-    """Deep-clone a resources dictionary, copying all indirect objects to writer.
+    """Deep-clone a resources dictionary, copying all indirect objects to *writer*.
 
-    :param resources: Original resources dictionary from reader.
-    :param writer: Target PdfWriter.
-    :return: Cloned resources dictionary with writer-owned references.
+    :param resources: Original resources dictionary from the reader, or *None*.
+    :param writer: Target :class:`~pypdf.PdfWriter`.
+    :return: Cloned resources dictionary with writer-owned references, or
+        *None* if *resources* is *None* or not a dictionary.
     """
     if resources is None:
         return None
@@ -941,11 +813,6 @@ def _clone_resources_for_writer(
     if not isinstance(cloned, DictionaryObject):
         raise TypeError(f"Expected DictionaryObject, got {type(cloned)}")
     return cloned
-
-
-# ---------------------------------------------------------------------------
-# Field property helpers
-# ---------------------------------------------------------------------------
 
 
 def _field_flags(annot: DictionaryObject) -> int:
@@ -1010,11 +877,6 @@ def _resolve_field_attribute(
         parent = parent_raw.get_object()
         node = parent if isinstance(parent, DictionaryObject) else None
     return None
-
-
-# ---------------------------------------------------------------------------
-# Widget annotation processing
-# ---------------------------------------------------------------------------
 
 
 def _get_annotation_rect(annot: DictionaryObject) -> _Rect | None:
@@ -1139,56 +1001,45 @@ def _synthesise_text_field_appearance(
 def _process_widget_annotation(
     annot: DictionaryObject,
     page_index: int,
-    xobj_counter: int,
+    xobj_index: int,
     writer_page: DictionaryObject,
-    writer: PdfWriter,
-    need_ap: bool,
-    dr: DictionaryObject | None,
-    acroform_da: str,
-) -> int:
+    ctx: _FieldContext,
+) -> None:
     """Process a single widget annotation, stamping its appearance if possible.
 
     :param annot: Widget annotation dictionary.
     :param page_index: Current page index.
-    :param xobj_counter: Counter for XObject naming.
+    :param xobj_index: Unique index for XObject naming on this page.
     :param writer_page: Writer's page object.
-    :param writer: PdfWriter instance.
-    :param need_ap: Whether NeedAppearances flag is set.
-    :param dr: Default resources from AcroForm.
-    :param acroform_da: Default appearance string from AcroForm.
-    :return: Updated xobj_counter.
+    :param ctx: Document-level flattening context.
     """
     rect = _get_annotation_rect(annot)
     if rect is None:
-        return xobj_counter
+        return
 
-    xobj_name = f"/Fm{page_index}_{xobj_counter}"
-    xobj_counter += 1
-
+    xobj_name = f"/Fm{page_index}_{xobj_index}"
     field_type = str(_resolve_field_attribute(annot, "/FT") or "")
 
-    # Try to use existing appearance
     ap_result = _ap_stream_bytes_and_resources(annot)
     if ap_result is not None and _should_use_existing_appearance(
-        ap_result, need_ap, field_type
+        ap_result, ctx.need_ap, field_type
     ):
-        xobj = _process_existing_appearance(annot, ap_result, rect, dr, writer)
-        _stamp_xobject_onto_page(writer_page, writer, xobj_name, xobj, rect)
-        return xobj_counter
+        xobj = _process_existing_appearance(annot, ap_result, rect, ctx.dr, ctx.writer)
+        _stamp_xobject_onto_page(writer_page, ctx.writer, xobj_name, xobj, rect)
+        return
 
-    # Synthesise appearance for text fields
+    # Synthesise appearance only for text fields
     if field_type != "/Tx":
-        return xobj_counter
+        return
 
     value = _get_field_value(annot)
     if value is None:
-        return xobj_counter
+        return
 
     xobj = _synthesise_text_field_appearance(
-        annot, value, rect, acroform_da, dr, writer
+        annot, value, rect, ctx.da, ctx.dr, ctx.writer
     )
-    _stamp_xobject_onto_page(writer_page, writer, xobj_name, xobj, rect)
-    return xobj_counter
+    _stamp_xobject_onto_page(writer_page, ctx.writer, xobj_name, xobj, rect)
 
 
 def _get_page_annotations(page: DictionaryObject) -> ArrayObject | None:
@@ -1205,56 +1056,43 @@ def _get_page_annotations(page: DictionaryObject) -> ArrayObject | None:
     return annots if isinstance(annots, ArrayObject) else None
 
 
+def _is_widget(annot_obj: object) -> bool:
+    """Return *True* if *annot_obj* is a widget annotation dictionary.
+
+    :param annot_obj: Dereferenced annotation object.
+    :return: Boolean predicate result.
+    """
+    return isinstance(annot_obj, DictionaryObject) and annot_obj.get(
+        "/Subtype"
+    ) == NameObject("/Widget")
+
+
 def _process_page_annotations(
     page: DictionaryObject,
     page_index: int,
     writer_page: DictionaryObject,
-    writer: PdfWriter,
-    need_ap: bool,
-    dr: DictionaryObject | None,
-    acroform_da: str,
+    ctx: _FieldContext,
 ) -> None:
-    """Process all widget annotations on a page.
+    """Stamp all widget appearances on page and strip interactive annotations.
 
     :param page: Reader's page object.
-    :param page_index: Current page index.
-    :param writer_page: Writer's page object.
-    :param writer: PdfWriter instance.
-    :param need_ap: Whether NeedAppearances flag is set.
-    :param dr: Default resources from AcroForm.
-    :param acroform_da: Default appearance string from AcroForm.
+    :param page_index: Zero-based page index.
+    :param writer_page: Writer's copy of the page (modified in-place).
+    :param ctx: Document-level flattening context.
     """
     annots = _get_page_annotations(page)
     if annots is None:
         return
 
-    xobj_counter = 0
+    xobj_index = 0
     for annot_ref in annots:
         annot = annot_ref.get_object()
-        if not isinstance(annot, DictionaryObject):
+        if not _is_widget(annot):
             continue
-        if annot.get("/Subtype") != NameObject("/Widget"):
-            continue
+        _process_widget_annotation(annot, page_index, xobj_index, writer_page, ctx)
+        xobj_index += 1
 
-        xobj_counter = _process_widget_annotation(
-            annot,
-            page_index,
-            xobj_counter,
-            writer_page,
-            writer,
-            need_ap,
-            dr,
-            acroform_da,
-        )
-
-    # Remove interactive annotations
-    if "/Annots" in writer_page:
-        del writer_page[NameObject("/Annots")]
-
-
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
+    writer_page.pop(NameObject("/Annots"), None)
 
 
 def flatten_with_pypdf(fn_in: Path, fn_out: Path) -> None:
@@ -1282,21 +1120,13 @@ def flatten_with_pypdf(fn_in: Path, fn_out: Path) -> None:
     reader = PdfReader(str(fn_in), strict=False)
     writer = PdfWriter()
 
-    need_ap = _need_appearances(reader)
-    dr = _get_acroform_dr(reader)
-    acroform_da = _get_acroform_da(reader)
+    ctx = _FieldContext.from_reader(reader, writer)
 
     for page_index, page in enumerate(reader.pages):
         writer.add_page(page)
-        writer_page = writer.pages[page_index]
+        _process_page_annotations(page, page_index, writer.pages[page_index], ctx)
 
-        _process_page_annotations(
-            page, page_index, writer_page, writer, need_ap, dr, acroform_da
-        )
-
-    # Remove the interactive form catalog entry
-    if "/AcroForm" in writer._root_object:
-        del writer._root_object[NameObject("/AcroForm")]
+    writer._root_object.pop(NameObject("/AcroForm"), None)
 
     with fn_out.open("wb") as fh:
         writer.write(fh)
