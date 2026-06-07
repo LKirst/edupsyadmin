@@ -26,4 +26,4 @@ def add_arguments(parser: ArgumentParser) -> None:
 def execute(args: Namespace) -> None:
     """Execute the flatten-pdfs command."""
     flatten_pdfs = lazy_import("edupsyadmin.api.flatten_pdf").flatten_pdfs
-    flatten_pdfs(args.form_paths, args.library)
+    flatten_pdfs(args.form_paths)
