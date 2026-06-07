@@ -1,5 +1,6 @@
 import contextlib
 import io
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -63,6 +64,13 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
             lambda p: 1 if p > self.SIGNIFICANT_DIFF_BRIGHTNESS else 0, mode="1"
         )
 
+        # Raw changed pixels (before denoising)
+        raw_stat = ImageStat.Stat(significant_diff_mask)
+        raw_changed_pixels = raw_stat.sum[0]
+
+        # Max difference
+        max_diff = diff_gray.getextrema()[1]
+
         # Denoise the mask: isolated pixels (noise) are removed,
         # clustered pixels (content) remain.
         denoised_mask = significant_diff_mask.filter(
@@ -86,8 +94,9 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
 
         if not matches:
             snapshot_logger.info(
-                f"Snapshot mismatch: avg_diff={avg_diff:.4f}, "
+                f"Snapshot mismatch: avg_diff={avg_diff:.4f}, max_diff={max_diff}, "
                 f"changed_pixels={int(changed_pixels)} ({percent_changed:.4f}%), "
+                f"raw_changed={int(raw_changed_pixels)}, "
                 f"actual_size={actual.size}, "
                 f"threshold={self.PERCENT_CHANGED_THRESHOLD}%"
             )
@@ -105,6 +114,21 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
             actual_png_path = Path(data).with_suffix(".png")
             if self.current_item:
                 self.current_item.stash[actual_snapshot_path_key] = actual_png_path
+
+            # Log font info if pdffonts is available
+            try:
+                result = subprocess.run(
+                    ["pdffonts", str(data)],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if result.returncode == 0:
+                    snapshot_logger.info(
+                        f"Fonts for {Path(data).name}:\n{result.stdout}"
+                    )
+            except Exception as e:
+                snapshot_logger.debug(f"Could not run pdffonts: {e}")
 
             images = convert_from_path(
                 data,
