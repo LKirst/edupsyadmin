@@ -177,11 +177,18 @@ def write_form_pypdf(
 
     writer = PdfWriter()
 
+    is_only_one_doc = len(fns) == 1
     for fn in fns:
         with fn.open("rb") as pdf_file:
             reader = PdfReader(pdf_file, strict=False)
             start_page_idx = len(writer.pages)
             writer.append(reader)
+
+            # for printing the documenents separately (2-sided), I need an
+            # empty page at the end of documents that have an odd number of
+            # pages
+            if (not is_only_one_doc) and (len(reader.pages) % 2 == 1):
+                writer.add_blank_page()
 
             fields = reader.get_fields()
             if not fields:
