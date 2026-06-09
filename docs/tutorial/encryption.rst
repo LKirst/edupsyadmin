@@ -6,11 +6,12 @@ personenbezogene Daten verschlüsselt und werden bei der Ausführung eines
 Befehls von edupsyadmin vorrübergehend entschlüsselt (alle Variablen, deren
 Name auf "_encr" endet, s. :doc:`../clients_model`).
 
-.. warning::
+.. tip::
 
-   Die Datenbank ist verschlüsselt, aber **nicht** die PDF-Formular-Dateien,
-   die mit edupsyadmin befüllt werden! Daher sollte der Speicher verschlüsselt
-   sein: `Link zur Erklärung des BSI
+   Die Datenbank ist verschlüsselt, und ausgefüllte PDF-Formular-Dateien
+   können nun ebenfalls mit einem Passwort geschützt werden (AES-256).
+   Dennoch sollte der Speicherort (deine Festplatte oder dein USB-Stick)
+   zusätzlich verschlüsselt sein: `Link zur Erklärung des BSI
    <https://www.bsi.bund.de/DE/Themen/Verbraucherinnen-und-Verbraucher/Informationen-und-Empfehlungen/Cyber-Sicherheitsempfehlungen/Daten-sichern-verschluesseln-und-loeschen/Datenverschluesselung/Soft-und-hardwaregestuetzte-Verschluesselung/soft-und-hardwaregestuetzte-verschluesselung_node.html#doc504660bodyText2>`_
 
 Standard Backends

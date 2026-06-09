@@ -27,6 +27,15 @@ Ablauf
       einzelne PDF- oder Markdown-Dateien aus. Du kannst den Startpfad oben im
       Eingabefeld ändern.
 
+#.  **Verschlüsselung (optional)**: Standardmäßig werden die ausgefüllten
+    PDF-Formulare verschlüsselt (AES-256).
+
+    - **PDF verschlüsseln**: Aktiviere oder deaktiviere diese Option mit dem
+      Checkbox-Feld.
+    - **Passwort**: Wenn die Verschlüsselung aktiviert ist, musst du ein
+      Passwort in das Feld "Passwort für PDF..." eingeben. Dieses Passwort wird
+      benötigt, um die erstellten PDF-Dateien später zu öffnen.
+
 #.  **Ausfüllen starten**: Klicke auf den Button "Fill Form(s)" oder drücke die
     entsprechende Taste, um den Vorgang zu starten. ``edupsyadmin`` nimmt sich
     dann die ausgewählten Vorlagen und füllt sie mit den Daten des Klienten.

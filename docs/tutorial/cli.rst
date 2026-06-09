@@ -133,6 +133,15 @@ viele Fälle gleichzeitig erstellt werden müssen.
   Schlüssel-Wert-Paare hinzuzufügen, die in den Formularen verwendet werden
   können.
 
+- ``--password``: Passwort zur Verschlüsselung der erstellten PDF-Dateien
+  (AES-256). **Hinweis:** Aus Sicherheitsgründen wird empfohlen, diesen
+  Parameter *nicht* zu verwenden und stattdessen die interaktive Abfrage zu
+  nutzen, damit das Passwort nicht in der Befehlshistorie deines Terminals
+  gespeichert wird.
+
+- ``--no-encryption``: Deaktiviert die Verschlüsselung der ausgefüllten
+  PDF-Formulare.
+
 - ``--tui``: Öffnet die TUI (Text User Interface) für eine interaktive
   Formularausfüllung. Wenn diese Option verwendet wird, sind die Argumente
   ``client_id``, ``--form_set``, ``--form_paths`` und ``--inject_data`` nicht
@@ -186,6 +195,12 @@ Installationsanweisungen.
 .. code-block:: console
 
    $ edupsyadmin flatten-pdfs ./formular1_ausgefuellt.pdf ./formular2_ausgefuellt.pdf
+
+- ``--password`` (oder ``-p``): Passwort zum Entschlüsseln der Eingabe-PDFs
+  und zum Verschlüsseln der Ausgabe-PDFs. **Hinweis:** Aus Sicherheitsgründen
+  wird empfohlen, diesen Parameter *nicht* zu verwenden und stattdessen die
+  interaktive Abfrage zu nutzen, damit das Passwort nicht in der
+  Befehlshistorie deines Terminals gespeichert wird.
 
 Ein neues, für den Druck aufbereitetes PDF mit dem Präfix ``print_`` wird
 erstellt (z.B. ``print_formular1_ausgefuellt.pdf``).
