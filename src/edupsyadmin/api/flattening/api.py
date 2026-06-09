@@ -11,11 +11,13 @@ from edupsyadmin.api.flattening.pypdf_backend import flatten_with_pypdf
 def flatten_pdf(
     fn_in: str | Path,
     output_prefix: str = DEFAULT_PREFIX,
+    password: str | None = None,
 ) -> Path:
     """Flatten a PDF form, making form fields non-editable.
 
     :param fn_in: Path to the input PDF file.
     :param output_prefix: Prefix to add to the output filename.
+    :param password: Password to decrypt the input PDF and encrypt the output.
     :return: Path to the flattened PDF file.
     :raises InvalidPDFError: If the input file is not a PDF.
     :raises FileNotFoundError: If the input file doesn't exist.
@@ -27,19 +29,26 @@ def flatten_pdf(
         raise InvalidPDFError(f"Input file is not a PDF: {fn_in}")
 
     fn_out = add_prefix(fn_in, prefix=output_prefix)
-    flatten_with_pypdf(fn_in, fn_out)
+    flatten_with_pypdf(fn_in, fn_out, password=password)
     return fn_out
 
 
 def flatten_pdfs(
     form_paths: Sequence[str | Path],
     output_prefix: str = DEFAULT_PREFIX,
+    password: str | None = None,
 ) -> list[Path]:
-    """Flatten multiple PDF forms."""
+    """Flatten multiple PDF forms.
+
+    :param form_paths: List of paths to the input PDF files.
+    :param output_prefix: Prefix to add to the output filenames.
+    :param password: Password to decrypt the input PDFs and encrypt the outputs.
+    :return: List of paths to the flattened PDF files.
+    """
     output_paths = []
     for fn_in in form_paths:
         try:
-            output_paths.append(flatten_pdf(fn_in, output_prefix))
+            output_paths.append(flatten_pdf(fn_in, output_prefix, password=password))
         except (FileNotFoundError, InvalidPDFError) as e:
             print(f"Error processing {fn_in}: {e}", file=sys.stderr)
             continue

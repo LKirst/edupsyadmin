@@ -1095,7 +1095,7 @@ def _process_page_annotations(
     writer_page.pop(NameObject("/Annots"), None)
 
 
-def flatten_with_pypdf(fn_in: Path, fn_out: Path) -> None:
+def flatten_with_pypdf(fn_in: Path, fn_out: Path, password: str | None = None) -> None:
     """Flatten a PDF form using only pypdf (pure Python, no external tools).
 
     For each widget annotation the function attempts, in order:
@@ -1112,12 +1112,23 @@ def flatten_with_pypdf(fn_in: Path, fn_out: Path) -> None:
 
     :param fn_in: Path to the input PDF with form fields.
     :param fn_out: Path where the flattened PDF is written.
+    :param password: Password to decrypt the input PDF and encrypt the output.
     :raises FileNotFoundError: If *fn_in* does not exist.
     """
     if not fn_in.exists():
         raise FileNotFoundError(f"Input file not found: {fn_in}")
 
     reader = PdfReader(str(fn_in), strict=False)
+    if reader.is_encrypted:
+        if password:
+            reader.decrypt(password)
+        else:
+            # We don't raise an error here because some PDFs might be
+            # "encrypted" but still readable without a password (empty password)
+            # but usually pypdf handles that.
+            # If it's really locked, subsequent operations will fail.
+            pass
+
     writer = PdfWriter()
 
     ctx = _FieldContext.from_reader(reader, writer)
@@ -1127,6 +1138,9 @@ def flatten_with_pypdf(fn_in: Path, fn_out: Path) -> None:
         _process_page_annotations(page, page_index, writer.pages[page_index], ctx)
 
     writer._root_object.pop(NameObject("/AcroForm"), None)
+
+    if password:
+        writer.encrypt(password, algorithm="AES-256")
 
     with fn_out.open("wb") as fh:
         writer.write(fh)
