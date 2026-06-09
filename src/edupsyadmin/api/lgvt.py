@@ -16,6 +16,7 @@ from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.core.config import config
 from edupsyadmin.utils.convert_measures import percentile_to_t, t_to_z
 from edupsyadmin.utils.datediff import mydatediff
+from edupsyadmin.utils.path_utils import normalize_path
 
 
 def askyn(prompt: str) -> int:
@@ -61,7 +62,7 @@ def get_indices(
     lgs_rw_korr: int,
 ) -> tuple[list[ResultsItem], float, float, float]:
     """Pure logic to calculate LGVT indices and results list."""
-    with Path(fn_csv).open(encoding="utf-8") as f:
+    with normalize_path(fn_csv).open(encoding="utf-8") as f:
         csv_data = list(csv.DictReader(f))
 
     if num_processed == 0:
@@ -170,7 +171,7 @@ def mk_report(
     ).get_decrypted_client(client_id)
     schoolyear = int(client_dict.class_int_encr or 0)
 
-    with Path(fn_csv).open(encoding="utf-8") as f:
+    with normalize_path(fn_csv).open(encoding="utf-8") as f:
         csv_data = list(csv.DictReader(f))
 
     correct_answ = 0
