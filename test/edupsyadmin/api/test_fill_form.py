@@ -49,6 +49,28 @@ def test_fill_form(
         assert btn_data["lrst_schpsy"].get("/V", None) == expected_lrst_last_test_by
 
 
+def test_fill_form_encrypted(
+    mock_config,
+    pdf_forms: list,
+    tmp_path: Path,
+    client_dict_internal: ClientRecord,
+) -> None:
+    """Test the fill_form function with encryption."""
+    clientd = ClientView.model_validate(client_dict_internal).model_dump()
+    password = "test_password"
+    fill_form(clientd, pdf_forms, out_dir=tmp_path, password=password)
+
+    output_pdf_path = tmp_path / f"{clientd['client_id']}_merged.pdf"
+    assert output_pdf_path.exists()
+
+    with output_pdf_path.open("rb") as f:
+        reader = pypdf.PdfReader(f)
+        assert reader.is_encrypted
+        # Try to decrypt with correct password
+        assert reader.decrypt(password) != pypdf.PasswordType.NOT_DECRYPTED
+        assert len(reader.pages) >= len(pdf_forms)
+
+
 def test_batch_fill_forms(
     mock_config,
     pdf_forms: list,

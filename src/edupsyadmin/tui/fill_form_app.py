@@ -74,6 +74,7 @@ class FillFormApp(App[None]):
         client_ids: list[int],
         form_paths: list[str],
         out_dir: str | None = None,
+        password: str | None = None,
     ) -> None:
         """Worker to fill forms for multiple clients."""
         try:
@@ -82,6 +83,7 @@ class FillFormApp(App[None]):
                 client_ids,
                 form_paths,
                 out_dir=Path(out_dir) if out_dir else None,
+                password=password,
             )
 
             success_count = sum(1 for res in results if res["success"])
@@ -126,6 +128,7 @@ class FillFormApp(App[None]):
             message.client_ids,
             message.form_paths,
             out_dir=message.out_dir,
+            password=message.password,
         )
 
     async def on_fill_form_cancel(self, message: FillForm.Cancel) -> None:

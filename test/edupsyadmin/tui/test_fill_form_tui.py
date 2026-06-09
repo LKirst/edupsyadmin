@@ -211,6 +211,10 @@ async def test_fill_button_emits_start_fill_message(
         )
         dir_tree.selected_paths = {form_path}
 
+        # 2b. Provide a password for encryption (enabled by default)
+        password_input = fill_form_widget.query_one("#pdf-password-input", Input)
+        password_input.value = "test_password"
+
         # 3. Use patch with wraps to capture messages without breaking the app
         with patch.object(app, "post_message", wraps=app.post_message) as mock_post:
             # 4. Click the button
@@ -227,6 +231,7 @@ async def test_fill_button_emits_start_fill_message(
     assert len(start_fill_messages) == 1
     message = start_fill_messages[0]
     assert message.client_ids == [CLIENT_ID]
+    assert message.password == "test_password"
     assert set(message.form_paths) == {
         "/path/to/set_form.pdf",
         str(form_path),

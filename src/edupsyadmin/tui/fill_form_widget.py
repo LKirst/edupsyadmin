@@ -116,10 +116,12 @@ class FillForm(Widget):
             client_ids: list[int],
             form_paths: list[str],
             out_dir: str | None = None,
+            password: str | None = None,
         ) -> None:
             self.client_ids = client_ids
             self.form_paths = form_paths
             self.out_dir = out_dir
+            self.password = password
             super().__init__()
 
     class Cancel(Message):
@@ -138,6 +140,20 @@ class FillForm(Widget):
             with Horizontal(id="output-path-row", classes="path-container"):
                 yield Label("Output Path:")
                 yield Input(id="output-path-input", placeholder="Enter output path...")
+            with Horizontal(id="encryption-row", classes="path-container"):
+                yield Label("Encryption:")
+                from textual.widgets import Checkbox
+
+                yield Checkbox(
+                    "PDF verschlüsseln",
+                    id="encrypt-checkbox",
+                    value=True,
+                )
+                yield Input(
+                    id="pdf-password-input",
+                    placeholder="Passwort für PDF...",
+                    password=True,
+                )
             with Vertical():
                 with Horizontal(id="lists-container"):
                     with Vertical(id="form-selection-container"):
@@ -233,8 +249,26 @@ class FillForm(Widget):
             form_paths = sorted(dict.fromkeys(form_paths))
 
             out_dir = self.query_one("#output-path-input", Input).value or None
+
+            password = None
+            from textual.widgets import Checkbox
+
+            if self.query_one("#encrypt-checkbox", Checkbox).value:
+                password = self.query_one("#pdf-password-input", Input).value
+                if not password:
+                    self.notify(
+                        "Bitte geben Sie ein Passwort für die PDF-Verschlüsselung ein.",
+                        severity="error",
+                    )
+                    return
+
             self.post_message(
-                self.StartFill(self.client_ids, form_paths, out_dir=out_dir),
+                self.StartFill(
+                    self.client_ids,
+                    form_paths,
+                    out_dir=out_dir,
+                    password=password,
+                ),
             )
 
         elif event.button.id == "cancel-button":

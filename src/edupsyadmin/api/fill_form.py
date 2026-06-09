@@ -164,6 +164,7 @@ def write_form_pypdf(
     fns: Sequence[Path],
     out_fn: Path,
     data: Mapping[str, Any],
+    password: str | None = None,
 ) -> None:
     """
     Fill one or more pdf forms with data and merge them into a single output.
@@ -171,6 +172,7 @@ def write_form_pypdf(
     :param fns: sequence of filenames of the empty pdf forms
     :param out_fn: filename for the output
     :param data: the data to fill the pdf with
+    :param password: password to encrypt the pdf with
     :raises FileExistsError: FileExistsError
     """
     _ensure_output_not_exists(out_fn)
@@ -209,6 +211,9 @@ def write_form_pypdf(
                         raise KeyError(
                             f"Bulk update of fields failed on p. {i + 1} of {fn.name}",
                         ) from e
+
+    if password:
+        writer.encrypt(password, algorithm="AES-256")
 
     with out_fn.open("wb") as output_stream:
         writer.write(output_stream)
@@ -254,6 +259,7 @@ def fill_form(
     client_data: ClientView | dict[str, Any],
     form_paths: Sequence[Path],
     out_dir: Path | None = None,
+    password: str | None = None,
 ) -> None:
     """
     A wrapper function for different functions to fill out forms and
@@ -263,6 +269,7 @@ def fill_form(
         the name of the form field or liquid variable
     :param form_paths: a list of paths to pdf forms or liquid templates
     :param out_dir: optional output directory
+    :param password: password to encrypt the pdf with
     """
     if out_dir is None:
         out_dir = Path()
@@ -285,13 +292,13 @@ def fill_form(
             fp = pdf_paths[0]
             logger.info(f"Using the template {fp}")
             out_fp = Path(out_dir, f"{client_id}_{fp.name}")
-            write_form_pypdf([fp], out_fp, aliased_data)
+            write_form_pypdf([fp], out_fp, aliased_data, password=password)
         else:
             for fp in pdf_paths:
                 logger.info(f"Using the template {fp}")
             out_fp = Path(out_dir, f"{client_id}_merged.pdf")
             logger.info(f"Merging {len(pdf_paths)} PDFs into {out_fp}")
-            write_form_pypdf(pdf_paths, out_fp, aliased_data)
+            write_form_pypdf(pdf_paths, out_fp, aliased_data, password=password)
 
     for fp in md_paths:
         logger.info(f"Using the template {fp}")
@@ -309,6 +316,7 @@ def batch_fill_forms(
     client_ids: Sequence[int],
     form_paths: Sequence[str | Path],
     out_dir: Path | None = None,
+    password: str | None = None,
 ) -> list[FillFormResult]:
     """
     Fill forms for multiple clients.
@@ -319,6 +327,7 @@ def batch_fill_forms(
     :param client_ids: a list of client IDs
     :param form_paths: a list of paths to forms or templates
     :param out_dir: optional output directory
+    :param password: password to encrypt the pdf with
     :return: list of FillFormResult
     """
     results: list[FillFormResult] = []
@@ -332,6 +341,7 @@ def batch_fill_forms(
                 view,
                 form_paths_normalized,
                 out_dir=out_dir_path,
+                password=password,
             )
             results.append(
                 {"client_id": client_id, "success": True, "error": None},

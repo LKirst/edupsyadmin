@@ -76,6 +76,31 @@ def add_arguments(parser: ArgumentParser) -> None:
             "or add new key=value pairs"
         ),
     )
+    encryption_group = parser.add_mutually_exclusive_group()
+    encryption_group.add_argument(
+        "--password",
+        type=str,
+        default=None,
+        help="password to encrypt filled PDF forms",
+    )
+    encryption_group.add_argument(
+        "--no-encryption",
+        action="store_true",
+        help="do not encrypt the output PDF(s)",
+    )
+
+
+def _get_pdf_password(args: Namespace) -> str | None:
+    """Determine the password for PDF encryption based on CLI arguments."""
+    if args.no_encryption:
+        return None
+    if args.password:
+        return args.password
+    if not args.tui:
+        import getpass
+
+        return getpass.getpass("Passwort für die PDF-Verschlüsselung: ")
+    return None
 
 
 def execute(args: Namespace) -> None:
@@ -84,6 +109,9 @@ def execute(args: Namespace) -> None:
     clients_manager = clients_manager_cls(
         database_url=args.database_url,
     )
+
+    password = _get_pdf_password(args)
+
     if args.tui:
         fill_form_app_cls = lazy_import("edupsyadmin.tui.fill_form_app").FillFormApp
         fill_form_app_cls(
@@ -129,4 +157,5 @@ def execute(args: Namespace) -> None:
             client_data,
             form_paths_normalized,
             out_dir=out_dir,
+            password=password,
         )

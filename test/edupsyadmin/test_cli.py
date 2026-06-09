@@ -301,6 +301,8 @@ def test_create_documentation(
         inject_data=None,
         out_dir=None,
         tui=False,
+        no_encryption=True,
+        password=None,
     )
     create_documentation_command.execute(args)
 
