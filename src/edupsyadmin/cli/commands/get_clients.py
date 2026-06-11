@@ -1,7 +1,6 @@
 import csv
 import textwrap
 from argparse import ArgumentParser, Namespace
-from pathlib import Path
 
 from rich.console import Console
 from rich.table import Table
@@ -33,6 +32,8 @@ COMMAND_EPILOG = textwrap.dedent(
 
 def add_arguments(parser: ArgumentParser) -> None:
     """CLI adaptor for the get-clients command."""
+    from edupsyadmin.utils.path_utils import normalize_path
+
     parser.set_defaults(command=execute)
     parser.add_argument(
         "--nta_nos",
@@ -46,7 +47,7 @@ def add_arguments(parser: ArgumentParser) -> None:
         default=[],
         help="filter by school name",
     )
-    parser.add_argument("--out", help="path for an output file", type=Path)
+    parser.add_argument("--out", help="path for an output file", type=normalize_path)
     parser.add_argument(
         "--client_id",
         type=int,

@@ -1,6 +1,5 @@
 import textwrap
 from argparse import ArgumentParser, Namespace
-from pathlib import Path
 
 from edupsyadmin.cli.utils import lazy_import
 
@@ -19,8 +18,10 @@ COMMAND_EPILOG = textwrap.dedent(
 
 def add_arguments(parser: ArgumentParser) -> None:
     """CLI adaptor for the flatten-pdfs command."""
+    from edupsyadmin.utils.path_utils import normalize_path
+
     parser.set_defaults(command=execute)
-    parser.add_argument("form_paths", nargs="+", type=Path)
+    parser.add_argument("form_paths", nargs="+", type=normalize_path)
     parser.add_argument(
         "--password",
         "-p",

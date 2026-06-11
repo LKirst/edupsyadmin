@@ -12,6 +12,7 @@ from edupsyadmin.api.reports import (
 from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.utils.convert_measures import iq_to_t, iq_to_z
 from edupsyadmin.utils.datediff import mydatediff
+from edupsyadmin.utils.path_utils import normalize_path
 
 
 def input_int_or_none(prompt: str) -> int | None:
@@ -77,6 +78,7 @@ def generate_cft_report(
 
     age_str = mydatediff(birthday, testdate)
     grade = client_dict.class_int_encr
+    directory_path = normalize_path(directory)
 
     raw_total_min, raw_total_max = calculate_raw_totals(
         raw_part1_min, raw_part1_max, raw_part2
@@ -130,7 +132,7 @@ def generate_cft_report(
     )
 
     report = TestReport(data)
-    output_fn = Path(directory) / f"{client_id}_Auswertung.pdf"
+    output_fn = directory_path / f"{client_id}_Auswertung.pdf"
     report.build(output_fn)
 
     # remove the plot png

@@ -1,5 +1,4 @@
 from datetime import date
-from pathlib import Path
 from unittest.mock import patch
 
 import pandas as pd
@@ -181,7 +180,7 @@ def test_create_taetigkeitsbericht_report_calls_build(
     summary_categories_df,
     summary_h_sessions_df,
 ):
-    output_file = str(tmp_path / "test_report")
+    output_file = tmp_path / "test_report"
 
     create_taetigkeitsbericht_report(
         output_file,
@@ -193,7 +192,7 @@ def test_create_taetigkeitsbericht_report_calls_build(
 
     mock_report_instance = mock_report_cls.return_value
     mock_report_instance.build.assert_called_once_with(
-        output_file + "_report.pdf",
+        output_file.with_name(f"{output_file.name}_report.pdf"),
         summary_wstd=summary_wstd_df,
         summary_h_sessions=summary_h_sessions_df,
         summary_categories=summary_categories_df,
@@ -230,7 +229,7 @@ def test_taetigkeitsbericht_calls_create_report(
         },
     ]
 
-    output_basename = str(tmp_path / "Taetigkeitsbericht_Out")
+    output_basename = tmp_path / "Taetigkeitsbericht_Out"
     taetigkeitsbericht(
         database_url="url",
         wstd_psy=5,
@@ -268,13 +267,13 @@ def test_taetigkeitsbericht_writes_csv_files(
         },
     ]
 
-    output_basename = str(tmp_path / "Taetigkeitsbericht_Out")
+    output_basename = tmp_path / "Taetigkeitsbericht_Out"
     taetigkeitsbericht(database_url="url", wstd_psy=5, out_basename=output_basename)
 
-    assert Path(output_basename + "_df.csv").exists()
-    assert Path(output_basename + "_categories.csv").exists()
-    assert Path(output_basename + "_h_sessions.csv").exists()
-    assert Path(output_basename + "_wstd.csv").exists()
+    assert output_basename.with_name(f"{output_basename.name}_df.csv").exists()
+    assert output_basename.with_name(f"{output_basename.name}_categories.csv").exists()
+    assert output_basename.with_name(f"{output_basename.name}_h_sessions.csv").exists()
+    assert output_basename.with_name(f"{output_basename.name}_wstd.csv").exists()
 
 
 def test_taetigkeitsbericht_snapshot(
@@ -319,7 +318,7 @@ def test_taetigkeitsbericht_snapshot(
         birthday_encr=date(2009, 3, 1),
     )
 
-    output_basename = str(tmp_path / "Taetigkeitsbericht_Snapshot")
+    output_basename = tmp_path / "Taetigkeitsbericht_Snapshot"
     taetigkeitsbericht(
         database_url=clients_manager.database_url,
         wstd_psy=5,
@@ -328,6 +327,6 @@ def test_taetigkeitsbericht_snapshot(
         report_date=date(2026, 12, 24),
     )
 
-    report_path = Path(output_basename + "_report.pdf")
+    report_path = output_basename.with_name(f"{output_basename.name}_report.pdf")
     assert report_path.exists()
     assert pdf_snapshot == report_path

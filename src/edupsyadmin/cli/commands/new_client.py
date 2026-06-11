@@ -3,7 +3,6 @@ import textwrap
 from argparse import ArgumentParser, Namespace
 from datetime import datetime
 from inspect import signature
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from edupsyadmin.cli.utils import lazy_import
@@ -200,17 +199,21 @@ def execute(args: Namespace) -> None:
     )
 
     if args.csv:
+        from edupsyadmin.utils.path_utils import normalize_path
+
         if args.name is None:
             raise ValueError("Pass a name to read a client from a csv.")
+
+        csv_path = normalize_path(args.csv)
         _enter_client_csv(
             clients_manager,
-            args.csv,
+            csv_path,
             args.school,
             args.name,
             args.import_config,
         )
         if not args.keepfile:
-            Path(args.csv).unlink()
+            csv_path.unlink()
     else:
         edit_client_app_cls = lazy_import(
             "edupsyadmin.tui.edit_client_app",

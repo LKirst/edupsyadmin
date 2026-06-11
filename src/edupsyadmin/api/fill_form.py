@@ -332,7 +332,10 @@ def batch_fill_forms(
     """
     results: list[FillFormResult] = []
     form_paths_normalized = [normalize_path(p) for p in form_paths]
-    out_dir_path = Path(out_dir) if out_dir else None
+    try:
+        out_dir_path = normalize_path(out_dir) if out_dir else None
+    except ValueError:
+        out_dir_path = None
 
     for client_id in client_ids:
         try:

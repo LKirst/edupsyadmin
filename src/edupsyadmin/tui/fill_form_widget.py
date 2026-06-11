@@ -22,6 +22,7 @@ from textual.widgets import (
 from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.core.config import config
+from edupsyadmin.utils.path_utils import normalize_path
 
 if TYPE_CHECKING:
     from edupsyadmin.api.managers import ClientsManager
@@ -175,16 +176,21 @@ class FillForm(Widget):
 
         path_input = self.query_one("#path-input", Input)
         tree = self.query_one(MultiSelectDirectoryTree)
-        path_input.value = str(Path(tree.path).resolve())
+        path_input.value = str(normalize_path(tree.path))
 
         output_path_input = self.query_one("#output-path-input", Input)
         if config.core.output_directory:
-            output_path_input.value = str(config.core.output_directory.resolve())
+            output_path_input.value = str(normalize_path(config.core.output_directory))
 
     @on(Input.Submitted, "#path-input")
     def on_path_submitted(self, event: Input.Submitted) -> None:
         """Handle path submission."""
-        new_path = Path(event.value).expanduser()
+        try:
+            new_path = normalize_path(event.value)
+        except ValueError:
+            self.notify("Error: Path cannot be empty.", severity="error")
+            return
+
         if new_path.is_dir():
             tree = self.query_one(MultiSelectDirectoryTree)
             tree.path = str(new_path)
@@ -194,7 +200,7 @@ class FillForm(Widget):
             self.notify(f"Error: Path '{new_path}' is not a valid directory.")
             # Reset input to current tree path
             tree = self.query_one(MultiSelectDirectoryTree)
-            current_path = Path(tree.path).resolve()
+            current_path = normalize_path(tree.path)
             event.input.value = str(current_path)
 
     def display_client_info(self, clients_data: dict[int, ClientRecord]) -> None:

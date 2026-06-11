@@ -37,6 +37,8 @@ COMMAND_EPILOG = textwrap.dedent(
 
 def add_arguments(parser: ArgumentParser) -> None:
     """CLI adaptor for the create-documentation command."""
+    from edupsyadmin.utils.path_utils import normalize_path
+
     parser.set_defaults(command=execute)
     parser.add_argument(
         "--tui",
@@ -53,13 +55,13 @@ def add_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--form_paths",
         nargs="*",
-        type=Path,
+        type=normalize_path,
         default=[],
         help="form file paths",
     )
     parser.add_argument(
         "--out_dir",
-        type=Path,
+        type=normalize_path,
         default=None,
         help=(
             "output directory for filled forms "

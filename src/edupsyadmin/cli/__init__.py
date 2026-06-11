@@ -137,16 +137,18 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
         parser.print_help()
         raise SystemExit(1)
 
+    from edupsyadmin.utils.path_utils import normalize_path
+
     # don't specify this as an argument default or else it will always be
     # included in the list.
     if not args.config_path:
         args.config_path = DEFAULT_CONFIG_PATH
     else:
-        args.config_path = Path(args.config_path)
+        args.config_path = normalize_path(args.config_path)
     if not args.salt_path:
         args.salt_path = DEFAULT_SALT_PATH
     else:
-        args.salt_path = Path(args.salt_path)
+        args.salt_path = normalize_path(args.salt_path)
 
     return args
 
@@ -245,8 +247,14 @@ def main(argv: list[str] | None = None) -> int:
     """
     args = _args(argv)
 
+    from edupsyadmin.utils.path_utils import normalize_path
+
     # Migrate versioned paths to stable paths if necessary
-    db_path = Path(args.database_url.removeprefix("sqlite:///"))
+    if args.database_url.startswith("sqlite:///"):
+        db_path = normalize_path(args.database_url.removeprefix("sqlite:///"))
+    else:
+        db_path = Path(args.database_url)
+
     migrate_to_stable_paths(
         config_file=args.config_path,
         salt_file=args.salt_path,

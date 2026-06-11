@@ -47,16 +47,15 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 def execute(args: Namespace) -> None:
     """Execute the taetigkeitsbericht command."""
+    from edupsyadmin.utils.path_utils import normalize_path
+
     taetigkeitsbericht = lazy_import(
         "edupsyadmin.api.taetigkeitsbericht_from_db",
     ).taetigkeitsbericht
     taetigkeitsbericht(
-        app_username=args.app_username,
-        app_uid=args.app_uid,
         database_url=args.database_url,
-        salt_path=args.salt_path,
         wstd_psy=args.wstd_psy,
-        out_basename=args.out_basename,
+        out_basename=normalize_path(args.out_basename),
         wstd_total=args.wstd_total,
         name=args.name,
     )

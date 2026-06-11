@@ -144,7 +144,8 @@ def generate_lgvt_report(
     )
 
     report = TestReport(data)
-    output_fn = Path(directory) / f"{client_id}_Auswertung_LGVT.pdf"
+    directory_path = normalize_path(directory)
+    output_fn = directory_path / f"{client_id}_Auswertung_LGVT.pdf"
     report.build(output_fn)
 
     # remove the plot png

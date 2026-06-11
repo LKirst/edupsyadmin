@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any, Literal
 
 from textual import on
@@ -6,6 +5,8 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.validation import Function, Regex
 from textual.widgets import Button, Input, Select, Static
+
+from edupsyadmin.utils.path_utils import normalize_path
 
 TOOLTIPS = {
     "logging": "Logging-Niveau für die Anwendung (DEBUG, INFO, WARN oder ERROR)",
@@ -29,13 +30,28 @@ NoPeriodValidator = Regex(
     failure_description="Darf keine Punkte enthalten",
 )
 
+
+def _is_file(value: str) -> bool:
+    try:
+        return normalize_path(value).is_file()
+    except ValueError:
+        return False
+
+
+def _is_dir(value: str) -> bool:
+    try:
+        return normalize_path(value).is_dir()
+    except ValueError:
+        return False
+
+
 PathIsFileValidator = Function(
-    function=lambda value: Path(value).expanduser().is_file(),
+    function=_is_file,
     failure_description="Pfad ist keine Datei.",
 )
 
 PathIsDirValidator = Function(
-    function=lambda value: Path(value).expanduser().is_dir(),
+    function=_is_dir,
     failure_description="Pfad ist kein Ordner.",
 )
 

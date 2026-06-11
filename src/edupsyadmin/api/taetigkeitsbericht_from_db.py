@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -222,7 +223,7 @@ def summary_statistics_wstd(
 
 
 def create_taetigkeitsbericht_report(
-    basename_out: str,
+    basename_out: Path,
     name: str,
     summary_wstd: pd.DataFrame,
     summary_categories: pd.DataFrame | None = None,
@@ -231,7 +232,7 @@ def create_taetigkeitsbericht_report(
 ) -> None:
     report = TaetigkeitsberichtReport(name, report_date=report_date)
     report.build(
-        basename_out + "_report.pdf",
+        basename_out.with_name(f"{basename_out.name}_report.pdf"),
         summary_wstd=summary_wstd,
         summary_h_sessions=summary_h_sessions,
         summary_categories=summary_categories,
@@ -241,7 +242,7 @@ def create_taetigkeitsbericht_report(
 def taetigkeitsbericht(
     database_url: str,
     wstd_psy: int,
-    out_basename: str = "Taetigkeitsbericht_Out",
+    out_basename: Path = Path("Taetigkeitsbericht_Out"),
     wstd_total: int = 23,
     name: str = "Schulpsychologie",
     report_date: date | None = None,
@@ -252,7 +253,7 @@ def taetigkeitsbericht(
     and reads nstudents from the config.
 
     param wstd_psy [int]: Anrechnungsstunden in Wochenstunden
-    param out_basename [str]: base name for the output files.
+    param out_basename [Path]: base name for the output files.
         Defaults to "Taetigkeitsbericht_Out".
     param wstd_total [int]: total Wochstunden (depends on your school).
         Defaults to 23.
@@ -275,14 +276,18 @@ def taetigkeitsbericht(
     df["h_sessions"] = df["min_sessions"] / 60.0
 
     df, summary_categories = add_categories_to_df(df, "keyword_taet_encr")
-    df.to_csv(out_basename + "_df.csv")
+    df.to_csv(out_basename.with_name(f"{out_basename.name}_df.csv"))
     print(df)
-    summary_categories.to_csv(out_basename + "_categories.csv")
+    summary_categories.to_csv(
+        out_basename.with_name(f"{out_basename.name}_categories.csv")
+    )
     print(summary_categories)
 
     # Summary statistics for h_sessions
     summarystats_h_sessions = summary_statistics_h_sessions(df)
-    summarystats_h_sessions.to_csv(out_basename + "_h_sessions.csv")
+    summarystats_h_sessions.to_csv(
+        out_basename.with_name(f"{out_basename.name}_h_sessions.csv")
+    )
     print(summarystats_h_sessions)
 
     zstd_spsy_year_actual = pd.to_numeric(summarystats_h_sessions.loc["all", "sum"])
@@ -299,7 +304,7 @@ def taetigkeitsbericht(
         zstd_spsy_year_actual,
         school_students_dict,
     )
-    summarystats_wstd.to_csv(out_basename + "_wstd.csv")
+    summarystats_wstd.to_csv(out_basename.with_name(f"{out_basename.name}_wstd.csv"))
     print(summarystats_wstd)
 
     create_taetigkeitsbericht_report(

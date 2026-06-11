@@ -15,6 +15,7 @@ from edupsyadmin.core.encrypt import (
     set_keys_in_keyring,
 )
 from edupsyadmin.core.logger import logger
+from edupsyadmin.utils.path_utils import normalize_path
 
 
 def setup_demo() -> None:
@@ -130,8 +131,8 @@ def setup_demo() -> None:
     )
 
     # Generate alias suggestions
-    abs_config_path = Path(demo_config_path).resolve()
-    abs_db_path = Path("demo.db").resolve()
+    abs_config_path = normalize_path(demo_config_path)
+    abs_db_path = normalize_path("demo.db")
 
     bash_alias = (
         f"alias edupsyadmin_demo='edupsyadmin "
