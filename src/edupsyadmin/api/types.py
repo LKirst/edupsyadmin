@@ -30,6 +30,7 @@ class ClientRecord(BaseModel):
     entry_date_encr: date | None = None
     class_name_encr: str = ""
     class_int_encr: int | None = None
+    class_int_override: bool = False
     estimated_graduation_date_encr: date | None = None
     document_shredding_date_encr: date | None = None
 

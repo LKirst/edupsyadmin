@@ -101,6 +101,12 @@ class Client(Base):
             "Diese Variable wird abgeleitet aus :attr:`class_name_encr`."
         ),
     )
+    class_int_override: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+        doc="Gibt an, ob class_int_encr manuell gesetzt wurde",
+    )
     keyword_taet_encr: Mapped[str] = mapped_column(
         EncryptedString,
         doc="Schlüsselwort für die Kategorie des Klienten im Tätigkeitsbericht",
@@ -386,6 +392,8 @@ class Client(Base):
         min_sessions: int | str | None = None,
         n_sessions: int | str | None = None,
         case_active: bool | str | int | None = True,
+        class_int_encr: int | str | None = None,
+        class_int_override: bool | str | int | None = False,
     ) -> None:
         client_id_int_or_none = to_int_or_none(client_id)
         if client_id_int_or_none is not None:
@@ -437,8 +445,11 @@ class Client(Base):
         self.n_sessions = to_int_or_none(n_sessions) or 1
         self.case_active = to_bool_or_none(case_active) or False
 
+        # Grade override
+        self.class_int_override = to_bool_or_none(class_int_override) or False
+        self.class_int_encr = to_int_or_none(class_int_encr)
+
         # Placeholder for derived fields and timestamps - will be handled by events
-        self.class_int_encr = None
         self.estimated_graduation_date_encr = None
         self.document_shredding_date_encr = None
         self.notenschutz = False
@@ -455,7 +466,6 @@ class Client(Base):
         self._recalculate_derived_fields()  # Call the new method at the end of init
 
     def _class_int_or_none(self) -> int | None:
-        # TODO: Is it possible to override class_int_encr? E.g. Vorklasse -> 10
         if not self.class_name_encr:
             return None
         try:
@@ -468,7 +478,8 @@ class Client(Base):
         Calculates and updates all derived fields based on current attribute values.
         This method should be called after initial assignment or any attribute change.
         """
-        self.class_int_encr = self._class_int_or_none()
+        if not self.class_int_override:
+            self.class_int_encr = self._class_int_or_none()
 
         # Calculate estimated_graduation_date_encr and document_shredding_date_encr
         self.estimated_graduation_date_encr = None
@@ -577,6 +588,7 @@ class Client(Base):
         "nos_rs",
         "nos_les",
         "case_active",
+        "class_int_override",
     )
     def validate_bool(
         self,
@@ -585,7 +597,7 @@ class Client(Base):
     ) -> bool:
         return to_bool_or_none(value) or False
 
-    @validates("nta_nos_end_grade")
+    @validates("nta_nos_end_grade", "class_int_encr")
     def validate_nta_nos_end_grade(
         self,
         key: str,  # noqa: ARG002

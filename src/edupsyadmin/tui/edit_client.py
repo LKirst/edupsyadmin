@@ -35,7 +35,6 @@ REQUIRED_FIELDS = [
 
 # fields which depend on other fields and should not be set by the user
 HIDDEN_FIELDS = {
-    "class_int_encr",
     "estimated_graduation_date_encr",
     "document_shredding_date_encr",
     "datetime_created",
@@ -244,6 +243,16 @@ class EditClient(Container):
             for name in REQUIRED_FIELDS:
                 if name in visible_columns:
                     yield from self._compose_field_row(visible_columns.pop(name))
+                    if name == "class_name_encr":
+                        # Yield grade override fields immediately after class_name_encr
+                        if "class_int_override" in visible_columns:
+                            yield from self._compose_field_row(
+                                visible_columns.pop("class_int_override"),
+                            )
+                        if "class_int_encr" in visible_columns:
+                            yield from self._compose_field_row(
+                                visible_columns.pop("class_int_encr"),
+                            )
 
             # Address fields in a Collapsible
             yield from self._compose_collapsible_if_present(
@@ -443,6 +452,12 @@ class EditClient(Container):
             value = self._original_data.get(name)
             widget.value = bool(value)
 
+        # Handle initial disabled state for grade override
+        if "class_int_override" in self.checkboxes and "class_int_encr" in self.inputs:
+            self.inputs["class_int_encr"].disabled = not self.checkboxes[
+                "class_int_override"
+            ].value
+
         self.query_one("#edit-client-log", RichLog).clear()
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -528,6 +543,14 @@ class EditClient(Container):
             if value != self._original_data.get(key)
         }
         self.post_message(self.SaveClient(self.client_id, self._changed_data))
+
+    @on(Checkbox.Changed)
+    def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
+        if (
+            event.checkbox.id == "class_int_override"
+            and "class_int_encr" in self.inputs
+        ):
+            self.inputs["class_int_encr"].disabled = not event.value
 
     @on(Input.Blurred)
     def check_for_validation(self, event: Input.Blurred) -> None:
