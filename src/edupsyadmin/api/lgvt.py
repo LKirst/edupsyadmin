@@ -17,6 +17,7 @@ from edupsyadmin.core.config import config
 from edupsyadmin.utils.convert_measures import percentile_to_t, t_to_z
 from edupsyadmin.utils.datediff import mydatediff
 from edupsyadmin.utils.path_utils import normalize_path
+from edupsyadmin.utils.rounding import round_half_up
 
 
 def askyn(prompt: str) -> int:
@@ -45,7 +46,7 @@ def calculate_lv_korrektur(
     lv_rw_korr_nachkomma = lv_rw_korr % 1
 
     lv_pr_diff = lv_pr_ceil - lv_pr_floor
-    lv_pr_korr = round(lv_pr_floor + lv_pr_diff * lv_rw_korr_nachkomma)
+    lv_pr_korr = round_half_up(lv_pr_floor + lv_pr_diff * lv_rw_korr_nachkomma)
     return lv_rw_korr, lv_pr_korr
 
 
@@ -71,7 +72,7 @@ def get_indices(
     words_until_last_item = int(csv_data[num_processed - 1]["Wortzahl"])
     lv_rw = correct_answ * 2 - incorrect_answ
     lgs_rw = words_until_last_item + words_after_last_item
-    lg_rw = round((correct_answ / num_processed) * 100)
+    lg_rw = round_half_up((correct_answ / num_processed) * 100)
 
     lv_t = percentile_to_t(lv_pr_korr)
     lgs_t = percentile_to_t(lgs_pr_korr)
@@ -216,14 +217,14 @@ def mk_report(
         )
 
         lgs_korr_faktor = float(input("Korrekturfaktor LGS:"))
-        lgs_rw_korr = round(lgs_rw * lgs_korr_faktor)
+        lgs_rw_korr = round_half_up(lgs_rw * lgs_korr_faktor)
     else:
         lv_rw_korr = lv_rw
         lv_pr_korr = int(input(f"Rohwert LV = {lv_rw_korr}; PR = "))
         lgs_rw_korr = lgs_rw
 
     lgs_pr_korr = int(input(f"Rohwert LGS = {lgs_rw_korr}; PR = "))
-    lg_rw = round((correct_answ / num_processed) * 100)
+    lg_rw = round_half_up((correct_answ / num_processed) * 100)
     lg_pr = int(input(f"Rohwert LG = {lg_rw}; PR = "))
 
     results, lv_t, lgs_t, lg_t = get_indices(

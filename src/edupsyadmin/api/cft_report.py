@@ -13,6 +13,7 @@ from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.utils.convert_measures import iq_to_t, iq_to_z
 from edupsyadmin.utils.datediff import mydatediff
 from edupsyadmin.utils.path_utils import normalize_path
+from edupsyadmin.utils.rounding import round_half_up
 
 
 def input_int_or_none(prompt: str) -> int | None:
@@ -28,7 +29,7 @@ def safe_iq_to_t(iq_value: int | None) -> float | None:
     """Avoid errors with None values"""
     if iq_value is None:
         return None
-    return round(iq_to_t(iq_value), 2)
+    return round_half_up(iq_to_t(iq_value), 2)
 
 
 def calculate_raw_totals(
