@@ -119,6 +119,7 @@ class EdupsyadminTui(App[None]):
         client_ids: list[int],
         form_paths: list[str],
         out_dir: str | None = None,
+        password: str | None = None,
     ) -> None:
         """Worker to fill forms."""
         try:
@@ -127,6 +128,7 @@ class EdupsyadminTui(App[None]):
                 client_ids,
                 form_paths,
                 out_dir=Path(out_dir) if out_dir else None,
+                password=password,
             )
             self.post_message(self._FormsFilledResult(results=results))
         except Exception as e:
@@ -225,6 +227,7 @@ class EdupsyadminTui(App[None]):
         edit_client_widget.update_client(None, None)
         self.notify("Bearbeitung abgebrochen.", severity="information")
 
+
     async def on_fill_form_start_fill(self, message: FillForm.StartFill) -> None:
         """Handle the start fill message from the FillForm widget."""
         if self.is_busy:
@@ -237,6 +240,7 @@ class EdupsyadminTui(App[None]):
             message.client_ids,
             message.form_paths,
             out_dir=message.out_dir,
+            password=message.password,
         )
 
     async def on_fill_form_cancel(self, message: FillForm.Cancel) -> None:
