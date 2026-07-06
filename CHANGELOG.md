@@ -1,3 +1,41 @@
+## 9.1.0 (2026-07-06)
+
+### Feat
+
+- **db.clients**: allow an override of class_int
+- **api.flatten_pdf**: allow flattening an encrypted pdf
+- **api.fill_form**: make pdf encryption the default
+- **api.fill_form**: add empty page at the end of files with odd number of pages when merging pdfs
+- **api.fill_form**: merge fill_form pdf output
+
+### Fix
+
+- **tui**: pass the password through to fill_form
+- **api**: always round up at .5 when rounding
+- consistently normalize paths
+- **api.lgvt**: normalise paths
+- **cli**: remove old library argument from flatten_pdfs
+- **db.column_types**: remove sensitive data from encrypteion error logs
+- **api.fill_form**: use PdfWriter.append instead of PdfWriter.add_page in a loop
+- **api.types**: remove redundant validator from pydantic ClientRecord model
+- resolve type error in fill-form and migrate CLI command
+- **api.cft_report**: display the total sums of raw scores in the cli
+
+### Refactor
+
+- **api**: modularize pdf flattening into a dedicated package
+- **api.flattening**: refactor for readability
+- **api.fill_form**: support radio buttons in pypdf form filling implementation and consolidate filling logic
+- **api.flattening**: remove alternative flattening implementations
+- **api**: replace TypedDict with Pydantic models for client data
+- remove add_convenience_data and update tests and docs
+- introduce ClientRecord and ClientView for convenience data
+
+### Perf
+
+- remove pandas from scripts that do not need it and use lazy imports
+- **api.exceptions**: move exceptions to separate file
+
 ## 9.0.0 (2026-05-04)
 
 ### Feat
