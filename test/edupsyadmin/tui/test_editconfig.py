@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 import yaml
 from conftest import TEST_UID, TEST_USERNAME
@@ -5,6 +7,8 @@ from textual.widgets import Input
 
 from edupsyadmin.api.migration import upgrade_db
 from edupsyadmin.tui.editconfig import (
+    PathIsDirValidator,
+    PathIsFileValidator,
     SchoolEditor,
 )
 from edupsyadmin.tui.editconfig_app import (
@@ -162,3 +166,10 @@ async def test_app_saves_config_changes(mock_config, tmp_path):
     assert saved_config["core"]["template_directory"] == new_template_directory
     assert saved_config["core"]["output_directory"] == new_output_directory
     assert saved_config["schoolpsy"]["schoolpsy_name"] == new_schoolpsy_name
+
+
+def test_path_validators_empty_string(tmp_path: Path) -> None:
+    """Test path validators handling of empty string."""
+    assert not PathIsFileValidator.validate("").is_valid
+    assert not PathIsDirValidator.validate("").is_valid
+    assert PathIsDirValidator.validate(str(tmp_path)).is_valid

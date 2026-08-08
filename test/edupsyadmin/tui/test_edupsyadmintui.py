@@ -138,3 +138,54 @@ async def test_fill_form_worker_uses_convenience_data(
         out_dir=None,
         password=None,
     )
+
+
+@pytest.mark.asyncio
+@patch("edupsyadmin.tui.edupsyadmintui.batch_fill_forms")
+@patch("edupsyadmin.tui.edupsyadmintui.EdupsyadminTui.pop_screen")
+async def test_fill_form_worker_passes_password(
+    mock_pop_screen: MagicMock,
+    mock_batch_fill_forms: MagicMock,
+    mock_clients_manager: MagicMock,
+    mock_config: Any,
+) -> None:
+    """Test that the TUI passes the password parameter through to batch_fill_forms."""
+    # Arrange
+    raw_client_data = {
+        "first_name_encr": "Test",
+        "last_name_encr": "User",
+        "birthday_encr": "2010-05-12",
+    }
+    mock_clients_manager.get_decrypted_client.return_value = raw_client_data
+    mock_batch_fill_forms.return_value = [
+        {"client_id": 123, "success": True, "error": None},
+    ]
+
+    app = EdupsyadminTui(manager=mock_clients_manager)
+
+    # Act
+    client_id = 123
+    form_paths = ["/fake/form.pdf"]
+    test_password = "my_secret_password"
+    async with app.run_test() as pilot:
+        app.post_message(
+            FillForm.StartFill([client_id], form_paths, password=test_password)
+        )
+        await pilot.pause()
+
+        import asyncio
+
+        for _ in range(50):
+            if not app.is_busy:
+                break
+            await asyncio.sleep(0.1)
+            await pilot.pause()
+
+    # Assert
+    mock_batch_fill_forms.assert_called_once_with(
+        mock_clients_manager,
+        [client_id],
+        form_paths,
+        out_dir=None,
+        password=test_password,
+    )

@@ -1,15 +1,16 @@
 from datetime import date
+from pathlib import Path
 from unittest.mock import patch
 
 import pandas as pd
 import pytest
 
-from edupsyadmin.api.lgvt import mk_report
+from edupsyadmin.api.lgvt import get_indices, mk_report
 from edupsyadmin.core.config import config
 
 
 @pytest.fixture
-def mock_lgvt_csv(tmp_path):
+def mock_lgvt_csv(tmp_path: Path) -> Path:
     """Create a mock CSV for LGVT tests."""
     df = pd.DataFrame(
         {
@@ -122,3 +123,21 @@ def test_lgvt_report_grade_9_snapshot(
     report_path = tmp_path / f"{client_id}_Auswertung_LGVT.pdf"
     assert report_path.exists()
     assert pdf_snapshot == report_path
+
+
+def test_lgvt_get_indices_normalizes_string_path(mock_lgvt_csv: Path) -> None:
+    """Test that get_indices works when passed a string path requiring normalization."""
+    unnormalized_str_path = str(mock_lgvt_csv.parent / "." / mock_lgvt_csv.name)
+    results, _lv_t, _lgs_t, _lg_t = get_indices(
+        fn_csv=unnormalized_str_path,
+        correct_answ=2,
+        incorrect_answ=1,
+        num_processed=3,
+        words_after_last_item=5,
+        lv_pr_korr=50,
+        lgs_pr_korr=60,
+        lg_pr=70,
+        lv_rw_korr=3.0,
+        lgs_rw_korr=80,
+    )
+    assert len(results) > 0
