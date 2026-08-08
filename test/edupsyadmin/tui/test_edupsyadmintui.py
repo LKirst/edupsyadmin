@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -29,7 +30,7 @@ DATA = [dict(zip(COLUMNS, row, strict=True)) for row in ROWS]
 
 
 @pytest.fixture
-def mock_clients_manager():
+def mock_clients_manager() -> MagicMock:
     """Provides a mock ClientsManager."""
     manager = MagicMock()
     manager.get_clients_overview.return_value = DATA
@@ -39,11 +40,13 @@ def mock_clients_manager():
     return manager
 
 
-def test_edupsyadmintui_initial_layout(snap_compare, mock_config, mock_clients_manager):
+def test_edupsyadmintui_initial_layout(
+    snap_compare: Any, mock_config: Any, mock_clients_manager: MagicMock
+) -> None:
     """Test the initial layout of the main TUI."""
     app = EdupsyadminTui(manager=mock_clients_manager)
 
-    async def run_before(pilot):
+    async def run_before(pilot: Any) -> None:
         await pilot.pause()
         # Wait for the table to be populated
         table = pilot.app.query_one(DataTable)
@@ -54,7 +57,9 @@ def test_edupsyadmintui_initial_layout(snap_compare, mock_config, mock_clients_m
 
 
 @pytest.mark.asyncio
-async def test_select_client_populates_edit_form(mock_config, mock_clients_manager):
+async def test_select_client_populates_edit_form(
+    mock_config: Any, mock_clients_manager: MagicMock
+) -> None:
     """Test that selecting a client in the overview populates the edit form."""
     client_to_select = ClientRecord.model_validate(
         dict(zip(COLUMNS, ROWS[1], strict=False))
@@ -79,7 +84,9 @@ async def test_select_client_populates_edit_form(mock_config, mock_clients_manag
         while edit_client_widget.client_id != client_to_select.client_id:
             await pilot.pause(0.01)
 
-        first_name_input = edit_client_widget.query_one("#first_name_encr", Input)
+        first_name_input = edit_client_widget.query_one(
+            "#first_name_encr", expect_type=Input
+        )
         assert first_name_input.value == client_to_select.first_name_encr
 
 
@@ -87,8 +94,11 @@ async def test_select_client_populates_edit_form(mock_config, mock_clients_manag
 @patch("edupsyadmin.tui.edupsyadmintui.batch_fill_forms")
 @patch("edupsyadmin.tui.edupsyadmintui.EdupsyadminTui.pop_screen")
 async def test_fill_form_worker_uses_convenience_data(
-    mock_pop_screen, mock_batch_fill_forms, mock_clients_manager, mock_config
-):
+    mock_pop_screen: MagicMock,
+    mock_batch_fill_forms: MagicMock,
+    mock_clients_manager: MagicMock,
+    mock_config: Any,
+) -> None:
     """Test that the TUI calls batch_fill_forms with correct IDs and paths."""
     # Arrange
     raw_client_data = {
@@ -126,4 +136,5 @@ async def test_fill_form_worker_uses_convenience_data(
         [client_id],
         form_paths,
         out_dir=None,
+        password=None,
     )
