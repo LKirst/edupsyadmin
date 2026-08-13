@@ -4,14 +4,17 @@ from argparse import ArgumentParser, Namespace
 from edupsyadmin.cli.utils import lazy_import
 
 COMMAND_DESCRIPTION = (
-    "Create a sandboxed demo environment (demo-config.yml, demo-salt.txt, demo.db)."
+    "Create a sandboxed demo environment (demo-config.yml, demo-salt.txt, demo.db)"
+    "with the user name `demouser`, "
+    "the UID `liebermann-schulpsychologie.github.io.demo` "
+    "and three example database entries."
 )
-COMMAND_HELP = "Create a sandboxed demo environment."
+COMMAND_HELP = "Create a sandboxed demo environment"
 COMMAND_EPILOG = textwrap.dedent(
     """\
     Example:
       # Create a sandboxed demo environment
-      edupsyadmin setup_demo
+      edupsyadmin setup-demo
 """,
 )
 
