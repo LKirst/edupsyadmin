@@ -22,7 +22,9 @@ from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.core.config import config
 from edupsyadmin.core.enums import Gender, LrstDiagnosis, LrstTesterType
 from edupsyadmin.db.clients import Client
+from edupsyadmin.tui.suggesters import CategorySuggester
 from edupsyadmin.utils.python_type import get_python_type
+from edupsyadmin.utils.taetigkeitsbericht_check_key import get_taet_categories
 
 REQUIRED_FIELDS = [
     "first_name_encr",
@@ -413,10 +415,16 @@ class EditClient(Container):
 
         # Fallback = plain text
         else:
+            suggester = None
+            if name == "keyword_taet_encr":
+                suggester = CategorySuggester(
+                    sorted(get_taet_categories()), case_sensitive=False
+                )
             widget = Input(
                 value=str(default or ""),
                 placeholder="Erforderlich" if required else "",
                 valid_empty=not required,
+                suggester=suggester,
                 id=name,
             )
 

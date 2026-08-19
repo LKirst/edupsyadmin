@@ -13,6 +13,8 @@ from textual.widgets import Checkbox, Input
 from edupsyadmin.api.types import ClientRecord
 from edupsyadmin.tui.edit_client import EditClient, _get_empty_client_dict
 from edupsyadmin.tui.edit_client_app import EditClientApp
+from edupsyadmin.tui.suggesters import CategorySuggester
+from edupsyadmin.utils.taetigkeitsbericht_check_key import get_taet_categories
 
 TERMINAL_SIZE = (70, 140)
 
@@ -259,3 +261,28 @@ async def test_cancel_exits(mock_config):
         await pilot.pause()
 
     assert app._exit is True
+
+
+@pytest.mark.asyncio
+async def test_keyword_taet_encr_input_has_suggester(mock_config: Any) -> None:
+    """Test that keyword_taet_encr input field has a CategorySuggester."""
+
+    local_mock_manager = MagicMock()
+    local_mock_manager.get_decrypted_client.return_value = None
+    app = EditClientApp(clients_manager=local_mock_manager, client_id=None)
+
+    async with app.run_test(size=TERMINAL_SIZE) as pilot:
+        await pilot.pause()
+        while not pilot.app.query(Input):
+            await pilot.pause(0.01)
+
+        input_widget = pilot.app.query_one("#keyword_taet_encr", expect_type=Input)
+        assert input_widget.suggester is not None
+        assert isinstance(input_widget.suggester, CategorySuggester)
+        assert input_widget.suggester.case_sensitive is False
+        expected_suggestions = sorted(get_taet_categories())
+        assert input_widget.suggester._suggestions == expected_suggestions
+
+        # Test segment match: 'ink' should match 'ppb.inkl'
+        suggestion = await input_widget.suggester.get_suggestion("ink")
+        assert suggestion == "ppb.inkl"
