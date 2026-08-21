@@ -4,6 +4,11 @@ from argparse import ArgumentParser, Namespace
 
 from edupsyadmin.api.exceptions import MigrationError
 from edupsyadmin.cli.utils import lazy_import
+from edupsyadmin.core.encrypt import (
+    delete_legacy_key_from_keyring,
+    get_keys_from_keyring,
+    set_keys_in_keyring,
+)
 from edupsyadmin.core.logger import logger
 
 COMMAND_DESCRIPTION = textwrap.dedent(
@@ -72,12 +77,6 @@ def execute(args: Namespace) -> None:
             .lower()
         )
         if cleanup_response in ("yes", "y"):
-            from edupsyadmin.core.encrypt import (
-                delete_legacy_key_from_keyring,
-                get_keys_from_keyring,
-                set_keys_in_keyring,
-            )
-
             delete_legacy_key_from_keyring(args.app_uid, args.app_username)
 
             # Also clean up versioned keys: only keep the newest primary key

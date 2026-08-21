@@ -5,6 +5,7 @@ from rich.console import Console
 from rich.table import Table
 
 from edupsyadmin.__version__ import __version__
+from edupsyadmin.core.encrypt import get_salt_from_db
 
 
 def info(
@@ -40,8 +41,6 @@ def info(
     table.add_row("Keyring Backend", str(get_keyring()))
 
     try:
-        from edupsyadmin.core.encrypt import get_salt_from_db
-
         _ = get_salt_from_db(database_url)
         salt_in_db = "[bold green]Yes[/bold green]"
     except Exception:

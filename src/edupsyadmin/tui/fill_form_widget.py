@@ -10,6 +10,7 @@ from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import (
     Button,
+    Checkbox,
     DirectoryTree,
     Footer,
     Header,
@@ -143,7 +144,6 @@ class FillForm(Widget):
                 yield Input(id="output-path-input", placeholder="Enter output path...")
             with Horizontal(id="encryption-row", classes="path-container"):
                 yield Label("Encryption:")
-                from textual.widgets import Checkbox
 
                 yield Checkbox(
                     "PDF verschlüsseln",
@@ -257,7 +257,6 @@ class FillForm(Widget):
             out_dir = self.query_one("#output-path-input", Input).value or None
 
             password = None
-            from textual.widgets import Checkbox
 
             if self.query_one("#encrypt-checkbox", Checkbox).value:
                 password = self.query_one("#pdf-password-input", Input).value

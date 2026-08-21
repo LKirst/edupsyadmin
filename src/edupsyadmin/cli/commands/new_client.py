@@ -5,9 +5,13 @@ from datetime import datetime
 from inspect import signature
 from typing import TYPE_CHECKING
 
+from sqlalchemy import inspect as sa_inspect
+
 from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
+from edupsyadmin.db import clients
+from edupsyadmin.utils.path_utils import normalize_path
 
 if TYPE_CHECKING:
     from edupsyadmin.api.managers import ClientsManager
@@ -49,7 +53,6 @@ def _enter_client_csv(
     return: client_id
     """
     pd = lazy_import("pandas")
-    from edupsyadmin.db import clients
 
     client_cls = clients.Client
 
@@ -135,8 +138,6 @@ def _enter_client_csv(
         school = next(iter(config.school.keys()))
     client_data["school"] = school
 
-    from sqlalchemy import inspect as sa_inspect
-
     # Filter data to only include valid columns for the Client model
     valid_keys = {c.key for c in sa_inspect(client_cls).column_attrs}
     init_sig = signature(client_cls.__init__)
@@ -199,8 +200,6 @@ def execute(args: Namespace) -> None:
     )
 
     if args.csv:
-        from edupsyadmin.utils.path_utils import normalize_path
-
         if args.name is None:
             raise ValueError("Pass a name to read a client from a csv.")
 

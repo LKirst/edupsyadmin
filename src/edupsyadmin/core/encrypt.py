@@ -9,6 +9,7 @@ from cryptography.fernet import Fernet, MultiFernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from keyring.errors import PasswordDeleteError
+from sqlalchemy import create_engine, text
 
 from edupsyadmin.core.logger import logger
 
@@ -192,7 +193,6 @@ def load_or_create_salt(salt_path: Path) -> bytes:
 
 def get_salt_from_db(database_url: str) -> bytes:
     """Fetches the salt from the database metadata table."""
-    from sqlalchemy import create_engine, text
 
     engine = create_engine(database_url)
     with engine.connect() as conn:

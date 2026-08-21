@@ -1,3 +1,4 @@
+import getpass
 import textwrap
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
@@ -37,8 +38,6 @@ COMMAND_EPILOG = textwrap.dedent(
 
 def add_arguments(parser: ArgumentParser) -> None:
     """CLI adaptor for the create-documentation command."""
-    from edupsyadmin.utils.path_utils import normalize_path
-
     parser.set_defaults(command=execute)
     parser.add_argument(
         "--tui",
@@ -99,8 +98,6 @@ def _get_pdf_password(args: Namespace) -> str | None:
     if args.password:
         return args.password
     if not args.tui:
-        import getpass
-
         return getpass.getpass("Passwort für die PDF-Verschlüsselung: ")
     return None
 

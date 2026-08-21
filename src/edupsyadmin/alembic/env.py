@@ -3,6 +3,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from edupsyadmin.core.paths import DEFAULT_DB_URL
 from edupsyadmin.db import Base
 
 # this is the Alembic Config object, which provides
@@ -40,8 +41,6 @@ def run_migrations_offline() -> None:
     """
     url = config.get_main_option("sqlalchemy.url")
     if not url:
-        from edupsyadmin.core.paths import DEFAULT_DB_URL
-
         x_args = context.get_x_argument(as_dictionary=True)
         url = x_args.get("db_url") or DEFAULT_DB_URL
 
@@ -68,8 +67,6 @@ def run_migrations_online() -> None:
     # If the URL is not in the config file, try to get it from the command line
     # (passed via -x db_url=...) or fallback to the default database URL.
     if not section.get("sqlalchemy.url"):
-        from edupsyadmin.core.paths import DEFAULT_DB_URL
-
         x_args = context.get_x_argument(as_dictionary=True)
         section["sqlalchemy.url"] = x_args.get("db_url") or DEFAULT_DB_URL
 

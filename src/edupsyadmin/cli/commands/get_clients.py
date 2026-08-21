@@ -7,6 +7,7 @@ from rich.table import Table
 
 from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.core.logger import logger
+from edupsyadmin.utils.path_utils import normalize_path
 
 COMMAND_DESCRIPTION = "Show clients overview or single client"
 COMMAND_HELP = "Show clients overview or single client"
@@ -32,7 +33,6 @@ COMMAND_EPILOG = textwrap.dedent(
 
 def add_arguments(parser: ArgumentParser) -> None:
     """CLI adaptor for the get-clients command."""
-    from edupsyadmin.utils.path_utils import normalize_path
 
     parser.set_defaults(command=execute)
     parser.add_argument(

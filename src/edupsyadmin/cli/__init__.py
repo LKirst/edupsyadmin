@@ -19,6 +19,7 @@ from edupsyadmin.core.paths import (
     DEFAULT_DB_URL,
     DEFAULT_SALT_PATH,
 )
+from edupsyadmin.utils.path_utils import normalize_path
 
 __all__ = ("main",)
 
@@ -137,8 +138,6 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
         parser.print_help()
         raise SystemExit(1)
 
-    from edupsyadmin.utils.path_utils import normalize_path
-
     # don't specify this as an argument default or else it will always be
     # included in the list.
     if not args.config_path:
@@ -246,8 +245,6 @@ def main(argv: list[str] | None = None) -> int:
     :return: exit status
     """
     args = _args(argv)
-
-    from edupsyadmin.utils.path_utils import normalize_path
 
     # Migrate versioned paths to stable paths if necessary
     if args.database_url.startswith("sqlite:///"):

@@ -2,7 +2,10 @@
 """CLI tool for flattening PDF forms."""
 
 import argparse
+import getpass
 from pathlib import Path
+
+from pypdf import PdfReader
 
 from edupsyadmin.api.flattening import (
     DEFAULT_PREFIX,
@@ -44,16 +47,12 @@ def main() -> None:
 
     password = args.password
     if not password:
-        from pypdf import PdfReader
-
         for p in args.inpaths:
             p_path = Path(p)
             if p_path.exists() and p_path.suffix.lower() == ".pdf":
                 try:
                     reader = PdfReader(str(p_path))
                     if reader.is_encrypted:
-                        import getpass
-
                         password = getpass.getpass(
                             f"Passwort für verschlüsselte PDF '{p_path.name}': ",
                         )

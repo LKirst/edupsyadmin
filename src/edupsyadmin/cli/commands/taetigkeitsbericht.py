@@ -2,6 +2,7 @@ import textwrap
 from argparse import ArgumentParser, Namespace
 
 from edupsyadmin.cli.utils import lazy_import
+from edupsyadmin.utils.path_utils import normalize_path
 
 COMMAND_DESCRIPTION = "Create a PDF output for the Taetigkeitsbericht (experimental)"
 COMMAND_HELP = "Create a PDF output for the Taetigkeitsbericht (experimental)"
@@ -47,7 +48,6 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 def execute(args: Namespace) -> None:
     """Execute the taetigkeitsbericht command."""
-    from edupsyadmin.utils.path_utils import normalize_path
 
     taetigkeitsbericht = lazy_import(
         "edupsyadmin.api.taetigkeitsbericht_from_db",
