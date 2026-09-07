@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from cryptography.fernet import Fernet
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 
 from edupsyadmin.api.migration import (
     MigrationError,
@@ -107,10 +107,6 @@ def test_upgrade_db_legacy_database(tmp_path: Path):
         conn.execute("INSERT INTO clients (school) VALUES ('LegacySchool')")
 
     # 2. Initialize encryption with a dummy key for migrations that need it
-    from cryptography.fernet import Fernet
-
-    from edupsyadmin.core.encrypt import encr
-
     encr.set_keys([Fernet.generate_key()])
 
     # 3. Run migration
@@ -128,8 +124,6 @@ def test_upgrade_db_legacy_database(tmp_path: Path):
 
     # Verify data was preserved
     with engine.connect() as conn:
-        from sqlalchemy import text
-
         result = conn.execute(text("SELECT school FROM clients"))
         row = result.fetchone()
         assert row is not None

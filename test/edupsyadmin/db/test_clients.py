@@ -1,19 +1,24 @@
 from datetime import date
 
 import pytest
+from cryptography.fernet import Fernet
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
 from edupsyadmin.api.migration import upgrade_db
-from edupsyadmin.db.clients import Client
+from edupsyadmin.core.encrypt import encr
+from edupsyadmin.db.clients import (
+    Client,
+    to_bool_or_none,
+    to_date_or_none,
+    to_int_or_none,
+)
+
+TEST_INT = 123
 
 
 @pytest.fixture(autouse=True)
 def setup_encryption(mock_config, mock_keyring):
-    from cryptography.fernet import Fernet
-
-    from edupsyadmin.core.encrypt import encr
-
     # initialize encr with a dummy key for testing
     dummy_key = Fernet.generate_key()
     encr.set_keys([dummy_key])
@@ -28,7 +33,7 @@ def test_client_birthday_required():
             class_name_encr="1a",
             first_name_encr="John",
             last_name_encr="Doe",
-            birthday_encr=None,  # type: ignore
+            birthday_encr=None,  # ty: ignore[invalid-argument-type]
         )
 
 
@@ -98,8 +103,6 @@ def test_empty_string_handled_as_none_for_dates(tmp_path):
 
 
 def test_to_bool_or_none():
-    from edupsyadmin.db.clients import to_bool_or_none
-
     assert to_bool_or_none(True) is True
     assert to_bool_or_none(False) is False
     assert to_bool_or_none("1") is True
@@ -121,10 +124,8 @@ def test_to_bool_or_none():
 
 
 def test_to_int_or_none():
-    from edupsyadmin.db.clients import to_int_or_none
-
-    assert to_int_or_none(123) == 123
-    assert to_int_or_none("456") == 456
+    assert to_int_or_none(TEST_INT) == TEST_INT
+    assert to_int_or_none(str(TEST_INT)) == TEST_INT
     assert to_int_or_none(None) is None
     assert to_int_or_none("") is None
     assert to_int_or_none("  ") is None
@@ -136,8 +137,6 @@ def test_to_int_or_none():
 
 
 def test_to_date_or_none():
-    from edupsyadmin.db.clients import to_date_or_none
-
     test_date = date(2023, 1, 1)
     assert to_date_or_none(test_date) == test_date
     assert to_date_or_none("2023-01-01") == test_date
@@ -148,4 +147,4 @@ def test_to_date_or_none():
     with pytest.raises(ValueError, match="Invalid date format"):
         to_date_or_none("01.01.2023")
     with pytest.raises(TypeError):
-        to_date_or_none(123)  # ty: ignore[invalid-argument-type]
+        to_date_or_none(TEST_INT)  # ty: ignore[invalid-argument-type]

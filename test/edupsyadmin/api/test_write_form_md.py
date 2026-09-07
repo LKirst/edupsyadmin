@@ -1,6 +1,6 @@
 import textwrap
-import unittest.mock as mock
 from pathlib import Path
+from unittest import mock
 
 import pytest
 from liquid.exceptions import LiquidError

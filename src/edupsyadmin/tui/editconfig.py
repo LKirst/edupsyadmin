@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any, Final, Literal
 
 from textual import on
 from textual.app import ComposeResult
@@ -7,6 +7,8 @@ from textual.validation import Function, Regex
 from textual.widgets import Button, Input, Select, Static
 
 from edupsyadmin.utils.path_utils import normalize_path
+
+MAPPING_INPUTS_COUNT: Final[int] = 2
 
 TOOLTIPS = {
     "logging": "Logging-Niveau für die Anwendung (DEBUG, INFO, WARN oder ERROR)",
@@ -310,7 +312,7 @@ class CsvImportEditor(Vertical):
         mappings = {}
         for row in self.query(".mapping-row"):
             inputs = row.query(Input)
-            if len(inputs) == 2 and inputs[0].value:
+            if len(inputs) == MAPPING_INPUTS_COUNT and inputs[0].value:
                 mappings[inputs[0].value] = inputs[1].value
         data["column_mapping"] = mappings
         return key, data

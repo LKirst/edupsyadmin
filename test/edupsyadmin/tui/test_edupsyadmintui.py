@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -122,7 +123,6 @@ async def test_fill_form_worker_uses_convenience_data(
         await pilot.pause()  # Allow worker to start
 
         # Wait for the worker to finish (is_busy becomes False)
-        import asyncio
 
         for _ in range(50):  # Wait up to 5 seconds
             if not app.is_busy:
@@ -172,8 +172,6 @@ async def test_fill_form_worker_passes_password(
             FillForm.StartFill([client_id], form_paths, password=test_password)
         )
         await pilot.pause()
-
-        import asyncio
 
         for _ in range(50):
             if not app.is_busy:

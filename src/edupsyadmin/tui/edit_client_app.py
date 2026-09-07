@@ -53,7 +53,7 @@ class EditClientApp(App):
                 self.clients_manager.add_client(**message.data)
             self.notify("Daten erfolgreich gespeichert.")
             self.exit()  # Exit after saving
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.notify(f"Fehler beim Speichern: {e}", severity="error")
 
     async def on_edit_client_cancel_edit(self, message: EditClient.CancelEdit) -> None:

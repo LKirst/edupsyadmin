@@ -123,7 +123,6 @@ class BasePDFReport:
 
     def _draw_header(self, canvas: Canvas) -> None:
         """Draw the header (to be overridden if needed)."""
-        pass
 
     def _scale_image(self, img: Image, available_width: float) -> Image:
         """

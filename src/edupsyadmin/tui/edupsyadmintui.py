@@ -86,7 +86,7 @@ class EdupsyadminTui(App[None]):
         try:
             data = self.manager.get_decrypted_client(client_id)
             self.post_message(self._ClientDataResult(client_id, data))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.post_message(self._ClientDataResult(client_id, None, error=e))
 
     @work(exclusive=True, thread=True)
@@ -110,7 +110,7 @@ class EdupsyadminTui(App[None]):
             else:
                 self.post_message(self._ClientDataSaveResult())
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.post_message(self._ClientDataSaveResult(error=e))
 
     @work(exclusive=True, thread=True)
@@ -131,7 +131,7 @@ class EdupsyadminTui(App[None]):
                 password=password,
             )
             self.post_message(self._FormsFilledResult(results=results))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.post_message(self._FormsFilledResult(error=e))
 
     async def on_clients_overview_client_selected(
@@ -226,7 +226,6 @@ class EdupsyadminTui(App[None]):
         edit_client_widget = self.query_one(EditClient)
         edit_client_widget.update_client(None, None)
         self.notify("Bearbeitung abgebrochen.", severity="information")
-
 
     async def on_fill_form_start_fill(self, message: FillForm.StartFill) -> None:
         """Handle the start fill message from the FillForm widget."""

@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from textual.widgets import Input, SelectionList
 
+from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.tui.fill_form_app import FillFormApp
 from edupsyadmin.tui.fill_form_widget import FillForm, MultiSelectDirectoryTree
 
@@ -18,7 +19,6 @@ CLIENT_DATA = {
 @pytest.fixture
 def mock_clients_manager(mock_config):
     """A mock clients manager for the fill form TUI."""
-    from edupsyadmin.api.client_view import ClientView
 
     manager = MagicMock()
     manager.get_decrypted_client.return_value = CLIENT_DATA

@@ -111,7 +111,7 @@ class FillFormApp(App[None]):
 
             self.call_from_thread(self.notify, msg, severity=severity)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.call_from_thread(
                 self.notify,
                 f"Critical error filling forms: {e}",

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Final
 
 import yaml
 from textual import on, work
@@ -31,6 +31,8 @@ from edupsyadmin.tui.editconfig import (
     PathIsDirValidator,
     SchoolEditor,
 )
+
+MIN_PASSWORD_LENGTH: Final[int] = 8
 
 
 def save_config(config_dict: dict[str, Any], file_path: Path) -> None:
@@ -311,7 +313,7 @@ class ConfigEditorApp(App[None]):
         """
         Handle the logic for when a new password is provided, performing key rotation.
         """
-        if len(password) < 8:
+        if len(password) < MIN_PASSWORD_LENGTH:
             self.notify(
                 "Passwort muss mindestens 8 Zeichen lang sein",
                 severity="error",
@@ -425,7 +427,7 @@ class ConfigEditorApp(App[None]):
                     "Neuer Verschlüsselungsschlüssel hinzugefügt und gespeichert.",
                 ),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.post_message(
                 KeyDerivationResult(
                     False,
@@ -438,7 +440,7 @@ class ConfigEditorApp(App[None]):
         try:
             existing_keys = get_keys_from_keyring(app_uid, username)
             self.post_message(GotKeys(existing_keys))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.log(f"Error getting keys: {e}")
             self.call_from_thread(
                 self.notify,
@@ -453,7 +455,7 @@ class ConfigEditorApp(App[None]):
         try:
             save_config(config_dict, file_path)
             self.post_message(ConfigSaved())
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.log(f"Error saving config: {e}")
             self.call_from_thread(
                 self.notify,

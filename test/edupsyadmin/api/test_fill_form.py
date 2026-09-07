@@ -94,10 +94,29 @@ def test_batch_fill_forms(
         pdf_forms,
         out_dir=tmp_path,
     )
-    assert len(results) == 2
+    assert len(results) == len(client_ids)
     assert all(res["success"] for res in results)
-    assert clients_manager.get_client_view.call_count == 2
+    assert clients_manager.get_client_view.call_count == len(client_ids)
 
     for client_id in client_ids:
         output_pdf_path = tmp_path / f"{client_id}_merged.pdf"
         assert output_pdf_path.exists()
+
+
+def test_batch_fill_forms_error_handling(
+    mock_config,
+    pdf_forms: list,
+    tmp_path: Path,
+) -> None:
+    clients_manager = MagicMock()
+    clients_manager.get_client_view.side_effect = RuntimeError("Client error")
+
+    results = batch_fill_forms(
+        clients_manager,
+        [1],
+        pdf_forms,
+        out_dir=tmp_path,
+    )
+    assert len(results) == 1
+    assert not results[0]["success"]
+    assert isinstance(results[0]["error"], RuntimeError)

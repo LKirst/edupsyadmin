@@ -8,8 +8,9 @@ import keyring
 from cryptography.fernet import Fernet, MultiFernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from keyring.errors import PasswordDeleteError
+from keyring.errors import KeyringError, PasswordDeleteError
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 
 from edupsyadmin.core.logger import logger
 
@@ -67,9 +68,10 @@ def check_key_validity(key: bytes | None) -> bool:
         return False
     try:
         Fernet(key)
-        return True
     except ValueError, TypeError:
         return False
+    else:
+        return True
 
 
 def _get_legacy_keys(uid: str, username: str) -> list[bytes]:
@@ -122,11 +124,11 @@ def get_keys_from_keyring(uid: str, username: str) -> list[bytes]:
             key_str = keyring.get_password(f"{uid}_key_{idx}", username)
             if key_str:
                 keys.append(key_str.encode("utf-8"))
-
-        return keys
-    except Exception as e:
+    except (KeyringError, ValueError) as e:
         logger.error(f"Error retrieving keys: {e}")
         return []
+    else:
+        return keys
 
 
 def set_keys_in_keyring(uid: str, username: str, keys: list[bytes]) -> None:
@@ -167,12 +169,12 @@ def set_keys_in_keyring(uid: str, username: str, keys: list[bytes]) -> None:
                 else:
                     # No more keys found, we can stop
                     break
-            except Exception as e:
+            except KeyringError as e:
                 logger.debug(f"No key found at index {idx} or error deleting: {e}")
                 # Continue trying to clean up remaining keys
                 continue
 
-    except Exception as e:
+    except KeyringError as e:
         # Non-critical: cleanup failure shouldn't break the operation
         # since new keys are already stored
         logger.warning(f"Error during cleanup of old keys: {e}")
@@ -202,7 +204,7 @@ def get_salt_from_db(database_url: str) -> bytes:
             ).fetchone()
             if result:
                 return bytes.fromhex(result[0])
-        except Exception as e:
+        except (SQLAlchemyError, ValueError) as e:
             logger.error(f"Error fetching salt from DB: {e}")
 
     raise RuntimeError(
@@ -228,5 +230,5 @@ def delete_legacy_key_from_keyring(uid: str, username: str) -> None:
         logger.info(f"Successfully deleted legacy key for '{username}'.")
     except PasswordDeleteError:
         logger.info(f"No legacy key found for '{username}' to delete.")
-    except Exception as e:
+    except KeyringError as e:
         logger.warning(f"An error occurred while deleting legacy key: {e}")

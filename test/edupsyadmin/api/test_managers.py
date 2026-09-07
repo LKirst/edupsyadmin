@@ -1,11 +1,13 @@
 from datetime import date
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
 from edupsyadmin.api.managers import (
     ClientNotFoundError,
 )
+from edupsyadmin.core.logger import logger as app_logger
 
 EXPECTED_KEYS = {
     "first_name_encr",
@@ -69,8 +71,9 @@ class TestManagers:
         assert client.last_name_encr == client_dict_set_by_user["last_name_encr"]
 
     def test_add_client_set_id(self, clients_manager):
+        client_id = 99
         client_dict_with_id = {
-            "client_id": 99,
+            "client_id": client_id,
             "school": "FirstSchool",
             "gender_encr": "f",
             "entry_date_encr": date(2021, 6, 30),
@@ -79,8 +82,8 @@ class TestManagers:
             "last_name_encr": "Müller",
             "birthday_encr": date(1990, 1, 1),
         }
-        client_id = clients_manager.add_client(**client_dict_with_id)
-        assert client_id == 99
+        client_id_retrieved = clients_manager.add_client(**client_dict_with_id)
+        assert client_id_retrieved == client_id
 
     def test_add_client_set_id_str(self, clients_manager):
         client_dict_with_id = {
@@ -94,7 +97,7 @@ class TestManagers:
             "birthday_encr": date(1990, 1, 1),
         }
         client_id = clients_manager.add_client(**client_dict_with_id)
-        assert client_id == 98
+        assert client_id == 98  # noqa: PLR2004
 
     def test_edit_client(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
@@ -113,11 +116,11 @@ class TestManagers:
         assert upd_cl.first_name_encr == "Jane"
         assert upd_cl.last_name_encr == "Smith"
 
-        assert upd_cl.nta_zeitv_vieltext == 25
+        assert upd_cl.nta_zeitv_vieltext == 25  # noqa: PLR2004
         assert upd_cl.nta_font is True
         assert upd_cl.nta_zeitv is True
         assert upd_cl.nachteilsausgleich is True
-        assert upd_cl.nta_nos_end_grade == 10
+        assert upd_cl.nta_nos_end_grade == 10  # noqa: PLR2004
         assert upd_cl.nta_nos_end is True
 
         assert upd_cl.nta_ersgew is False
@@ -235,7 +238,7 @@ class TestManagers:
 
         # 1. Default overview
         data = clients_manager.get_clients_overview()
-        assert len(data) == 3
+        assert len(data) == 3  # noqa: PLR2004
         expected_base = {
             "client_id",
             "case_active",
@@ -248,12 +251,12 @@ class TestManagers:
 
         # 2. Filter by school
         data_school = clients_manager.get_clients_overview(schools=["FirstSchool"])
-        assert len(data_school) == 2
+        assert len(data_school) == 2  # noqa: PLR2004
         assert all(row["school"] == "FirstSchool" for row in data_school)
 
         # 3. Filter by nta_nos
         data_nta_nos = clients_manager.get_clients_overview(nta_nos=True)
-        assert len(data_nta_nos) == 2  # A (nos_rs) and B (nta_zeitv)
+        assert len(data_nta_nos) == 2  # noqa: PLR2004  # A (nos_rs) and B (nta_zeitv)
         assert {row["client_id"] for row in data_nta_nos} == {c1_id, c2_id}
 
         # 4. Custom columns
@@ -281,10 +284,6 @@ class TestManagers:
         self, clients_manager, client_dict_set_by_user
     ):
         c1_id = clients_manager.add_client(**client_dict_set_by_user)
-
-        from unittest.mock import patch
-
-        from edupsyadmin.core.logger import logger as app_logger
 
         with patch.object(app_logger, "warning") as mock_warning:
             # Edit one existing and one non-existing ID
@@ -426,9 +425,12 @@ class TestClientValidation:
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
         # nta_zeitv_vieltext
-        clients_manager.edit_client([client_id], {"nta_zeitv_vieltext": "25"})
+        zeitverlaengerung = 25
+        clients_manager.edit_client(
+            [client_id], {"nta_zeitv_vieltext": str(zeitverlaengerung)}
+        )
         client = clients_manager.get_decrypted_client(client_id)
-        assert client.nta_zeitv_vieltext == 25
+        assert client.nta_zeitv_vieltext == zeitverlaengerung
         assert client.nta_zeitv is True
         assert client.nachteilsausgleich is True
 
@@ -439,9 +441,12 @@ class TestClientValidation:
         assert client.nachteilsausgleich is False
 
         # nta_zeitv_wenigtext
-        clients_manager.edit_client([client_id], {"nta_zeitv_wenigtext": 10})
+        zeitverlaengerung = 10
+        clients_manager.edit_client(
+            [client_id], {"nta_zeitv_wenigtext": str(zeitverlaengerung)}
+        )
         client = clients_manager.get_decrypted_client(client_id)
-        assert client.nta_zeitv_wenigtext == 10
+        assert client.nta_zeitv_wenigtext == zeitverlaengerung
         assert client.nta_zeitv is True
         assert client.nachteilsausgleich is True
 
@@ -528,9 +533,10 @@ class TestClientValidation:
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
         # With value
-        clients_manager.edit_client([client_id], {"nta_nos_end_grade": "10"})
+        end_grade = 10
+        clients_manager.edit_client([client_id], {"nta_nos_end_grade": str(end_grade)})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client.nta_nos_end_grade == 10
+        assert client.nta_nos_end_grade == end_grade
         assert client.nta_nos_end is True
 
         # With None
@@ -660,13 +666,15 @@ class TestClientValidation:
     def test_min_sessions(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
 
-        clients_manager.edit_client([client_id], {"min_sessions": 45})
+        min_sessions = 45
+        clients_manager.edit_client([client_id], {"min_sessions": str(min_sessions)})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client.min_sessions == 45
+        assert client.min_sessions == min_sessions
 
-        clients_manager.edit_client([client_id], {"min_sessions": "120"})
+        min_sessions = 120
+        clients_manager.edit_client([client_id], {"min_sessions": str(min_sessions)})
         client = clients_manager.get_decrypted_client(client_id)
-        assert client.min_sessions == 120
+        assert client.min_sessions == min_sessions
 
     def test_nta_nos_notes_encr(self, clients_manager, client_dict_set_by_user):
         client_id = clients_manager.add_client(**client_dict_set_by_user)
@@ -708,7 +716,7 @@ class TestClientValidation:
         client_data["class_name_encr"] = "10a"
         client_id = clients_manager.add_client(**client_data)
         client = clients_manager.get_decrypted_client(client_id)
-        assert client.class_int_encr == 10
+        assert client.class_int_encr == 10  # noqa: PLR2004
         assert client.estimated_graduation_date_encr is not None
         assert client.document_shredding_date_encr is not None
 

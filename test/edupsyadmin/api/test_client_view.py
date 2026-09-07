@@ -13,9 +13,10 @@ def _is_valid_german_date(date_str: str | None) -> bool:
         return date_str == ""
     try:
         datetime.strptime(date_str, "%d.%m.%Y")
-        return True
     except ValueError:
         return False
+    else:
+        return True
 
 
 @patch("edupsyadmin.api.client_view._get_subjects")  # Mock the get_subjects function

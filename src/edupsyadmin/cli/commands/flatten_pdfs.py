@@ -3,6 +3,7 @@ import textwrap
 from argparse import ArgumentParser, Namespace
 
 from pypdf import PdfReader
+from pypdf.errors import PyPdfError
 
 from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.utils.path_utils import normalize_path
@@ -48,7 +49,7 @@ def execute(args: Namespace) -> None:
                             f"Passwort für verschlüsselte PDF '{p.name}': ",
                         )
                         break
-                except Exception:
+                except PyPdfError, OSError, ValueError:
                     continue
 
     flatten_pdfs = lazy_import("edupsyadmin.api.flatten_pdf").flatten_pdfs

@@ -1,3 +1,4 @@
+# ruff: noqa: PLR2004
 from edupsyadmin.utils.rounding import round_half_up
 
 

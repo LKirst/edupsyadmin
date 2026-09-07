@@ -11,7 +11,7 @@ from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.tui.dialogs import YesNoDialog
 
 
-def _format_cell(value: str | bool | float | int) -> Text | str | bool | float | int:
+def _format_cell(value: str | bool | float) -> Text | str | bool | float | int:
     """Format a cell value with colors:
     - None → grey
     - True → bold green "True"
@@ -49,6 +49,9 @@ class StyledID:
         if isinstance(other, int):
             return self.value == other
         return str(self.value) == str(other)
+
+    def __hash__(self) -> int:
+        return hash(self.value)
 
     def __str__(self) -> str:
         return str(self.value)
@@ -144,7 +147,7 @@ class ClientsOverview(Static):
         try:
             self.manager.delete_client(client_id)
             self.post_message(self._ClientDeleted())
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.post_message(self._ClientDeleted(error=e))
 
     def _setup_table_columns(self, table: DataTable, columns: list[str]) -> None:

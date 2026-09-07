@@ -13,6 +13,7 @@ from cryptography.fernet import Fernet
 from edupsyadmin.core.encrypt import (
     Encryption,
     check_key_validity,
+    delete_legacy_key_from_keyring,
     derive_key_from_password,
     encr,  # The global instance
     get_keys_from_keyring,
@@ -125,7 +126,7 @@ class TestKeyHelpers:
         assert not temp_salt_file.exists()
         salt = load_or_create_salt(temp_salt_file)
         assert temp_salt_file.exists()
-        assert len(salt) == 16
+        assert len(salt) == 16  # noqa: PLR2004
 
     def test_load_or_create_salt_loads_existing(self, temp_salt_file):
         existing_salt = os.urandom(16)
@@ -212,3 +213,25 @@ def test_full_workflow(temp_salt_file):
 
     # Crucially, ensure data encrypted with the OLD key is still readable
     assert encr.decrypt(token1) == "secret_data_1"
+
+
+def test_get_keys_from_keyring_keyring_error(monkeypatch):
+    def mock_get_password(*args, **kwargs):
+        raise keyring.errors.KeyringError("Keyring access error")
+
+    monkeypatch.setattr(keyring, "get_password", mock_get_password)
+    assert get_keys_from_keyring("uid", "user") == []
+
+
+def test_get_keys_from_keyring_value_error(monkeypatch):
+    monkeypatch.setattr(keyring, "get_password", lambda *a, **kw: "not-an-int")
+    assert get_keys_from_keyring("uid", "user") == []
+
+
+def test_delete_legacy_key_keyring_error(monkeypatch):
+    def mock_delete_password(*args, **kwargs):
+        raise keyring.errors.KeyringError("Delete error")
+
+    monkeypatch.setattr(keyring, "delete_password", mock_delete_password)
+    # Should log warning and not crash
+    delete_legacy_key_from_keyring("uid", "user")

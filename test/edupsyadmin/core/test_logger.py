@@ -34,7 +34,6 @@ class TestLogger:
         _, stderr = capsys.readouterr()
         assert logger.level == DEBUG
         assert message in stderr
-        return
 
     def test_stop(self, capsys, logger):
         """Test the stop() method."""
@@ -43,7 +42,6 @@ class TestLogger:
         logger.critical("test")
         _, stderr = capsys.readouterr()
         assert not stderr
-        return
 
     def test_restart(self, capsys, logger):
         """Test a restart."""
@@ -54,7 +52,6 @@ class TestLogger:
         logger.debug("debug message")  # should not be emitted
         _, stderr = capsys.readouterr()
         assert message not in stderr
-        return
 
     def test_stream(self, logger):
         """Test output to an alternate stream."""
@@ -63,7 +60,6 @@ class TestLogger:
         logger.start("debug", stream)
         logger.debug(message)
         assert message in stream.getvalue()
-        return
 
 
 # Make the module executable.

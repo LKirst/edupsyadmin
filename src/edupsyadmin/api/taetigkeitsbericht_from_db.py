@@ -1,13 +1,16 @@
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 import pandas as pd
 
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.api.reports import TaetigkeitsberichtReport
 from edupsyadmin.core.config import config
+
+SESSION_BRACKET_HIGH: Final[int] = 3
+SESSION_BRACKET_LOW: Final[int] = 2
 
 pd.set_option("display.precision", 1)
 
@@ -57,8 +60,12 @@ def add_categories_to_df(
         mask = df[cat].notna()
         cat_sessions = df.loc[mask, "n_sessions"]
 
-        summary.loc["count_mt3_sessions", cat] = (cat_sessions > 3).sum()
-        summary.loc["count_2to3_sessions", cat] = cat_sessions.between(2, 3).sum()
+        summary.loc["count_mt3_sessions", cat] = (
+            cat_sessions > SESSION_BRACKET_HIGH
+        ).sum()
+        summary.loc["count_2to3_sessions", cat] = cat_sessions.between(
+            SESSION_BRACKET_LOW, SESSION_BRACKET_HIGH
+        ).sum()
         summary.loc["count_1_session", cat] = (cat_sessions == 1).sum()
 
     return df, summary

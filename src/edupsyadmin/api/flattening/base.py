@@ -4,8 +4,6 @@
 class InvalidPDFError(Exception):
     """Raised when the input file is not a valid PDF."""
 
-    pass
-
 
 DEFAULT_PREFIX = "print_"
 

@@ -4,6 +4,7 @@ import math
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Final
 
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.api.reports import (
@@ -18,6 +19,8 @@ from edupsyadmin.utils.convert_measures import percentile_to_t, t_to_z
 from edupsyadmin.utils.datediff import mydatediff
 from edupsyadmin.utils.path_utils import normalize_path
 from edupsyadmin.utils.rounding import round_half_up
+
+MAX_KORREKTUR_SCHOOLYEAR: Final[int] = 11
 
 
 def askyn(prompt: str) -> int:
@@ -202,7 +205,7 @@ def mk_report(
     lv_rw = correct_answ * 2 - incorrect_answ
     lgs_rw = words_until_last_item + words_after_last_item
 
-    if schoolyear < 11:
+    if schoolyear < MAX_KORREKTUR_SCHOOLYEAR:
         lv_korr_faktor = float(input("Korrekturfaktor LV:"))
         lv_rw_korr_floor = math.floor(lv_rw * lv_korr_faktor)
         lv_rw_korr_ceil = math.ceil(lv_rw * lv_korr_faktor)

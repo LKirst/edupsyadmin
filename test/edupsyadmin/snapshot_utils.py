@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 from pdf2image import convert_from_path
-from PIL import Image, ImageChops, ImageFilter, ImageStat
+from PIL import Image, ImageChops, ImageFilter, ImageStat, UnidentifiedImageError
 from syrupy.extensions.image import PNGImageSnapshotExtension
 
 from edupsyadmin.core.logger import Logger
@@ -46,7 +46,7 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
         try:
             actual = Image.open(io.BytesIO(serialized_data)).convert("RGB")
             expected = Image.open(io.BytesIO(snapshot_data)).convert("RGB")
-        except Exception:
+        except UnidentifiedImageError, OSError, ValueError:
             return False
 
         if actual.size != expected.size:
@@ -127,7 +127,7 @@ class PDFSnapshotExtension(PNGImageSnapshotExtension):
                     snapshot_logger.info(
                         f"Fonts for {Path(data).name}:\n{result.stdout}"
                     )
-            except Exception as e:
+            except (OSError, subprocess.SubprocessError) as e:
                 snapshot_logger.debug(f"Could not run pdffonts: {e}")
 
             images = convert_from_path(

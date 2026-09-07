@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 import pytest
@@ -149,9 +150,8 @@ async def test_app_saves_config_changes(mock_config, tmp_path):
         password_confirm_input.value = test_password
 
         await pilot.click("#save")
-        # Wait for the app to exit (it exits after saving)
-        import asyncio
 
+        # Wait for the app to exit (it exits after saving)
         for _ in range(100):
             if not app._running:
                 break

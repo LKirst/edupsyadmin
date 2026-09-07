@@ -22,7 +22,7 @@ from cryptography.fernet import Fernet
 from edupsyadmin.api import managers
 from edupsyadmin.api.managers import ClientNotFoundError
 from edupsyadmin.api.migration import upgrade_db
-from edupsyadmin.cli import APP_UID, main
+from edupsyadmin.cli import APP_UID, DEFAULT_DB_URL, main
 from edupsyadmin.cli.commands import (
     create_documentation as create_documentation_command,
 )
@@ -30,8 +30,14 @@ from edupsyadmin.cli.commands import delete_client as delete_client_command
 from edupsyadmin.cli.commands import edit_config as edit_config_command
 from edupsyadmin.cli.commands import get_clients as get_clients_command
 from edupsyadmin.cli.commands import new_client as new_client_command
+from edupsyadmin.cli.commands import rotate_key as rotate_key_command
 from edupsyadmin.cli.commands import set_client as set_client_command
-from edupsyadmin.core.encrypt import encr
+from edupsyadmin.core.config import config
+from edupsyadmin.core.encrypt import (
+    encr,
+    get_keys_from_keyring,
+    set_keys_in_keyring,
+)
 from edupsyadmin.core.logger import Logger
 
 TEST_USERNAME = "test_user_do_not_use"
@@ -103,7 +109,6 @@ class TestBasicSanityCheck:
 
 def test_defaults_are_used(mock_config):
     """Test that default values for app_uid and database_url are used."""
-    from edupsyadmin.cli import DEFAULT_DB_URL
 
     with patch("edupsyadmin.cli.commands.info.execute") as mock_command_info:
         main(["-c", str(mock_config), "info"])
@@ -371,9 +376,6 @@ def test_edit_config_command(mock_config):
 # TODO: Do the same for `get_clients --tui` and `edit_client --tui`
 def test_create_documentation_tui(mock_config, tmp_path):
     """Test that `create_documentation --tui` starts the FillFormApp."""
-    from edupsyadmin.core.config import config
-    from edupsyadmin.core.encrypt import set_keys_in_keyring
-
     database_path = tmp_path / "test_tui.sqlite"
     database_url = f"sqlite:///{database_path}"
 
@@ -418,10 +420,6 @@ def test_create_documentation_tui(mock_config, tmp_path):
 class TestRotateKey:
     def test_rotate_key_success(self, mock_config, tmp_path):
         """Test that rotate-key command successfully re-encrypts the database."""
-        from edupsyadmin.cli.commands import rotate_key
-        from edupsyadmin.core.config import config
-        from edupsyadmin.core.encrypt import set_keys_in_keyring
-
         database_path = tmp_path / "test_rotate.sqlite"
         database_url = f"sqlite:///{database_path}"
 
@@ -460,7 +458,7 @@ class TestRotateKey:
                 app_uid=APP_UID,
                 app_username=username,
             )
-            rotate_key.execute(args)
+            rotate_key_command.execute(args)
 
         # 5. Verify: Data should be decryptable with ONLY the new key now
         encr.set_keys([new_key])
@@ -470,16 +468,12 @@ class TestRotateKey:
 
         # Check keyring: should ONLY have the new key now
         # (if cleanup worked as expected)
-        from edupsyadmin.core.encrypt import get_keys_from_keyring
-
         keys_in_keyring = get_keys_from_keyring(APP_UID, username)
         # IF IT CURRENTLY FAILS, it means it's not cleaning up versioned keys
         assert keys_in_keyring == [new_key]
 
     def test_rotate_key_cancelled(self, mock_config, tmp_path):
         """Test that rotate-key command does nothing if cancelled."""
-        from edupsyadmin.cli.commands import rotate_key
-
         database_path = tmp_path / "test_cancelled.sqlite"
         database_url = f"sqlite:///{database_path}"
 
@@ -494,7 +488,7 @@ class TestRotateKey:
                 app_uid=APP_UID,
                 app_username="test_user",
             )
-            rotate_key.execute(args)
+            rotate_key_command.execute(args)
             mock_re_encrypt.assert_not_called()
 
 

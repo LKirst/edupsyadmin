@@ -496,7 +496,7 @@ class Client(Base):
                     self.document_shredding_date_encr = get_date_destroy_records(
                         self.estimated_graduation_date_encr,
                     )
-            except Exception as e:
+            except (ValueError, TypeError, KeyError, AttributeError) as e:
                 logger.warning(
                     f"Could not calculate estimated_graduation_date_encr or "
                     f"document_shredding_date_encr for client {self.client_id}: {e}",

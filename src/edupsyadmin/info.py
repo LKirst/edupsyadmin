@@ -3,6 +3,7 @@ from pathlib import Path
 from keyring import get_keyring
 from rich.console import Console
 from rich.table import Table
+from sqlalchemy.exc import SQLAlchemyError
 
 from edupsyadmin.__version__ import __version__
 from edupsyadmin.core.encrypt import get_salt_from_db
@@ -43,7 +44,7 @@ def info(
     try:
         _ = get_salt_from_db(database_url)
         salt_in_db = "[bold green]Yes[/bold green]"
-    except Exception:
+    except RuntimeError, SQLAlchemyError, ValueError, KeyError, OSError:
         salt_in_db = "[bold red]No[/bold red]"
 
     table.add_row("Salt in Database", salt_in_db)

@@ -134,7 +134,7 @@ def test_summary_statistics_h_sessions_total():
 
 def test_wstd_in_zstd_input_stored():
     result = wstd_in_zstd(5)
-    assert pd.to_numeric(result.loc["wstd_spsy", "value"]) == 5
+    assert pd.to_numeric(result.loc["wstd_spsy", "value"]) == 5  # noqa: PLR2004
 
 
 def test_wstd_in_zstd_weekly_target_positive():
@@ -154,9 +154,9 @@ def test_wstd_in_zstd_yearly_target_proportional():
 def test_summary_statistics_wstd_student_counts():
     school_students = {"SchoolA": 100, "SchoolB": 200}
     result = summary_statistics_wstd(5, 23, 1000.0, school_students)
-    assert pd.to_numeric(result.loc["nstudents_SchoolA", "value"]) == 100
-    assert pd.to_numeric(result.loc["nstudents_SchoolB", "value"]) == 200
-    assert pd.to_numeric(result.loc["nstudents_all", "value"]) == 300
+    assert pd.to_numeric(result.loc["nstudents_SchoolA", "value"]) == 100  # noqa: PLR2004
+    assert pd.to_numeric(result.loc["nstudents_SchoolB", "value"]) == 200  # noqa: PLR2004
+    assert pd.to_numeric(result.loc["nstudents_all", "value"]) == 300  # noqa: PLR2004
 
 
 def test_summary_statistics_wstd_actual_hours_stored():

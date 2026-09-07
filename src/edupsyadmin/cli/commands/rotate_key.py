@@ -92,7 +92,7 @@ def execute(args: Namespace) -> None:
         print(f"\nERROR: {e}")
         print("The database has been rolled back to its previous state.")
         sys.exit(1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.critical(f"An unexpected error occurred during re-encryption: {e}")
         print(f"\nCRITICAL ERROR: {e}")
         print("Please restore your database from a backup.")

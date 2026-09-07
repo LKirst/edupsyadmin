@@ -8,7 +8,8 @@ from pydantic import ValidationError
 from edupsyadmin.core.config import AppConfig, config
 
 # A minimal, valid config
-valid_config_content = """
+NSTUDENTS = 500
+valid_config_content = f"""
 core:
   app_username: "testuser"
   template_directory: "/path/to/templates"
@@ -24,7 +25,7 @@ school:
     school_street: "456 Avenue"
     school_city: "Test Town"
     end: 12
-    nstudents: 500
+    nstudents: {NSTUDENTS}
 """
 
 # An invalid config (missing required field `app_username`)
@@ -77,7 +78,7 @@ def test_successful_load_minimal(tmp_path):
     assert config.core.app_username == "testuser"
     assert config.core.template_directory == Path("/path/to/templates")
     assert config.core.output_directory == Path("/path/to/output")
-    assert config.school["TestSchool"].nstudents == 500
+    assert config.school["TestSchool"].nstudents == NSTUDENTS
     # Check default value
     assert config.core.logging == "WARN"
 
@@ -89,7 +90,7 @@ def test_successful_load_sampleconfig(mock_config):
     # Check that the loaded config is an instance of our Pydantic model
     assert isinstance(config._instance, AppConfig)
     # Check attribute access
-    assert config.school["FirstSchool"].nstudents == 200
+    assert config.school["FirstSchool"].nstudents == 200  # noqa: PLR2004
 
 
 def test_load_invalid_config_missing_field(tmp_path):

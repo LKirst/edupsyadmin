@@ -33,14 +33,13 @@ def upgrade_db(database_url: str, salt_path: Path | None = None) -> None:
     A backup is only created if a migration is actually required.
     """
     logger.info("Checking for database migrations...")
+    pkg_path = resources.files("edupsyadmin")
+    alembic_ini_path = pkg_path.joinpath("alembic.ini")
+
+    if not alembic_ini_path.is_file():
+        raise MigrationError(f"Alembic config not found at {alembic_ini_path}")
+
     try:
-        # Use importlib.resources to access packaged data
-        pkg_path = resources.files("edupsyadmin")
-        alembic_ini_path = pkg_path.joinpath("alembic.ini")
-
-        if not alembic_ini_path.is_file():
-            raise MigrationError(f"Alembic config not found at {alembic_ini_path}")
-
         alembic_script_location = pkg_path.joinpath("alembic")
 
         alembic_cfg = Config(str(alembic_ini_path))
@@ -212,13 +211,15 @@ def _verify_migration(db_session: Session, expected_count: int) -> None:
     try:
         stmt = select(Client)
         clients = list(db_session.scalars(stmt))
+    except Exception as e:
+        raise MigrationError(f"Verification failed: {e}") from e
 
-        if len(clients) != expected_count:
-            raise MigrationError(
-                f"Client count mismatch: expected {expected_count}, "
-                f"found {len(clients)}",
-            )
+    if len(clients) != expected_count:
+        raise MigrationError(
+            f"Client count mismatch: expected {expected_count}, found {len(clients)}",
+        )
 
+    try:
         sample_size = min(10, len(clients))
         for client in clients[:sample_size]:
             _ = client.first_name_encr

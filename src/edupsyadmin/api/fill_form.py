@@ -349,7 +349,7 @@ def batch_fill_forms(
             results.append(
                 {"client_id": client_id, "success": True, "error": None},
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             results.append(
                 {"client_id": client_id, "success": False, "error": e},
             )

@@ -6,6 +6,7 @@ import getpass
 from pathlib import Path
 
 from pypdf import PdfReader
+from pypdf.errors import PyPdfError
 
 from edupsyadmin.api.flattening import (
     DEFAULT_PREFIX,
@@ -57,7 +58,7 @@ def main() -> None:
                             f"Passwort für verschlüsselte PDF '{p_path.name}': ",
                         )
                         break
-                except Exception:
+                except PyPdfError, OSError, ValueError:
                     continue
 
     try:

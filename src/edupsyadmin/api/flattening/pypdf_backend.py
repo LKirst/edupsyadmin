@@ -28,8 +28,10 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from textwrap import wrap
+from typing import Final
 
 from pypdf import PdfReader, PdfWriter
+from pypdf.errors import PyPdfError
 from pypdf.generic import (
     ArrayObject,
     DecodedStreamObject,
@@ -43,6 +45,9 @@ from pypdf.generic import (
     RectangleObject,
     StreamObject,
 )
+
+RECT_NUM_COORDINATES: Final[int] = 4
+MAX_PRINTABLE_ASCII: Final[int] = 126
 
 _Rect = tuple[float, float, float, float]  # x0, y0, x1, y1
 
@@ -146,7 +151,7 @@ def _rect_to_floats(rect_obj: object) -> _Rect:
             float(rect_obj.right),
             float(rect_obj.top),
         )
-    if isinstance(rect_obj, ArrayObject) and len(rect_obj) == 4:
+    if isinstance(rect_obj, ArrayObject) and len(rect_obj) == RECT_NUM_COORDINATES:
         floats = [float(v) for v in rect_obj]
         return (floats[0], floats[1], floats[2], floats[3])
     raise ValueError(f"Cannot parse rectangle: {rect_obj!r}")
@@ -272,7 +277,7 @@ def _ap_stream_bytes_and_resources(
 
     try:  # because of the checks above, I know that n_obj is a  stream object
         data = n_obj.get_data()  # ty: ignore[unresolved-attribute]
-    except Exception:
+    except PyPdfError, TypeError, ValueError, KeyError, AttributeError:
         return None
 
     if _is_empty_stream(data):
@@ -351,7 +356,7 @@ def _escape_pdf_string(text: str) -> str:
             result.append("\\r")
         elif char == "\n":
             result.append("\\n")
-        elif ord(char) > 126:
+        elif ord(char) > MAX_PRINTABLE_ASCII:
             # Octal escape for WinAnsi (cp1252).
             try:
                 # Most standard fonts use an encoding close to CP1252.
