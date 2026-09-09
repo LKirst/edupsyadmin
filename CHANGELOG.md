@@ -1,3 +1,14 @@
+## 9.2.0 (2026-09-09)
+
+### Feat
+
+- **tui**: add suggester to taet_key entry
+
+### Refactor
+
+- address ruff errors
+- move all imports to the top
+
 ## 9.1.0 (2026-07-06)
 
 ### Feat
