@@ -53,7 +53,7 @@ def test_lgvt_report_grade_11_snapshot(
         "y",  # item 3
         "q",  # item 4 is quit, so 3 items processed
         "5",  # words_after_last_item
-        "50",  # lv_pr_korr
+        "0",  # lv_pr_korr
         "60",  # lgs_pr_korr
         "70",  # lg_pr
     ]

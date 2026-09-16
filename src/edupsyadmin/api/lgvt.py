@@ -4,8 +4,8 @@ import math
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Final
 from statistics import StatisticsError
+from typing import Final
 
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.api.reports import (
@@ -22,9 +22,7 @@ from edupsyadmin.utils.path_utils import normalize_path
 from edupsyadmin.utils.rounding import round_half_up
 
 MAX_KORREKTUR_SCHOOLYEAR: Final[int] = 11
-_BOUNDARY_LABEL = (
-    "n/a - für PR < 1 oder PR > 99 kann kein exakter Wert berechnet werden"
-)
+_BOUNDARY_LABEL = "n/a (da PR < 1 oder PR > 99)"
 _Z_EXTREME = 3.0
 
 
@@ -34,22 +32,29 @@ def _safe_percentile_to_t(percentile: int) -> tuple[float | None, str]:
     :param percentile: A percentile rank.
     :return: A tuple of ``(t_value, display_string)``. If the percentile is
         at the boundary, ``t_value`` is ``None`` and ``display_string`` is
-        the boundary label.
+        the boundary label. For PR ≤ 1, returns ``(None, label)``. For PR ≥ 99,
+        returns ``(None, label)``.
     """
     try:
         t = percentile_to_t(percentile)
-        return t, f"{t:.2f}"
     except StatisticsError:
         return None, _BOUNDARY_LABEL
+    else:
+        return t, f"{t:.2f}"
 
 
-def _t_to_z_clamped(t: float | None) -> float:
+def _t_to_z_clamped(t: float | None, percentile: int | None = None) -> float:
     """Convert a T-value to a Z-score, clamping to ``±3.0`` if ``None``.
 
     :param t: A T-value, or ``None`` for a boundary case.
+    :param percentile: The original percentile (required if ``t`` is ``None``
+        to determine the sign of the clamp).
     :return: The corresponding Z-score, or ``±3.0`` for boundary cases.
     """
     if t is None:
+        # Clamp to -3.0 for low percentiles, +3.0 for high percentiles
+        if percentile is not None and percentile < 50:  # noqa: PLR2004
+            return -_Z_EXTREME
         return _Z_EXTREME
     return t_to_z(t)
 
@@ -170,6 +175,10 @@ def get_indices(
     lgs_t, lgs_t_str = _safe_percentile_to_t(lgs_pr_korr)
     lg_t, lg_t_str = _safe_percentile_to_t(lg_pr)
 
+    lv_z = _t_to_z_clamped(lv_t, lv_pr_korr)
+    lgs_z = _t_to_z_clamped(lgs_t, lgs_pr_korr)
+    lg_z = _t_to_z_clamped(lg_t, lg_pr)
+
     results: list[ResultsItem] = [
         "Items",
         ("Bearbeitete Items", str(num_processed)),
@@ -193,10 +202,6 @@ def get_indices(
         ("T-Wert", lg_t_str),
     ]
 
-    lv_z = _t_to_z_clamped(lv_t)
-    lgs_z = _t_to_z_clamped(lgs_t)
-    lg_z = _t_to_z_clamped(lg_t)
-
     return results, lv_z, lgs_z, lg_z
 
 
@@ -205,15 +210,15 @@ def generate_lgvt_report(
     client_id: int,
     test_date: str,
     results: list[ResultsItem],
-    lv_t: float | None,
-    lgs_t: float | None,
-    lg_t: float | None,
+    lv_z: float,
+    lgs_z: float,
+    lg_z: float,
     version: str = "Rosenkohl",
     directory: str | os.PathLike[str] = ".",
 ) -> Path:
     """Generate the LGVT report PDF for a client.
 
-    Builds a normal-distribution plot from the three T-values, assembles
+    Builds a normal-distribution plot from the three Z-scores, assembles
     a :class:`~edupsyadmin.api.reports.TestReport`, writes it to disk, and
     cleans up the temporary plot file.
 
@@ -224,9 +229,9 @@ def generate_lgvt_report(
     :param test_date: ISO-formatted test date string (``YYYY-MM-DD``).
     :param results: Structured results list as returned by
         :func:`get_indices`.
-    :param lv_t: T-value for Leseverständnis (LV).
-    :param lgs_t: T-value for Lesegeschwindigkeit (LGS).
-    :param lg_t: T-value for Lesegenauigkeit (LGN).
+    :param lv_z: Z-score for Leseverständnis (LV).
+    :param lgs_z: Z-score for Lesegeschwindigkeit (LGS).
+    :param lg_z: Z-score for Lesegenauigkeit (LGN).
     :param version: LGVT version label, e.g. ``"Rosenkohl"``.
     :param directory: Directory in which to write the output PDF.
     :return: :class:`~pathlib.Path` to the generated PDF file.
@@ -252,7 +257,7 @@ def generate_lgvt_report(
     age_str = mydatediff(birthday, t_day)
 
     # Plot generation
-    z_values = [_t_to_z_clamped(lv_t), _t_to_z_clamped(lgs_t), _t_to_z_clamped(lg_t)]
+    z_values = [lv_z, lgs_z, lg_z]
     fn_plot = Path("normal_distribution_plot.png")
     normal_distribution_plot(z_values, fn_plot)
 
@@ -399,8 +404,7 @@ def mk_report(
     lg_rw = round_half_up((correct_answ / num_processed) * 100)
     lg_pr = _prompt_int(f"Rohwert LG = {lg_rw}; PR = ")
 
-    # Compute indices and generate report
-    results, lv_t, lgs_t, lg_t = get_indices(
+    results, lv_z, lgs_z, lg_z = get_indices(
         fn_csv=fn_csv,
         correct_answ=correct_answ,
         incorrect_answ=incorrect_answ,
@@ -418,9 +422,9 @@ def mk_report(
         client_id=client_id,
         test_date=test_date,
         results=results,
-        lv_t=lv_t,
-        lgs_t=lgs_t,
-        lg_t=lg_t,
+        lv_z=lv_z,
+        lgs_z=lgs_z,
+        lg_z=lg_z,
         version=version,
         directory=directory,
     )
