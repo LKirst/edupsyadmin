@@ -37,6 +37,7 @@ def test_upgrade_db_new_database(tmp_path: Path):
     assert "client_id" in columns
     assert "first_name_encr" in columns
     assert "datetime_created" in columns
+    assert "record_academic_year" in columns
 
 
 def test_upgrade_db_legacy_database(tmp_path: Path):
@@ -122,12 +123,13 @@ def test_upgrade_db_legacy_database(tmp_path: Path):
     assert "alembic_version" in tables
     assert "system_metadata" in tables
 
-    # Verify data was preserved
+    # Verify data was preserved and record_academic_year populated
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT school FROM clients"))
+        result = conn.execute(text("SELECT school, record_academic_year FROM clients"))
         row = result.fetchone()
         assert row is not None
         assert row[0] == "LegacySchool"
+        assert row[1] != ""
 
 
 def test_upgrade_db_idempotency(tmp_path: Path):

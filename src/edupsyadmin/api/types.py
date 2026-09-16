@@ -4,6 +4,7 @@ from typing import TypedDict
 from pydantic import BaseModel, ConfigDict, Field
 
 from edupsyadmin.core.enums import Gender, LrstDiagnosis, LrstTesterType
+from edupsyadmin.utils.academic_year import get_this_academic_year_string
 
 
 class ClientRecord(BaseModel):
@@ -36,6 +37,7 @@ class ClientRecord(BaseModel):
 
     datetime_created: datetime = Field(default_factory=datetime.now)
     datetime_lastmodified: datetime = Field(default_factory=datetime.now)
+    record_academic_year: str = Field(default_factory=get_this_academic_year_string)
 
     notenschutz: bool = False
     nos_rs: bool = False

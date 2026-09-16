@@ -58,6 +58,7 @@ EXPECTED_KEYS = {
     "nta_nos_end_grade",
     "min_sessions",
     "n_sessions",
+    "record_academic_year",
 }
 
 
@@ -721,14 +722,78 @@ class TestClientValidation:
         assert client.document_shredding_date_encr is not None
 
         # Test with no number in class_name_encr
-        # FIXME: Raise an error because it containes no integer
-        # TODO: write a validates method for the db model and a validator for the tui
+        # TODO: Raise a warning if no integer and no class_int override is set
         client_data["class_name_encr"] = "Vorklasse"
         client_id_2 = clients_manager.add_client(**client_data)
         client2 = clients_manager.get_decrypted_client(client_id_2)
         assert client2.class_int_encr is None
         assert client2.estimated_graduation_date_encr is None
         assert client2.document_shredding_date_encr is None
+
+    def test_get_clients_overview_academic_years(
+        self, clients_manager, client_dict_set_by_user
+    ):
+        data1 = dict(client_dict_set_by_user)
+        data1.pop("client_id", None)
+        data1["first_name_encr"] = "Year25"
+        data1["record_academic_year"] = "2025/26"
+        id1 = clients_manager.add_client(**data1)
+
+        data2 = dict(client_dict_set_by_user)
+        data2.pop("client_id", None)
+        data2["first_name_encr"] = "Year26"
+        data2["record_academic_year"] = "2026/27"
+        id2 = clients_manager.add_client(**data2)
+
+        # Query only 2025/26
+        res25 = clients_manager.get_clients_overview(academic_years=["2025/26"])
+        ids25 = [r["client_id"] for r in res25]
+        assert id1 in ids25
+        assert id2 not in ids25
+
+        # Query multiple years
+        res_both = clients_manager.get_clients_overview(
+            academic_years=["2025/26", "2026/27"]
+        )
+        ids_both = [r["client_id"] for r in res_both]
+        assert id1 in ids_both
+        assert id2 in ids_both
+
+        # Query all
+        res_all = clients_manager.get_clients_overview(academic_years="all")
+        ids_all = [r["client_id"] for r in res_all]
+        assert id1 in ids_all
+        assert id2 in ids_all
+
+    def test_copy_client(self, clients_manager, client_dict_set_by_user):
+        data = dict(client_dict_set_by_user)
+        data.pop("client_id", None)
+        data["record_academic_year"] = "2025/26"
+        data["min_sessions"] = 90
+        data["n_sessions"] = 2
+        orig_id = clients_manager.add_client(**data)
+
+        # Copy with reset_sessions=True (default)
+        new_id = clients_manager.copy_client(
+            orig_id, target_academic_year="2026/27", reset_sessions=True
+        )
+        assert new_id != orig_id
+
+        copied_client = clients_manager.get_decrypted_client(new_id)
+        assert copied_client.record_academic_year == "2026/27"
+        assert copied_client.first_name_encr == data["first_name_encr"]
+        assert copied_client.last_name_encr == data["last_name_encr"]
+        assert copied_client.min_sessions == 0
+        assert copied_client.n_sessions == 0
+
+        # Copy with reset_sessions=False
+        new_id_keep = clients_manager.copy_client(
+            orig_id, target_academic_year="2027/28", reset_sessions=False
+        )
+        copied_client_keep = clients_manager.get_decrypted_client(new_id_keep)
+        assert copied_client_keep.record_academic_year == "2027/28"
+        assert copied_client_keep.min_sessions == data["min_sessions"]
+        assert copied_client_keep.n_sessions == data["n_sessions"]
 
 
 # Make the script executable.

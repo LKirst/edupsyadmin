@@ -18,6 +18,7 @@ from edupsyadmin.db.converters import to_bool_or_none, to_date_or_none, to_int_o
 from edupsyadmin.utils.academic_year import (
     get_date_destroy_records,
     get_estimated_end_of_academic_year,
+    get_this_academic_year_string,
 )
 from edupsyadmin.utils.int_from_str import extract_number
 from edupsyadmin.utils.taetigkeitsbericht_check_key import check_keyword
@@ -176,6 +177,11 @@ class Client(Base):
     datetime_lastmodified: Mapped[datetime] = mapped_column(
         DateTime,
         doc="Zeitstempel, wann der Klienten-Datensatz zuletzt geändert wurde",
+    )
+    record_academic_year: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+        doc="Schuljahr, dem der Datensatz zugeordnet ist",
     )
 
     # Notenschutz
@@ -394,6 +400,7 @@ class Client(Base):
         case_active: bool | str | int | None = True,
         class_int_encr: int | str | None = None,
         class_int_override: bool | str | int | None = False,
+        record_academic_year: str | None = None,
     ) -> None:
         client_id_int_or_none = to_int_or_none(client_id)
         if client_id_int_or_none is not None:
@@ -441,8 +448,10 @@ class Client(Base):
         self.nta_nos_end_grade = to_int_or_none(nta_nos_end_grade)
 
         # Session tracking
-        self.min_sessions = to_int_or_none(min_sessions) or 45
-        self.n_sessions = to_int_or_none(n_sessions) or 1
+        _min = to_int_or_none(min_sessions)
+        self.min_sessions = 45 if _min is None else _min
+        _n = to_int_or_none(n_sessions)
+        self.n_sessions = 1 if _n is None else _n
         self.case_active = to_bool_or_none(case_active) or False
 
         # Grade override
@@ -462,6 +471,11 @@ class Client(Base):
 
         self.datetime_created = datetime.now()
         self.datetime_lastmodified = datetime.now()
+        self.record_academic_year = (
+            record_academic_year
+            if record_academic_year is not None
+            else get_this_academic_year_string()
+        )
 
         self._recalculate_derived_fields()  # Call the new method at the end of init
 
@@ -655,6 +669,8 @@ def receive_before_insert(_mapper, _connection, target: Client) -> None:
     """Set timestamps and calculate derived fields on insert."""
     target.datetime_created = datetime.now()
     target.datetime_lastmodified = datetime.now()
+    if not getattr(target, "record_academic_year", None):
+        target.record_academic_year = get_this_academic_year_string()
     target._recalculate_derived_fields()
 
 

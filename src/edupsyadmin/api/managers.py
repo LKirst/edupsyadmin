@@ -1,3 +1,4 @@
+import inspect as py_inspect
 import logging  # just for interaction with the sqlalchemy logger
 from typing import Any
 
@@ -67,6 +68,7 @@ class ClientsManager:
         nta_nos: bool = False,
         schools: list[str] | None = None,
         columns: list[str] | str | None = None,
+        academic_years: list[str] | str | None = None,
     ) -> list[dict[str, Any]]:
         logger.debug("trying to query client data for overview")
 
@@ -78,6 +80,7 @@ class ClientsManager:
             "last_name_encr",
             "first_name_encr",
             "class_name_encr",
+            "record_academic_year",
         ]
 
         if columns in ("all", ["all"]):
@@ -126,12 +129,63 @@ class ClientsManager:
             )
         if schools:
             conditions.append(clients_db.Client.school.in_(schools))
+        if academic_years and academic_years not in ("all", ["all"]):
+            if isinstance(academic_years, str):
+                academic_years = [academic_years]
+            conditions.append(
+                clients_db.Client.record_academic_year.in_(academic_years)
+            )
         if conditions:
             stmt = stmt.where(*conditions)
 
         with self.Session() as session:
             result = session.execute(stmt, execution_options={"yield_per": 100})
             return [dict(row) for row in result.mappings()]
+
+    def copy_client(
+        self,
+        client_id: int,
+        target_academic_year: str,
+        reset_sessions: bool = True,
+    ) -> int:
+        """Copy a client record to a specified academic year.
+
+        :param client_id: The ID of the client to copy.
+        :param target_academic_year: The target academic year (e.g. '2026/27').
+        :param reset_sessions: Whether to reset min_sessions and n_sessions to 0.
+        :return: The client_id of the newly created client copy.
+        """
+        logger.debug(
+            f"trying to copy client {client_id} "
+            f"to academic year {target_academic_year}",
+        )
+        with self.Session() as session:
+            client = session.get(clients_db.Client, client_id)
+            if client is None:
+                raise ClientNotFoundError(client_id)
+
+            init_params = set(
+                py_inspect.signature(clients_db.Client.__init__).parameters.keys(),
+            )
+            data: dict[str, Any] = {
+                k: getattr(client, k)
+                for k in init_params
+                if k not in ("self", "client_id") and hasattr(client, k)
+            }
+            data["record_academic_year"] = target_academic_year
+            if reset_sessions:
+                data["min_sessions"] = 0
+                data["n_sessions"] = 0
+
+            new_client = clients_db.Client(**data)
+            session.add(new_client)
+            session.commit()
+
+            logger.info(
+                f"copied client {client_id} to {new_client.client_id} "
+                f"for academic year {target_academic_year}",
+            )
+            return new_client.client_id
 
     def edit_client(self, client_ids: list[int], new_data: dict[str, Any]) -> None:
         logger.debug(f"editing clients (ids = {client_ids})")

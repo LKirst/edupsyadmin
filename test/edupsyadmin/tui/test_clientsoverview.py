@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
-from textual.widgets import DataTable
+from textual.widgets import DataTable, Input
 
 from edupsyadmin.tui.clients_overview_app import ClientsOverviewApp
 
@@ -207,3 +207,67 @@ async def test_delete_client_cancelled(mock_config):
 
         # Check that the table still has the same number of rows
         assert table.row_count == len(ROWS)
+
+
+@pytest.mark.asyncio
+async def test_copy_client_confirmed(mock_config):
+    """Test copying a client after entering a target academic year in the dialog."""
+    mock_manager = MagicMock()
+
+    # Initial data; after copy the table reloads with the same data (mock doesn't add)
+    mock_manager.get_clients_overview.return_value = DATA
+    mock_manager.copy_client.return_value = 99  # new client ID returned by manager
+
+    app = ClientsOverviewApp(clients_manager=mock_manager)
+
+    async with app.run_test(size=(150, 30)) as pilot:
+        # Wait for the table to be populated
+        await pilot.pause()
+        table = pilot.app.query_one(DataTable)
+        while table.loading:
+            await pilot.pause()
+
+        assert table.row_count == len(ROWS)
+
+        # Press 'y' to trigger copy-client action
+        await pilot.press("y")
+        await pilot.pause()
+
+        # The InputDialog is a modal screen — query from the current (top) screen
+
+        input_widget = pilot.app.screen.query_one(
+            "#dialogue_input_value", expect_type=Input
+        )
+        input_widget.value = "2026/27"
+        await pilot.press("enter")
+        await pilot.pause()
+
+        # Wait for reload to complete
+        while table.loading:
+            await pilot.pause()
+
+        # The manager's copy_client should have been called with the first row's ID (1)
+        mock_manager.copy_client.assert_called_once_with(1, "2026/27")
+
+
+@pytest.mark.asyncio
+async def test_copy_client_dialog_cancelled(mock_config):
+    """Test that cancelling the copy dialog does not call copy_client."""
+    mock_manager = MagicMock()
+    mock_manager.get_clients_overview.return_value = DATA
+
+    app = ClientsOverviewApp(clients_manager=mock_manager)
+
+    async with app.run_test(size=(150, 30)) as pilot:
+        await pilot.pause()
+        table = pilot.app.query_one(DataTable)
+        while table.loading:
+            await pilot.pause()
+
+        # Press 'y' then press Escape to cancel
+        await pilot.press("y")
+        await pilot.pause()
+        await pilot.press("escape")
+        await pilot.pause()
+
+        mock_manager.copy_client.assert_not_called()

@@ -253,6 +253,7 @@ def taetigkeitsbericht(
     wstd_total: int = 23,
     name: str = "Schulpsychologie",
     report_date: date | None = None,
+    academic_year: str | None = None,
 ) -> None:
     """
     Create a PDF for the Taetigkeitsbericht. This function assumes your db
@@ -264,20 +265,21 @@ def taetigkeitsbericht(
         Defaults to "Taetigkeitsbericht_Out".
     param wstd_total [int]: total Wochstunden (depends on your school).
         Defaults to 23.
-    )
     param name [str]: name for the header of the pdf report.
         Defaults to "Schulpsychologie".
-    )
     param report_date [date]: date for the header of the pdf report.
         Defaults to date.today().
-    )
+    param academic_year [str]: academic year to filter for.
+        Defaults to None (all years or managed upstream).
     """
 
     # Only fetch required columns
+    academic_years = [academic_year] if academic_year else None
     data = ClientsManager(
         database_url=database_url,
     ).get_clients_overview(
         columns=["keyword_taet_encr", "min_sessions", "n_sessions"],
+        academic_years=academic_years,
     )
     df = pd.DataFrame(data)
     df["h_sessions"] = df["min_sessions"] / 60.0

@@ -44,6 +44,14 @@ def add_arguments(parser: ArgumentParser) -> None:
         default="Schulpsychologie",
         help="name for the header of the pdf report",
     )
+    parser.add_argument(
+        "--academic_year",
+        "--academic-year",
+        dest="academic_year",
+        type=str,
+        default=None,
+        help="academic year for the report (default: current academic year)",
+    )
 
 
 def execute(args: Namespace) -> None:
@@ -52,10 +60,18 @@ def execute(args: Namespace) -> None:
     taetigkeitsbericht = lazy_import(
         "edupsyadmin.api.taetigkeitsbericht_from_db",
     ).taetigkeitsbericht
+    academic_year = args.academic_year
+    if academic_year is None:
+        get_this_academic_year_string = lazy_import(
+            "edupsyadmin.utils.academic_year",
+        ).get_this_academic_year_string
+        academic_year = get_this_academic_year_string()
+
     taetigkeitsbericht(
         database_url=args.database_url,
         wstd_psy=args.wstd_psy,
         out_basename=normalize_path(args.out_basename),
         wstd_total=args.wstd_total,
         name=args.name,
+        academic_year=academic_year,
     )

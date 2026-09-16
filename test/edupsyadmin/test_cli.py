@@ -22,7 +22,9 @@ from cryptography.fernet import Fernet
 from edupsyadmin.api import managers
 from edupsyadmin.api.managers import ClientNotFoundError
 from edupsyadmin.api.migration import upgrade_db
+from edupsyadmin.api.taetigkeitsbericht_from_db import taetigkeitsbericht
 from edupsyadmin.cli import APP_UID, DEFAULT_DB_URL, main
+from edupsyadmin.cli.commands import copy_client as copy_client_command
 from edupsyadmin.cli.commands import (
     create_documentation as create_documentation_command,
 )
@@ -190,6 +192,8 @@ def test_get_clients_all(capsys, mock_config, mock_webuntis, tmp_path, monkeypat
         out=None,
         tui=False,
         columns=None,
+        academic_years=[],
+        all_academic_years=True,
     )
     get_clients_command.execute(args)
 
@@ -232,6 +236,8 @@ def test_get_clients_single(capsys, mock_config, mock_webuntis, tmp_path):
         out=None,
         tui=False,
         columns=None,
+        academic_years=[],
+        all_academic_years=True,
     )
     get_clients_command.execute(args)
 
@@ -490,6 +496,207 @@ class TestRotateKey:
             )
             rotate_key_command.execute(args)
             mock_re_encrypt.assert_not_called()
+
+
+def test_copy_client_command(mock_config, tmp_path):
+    """Test that copy-client copies a client to the target academic year."""
+    database_path = tmp_path / "test_copy.sqlite"
+    database_url = f"sqlite:///{database_path}"
+
+    upgrade_db(database_url)
+    clients_manager = managers.ClientsManager(database_url)
+    orig_id = clients_manager.add_client(
+        school="FirstSchool",
+        gender_encr="f",
+        class_name_encr="10A",
+        first_name_encr="Erika",
+        last_name_encr="Mustermann",
+        birthday_encr="2000-12-24",
+        record_academic_year="2025/26",
+        min_sessions=120,
+        n_sessions=3,
+    )
+
+    args = argparse.Namespace(
+        database_url=database_url,
+        client_id=orig_id,
+        to_academic_year="2026/27",
+        keep_sessions=False,
+    )
+    copy_client_command.execute(args)
+
+    # Exactly two clients should exist
+    assert clients_manager.get_total_count() == 2  # noqa: PLR2004
+
+    # The new client should be in the target year and have reset sessions
+    overview = clients_manager.get_clients_overview(academic_years=["2026/27"])
+    assert len(overview) == 1
+    new_id = overview[0]["client_id"]
+    assert new_id != orig_id
+    copied = clients_manager.get_decrypted_client(new_id)
+    assert copied.record_academic_year == "2026/27"
+    assert copied.min_sessions == 0
+    assert copied.n_sessions == 0
+    assert copied.first_name_encr == "Erika"
+
+
+def test_copy_client_command_keep_sessions(mock_config, tmp_path):
+    """Test copy-client with --keep-sessions preserves session counts."""
+    database_path = tmp_path / "test_copy_keep.sqlite"
+    database_url = f"sqlite:///{database_path}"
+
+    upgrade_db(database_url)
+    clients_manager = managers.ClientsManager(database_url)
+    orig_id = clients_manager.add_client(
+        school="FirstSchool",
+        gender_encr="m",
+        class_name_encr="9B",
+        first_name_encr="Max",
+        last_name_encr="Mustermann",
+        birthday_encr="2001-06-01",
+        record_academic_year="2025/26",
+        min_sessions=90,
+        n_sessions=5,
+    )
+
+    args = argparse.Namespace(
+        database_url=database_url,
+        client_id=orig_id,
+        to_academic_year="2026/27",
+        keep_sessions=True,
+    )
+    copy_client_command.execute(args)
+
+    overview = clients_manager.get_clients_overview(academic_years=["2026/27"])
+    assert len(overview) == 1
+    copied = clients_manager.get_decrypted_client(overview[0]["client_id"])
+    assert copied.min_sessions == 90  # noqa: PLR2004
+    assert copied.n_sessions == 5  # noqa: PLR2004
+
+
+def test_get_clients_academic_years_filter(capsys, mock_config, tmp_path, monkeypatch):
+    """Test get-clients filters by academic year when --academic-years is given."""
+    monkeypatch.setenv("COLUMNS", "200")
+    database_path = tmp_path / "test_ay.sqlite"
+    database_url = f"sqlite:///{database_path}"
+
+    upgrade_db(database_url)
+    clients_manager = managers.ClientsManager(database_url)
+    clients_manager.add_client(
+        school="FirstSchool",
+        gender_encr="f",
+        class_name_encr="10A",
+        first_name_encr="InYear",
+        last_name_encr="2025",
+        birthday_encr="2000-01-01",
+        record_academic_year="2025/26",
+    )
+    clients_manager.add_client(
+        school="FirstSchool",
+        gender_encr="m",
+        class_name_encr="10B",
+        first_name_encr="InYear",
+        last_name_encr="2026",
+        birthday_encr="2000-01-01",
+        record_academic_year="2026/27",
+    )
+
+    args = argparse.Namespace(
+        database_url=database_url,
+        nta_nos=False,
+        school=[],
+        client_id=None,
+        out=None,
+        tui=False,
+        columns=[],
+        academic_years=["2025/26"],
+        all_academic_years=False,
+    )
+    get_clients_command.execute(args)
+
+    stdout, _ = capsys.readouterr()
+    assert "2025" in stdout
+    assert "2026" not in stdout
+
+
+def test_get_clients_all_academic_years(capsys, mock_config, tmp_path, monkeypatch):
+    """Test get-clients --all-academic-years shows all records."""
+    monkeypatch.setenv("COLUMNS", "200")
+    database_path = tmp_path / "test_all_ay.sqlite"
+    database_url = f"sqlite:///{database_path}"
+
+    upgrade_db(database_url)
+    clients_manager = managers.ClientsManager(database_url)
+    clients_manager.add_client(
+        school="FirstSchool",
+        gender_encr="f",
+        class_name_encr="10A",
+        first_name_encr="Alpha",
+        last_name_encr="Smith",
+        birthday_encr="2000-01-01",
+        record_academic_year="2024/25",
+    )
+    clients_manager.add_client(
+        school="FirstSchool",
+        gender_encr="m",
+        class_name_encr="10B",
+        first_name_encr="Beta",
+        last_name_encr="Jones",
+        birthday_encr="2000-01-01",
+        record_academic_year="2025/26",
+    )
+
+    args = argparse.Namespace(
+        database_url=database_url,
+        nta_nos=False,
+        school=[],
+        client_id=None,
+        out=None,
+        tui=False,
+        columns=[],
+        academic_years=None,
+        all_academic_years=True,
+    )
+    get_clients_command.execute(args)
+
+    stdout, _ = capsys.readouterr()
+    assert "Smith" in stdout
+    assert "Jones" in stdout
+
+
+@patch("edupsyadmin.api.taetigkeitsbericht_from_db.ClientsManager")
+@patch("edupsyadmin.api.taetigkeitsbericht_from_db.create_taetigkeitsbericht_report")
+def test_taetigkeitsbericht_academic_year_arg(
+    mock_create_report,
+    mock_clients_manager_cls,
+    mock_config,
+    tmp_path,
+):
+    """Test that the taetigkeitsbericht function passes academic_year as a filter."""
+
+    mock_manager = mock_clients_manager_cls.return_value
+    mock_manager.get_clients_overview.return_value = [
+        {
+            "school": "FirstSchool",
+            "keyword_taet_encr": "cat1",
+            "min_sessions": 180,
+            "n_sessions": 2,
+        },
+    ]
+
+    taetigkeitsbericht(
+        database_url="sqlite:///fake.db",
+        wstd_psy=5,
+        out_basename=tmp_path / "TaetOut",
+        wstd_total=23,
+        name="Test",
+        academic_year="2025/26",
+    )
+
+    call_kwargs = mock_manager.get_clients_overview.call_args
+    assert call_kwargs is not None
+    # academic_years should be ["2025/26"] (wrapped from the single string)
+    assert call_kwargs.kwargs.get("academic_years") == ["2025/26"]
 
 
 # Make the script executable.

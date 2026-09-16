@@ -38,6 +38,23 @@ def add_arguments(parser: ArgumentParser) -> None:
         help="filter by school name",
     )
     parser.add_argument("--columns", default=None, nargs="*", help="columns to show")
+    parser.add_argument(
+        "--academic_year",
+        "--academic_years",
+        "--academic-year",
+        "--academic-years",
+        dest="academic_years",
+        nargs="*",
+        type=str,
+        default=None,
+        help="filter by academic year(s) (default: current academic year)",
+    )
+    parser.add_argument(
+        "--all_academic_years",
+        "--all-academic-years",
+        action="store_true",
+        help="show entries from all academic years (overrides default filtering)",
+    )
 
 
 def _suppress_console_logging() -> None:
@@ -68,6 +85,19 @@ def execute(args: Namespace) -> None:
     # Suppress console logging BEFORE creating managers or starting TUI
     _suppress_console_logging()
 
+    academic_years: list[str] | None
+    if args.all_academic_years or (
+        args.academic_years and "all" in args.academic_years
+    ):
+        academic_years = None
+    elif args.academic_years is not None:
+        academic_years = args.academic_years
+    else:
+        get_this_academic_year_string = lazy_import(
+            "edupsyadmin.utils.academic_year",
+        ).get_this_academic_year_string
+        academic_years = [get_this_academic_year_string()]
+
     edupsyadmin_tui_cls = lazy_import("edupsyadmin.tui.edupsyadmintui").EdupsyadminTui
 
     app = edupsyadmin_tui_cls(
@@ -75,5 +105,6 @@ def execute(args: Namespace) -> None:
         nta_nos=args.nta_nos,
         schools=args.school,
         columns=args.columns,
+        academic_years=academic_years,
     )
     app.run()

@@ -23,6 +23,7 @@ from edupsyadmin.core.config import config
 from edupsyadmin.core.enums import Gender, LrstDiagnosis, LrstTesterType
 from edupsyadmin.db.clients import Client
 from edupsyadmin.tui.suggesters import CategorySuggester
+from edupsyadmin.utils.academic_year import get_this_academic_year_string
 from edupsyadmin.utils.python_type import get_python_type
 from edupsyadmin.utils.taetigkeitsbericht_check_key import get_taet_categories
 
@@ -33,6 +34,7 @@ REQUIRED_FIELDS = [
     "gender_encr",
     "class_name_encr",
     "birthday_encr",
+    "record_academic_year",
 ]
 
 # fields which depend on other fields and should not be set by the user
@@ -202,6 +204,8 @@ class EditClient(Container):
         required = self._is_required(name)
         label_text = f"{name}*" if required else name
         default = ""
+        if name == "record_academic_year":
+            default = get_this_academic_year_string()
 
         widget = self._build_field_widget(
             name=name,

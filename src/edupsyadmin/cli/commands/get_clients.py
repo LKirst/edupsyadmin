@@ -27,6 +27,12 @@ COMMAND_EPILOG = textwrap.dedent(
 
           # Show all clients, and display the columns keyword_taet_encr and notes_encr
           edupsyadmin get-clients --tui --columns keyword_taet_encr notes_encr
+
+          # Show clients for specific academic year(s)
+          edupsyadmin get-clients --academic-years 2025/26 2026/27
+
+          # Show clients from all academic years
+          edupsyadmin get-clients --all-academic-years
           """,
 )
 
@@ -46,6 +52,23 @@ def add_arguments(parser: ArgumentParser) -> None:
         type=str,
         default=[],
         help="filter by school name",
+    )
+    parser.add_argument(
+        "--academic_year",
+        "--academic_years",
+        "--academic-year",
+        "--academic-years",
+        dest="academic_years",
+        nargs="*",
+        type=str,
+        default=None,
+        help="filter by academic year(s) (default: current academic year)",
+    )
+    parser.add_argument(
+        "--all_academic_years",
+        "--all-academic-years",
+        action="store_true",
+        help="show entries from all academic years (overrides default filtering)",
     )
     parser.add_argument("--out", help="path for an output file", type=normalize_path)
     parser.add_argument(
@@ -71,6 +94,19 @@ def execute(args: Namespace) -> None:
     total = clients_manager.get_total_count()
     logger.info(f"Database contains {total} entries.")
 
+    academic_years: list[str] | None
+    if args.all_academic_years or (
+        args.academic_years and "all" in args.academic_years
+    ):
+        academic_years = None
+    elif args.academic_years is not None:
+        academic_years = args.academic_years
+    else:
+        get_this_academic_year_string = lazy_import(
+            "edupsyadmin.utils.academic_year",
+        ).get_this_academic_year_string
+        academic_years = [get_this_academic_year_string()]
+
     if args.tui:
         clients_overview_app_cls = lazy_import(
             "edupsyadmin.tui.clients_overview_app",
@@ -80,6 +116,7 @@ def execute(args: Namespace) -> None:
             nta_nos=args.nta_nos,
             schools=args.school,
             columns=args.columns,
+            academic_years=academic_years,
         ).run()
     else:
         display_client_details = lazy_import(
@@ -95,6 +132,7 @@ def execute(args: Namespace) -> None:
                 nta_nos=args.nta_nos,
                 schools=args.school,
                 columns=args.columns,
+                academic_years=academic_years,
             )
             # Sort manually
             data.sort(key=lambda x: (x.get("school", ""), x.get("last_name_encr", "")))

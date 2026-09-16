@@ -8,7 +8,8 @@ from textual.message import Message
 from textual.widgets import DataTable, Static
 
 from edupsyadmin.api.managers import ClientsManager
-from edupsyadmin.tui.dialogs import YesNoDialog
+from edupsyadmin.tui.dialogs import InputDialog, YesNoDialog
+from edupsyadmin.utils.academic_year import get_this_academic_year_string
 
 
 def _format_cell(value: str | bool | float) -> Text | str | bool | float | int:
@@ -68,6 +69,7 @@ class ClientsOverview(Static):
 
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("delete", "request_delete_client", "Löschen"),
+        Binding("y", "request_copy_client", "Kopieren in Schuljahr"),
         Binding("n", "sort_by_last_name", "Sortieren nach `last_name_encr`"),
         Binding("s", "sort_by_school", "Sortieren nach `schule`"),
         Binding("i", "sort_by_client_id", "Sortieren nach `client_id`"),
@@ -96,12 +98,25 @@ class ClientsOverview(Static):
             self.error = error
             super().__init__()
 
+    class _ClientCopied(Message):
+        """Internal message to signal client was copied."""
+
+        def __init__(
+            self,
+            new_id: int | None = None,
+            error: Exception | None = None,
+        ) -> None:
+            self.new_id = new_id
+            self.error = error
+            super().__init__()
+
     def __init__(
         self,
         manager: ClientsManager,
         nta_nos: bool = False,
         schools: list[str] | None = None,
         columns: list[str] | None = None,
+        academic_years: list[str] | None = None,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
@@ -111,6 +126,7 @@ class ClientsOverview(Static):
         self.nta_nos = nta_nos
         self.schools = schools
         self.columns = columns
+        self.academic_years = academic_years
         self._last_applied_sort: tuple[tuple[str, ...], bool] = ((), False)
         self._reverse_states: dict[str, bool] = {}
 
@@ -138,6 +154,7 @@ class ClientsOverview(Static):
             nta_nos=self.nta_nos,
             schools=self.schools,
             columns=self.columns,
+            academic_years=self.academic_years,
         )
         self.post_message(self._DataLoaded(data))
 
@@ -149,6 +166,15 @@ class ClientsOverview(Static):
             self.post_message(self._ClientDeleted())
         except Exception as e:  # noqa: BLE001
             self.post_message(self._ClientDeleted(error=e))
+
+    @work(exclusive=True, thread=True)
+    def copy_client(self, client_id: int, target_academic_year: str) -> None:
+        """Copy client to target academic year."""
+        try:
+            new_id = self.manager.copy_client(client_id, target_academic_year)
+            self.post_message(self._ClientCopied(new_id=new_id))
+        except Exception as e:  # noqa: BLE001
+            self.post_message(self._ClientCopied(error=e))
 
     def _setup_table_columns(self, table: DataTable, columns: list[str]) -> None:
         """Sets up the DataTable columns if not already present."""
@@ -217,6 +243,14 @@ class ClientsOverview(Static):
             self.notify("Klient*in erfolgreich gelöscht.")
             self.action_reload()
 
+    def on_clients_overview__client_copied(self, message: _ClientCopied) -> None:
+        """Callback for when a client is copied."""
+        if message.error:
+            self.notify(f"Fehler beim Kopieren: {message.error}", severity="error")
+        else:
+            self.notify(f"Klient*in erfolgreich kopiert (neue ID: {message.new_id}).")
+            self.action_reload()
+
     def action_reload(self) -> None:
         """Reloads the data in the table from the database."""
         table = self.query_one(DataTable)
@@ -249,6 +283,40 @@ class ClientsOverview(Static):
         self.app.push_screen(
             YesNoDialog(f"Delete client {first_name} {last_name} (ID: {client_id})?"),
             check_delete,
+        )
+
+    def action_request_copy_client(self) -> None:
+        """Action to request copying a client to another academic year."""
+        table = self.query_one(DataTable)
+        if table.cursor_row < 0:
+            self.notify(
+                "Kein(e) Klient*in zum Kopieren ausgewählt.", severity="warning"
+            )
+            return
+
+        row_data = table.get_row_at(table.cursor_row)
+        client_id_val = row_data[0]
+        last_name = row_data[2]
+        first_name = row_data[3]
+
+        try:
+            client_id = int(client_id_val)
+        except ValueError, TypeError:
+            self.notify(f"Invalid client_id: {client_id_val}", severity="error")
+            return
+
+        def handle_copy(target_year: str | None) -> None:
+            """Called with the result of the input dialog."""
+            if target_year and target_year.strip():
+                self.copy_client(client_id, target_year.strip())
+
+        self.app.push_screen(
+            InputDialog(
+                f"Klient*in {first_name} {last_name} "
+                f"(ID: {client_id}) kopieren in Schuljahr:",
+                initial_value=get_this_academic_year_string(),
+            ),
+            handle_copy,
         )
 
     @on(DataTable.RowSelected, "#clients_overview_table")
