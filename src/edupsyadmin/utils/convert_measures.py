@@ -12,6 +12,8 @@ def percentile_to_z(percentile: int) -> float:
 
     :param percentile: a percentile
     :return: the Z-score which corresponds to the percentile
+    :raises StatisticsError: If ``percentile`` is ``0`` or ``100``, or
+        outside ``[0, 100]``.
     """
     z: float = NormalDist().inv_cdf(percentile / 100)
     return z
@@ -35,7 +37,7 @@ def z_to_normaldist(z: float, mean: float, sd: float) -> float:
 
     :param z: a Z-score
     :param mean: the mean of the target normal distribution
-    :param sd: the standard deveation of the target normal distribution
+    :param sd: the standard deviation of the target normal distribution
     :return: the value in the target normal distribution that corresponds to
     the Z-score
     """
