@@ -1,3 +1,4 @@
+import re
 from datetime import date, datetime
 
 from sqlalchemy import (
@@ -25,6 +26,8 @@ from edupsyadmin.utils.taetigkeitsbericht_check_key import check_keyword
 
 LRST_DIAG: frozenset[LrstDiagnosis] = frozenset(LrstDiagnosis)
 LRST_TEST_BY: frozenset[LrstTesterType] = frozenset(LrstTesterType)
+
+_ACADEMIC_YEAR_PATTERN: re.Pattern[str] = re.compile(r"^\d{4}/\d{2}$")
 
 
 class SystemMetadata(Base):
@@ -659,6 +662,13 @@ class Client(Base):
         value: str | date | None,
     ) -> date | None:
         return to_date_or_none(value)
+
+    @validates("record_academic_year")
+    def validate_academic_year(self, key: str, value: str) -> str:
+        # TODO: Write a test for the validator
+        if not _ACADEMIC_YEAR_PATTERN.match(value):
+            raise ValueError(f"{key!r} must match the pattern 'YYYY/YY', got {value!r}")
+        return value
 
     def __repr__(self) -> str:
         return f"<Client(id='{self.client_id}', sc='{self.school}')>"
