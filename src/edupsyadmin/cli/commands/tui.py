@@ -13,11 +13,11 @@ COMMAND_EPILOG = textwrap.dedent(
       # Start the TUI
       edupsyadmin tui
 
-      # Filter by school name
-      edupsyadmin --school MySchool
+      # Filter by school name and academic year
+      edupsyadmin tui --school MySchool --academic-years "2025/26"
 
       # Show columns min_session and n_sessions
-      edupsyadmin --columns min_sessions n_sessions
+      edupsyadmin tui --columns min_sessions n_sessions
 """,
 )
 
@@ -26,7 +26,9 @@ def add_arguments(parser: ArgumentParser) -> None:
     """CLI adaptor for the tui command."""
     parser.set_defaults(command=execute)
     parser.add_argument(
+        "--nta-nos",
         "--nta_nos",
+        dest="nta_nos",
         action="store_true",
         help="show only students with Nachteilsausgleich or Notenschutz",
     )
@@ -39,10 +41,8 @@ def add_arguments(parser: ArgumentParser) -> None:
     )
     parser.add_argument("--columns", default=None, nargs="*", help="columns to show")
     parser.add_argument(
-        "--academic_year",
-        "--academic_years",
-        "--academic-year",
         "--academic-years",
+        "--academic_years",
         dest="academic_years",
         nargs="*",
         type=str,
@@ -50,8 +50,8 @@ def add_arguments(parser: ArgumentParser) -> None:
         help="filter by academic year(s) (default: current academic year)",
     )
     parser.add_argument(
-        "--all_academic_years",
         "--all-academic-years",
+        "--all_academic_years",
         action="store_true",
         help="show entries from all academic years (overrides default filtering)",
     )
