@@ -187,9 +187,6 @@ Für das Drucken ist es manchmal notwendig, ausgefüllte PDF-Formulare so zu
 speichern, dass die Felder nicht mehr bearbeitet werden können. Diesen Vorgang
 nennt man "Flattening".
 
-**Voraussetzung**: Benötigt **Poppler**. Siehe :doc:`installation` für
-Installationsanweisungen.
-
 **Beispiel:** Bereite zwei Formulare für den Druck vor.
 
 .. code-block:: console
