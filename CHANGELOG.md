@@ -1,3 +1,15 @@
+## 9.3.0 (2026-09-20)
+
+### Feat
+
+- **db**: add validator for record_academic_year
+- **db**: add record academic year to db
+
+### Fix
+
+- **lgvt**: correctly clamp z values for plots
+- **lgvt**: handle conversion of PR=0 to a T value
+
 ## 9.2.0 (2026-09-09)
 
 ### Feat
