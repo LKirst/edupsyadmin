@@ -30,7 +30,7 @@ COMMAND_EPILOG = textwrap.dedent(
 
       # Add from CSV and keep the file
       edupsyadmin new-client --csv "./path/to/sample.csv" \
-        --name "ClientName" --school MySchool --keepfile
+        --name "Client1Name" "Client2Name" --school MySchool --keepfile
 """,
 )
 
@@ -39,7 +39,7 @@ def _enter_client_csv(
     clients_manager: ClientsManager,
     csv_path: str | os.PathLike[str],
     school: str | None,
-    name: str,
+    name: list[str],
     import_config_name: str | None = None,
 ) -> int:
     """
@@ -48,9 +48,9 @@ def _enter_client_csv(
     :param clients_manager: a ClientsManager instance used to add the client to the db
     :param csv_path: path to a csv file
     :param school: short name of the school as set in the config file
-    :param name: name of the client as specified in the "name" column of the csv
+    :param name: name(s) of the client(s) as specified in the "name" column of the csv
     :param import_config_name: name of the csv import configuration from the config
-    return: client_id
+    return: client_id of the last client that was created
     """
     pd = lazy_import("pandas")
 
@@ -100,54 +100,59 @@ def _enter_client_csv(
     else:
         lookup_col = "name"
 
-    client_series = df[df[lookup_col] == name]
+    for this_name in name:
+        client_series = df[df[lookup_col] == this_name]
 
-    if client_series.empty:
-        raise ValueError(
-            f"The name '{name}' was not found in the CSV file '{csv_path}'.",
-        )
+        if client_series.empty:
+            raise ValueError(
+                f"The name '{this_name}' was not found in the CSV file '{csv_path}'.",
+            )
 
-    client_data = client_series.iloc[0].to_dict()
+        client_data = client_series.iloc[0].to_dict()
 
-    # Combine address fields if they exist
-    if "postCode" in client_data and "city" in client_data:
-        client_data["city_encr"] = (
-            str(client_data.pop("postCode", ""))
-            + " "
-            + str(client_data.pop("city", ""))
-        )
+        # Combine address fields if they exist
+        if "postCode" in client_data and "city" in client_data:
+            client_data["city_encr"] = (
+                str(client_data.pop("postCode", ""))
+                + " "
+                + str(client_data.pop("city", ""))
+            )
 
-    # Handle date formatting
-    for date_col in ("entry_date_encr", "birthday_encr"):
-        if date_col in client_data and isinstance(client_data[date_col], str):
-            try:
-                client_data[date_col] = datetime.strptime(
-                    client_data[date_col],
-                    "%d.%m.%Y",
-                ).date()
-            except ValueError:
-                logger.error(
-                    f"Could not parse date '{client_data[date_col]}' "
-                    f"for column '{date_col}'. "
-                    "Please ensure the format is DD.MM.YYYY.",
-                )
-                client_data[date_col] = None
+        # Handle date formatting
+        for date_col in ("entry_date_encr", "birthday_encr"):
+            if date_col in client_data and isinstance(client_data[date_col], str):
+                try:
+                    client_data[date_col] = datetime.strptime(
+                        client_data[date_col],
+                        "%d.%m.%Y",
+                    ).date()
+                except ValueError:
+                    logger.error(
+                        f"Could not parse date '{client_data[date_col]}' "
+                        f"for column '{date_col}'. "
+                        "Please ensure the format is DD.MM.YYYY.",
+                    )
+                    client_data[date_col] = None
 
-    # check if school was passed and if not use the first from the config
-    if school is None:
-        school = next(iter(config.school.keys()))
-    client_data["school"] = school
+        # check if school was passed and if not use the first from the config
+        if school is None:
+            school = next(iter(config.school.keys()))
+        client_data["school"] = school
 
-    # Filter data to only include valid columns for the Client model
-    valid_keys = {c.key for c in sa_inspect(client_cls).column_attrs}
-    init_sig = signature(client_cls.__init__)
-    valid_init_keys = set(init_sig.parameters.keys())
+        # Filter data to only include valid columns for the Client model
+        valid_keys = {c.key for c in sa_inspect(client_cls).column_attrs}
+        init_sig = signature(client_cls.__init__)
+        valid_init_keys = set(init_sig.parameters.keys())
 
-    final_client_data = {
-        k: v for k, v in client_data.items() if k in valid_keys or k in valid_init_keys
-    }
+        final_client_data = {
+            k: v
+            for k, v in client_data.items()
+            if k in valid_keys or k in valid_init_keys
+        }
 
-    return clients_manager.add_client(**final_client_data)
+        client_id = clients_manager.add_client(**final_client_data)
+
+    return client_id
 
 
 def add_arguments(parser: ArgumentParser) -> None:
@@ -162,9 +167,10 @@ def add_arguments(parser: ArgumentParser) -> None:
     )
     parser.add_argument(
         "--name",
+        nargs="*",
         help=(
             "Only relevant if --csv is set. "
-            "Name of the client from the name column of the csv."
+            "Name(s) of the client from the name column of the csv."
         ),
     )
     parser.add_argument(
@@ -200,7 +206,7 @@ def execute(args: Namespace) -> None:
     )
 
     if args.csv:
-        if args.name is None:
+        if not args.name:
             raise ValueError("Pass a name to read a client from a csv.")
 
         csv_path = normalize_path(args.csv)
