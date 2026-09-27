@@ -9,7 +9,7 @@ COMMAND_EPILOG = textwrap.dedent(
     """\
     Example:
       # Delete client with ID 1
-      edupsyadmin delete_client 1
+      edupsyadmin delete-client 1
 """,
 )
 

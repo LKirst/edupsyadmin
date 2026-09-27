@@ -25,15 +25,12 @@ def add_arguments(parser: ArgumentParser) -> None:
     parser.set_defaults(command=execute)
     parser.add_argument("client_id", type=int, help="id of the client to copy")
     parser.add_argument(
-        "--to_academic_year",
         "--to-academic-year",
-        dest="to_academic_year",
         type=str,
         default=None,
         help="target academic year (default: current academic year)",
     )
     parser.add_argument(
-        "--keep_sessions",
         "--keep-sessions",
         action="store_true",
         help="keep session counts instead of resetting them to 0",

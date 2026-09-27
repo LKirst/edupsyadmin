@@ -95,12 +95,12 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     parser = ArgumentParser(formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument(
         "-c",
-        "--config_path",
+        "--config-path",
         type=Path,
         default=None,
         help=argparse.SUPPRESS,
     )
-    parser.add_argument("--salt_path", type=Path, default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--salt-path", type=Path, default=None, help=argparse.SUPPRESS)
     parser.add_argument(
         "-v",
         "--version",
@@ -118,10 +118,10 @@ def _args(argv: list[str] | None) -> argparse.Namespace:
     )
 
     # Global arguments
-    parser.add_argument("--app_username", default=None, help=argparse.SUPPRESS)
-    parser.add_argument("--app_uid", default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--app-username", default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--app-uid", default=None, help=argparse.SUPPRESS)
     parser.add_argument(
-        "--database_url",
+        "--database-url",
         default=DEFAULT_DB_URL,
         help=argparse.SUPPRESS,
     )

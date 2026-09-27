@@ -26,11 +26,11 @@ COMMAND_EPILOG = textwrap.dedent(
 
       # Add a new client from a CSV file
       edupsyadmin new-client --csv "./path/to/sample.csv" \
-        --name "ClientName" --school MySchool
+        --names "ClientName" --school MySchool
 
       # Add from CSV and keep the file
       edupsyadmin new-client --csv "./path/to/sample.csv" \
-        --name "Client1Name" "Client2Name" --school MySchool --keepfile
+        --names "Client1Name" "Client2Name" --school MySchool --keep-file
 """,
 )
 
@@ -166,7 +166,7 @@ def add_arguments(parser: ArgumentParser) -> None:
         ),
     )
     parser.add_argument(
-        "--name",
+        "--names",
         nargs="*",
         help=(
             "Only relevant if --csv is set. "
@@ -189,7 +189,7 @@ def add_arguments(parser: ArgumentParser) -> None:
         ),
     )
     parser.add_argument(
-        "--keepfile",
+        "--keep-file",
         action="store_true",
         help=(
             "Only relevant if --csv is set. "
@@ -206,7 +206,7 @@ def execute(args: Namespace) -> None:
     )
 
     if args.csv:
-        if not args.name:
+        if not args.names:
             raise ValueError("Pass a name to read a client from a csv.")
 
         csv_path = normalize_path(args.csv)
@@ -214,10 +214,10 @@ def execute(args: Namespace) -> None:
             clients_manager,
             csv_path,
             args.school,
-            args.name,
+            args.names,
             args.import_config,
         )
-        if not args.keepfile:
+        if not args.keep_file:
             csv_path.unlink()
     else:
         edit_client_app_cls = lazy_import(

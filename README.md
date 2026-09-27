@@ -117,7 +117,7 @@ Change values for the database entry with `client_id=42` from the command line:
 
 ```text
 $ edupsyadmin set-client 42 \
-  --key_value_pairs \
+  --key-value-pairs \
   "nta_font=1" \
   "nta_zeitv_vieltext=20" \
   "nos_rs=0" \
@@ -139,14 +139,14 @@ edupsyadmin get-clients
 Fill a PDF form for the database entry with `client_id=42`:
 
 ```text
-edupsyadmin create-documentation 42 --form_paths ./path/to/your/file.pdf
+edupsyadmin create-documentation 42 --form-paths ./path/to/your/file.pdf
 ```
 
 Fill all files that belong to the form_set `lrst` (as defined in the
 config.yml) for the database entry with `client_id=42`:
 
 ```text
-edupsyadmin create-documentation 42 --form_set lrst
+edupsyadmin create-documentation 42 --form-set lrst
 ```
 
 Generate a "Tätigkeitsbericht" PDF with 3 Anrechnungsstunden (experimental):

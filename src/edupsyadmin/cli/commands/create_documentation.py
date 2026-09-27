@@ -10,7 +10,7 @@ from edupsyadmin.utils.path_utils import normalize_path
 
 COMMAND_DESCRIPTION = (
     "Fill a pdf form or a text file with a liquid template. "
-    "Use --tui for interactive mode, or provide client_id and form "
+    "Use --tui for interactive mode, or provide client_ids and form "
     "details for direct creation."
 )
 COMMAND_HELP = "Fill a pdf form or a text file with a liquid template"
@@ -19,18 +19,18 @@ COMMAND_EPILOG = textwrap.dedent(
           # Open the TUI to interactively fill a form for client with ID 1
           edupsyadmin create-documentation 1 --tui
 
-          # Fill a PDF form for client with ID 1 using a form set named 'MyFormSet'
-          edupsyadmin create-documentation 1 --form_set MyFormSet
+          # Fill PDF forms for the IDs 1 and 2 using the form set 'MyFormSet'
+          edupsyadmin create-documentation 1 2 --form-set MyFormSet
 
           # Fill a text file for client with ID 2 using a specific form path
-          edupsyadmin create-documentation 2 --form_paths "./path/to/template.txt"
+          edupsyadmin create-documentation 2 --form-paths "./path/to/template.txt"
 
           # Fill a form for client with ID 3, injecting custom data
-          edupsyadmin create-documentation 3 --form_paths "./path/to/form.pdf" \
-            --inject_data "key1=value1" "key2=value2"
+          edupsyadmin create-documentation 3 --form-paths "./path/to/form.pdf" \
+            --inject-data "key1=value1" "key2=value2"
 
           # Process multiple forms for client with ID 3 with different form paths
-          edupsyadmin create-documentation 2 --form_paths "./path/to/form1.pdf" \
+          edupsyadmin create-documentation 3 --form-paths "./path/to/form1.pdf" \
             "./path/to/form2.pdf"
           """,
 )
@@ -44,22 +44,27 @@ def add_arguments(parser: ArgumentParser) -> None:
         action="store_true",
         help="Open TUI for interactive form filling.",
     )
-    parser.add_argument("client_id", type=int, nargs="+")
     parser.add_argument(
-        "--form_set",
+        "client_ids",
+        type=int,
+        nargs="+",
+        help="id(s) for the client(s) to fill forms for",
+    )
+    parser.add_argument(
+        "--form-set",
         type=str,
         default=None,
         help="name of a set of file paths defined in the config file",
     )
     parser.add_argument(
-        "--form_paths",
+        "--form-paths",
         nargs="*",
         type=normalize_path,
         default=[],
         help="form file paths",
     )
     parser.add_argument(
-        "--out_dir",
+        "--out-dir",
         type=normalize_path,
         default=None,
         help=(
@@ -68,7 +73,7 @@ def add_arguments(parser: ArgumentParser) -> None:
         ),
     )
     parser.add_argument(
-        "--inject_data",
+        "--inject-data",
         nargs="*",
         default=[],
         help=(
@@ -80,6 +85,7 @@ def add_arguments(parser: ArgumentParser) -> None:
     encryption_group = parser.add_mutually_exclusive_group()
     encryption_group.add_argument(
         "--password",
+        "-p",
         type=str,
         default=None,
         help="password to encrypt filled PDF forms",
@@ -115,7 +121,7 @@ def execute(args: Namespace) -> None:
         fill_form_app_cls = lazy_import("edupsyadmin.tui.fill_form_app").FillFormApp
         fill_form_app_cls(
             clients_manager=clients_manager,
-            client_ids=args.client_id,
+            client_ids=args.client_ids,
         ).run()
         return
 
@@ -143,13 +149,13 @@ def execute(args: Namespace) -> None:
 
     out_dir = args.out_dir or config.core.output_directory
 
-    for cid in args.client_id:
+    for cid in args.client_ids:
         client_view = clients_manager.get_client_view(cid)
         client_data = client_view.model_dump()
         if args.inject_data:
             inject_dict = parse_key_value_pairs(
                 args.inject_data,
-                option_name="--inject_data",
+                option_name="--inject-data",
             )
             client_data.update(inject_dict)
         fill_form(

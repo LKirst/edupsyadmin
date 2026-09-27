@@ -7,6 +7,7 @@ precedence over the version in this project directory. Use a virtualenv test
 environment or setuptools develop mode to test against the development version.
 
 """
+# TODO: Switch from Namespace calls to real parser.parse_args calls
 
 import argparse
 import os
@@ -132,11 +133,11 @@ def test_config_template(tmp_path_factory):
         "DEBUG",
         "-c",
         config_path,
-        "--app_uid",
+        "--app-uid",
         "example.com",
-        "--app_username",
+        "--app-username",
         "test",
-        "--database_url",
+        "--database-url",
         database_url,
         "info",
     ]
@@ -154,9 +155,9 @@ def test_new_client(mock_config, mock_webuntis, tmp_path):
     args = argparse.Namespace(
         database_url=database_url,
         csv=str(mock_webuntis),
-        name="MustermErika1",
+        names=["MustermErika1"],
         school="FirstSchool",
-        keepfile=False,
+        keep_file=False,
         import_config=None,
     )
     new_client_command.execute(args)
@@ -187,12 +188,12 @@ def test_get_clients_all(capsys, mock_config, mock_webuntis, tmp_path, monkeypat
     args = argparse.Namespace(
         database_url=database_url,
         nta_nos=False,
-        school=None,
+        schools=None,
         client_id=None,
         out=None,
         tui=False,
         columns=None,
-        academic_years=[],
+        academic_years=None,
         all_academic_years=True,
     )
     get_clients_command.execute(args)
@@ -231,12 +232,12 @@ def test_get_clients_single(capsys, mock_config, mock_webuntis, tmp_path):
     args = argparse.Namespace(
         database_url=database_url,
         nta_nos=False,
-        school=None,
+        schools=None,
         client_id=1,
         out=None,
         tui=False,
         columns=None,
-        academic_years=[],
+        academic_years=None,
         all_academic_years=True,
     )
     get_clients_command.execute(args)
@@ -267,7 +268,7 @@ def test_set_client(capsys, mock_config, mock_webuntis, tmp_path):
     # Act
     args = argparse.Namespace(
         database_url=database_url,
-        client_id=[1],
+        client_ids=[1],
         key_value_pairs=["street_encr=Veränderte Straße 5", "class_name_encr=42ab"],
     )
     set_client_command.execute(args)
@@ -306,7 +307,7 @@ def test_create_documentation(
     # Act
     args = argparse.Namespace(
         database_url=database_url,
-        client_id=[client_id],
+        client_ids=[client_id],
         form_set="lrst",
         form_paths=None,
         inject_data=None,
@@ -379,9 +380,9 @@ def test_edit_config_command(mock_config):
         mock_app_instance.run.assert_called_once()
 
 
-# TODO: Do the same for `get_clients --tui` and `edit_client --tui`
+# TODO: Do the same for `get-clients --tui` and `edit-client --tui`
 def test_create_documentation_tui(mock_config, tmp_path):
-    """Test that `create_documentation --tui` starts the FillFormApp."""
+    """Test that `create-documentation --tui` starts the FillFormApp."""
     database_path = tmp_path / "test_tui.sqlite"
     database_url = f"sqlite:///{database_path}"
 
@@ -403,7 +404,7 @@ def test_create_documentation_tui(mock_config, tmp_path):
             [
                 "-c",
                 str(mock_config),
-                "--database_url",
+                "--database-url",
                 database_url,
                 "create-documentation",
                 "1",
@@ -604,11 +605,11 @@ def test_get_clients_academic_years_filter(capsys, mock_config, tmp_path, monkey
     args = argparse.Namespace(
         database_url=database_url,
         nta_nos=False,
-        school=[],
+        schools=None,
         client_id=None,
         out=None,
         tui=False,
-        columns=[],
+        columns=None,
         academic_years=["2025/26"],
         all_academic_years=False,
     )
@@ -649,11 +650,11 @@ def test_get_clients_all_academic_years(capsys, mock_config, tmp_path, monkeypat
     args = argparse.Namespace(
         database_url=database_url,
         nta_nos=False,
-        school=[],
+        schools=None,
         client_id=None,
         out=None,
         tui=False,
-        columns=[],
+        columns=None,
         academic_years=None,
         all_academic_years=True,
     )

@@ -35,5 +35,5 @@ in der Datenbank anzuzeigen (``get-clients``):
 
 .. code-block:: console
 
-    $ edupsyadmin --config_path "./config.yml" get-clients \
-        --database_url "sqlite:///edupsyadmin.db"
+    $ edupsyadmin --config-path "./config.yml" get-clients \
+        --database-url "sqlite:///edupsyadmin.db"

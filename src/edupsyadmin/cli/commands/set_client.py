@@ -13,7 +13,7 @@ COMMAND_EPILOG = textwrap.dedent(
 
       # Set 'nta_font' to '1' (true) and 'nta_zeitv_vieltext' to '20' for
       # clients with ID 1 and 2
-      edupsyadmin set-client 1 2 --key_value_pairs "nta_font=1" \
+      edupsyadmin set-client 1 2 --key-value-pairs "nta_font=1" \
         "nta_zeitv_vieltext=20"
 """,
 )
@@ -22,9 +22,9 @@ COMMAND_EPILOG = textwrap.dedent(
 def add_arguments(parser: ArgumentParser) -> None:
     """CLI adaptor for the set-client command."""
     parser.set_defaults(command=execute)
-    parser.add_argument("client_id", type=int, nargs="+")
+    parser.add_argument("client_ids", type=int, nargs="+")
     parser.add_argument(
-        "--key_value_pairs",
+        "--key-value-pairs",
         type=str,
         nargs="*",
         default=[],
@@ -48,15 +48,15 @@ def execute(args: Namespace) -> None:
     if args.key_value_pairs:
         key_value_pairs_dict = parse_key_value_pairs(
             args.key_value_pairs,
-            option_name="--key_value_pairs",
+            option_name="--key-value-pairs",
         )
         clients_manager.edit_client(
-            client_ids=args.client_id,
+            client_ids=args.client_ids,
             new_data=key_value_pairs_dict,
         )
     else:
         edit_client_app_cls = lazy_import(
             "edupsyadmin.tui.edit_client_app",
         ).EditClientApp
-        for cid in args.client_id:
+        for cid in args.client_ids:
             edit_client_app_cls(clients_manager=clients_manager, client_id=cid).run()

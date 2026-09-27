@@ -13,7 +13,7 @@ COMMAND_EPILOG = textwrap.dedent(
       edupsyadmin taetigkeitsbericht 3
 
       # Generate a report with custom output name and total hours
-      edupsyadmin taetigkeitsbericht 10 --out_basename "MyReport" --wstd_total 28
+      edupsyadmin taetigkeitsbericht 10 --out-basename "MyReport" --wstd-total 28
 """,
 )
 
@@ -27,13 +27,13 @@ def add_arguments(parser: ArgumentParser) -> None:
         help="Anrechnungsstunden in Wochenstunden",
     )
     parser.add_argument(
-        "--out_basename",
+        "--out-basename",
         type=str,
         default="Taetigkeitsbericht_Out",
         help="base name for the output files; default is 'Taetigkeitsbericht_Out'",
     )
     parser.add_argument(
-        "--wstd_total",
+        "--wstd-total",
         type=int,
         default=23,
         help="total Wochstunden (depends on your school); default is 23",
@@ -45,9 +45,7 @@ def add_arguments(parser: ArgumentParser) -> None:
         help="name for the header of the pdf report",
     )
     parser.add_argument(
-        "--academic_year",
         "--academic-year",
-        dest="academic_year",
         type=str,
         default=None,
         help="academic year for the report (default: current academic year)",

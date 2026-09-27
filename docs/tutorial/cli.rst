@@ -67,12 +67,12 @@ Nachteilsausgleich für die Schriftgröße und einen Zeitzuschlag von 25%.
 
 .. code-block:: console
 
-    $ edupsyadmin set-client 1 2 5 --key_value_pairs "nta_font=1" "nta_zeitv_vieltext=25"
+    $ edupsyadmin set-client 1 2 5 --key-value-pairs "nta_font=1" "nta_zeitv_vieltext=25"
 
 - ``client_id``: Eine oder mehrere IDs von Klienten, die bearbeitet werden
   sollen.
 
-- ``--key_value_pairs``: Eine Liste von Schlüssel-Wert-Paaren.
+- ``--key-value-pairs``: Eine Liste von Schlüssel-Wert-Paaren.
 
 - Für Wahr/Falsch-Felder steht ``1`` für "wahr" und ``0`` für "falsch".
 
@@ -100,13 +100,13 @@ Detailansicht für einen einzelnen Klienten an.
 
     .. code-block:: console
 
-        $ edupsyadmin get-clients --nta_nos --school TutorialSchule --out "gefilterte_liste.csv"
+        $ edupsyadmin get-clients --nta-nos --school TutorialSchule --out "gefilterte_liste.csv"
 
 -   **Details für einen einzelnen Klienten**:
 
     .. code-block:: console
 
-        $ edupsyadmin get-clients --client_id 2
+        $ edupsyadmin get-clients --client-id 2
 
 
 Dokumentation erstellen (``create-documentation``)
@@ -119,15 +119,15 @@ viele Fälle gleichzeitig erstellt werden müssen.
   erstellt werden soll. Die Daten dieser Klienten werden aus der Datenbank
   geladen und zum Ausfüllen der Formulare verwendet.
 
-- ``--form_set``: Der Name eines Formular-Sets, das in der Konfigurationsdatei
+- ``--form-set``: Der Name eines Formular-Sets, das in der Konfigurationsdatei
   definiert ist. Ein Formular-Set ist eine Sammlung von Pfaden zu
   PDF-Formularen oder Liquid-Vorlagen, die gemeinsam ausgefüllt werden sollen.
 
-- ``--form_paths``: Eine Liste von Pfaden zu den Formulardateien, die
+- ``--form-paths``: Eine Liste von Pfaden zu den Formulardateien, die
   ausgefüllt werden sollen. Dies können PDF-Formulare oder Textdateien sein,
   die `Liquid-Vorlagen <https://jg-rp.github.io/liquid/syntax/>`_ enthalten.
 
-- ``--inject_data``: Eine Liste von Schlüssel-Wert-Paaren im Format
+- ``--inject-data``: Eine Liste von Schlüssel-Wert-Paaren im Format
   ``key=value``. Diese Option kann verwendet werden, um vorhandene Daten der
   Klienten (temporär nur für diesen Ausfüllvorgang) zu überschreiben oder neue
   Schlüssel-Wert-Paare hinzuzufügen, die in den Formularen verwendet werden
@@ -144,12 +144,12 @@ viele Fälle gleichzeitig erstellt werden müssen.
 
 - ``--tui``: Öffnet die TUI (Text User Interface) für eine interaktive
   Formularausfüllung. Wenn diese Option verwendet wird, sind die Argumente
-  ``client_id``, ``--form_set``, ``--form_paths`` und ``--inject_data`` nicht
+  ``client_id``, ``--form-set``, ``--form-paths`` und ``--inject-data`` nicht
   relevant, da die Auswahl interaktiv erfolgt.
 
 .. code-block:: console
 
-    $ edupsyadmin create-documentation 1 2 --form_set lrst --inject_data "today_date_de=16.10.2025"
+    $ edupsyadmin create-documentation 1 2 --form-set lrst --inject-data "today_date_de=16.10.2025"
 
 Klienten löschen (``delete-client``)
 ------------------------------------

@@ -89,7 +89,7 @@ def test_scrubbing_set_client_args_in_logs():
         )
 
         with patch("edupsyadmin.cli._args", return_value=mock_args):
-            edupsyadmin.cli.main(["set-client", "1", "--key_value_pairs", "nta_font=1"])
+            edupsyadmin.cli.main(["set-client", "1", "--key-value-pairs", "nta_font=1"])
 
             debug_calls = [
                 call.args[0] for call in mock_logger.debug.call_args_list if call.args

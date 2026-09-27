@@ -27,23 +27,19 @@ def add_arguments(parser: ArgumentParser) -> None:
     parser.set_defaults(command=execute)
     parser.add_argument(
         "--nta-nos",
-        "--nta_nos",
-        dest="nta_nos",
         action="store_true",
         help="show only students with Nachteilsausgleich or Notenschutz",
     )
     parser.add_argument(
-        "--school",
+        "--schools",
         nargs="*",
         type=str,
         default=None,
-        help="filter by school name",
+        help="filter by school name(s)",
     )
     parser.add_argument("--columns", default=None, nargs="*", help="columns to show")
     parser.add_argument(
         "--academic-years",
-        "--academic_years",
-        dest="academic_years",
         nargs="*",
         type=str,
         default=None,
@@ -51,7 +47,6 @@ def add_arguments(parser: ArgumentParser) -> None:
     )
     parser.add_argument(
         "--all-academic-years",
-        "--all_academic_years",
         action="store_true",
         help="show entries from all academic years (overrides default filtering)",
     )
@@ -103,7 +98,7 @@ def execute(args: Namespace) -> None:
     app = edupsyadmin_tui_cls(
         manager=clients_manager,
         nta_nos=args.nta_nos,
-        schools=args.school,
+        schools=args.schools,
         columns=args.columns,
         academic_years=academic_years,
     )

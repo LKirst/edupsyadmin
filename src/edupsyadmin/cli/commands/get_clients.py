@@ -20,10 +20,10 @@ COMMAND_EPILOG = textwrap.dedent(
           edupsyadmin get-clients --tui
 
           # Show clients from 'TutorialSchule' who have 'NTA' or 'NOS'
-          edupsyadmin get-clients --nta_nos --school TutorialSchule
+          edupsyadmin get-clients --nta-nos --schools TutorialSchule
 
           # Show all details for client with ID 2
-          edupsyadmin get-clients --client_id 2
+          edupsyadmin get-clients --client-id 2
 
           # Show all clients, and display the columns keyword_taet_encr and notes_encr
           edupsyadmin get-clients --tui --columns keyword_taet_encr notes_encr
@@ -42,41 +42,36 @@ def add_arguments(parser: ArgumentParser) -> None:
 
     parser.set_defaults(command=execute)
     parser.add_argument(
-        "--nta_nos",
+        "--nta-nos",
         action="store_true",
         help="show only students with Nachteilsausgleich or Notenschutz",
     )
     parser.add_argument(
-        "--school",
+        "--schools",
         nargs="*",
         type=str,
-        default=[],
-        help="filter by school name",
+        default=None,
+        help="filter by school name(s)",
     )
     parser.add_argument(
-        "--academic_year",
-        "--academic_years",
-        "--academic-year",
         "--academic-years",
-        dest="academic_years",
         nargs="*",
         type=str,
         default=None,
         help="filter by academic year(s) (default: current academic year)",
     )
     parser.add_argument(
-        "--all_academic_years",
         "--all-academic-years",
         action="store_true",
         help="show entries from all academic years (overrides default filtering)",
     )
     parser.add_argument("--out", help="path for an output file", type=normalize_path)
     parser.add_argument(
-        "--client_id",
+        "--client-id",
         type=int,
         help="id for a single client to display",
     )
-    parser.add_argument("--columns", default=[], nargs="*", help="columns to show")
+    parser.add_argument("--columns", default=None, nargs="*", help="columns to show")
     parser.add_argument(
         "--tui",
         action="store_true",
@@ -114,7 +109,7 @@ def execute(args: Namespace) -> None:
         clients_overview_app_cls(
             clients_manager=clients_manager,
             nta_nos=args.nta_nos,
-            schools=args.school,
+            schools=args.schools,
             columns=args.columns,
             academic_years=academic_years,
         ).run()
@@ -130,7 +125,7 @@ def execute(args: Namespace) -> None:
         else:
             data = clients_manager.get_clients_overview(
                 nta_nos=args.nta_nos,
-                schools=args.school,
+                schools=args.schools,
                 columns=args.columns,
                 academic_years=academic_years,
             )

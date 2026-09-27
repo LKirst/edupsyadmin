@@ -126,8 +126,8 @@ def setup_demo() -> None:
     print("  - demo.db")
     print("\nTo use the demo environment, run commands like this:")
     print(
-        "  edupsyadmin --config_path demo-config.yml "
-        "--database_url sqlite:///demo.db tui",
+        "  edupsyadmin --config-path demo-config.yml "
+        "--database-url sqlite:///demo.db tui",
     )
 
     # Generate alias suggestions
@@ -136,14 +136,14 @@ def setup_demo() -> None:
 
     bash_alias = (
         f"alias edupsyadmin_demo='edupsyadmin "
-        f'--config_path "{abs_config_path}" '
-        f'--database_url "sqlite:///{abs_db_path}"\''
+        f'--config-path "{abs_config_path}" '
+        f'--database-url "sqlite:///{abs_db_path}"\''
     )
     # A function is more common in PowerShell profiles and robustly passes arguments
     powershell_function = (
         f"function edupsyadmin_demo {{ "
-        f'edupsyadmin --config_path \\"{abs_config_path}\\" '
-        f'--database_url \\"sqlite:///{abs_db_path}\\" $args '
+        f'edupsyadmin --config-path \\"{abs_config_path}\\" '
+        f'--database-url \\"sqlite:///{abs_db_path}\\" $args '
         f"}}"
     )
 

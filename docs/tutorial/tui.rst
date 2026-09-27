@@ -37,7 +37,7 @@ angehören:
 
 .. code-block:: console
 
-    $ edupsyadmin tui --nta_nos --school TutorialSchule
+    $ edupsyadmin tui --nta-nos --schools TutorialSchule
 
 Zusätzlich können die angezeigten Spalten mit ``--columns`` angepasst werden.
 Eine Auswahl an Spalten wird immer angezeigt (``client_id``, ``school``,

@@ -71,38 +71,53 @@ Dies wird dir die Optionen und Argumente für den ``create-documentation``
 Unterbefehl anzeigen:
 
 .. code-block:: console
-   :emphasize-lines: 2,6,9
+   :emphasize-lines: 2,10,13
 
-    $ edupsyadmin create-documentation --help
-    usage: edupsyadmin create-documentation [-h] [--tui] [--form_set FORM_SET] [--form_paths [FORM_PATHS ...]] [--inject_data [INJECT_DATA ...]] [client_id ...]
+    usage: edupsyadmin create-documentation
+       [-h] [--tui] [--form-set FORM_SET] [--form-paths [FORM_PATHS ...]]
+       [--out-dir OUT_DIR] [--inject-data [INJECT_DATA ...]]
+       [--password PASSWORD | --no-encryption]
+       client_ids [client_ids ...]
 
-    Fill a pdf form or a text file with a liquid template. Use --tui for interactive mode, or provide client_id and form details for direct creation.
+    Fill a pdf form or a text file with a liquid template. Use --tui for interactive mode, or provide client_ids and form details for direct creation.
 
     positional arguments:
-      client_id
+      client_ids            id(s) for the client(s) to fill forms for
 
     options:
       -h, --help            show this help message and exit
       --tui                 Open TUI for interactive form filling.
-      --form_set FORM_SET   name of a set of file paths defined in the config file
-      --form_paths [FORM_PATHS ...]
+      --form-set FORM_SET   name of a set of file paths defined in the config file
+      --form-paths [FORM_PATHS ...]
                             form file paths
-      --inject_data [INJECT_DATA ...]
-                            key-value pairs in the format 'key=value'; this option can be used to override existing key=value pairs or add new key=value pairs
+      --out-dir OUT_DIR     output directory for filled forms (overrides the
+                            default from the config file)
+      --inject-data [INJECT_DATA ...]
+                            key-value pairs in the format 'key=value'; this option
+                            can be used to override existing key=value pairs or
+                            add new key=value pairs
+      --password, -p PASSWORD
+                            password to encrypt filled PDF forms
+      --no-encryption       do not encrypt the output PDF(s)
 
     Examples:
-    # Open the TUI to interactively fill a form
-    edupsyadmin create-documentation --tui
+     # Open the TUI to interactively fill a form for client with ID 1
+     edupsyadmin create-documentation 1 --tui
 
-    # Fill a PDF form for client with ID 1 using a form set named 'MyFormSet'
-    edupsyadmin create-documentation 1 --form_set MyFormSet
+     # Fill PDF forms for the IDs 1 and 2 using the form set 'MyFormSet'
+     edupsyadmin create-documentation 1 2 --form-set MyFormSet
 
-    # Fill a text file for client with ID 2 using a specific form path
-    edupsyadmin create-documentation 2 --form_paths "./path/to/template.txt"
+     # Fill a text file for client with ID 2 using a specific form path
+     edupsyadmin create-documentation 2 --form-paths "./path/to/template.txt"
 
-    # Fill a form for client with ID 3, injecting custom data
-    edupsyadmin create-documentation 3 --form_paths "./path/to/form.pdf" \
-      --inject_data "key1=value1" "key2=value2"
+     # Fill a form for client with ID 3, injecting custom data
+     edupsyadmin create-documentation 3 --form-paths "./path/to/form.pdf" \
+       --inject-data "key1=value1" "key2=value2"
+
+     # Process multiple forms for client with ID 3 with different form paths
+     edupsyadmin create-documentation 3 --form-paths "./path/to/form1.pdf" \
+       "./path/to/form2.pdf"
+
 
 Die Hilfe zeigt ``positional arguments``  und ``options``. Die positional
 arguments sind Argumente, die du dem Unterbefehl in einer bestimmten
@@ -112,5 +127,5 @@ du hier, dass der Unterbefehl "create-documentation" ein positional argument
 (client_id) und mehrere optionale Optionen akzeptiert.
 Argumente oder Optionen, die bei ``usage:`` in eckigen Klammern stehen, sind
 optional. (Bei ``create-documentation`` gibt es noch die Besonderheit, dass
-entweder ein ``form_set`` oder mindestens ein ``form_path`` angegeben werden
+entweder ein ``form-set`` oder mindestens ein ``form-path`` angegeben werden
 müssen.)

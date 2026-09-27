@@ -24,10 +24,10 @@ Dieser Befehl erstellt viele Dateien für den Tätigkeitsbericht, die dann in
 einem PDF-Bericht zusammengefasst werden.
 
 Das Beispiel oben geht davon aus, dass Vollzeit 23 Wochenstunden entspricht.
-Über die Flag ``--wstd_total`` kann die Wochenstundenanzahl angepasst werden,
+Über die Flag ``--wstd-total`` kann die Wochenstundenanzahl angepasst werden,
 damit im Bericht korrekte Angaben gemacht werden zu den Zeitstunden, die den
 angegebenen Anrechnungsstunden entsprechen.
 
 .. code-block:: console
 
-   $ edupsyadmin taetigkeitsbericht --wstd_total 28 3
+   $ edupsyadmin taetigkeitsbericht --wstd-total 28 3
