@@ -36,7 +36,7 @@ CSV-Datei und weise ihn der "TutorialSchule" zu.
 - ``--school``: Der Kurzname der Schule, wie er in der
   :doc:`../tutorial/configuration` festgelegt wurde.
 
-- ``--keepfile``: Standardmäßig wird die CSV-Datei nach dem Import gelöscht.
+- ``--keep-file``: Standardmäßig wird die CSV-Datei nach dem Import gelöscht.
   Diese Option verhindert das.
 
 **Interaktives Anlegen (eines einzelnen Klienten):** Wenn du ``new-client``
@@ -69,7 +69,7 @@ Nachteilsausgleich für die Schriftgröße und einen Zeitzuschlag von 25%.
 
     $ edupsyadmin set-client 1 2 5 --key-value-pairs "nta_font=1" "nta_zeitv_vieltext=25"
 
-- ``client_id``: Eine oder mehrere IDs von Klienten, die bearbeitet werden
+- ``client_ids``: Eine oder mehrere IDs von Klienten, die bearbeitet werden
   sollen.
 
 - ``--key-value-pairs``: Eine Liste von Schlüssel-Wert-Paaren.
@@ -81,7 +81,8 @@ Klienten anzeigen (``get-clients``)
 -----------------------------------
 
 Dieser Befehl zeigt entweder eine Übersicht aller Klienten oder die
-Detailansicht für einen einzelnen Klienten an.
+Detailansicht für einen einzelnen Klienten an. Bei der Übersicht aller Klienten
+wird standardmäßig nur das aktuelle Schuljahr angezeigt.
 
 -   **Übersicht anzeigen**:
 
@@ -96,11 +97,20 @@ Detailansicht für einen einzelnen Klienten an.
 
         $ edupsyadmin get-clients --tui
 
+-   **Alle Schuljahre**: Um auch ältere Einträge anzuzeigen, verwende
+    ``--academic-years`` mit einem Wert oder die ``--all-academic-years``
+    Option.
+
+    .. code-block:: console
+
+        $ edupsyadmin get-clients --tui --all-academic-years
+        $ edupsyadmin get-clients --tui --academic-years "2024/25" "2023/24"
+
 -   **Gefilterte Daten exportieren**:
 
     .. code-block:: console
 
-        $ edupsyadmin get-clients --nta-nos --school TutorialSchule --out "gefilterte_liste.csv"
+        $ edupsyadmin get-clients --nta-nos --schools TutorialSchule --out "gefilterte_liste.csv"
 
 -   **Details für einen einzelnen Klienten**:
 
