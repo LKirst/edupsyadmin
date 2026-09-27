@@ -1,3 +1,17 @@
+## 10.0.0 (2026-09-27)
+
+### BREAKING CHANGE
+
+- CLI flags now consistently use kebab-case (e.g. --key-value-pairs, --config-path, --database-url) and list-taking options are pluralized (e.g. --school -> --schools, client_id -> client_ids)
+
+### Feat
+
+- **cli.commands**: accept multiple values for name in new-client
+
+### Refactor
+
+- **cli**: standardize options to kebab-case and pluralize names
+
 ## 9.3.0 (2026-09-20)
 
 ### Feat
