@@ -31,17 +31,23 @@ class KeyValueParseError(ValueError):
 
 
 def parse_key_value_pairs(pairs: Iterable[str], option_name: str) -> dict[str, str]:
-    """
-    Parse an iterable of 'key=value' strings into a dict.
+    """Parse an iterable of ``key=value`` strings into a dictionary.
 
-    Rules:
-    - Exactly one '=' per pair
-    - Key must be non-empty after stripping
-    - Value may be empty; spaces allowed
-    - No further type coercion or normalization
+    Each item in ``pairs`` must contain exactly one ``=`` character. The
+    key is stripped of surrounding whitespace and must be non-empty after
+    stripping. The value is also stripped but may be empty. No further
+    type coercion or normalization is applied to keys or values.
 
-    Raises:
-    - ValueError with a concise message listing the malformed entries
+    :param pairs: Iterable of strings in the form ``key=value``.
+    :type pairs: Iterable[str]
+    :param option_name: Name of the source option/argument, used only to
+        build a descriptive error message.
+    :type option_name: str
+    :returns: Mapping of parsed, stripped keys to their stripped values.
+    :rtype: dict[str, str]
+    :raises ValueError: If any entries are malformed (not exactly one
+        ``=``, or an empty key after stripping). The message lists all
+        offending entries.
     """
     result: dict[str, str] = {}
     bad: list[str] = []
