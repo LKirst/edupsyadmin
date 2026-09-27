@@ -51,6 +51,14 @@ Folgender Befehl zeigt zusätzlich die Spalte für ``notes_encr`` und
 
     $ edupsyadmin tui --columns notes_encr lrst_diagnosis_encr
 
+Die TUI zeigt standardmäßig nur das aktuelle Schuljahr an. Sollen auch ältere
+Schuljahre angezeigt werden, hilft der Filter ``--academic-years`` mit einer
+Angabe der gewünschten Schuljahre oder die Option ``--all-academic-years``.
+
+.. code-block:: console
+
+    $ edupsyadmin tui --academic-years "2023/24" "2024/2025"
+
 Navigation und Steuerung
 ------------------------
 
