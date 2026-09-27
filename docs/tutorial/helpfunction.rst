@@ -73,6 +73,7 @@ Unterbefehl anzeigen:
 .. code-block:: console
    :emphasize-lines: 2,10,13
 
+    $ edupsyadmin create-documentation --help
     usage: edupsyadmin create-documentation
        [-h] [--tui] [--form-set FORM_SET] [--form-paths [FORM_PATHS ...]]
        [--out-dir OUT_DIR] [--inject-data [INJECT_DATA ...]]
