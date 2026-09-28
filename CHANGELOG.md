@@ -1,3 +1,9 @@
+## 10.0.1 (2026-09-28)
+
+### Fix
+
+- **db**: validate client_id
+
 ## 10.0.0 (2026-09-27)
 
 ### BREAKING CHANGE
