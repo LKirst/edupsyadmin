@@ -614,8 +614,8 @@ class Client(Base):
     ) -> bool:
         return to_bool_or_none(value) or False
 
-    @validates("nta_nos_end_grade", "class_int_encr")
-    def validate_nta_nos_end_grade(
+    @validates("nta_nos_end_grade", "class_int_encr", "client_id")
+    def validate_int_or_none(
         self,
         key: str,  # noqa: ARG002
         value: str | int | None,
