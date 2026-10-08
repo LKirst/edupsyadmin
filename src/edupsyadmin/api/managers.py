@@ -76,11 +76,9 @@ class ClientsManager:
         required_columns = [
             "client_id",
             "case_active",
-            "school",
             "last_name_encr",
             "first_name_encr",
             "class_name_encr",
-            "record_academic_year",
         ]
 
         if columns in ("all", ["all"]):
@@ -88,9 +86,9 @@ class ClientsManager:
         else:
             # Defaults for extra columns when none provided
             default_extras = [
+                "school",
                 "notenschutz",
                 "nachteilsausgleich",
-                "min_sessions",
                 "lrst_diagnosis_encr",
                 "keyword_taet_encr",
             ]
