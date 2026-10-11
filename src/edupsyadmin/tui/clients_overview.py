@@ -70,10 +70,10 @@ class ClientsOverview(Static):
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("delete", "request_delete_client", "Löschen"),
         Binding("y", "request_copy_client", "Kopieren in Schuljahr"),
-        Binding("n", "sort_by_last_name", "Sortieren nach `last_name_encr`"),
-        Binding("s", "sort_by_school", "Sortieren nach `schule`"),
-        Binding("i", "sort_by_client_id", "Sortieren nach `client_id`"),
-        Binding("c", "sort_by_class_name", "Sortieren nach `class_name_encr`"),
+        Binding("n", "sort_by_last_name", "↕ `last_name_encr`"),
+        Binding("s", "sort_by_school", "↕ `schule`"),
+        Binding("i", "sort_by_client_id", "↕ `client_id`"),
+        Binding("c", "sort_by_class_name", "↕ `class_name_encr`"),
         Binding("ctrl+r", "reload", "Neu laden"),
     ]
 
@@ -182,7 +182,7 @@ class ClientsOverview(Static):
             for col in columns:
                 if col == "case_active":
                     continue
-                width = 20 if col in ("first_name_encr", "last_name_encr") else None
+                width = 15 if col in ("first_name_encr", "last_name_encr") else None
                 table.add_column(col, key=col, width=width)
 
     def _add_rows_to_table(self, table: DataTable, data: list[dict[str, Any]]) -> None:
