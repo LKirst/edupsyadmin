@@ -236,6 +236,10 @@ def test_taetigkeitsbericht_calls_create_report(
         out_basename=output_basename,
     )
 
+    mock_manager_instance.get_clients_overview.assert_called_once_with(
+        columns=["school", "keyword_taet_encr", "min_sessions", "n_sessions"],
+        academic_years=None,
+    )
     mock_create_report.assert_called_once()
     # Verify the correct basename and name are passed through
     assert mock_create_report.call_args[0][0] == output_basename

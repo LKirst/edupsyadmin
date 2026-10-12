@@ -257,7 +257,7 @@ def taetigkeitsbericht(
 ) -> None:
     """
     Create a PDF for the Taetigkeitsbericht. This function assumes your db
-    has the columns 'keyword_taet_encr', 'min_sessions' and 'n_sessions'
+    has the columns 'school', 'keyword_taet_encr', 'min_sessions' and 'n_sessions'
     and reads nstudents from the config.
 
     param wstd_psy [int]: Anrechnungsstunden in Wochenstunden
@@ -278,7 +278,7 @@ def taetigkeitsbericht(
     data = ClientsManager(
         database_url=database_url,
     ).get_clients_overview(
-        columns=["keyword_taet_encr", "min_sessions", "n_sessions"],
+        columns=["school", "keyword_taet_encr", "min_sessions", "n_sessions"],
         academic_years=academic_years,
     )
     df = pd.DataFrame(data)
