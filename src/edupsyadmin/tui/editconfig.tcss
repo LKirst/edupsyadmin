@@ -61,6 +61,19 @@ Button {
     margin: 0 1;
 }
 
+/* Log for validation and errors */
+#edit-config-log {
+    height: 6;
+    display: none;
+    border: tall $error;
+    margin: 1 1 0 1;
+}
+
+#edit-config-log.-visible {
+    display: block;
+}
+
+
 /* Container for holding a label and an input field */
 .input-container {
     layout: horizontal;

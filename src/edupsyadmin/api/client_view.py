@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from datetime import date
 from functools import cached_property, lru_cache
 from importlib.resources import files

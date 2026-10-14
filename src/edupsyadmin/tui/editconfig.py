@@ -183,11 +183,11 @@ class SchoolEditor(Vertical):
         yield DeleteItemButton()
 
     def get_data(self) -> tuple[str | None, dict[str, Any] | None]:
-        key = self.query_one("#item_key", Input).value
+        key = self.query_one("#item_key", expect_type=Input).value.strip()
         if not key:
             return None, None
         data = {}
-        for inp in self.query(Input):
+        for inp in self.query(Input).results(Input):
             if inp.id and inp.id != "item_key":
                 if inp.type == "integer":
                     val = int(inp.value) if inp.value else None
@@ -234,7 +234,7 @@ class FormSetEditor(Vertical):
         )
 
     def get_data(self) -> tuple[str | None, list[str] | None]:
-        key = self.query_one("#item_key", Input).value
+        key = self.query_one("#item_key", expect_type=Input).value.strip()
         if not key:
             return None, None
         paths = [
@@ -280,6 +280,7 @@ class CsvImportEditor(Vertical):
                 separator_options,
                 value=default_value,
                 id="separator",
+                allow_blank=False,
             )
         yield Static("Spaltenzuordnung (CSV-Spalte -> DB-Feld)")
         for csv_col, db_col in self._import_data.get("column_mapping", {}).items():
@@ -304,14 +305,14 @@ class CsvImportEditor(Vertical):
         )
 
     def get_data(self) -> tuple[str | None, dict[str, Any] | None]:
-        key = self.query_one("#item_key", Input).value
+        key = self.query_one("#item_key", expect_type=Input).value.strip()
         if not key:
             return None, None
         data: dict[str, Any] = {"column_mapping": {}}
-        data["separator"] = self.query_one("#separator", Select).value
+        data["separator"] = self.query_one("#separator", expect_type=Select).value
         mappings = {}
         for row in self.query(".mapping-row"):
-            inputs = row.query(Input)
+            inputs = list(row.query(Input).results(Input))
             if len(inputs) == MAPPING_INPUTS_COUNT and inputs[0].value:
                 mappings[inputs[0].value] = inputs[1].value
         data["column_mapping"] = mappings

@@ -4,9 +4,10 @@ from pathlib import Path
 import pytest
 import yaml
 from conftest import TEST_UID, TEST_USERNAME
-from textual.widgets import Input
+from textual.widgets import Input, RichLog
 
 from edupsyadmin.api.migration import upgrade_db
+from edupsyadmin.core.config import AppConfig
 from edupsyadmin.tui.editconfig import (
     PathIsDirValidator,
     PathIsFileValidator,
@@ -16,13 +17,21 @@ from edupsyadmin.tui.editconfig_app import (
     ConfigEditorApp,
 )
 
+# TODO: Use fixtures consistently
+
+
+@pytest.fixture
+def db_url(tmp_path: Path) -> str:
+    """Create and migrate a fresh SQLite database, returning its URL."""
+    db_path = tmp_path / "test.db"
+    url = f"sqlite:///{db_path}"
+    upgrade_db(url)
+    return url
+
 
 @pytest.mark.asyncio
-async def test_app_loads_config(mock_config_snapshots, tmp_path):
+async def test_app_loads_config(mock_config_snapshots, db_url):
     """Test if the app loads the configuration correctly."""
-    db_path = tmp_path / "test.db"
-    db_url = f"sqlite:///{db_path}"
-    upgrade_db(db_url)
     app = ConfigEditorApp(
         mock_config_snapshots,
         TEST_UID,
@@ -39,10 +48,7 @@ async def test_app_loads_config(mock_config_snapshots, tmp_path):
         # TODO: check School(s)
 
 
-def test_editconfig_initial_layout(mock_config_snapshots, snap_compare, tmp_path):
-    db_path = tmp_path / "test.db"
-    db_url = f"sqlite:///{db_path}"
-    upgrade_db(db_url)
+def test_editconfig_initial_layout(mock_config_snapshots, snap_compare, db_url):
     app = ConfigEditorApp(
         mock_config_snapshots,
         TEST_UID,
@@ -52,10 +58,7 @@ def test_editconfig_initial_layout(mock_config_snapshots, snap_compare, tmp_path
     assert snap_compare(app, terminal_size=(80, 250))
 
 
-def test_add_new_school_container(mock_config_snapshots, snap_compare, tmp_path):
-    db_path = tmp_path / "test.db"
-    db_url = f"sqlite:///{db_path}"
-    upgrade_db(db_url)
+def test_add_new_school_container(mock_config_snapshots, snap_compare, db_url):
     app = ConfigEditorApp(
         mock_config_snapshots,
         TEST_UID,
@@ -73,10 +76,7 @@ def test_add_new_school_container(mock_config_snapshots, snap_compare, tmp_path)
     assert snap_compare(app, run_before=run_before, terminal_size=(80, 280))
 
 
-def test_edit_new_school_container(mock_config_snapshots, snap_compare, tmp_path):
-    db_path = tmp_path / "test.db"
-    db_url = f"sqlite:///{db_path}"
-    upgrade_db(db_url)
+def test_edit_new_school_container(mock_config_snapshots, snap_compare, db_url):
     app = ConfigEditorApp(
         mock_config_snapshots,
         TEST_UID,
@@ -173,3 +173,214 @@ def test_path_validators_empty_string(tmp_path: Path) -> None:
     assert not PathIsFileValidator.validate("").is_valid
     assert not PathIsDirValidator.validate("").is_valid
     assert PathIsDirValidator.validate(str(tmp_path)).is_valid
+
+
+@pytest.mark.asyncio
+async def test_log_widget_hidden_initially(mock_config, tmp_path):
+    """Test that #edit-config-log is hidden by default."""
+    db_path = tmp_path / "test.db"
+    db_url = f"sqlite:///{db_path}"
+    upgrade_db(db_url)
+
+    app = ConfigEditorApp(mock_config, TEST_UID, TEST_USERNAME, database_url=db_url)
+    async with app.run_test():
+        log = app.query_one("#edit-config-log", expect_type=RichLog)
+        assert not log.has_class("-visible")
+
+
+@pytest.mark.asyncio
+async def test_add_new_school_and_save_success(mock_config, tmp_path):
+    """Test adding a new school, filling all required fields, and saving."""
+    db_path = tmp_path / "test.db"
+    db_url = f"sqlite:///{db_path}"
+    upgrade_db(db_url)
+
+    config_path = mock_config
+    app = ConfigEditorApp(config_path, TEST_UID, TEST_USERNAME, database_url=db_url)
+    test_password = "test_password_12345"
+
+    expected_end = 12
+    expected_nstudents = 850
+
+    async with app.run_test(size=(80, 250)) as pilot:
+        add_btn = app.query_one("#add-school-button")
+        add_btn.focus()
+        await pilot.pause()
+        await pilot.click(add_btn)
+        await pilot.pause()
+
+        school_editors = list(app.query(SchoolEditor).results(SchoolEditor))
+        new_editor = school_editors[-1]
+
+        new_editor.query_one("#item_key", expect_type=Input).value = "Gymnasium"
+        new_editor.query_one(
+            "#school_name",
+            expect_type=Input,
+        ).value = "Goethe Gymnasium"
+        new_editor.query_one("#school_street", expect_type=Input).value = "Schulstr. 5"
+        new_editor.query_one(
+            "#school_city",
+            expect_type=Input,
+        ).value = "80331 Muenchen"
+        new_editor.query_one(
+            "#school_head_w_school",
+            expect_type=Input,
+        ).value = "OStD Mueller"
+        new_editor.query_one("#end", expect_type=Input).value = str(expected_end)
+        new_editor.query_one(
+            "#nstudents",
+            expect_type=Input,
+        ).value = str(expected_nstudents)
+
+        kdf_iterations_input = app.query_exactly_one("#core-kdf_iterations", Input)
+        kdf_iterations_input.value = "1"
+
+        password_input = app.query_exactly_one("#password", Input)
+        password_input.value = test_password
+        password_confirm_input = app.query_exactly_one("#password_confirm", Input)
+        password_confirm_input.value = test_password
+
+        save_btn = app.query_one("#save")
+        save_btn.focus()
+        await pilot.pause()
+        await pilot.click(save_btn)
+
+        for _ in range(100):
+            if not app._running:
+                break
+            await asyncio.sleep(0.05)
+
+    assert not app._running
+
+    with config_path.open("r", encoding="utf-8") as f:
+        saved_config = yaml.safe_load(f)
+
+    assert "Gymnasium" in saved_config["school"]
+    gym = saved_config["school"]["Gymnasium"]
+    assert gym["school_name"] == "Goethe Gymnasium"
+    assert gym["school_street"] == "Schulstr. 5"
+    assert gym["school_city"] == "80331 Muenchen"
+    assert gym["school_head_w_school"] == "OStD Mueller"
+    assert gym["end"] == expected_end
+    assert gym["nstudents"] == expected_nstudents
+
+    # Ensure the saved YAML passes Pydantic validation
+    app_config = AppConfig(**saved_config)
+    assert app_config.school["Gymnasium"].end == expected_end
+
+
+@pytest.mark.asyncio
+async def test_add_new_school_empty_required_fields_blocks_save(mock_config, tmp_path):
+    """Test that adding a school with empty fields blocks save and highlights inputs."""
+    db_path = tmp_path / "test.db"
+    db_url = f"sqlite:///{db_path}"
+    upgrade_db(db_url)
+
+    app = ConfigEditorApp(mock_config, TEST_UID, TEST_USERNAME, database_url=db_url)
+
+    async with app.run_test(size=(80, 250)) as pilot:
+        add_btn = app.query_one("#add-school-button")
+        add_btn.focus()
+        await pilot.pause()
+        await pilot.click(add_btn)
+        await pilot.pause()
+
+        school_editors = list(app.query(SchoolEditor).results(SchoolEditor))
+        new_editor = school_editors[-1]
+
+        save_btn = app.query_one("#save")
+        save_btn.focus()
+        await pilot.pause()
+        await pilot.click(save_btn)
+        await pilot.pause()
+
+        # App must remain running
+        assert app._running
+
+        # Log must become visible
+        log = app.query_one("#edit-config-log", expect_type=RichLog)
+        assert log.has_class("-visible")
+
+        # Empty fields on the new editor must have -invalid class
+        assert new_editor.query_one(
+            "#school_name",
+            expect_type=Input,
+        ).has_class("-invalid")
+        assert new_editor.query_one("#end", expect_type=Input).has_class("-invalid")
+        assert new_editor.query_one(
+            "#nstudents",
+            expect_type=Input,
+        ).has_class("-invalid")
+
+
+@pytest.mark.asyncio
+async def test_save_without_keys_or_password_blocks_save(mock_config, tmp_path):
+    """Test that attempting to save without keys or password displays log error."""
+    db_path = tmp_path / "test.db"
+    db_url = f"sqlite:///{db_path}"
+    upgrade_db(db_url)
+
+    app = ConfigEditorApp(mock_config, TEST_UID, TEST_USERNAME, database_url=db_url)
+
+    async with app.run_test(size=(80, 250)) as pilot:
+        save_btn = app.query_one("#save")
+        save_btn.focus()
+        await pilot.pause()
+        await pilot.click(save_btn)
+
+        # Wait a moment for worker to complete
+        for _ in range(20):
+            await pilot.pause()
+            log = app.query_one("#edit-config-log", expect_type=RichLog)
+            if log.has_class("-visible"):
+                break
+            await asyncio.sleep(0.05)
+
+        assert app._running
+        log = app.query_one("#edit-config-log", expect_type=RichLog)
+        assert log.has_class("-visible")
+
+
+@pytest.mark.asyncio
+async def test_duplicate_school_key_blocks_save(mock_config, tmp_path):
+    """Test that duplicate school keys are caught by validation and block save."""
+    db_path = tmp_path / "test.db"
+    db_url = f"sqlite:///{db_path}"
+    upgrade_db(db_url)
+
+    app = ConfigEditorApp(mock_config, TEST_UID, TEST_USERNAME, database_url=db_url)
+
+    async with app.run_test(size=(80, 250)) as pilot:
+        add_btn = app.query_one("#add-school-button")
+        add_btn.focus()
+        await pilot.pause()
+        await pilot.click(add_btn)
+        await pilot.pause()
+
+        school_editors = list(app.query(SchoolEditor).results(SchoolEditor))
+        new_editor = school_editors[-1]
+
+        # Use duplicate key "FirstSchool" which already exists in sampleconfig
+        new_editor.query_one("#item_key", expect_type=Input).value = "FirstSchool"
+        new_editor.query_one(
+            "#school_name",
+            expect_type=Input,
+        ).value = "Dup Name"
+        new_editor.query_one("#school_street", expect_type=Input).value = "Dup Str"
+        new_editor.query_one("#school_city", expect_type=Input).value = "Dup City"
+        new_editor.query_one(
+            "#school_head_w_school",
+            expect_type=Input,
+        ).value = "Dup Head"
+        new_editor.query_one("#end", expect_type=Input).value = "10"
+        new_editor.query_one("#nstudents", expect_type=Input).value = "100"
+
+        save_btn = app.query_one("#save")
+        save_btn.focus()
+        await pilot.pause()
+        await pilot.click(save_btn)
+        await pilot.pause()
+
+        assert app._running
+        log = app.query_one("#edit-config-log", expect_type=RichLog)
+        assert log.has_class("-visible")
