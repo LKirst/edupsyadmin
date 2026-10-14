@@ -2,7 +2,9 @@ import textwrap
 from argparse import ArgumentParser, Namespace
 
 from edupsyadmin.cli.utils import lazy_import
+from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
+from edupsyadmin.utils.path_utils import normalize_path
 
 COMMAND_DESCRIPTION = "Create a report for a given test type."
 COMMAND_HELP = "Create a report for a given test type."
@@ -25,11 +27,21 @@ def add_arguments(parser: ArgumentParser) -> None:
         choices=["Rosenkohl", "Toechter", "Laufbursche"],
         default=None,
     )
+    parser.add_argument(
+        "--out-dir",
+        type=normalize_path,
+        default=None,
+        help=(
+            "output directory for generated report "
+            "(overrides the default from the config file)"
+        ),
+    )
 
 
 def execute(args: Namespace) -> None:
     """Execute the mk-report command."""
     logger.debug(f"args.test_type: {args.test_type}")
+    out_dir = args.out_dir or config.core.output_directory
     if args.test_type == "LGVT":
         mk_report = lazy_import("edupsyadmin.api.lgvt").mk_report
         mk_report(
@@ -37,6 +49,7 @@ def execute(args: Namespace) -> None:
             args.client_id,
             args.test_date,
             version=args.version,
+            directory=out_dir,
         )
     elif args.test_type == "CFT":
         create_report = lazy_import("edupsyadmin.api.cft_report").create_report
@@ -44,6 +57,7 @@ def execute(args: Namespace) -> None:
             args.database_url,
             args.client_id,
             args.test_date,
+            directory=out_dir,
         )
     else:
         logger.warning("Testauswertung bisher nur für CFT und LGVT implementiert")
