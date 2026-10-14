@@ -226,6 +226,7 @@ class ConfigEditorApp(App[None]):
             yield LgvtEditor(self.config_dict.get("lgvtcsv"))
 
         yield RichLog(id="edit-config-log", markup=True, wrap=True)
+        # Spnner shown during long-running operations
         yield Horizontal(
             Button("Speichern", id="save", variant="success"),
             Button("Abbrechen", id="cancel", variant="error"),
@@ -282,7 +283,7 @@ class ConfigEditorApp(App[None]):
 
         :param message: Plain text error message.
         """
-        self.loading = False
+        self.screen.loading = False  # turn off spinner
         self.notify(message, severity="error", markup=False)
         self.log_error(message)
 
@@ -776,7 +777,6 @@ class ConfigEditorApp(App[None]):
     @on(GotKeys)
     async def on_got_keys(self, message: GotKeys) -> None:
         """Handles the GotKeys message to continue the save process."""
-        self.loading = False
         existing_keys = message.keys
 
         password_editor = self.query_one(
@@ -865,7 +865,8 @@ class ConfigEditorApp(App[None]):
                         app_uid,
                         username,
                         existing_keys,
-                    )
+                    )  # turns loading on
+                    self.screen.loading = False
 
                 self.push_screen(
                     YesNoDialog(
@@ -900,7 +901,7 @@ class ConfigEditorApp(App[None]):
         :param username: Keyring user name.
         :param existing_keys: Valid keys to keep next to the new one.
         """
-        self.loading = True
+        self.screen.loading = True  # show spinner
         self.notify("Neuer Verschlüsselungsschlüssel wird generiert...")
         kdf_iterations_value = self.query_one(
             "#core-kdf_iterations",
@@ -917,7 +918,7 @@ class ConfigEditorApp(App[None]):
 
     def _start_save(self) -> None:
         """Rebuild the config from the UI and start the save worker."""
-        self.loading = True
+        self.screen.loading = True  # show spinner
         try:
             self.config_dict = self._rebuild_config_from_ui()
         except ValueError as e:
@@ -927,14 +928,17 @@ class ConfigEditorApp(App[None]):
 
     async def action_save(self) -> None:
         """Validate the UI, then start the save process."""
+        if self.screen.loading:
+            return
         self.clear_log()
         if not self._validate_inputs_for_save():
             return
 
+        self.screen.loading = True  # show spinner for get_keys
+
         app_uid = self.query_one("#core-app_uid", expect_type=Input).value.strip()
         username = self.query_one("#core-app_username", expect_type=Input).value.strip()
 
-        self.loading = True  # Start loading for get_keys
         self._get_keys_worker(app_uid, username)
 
     # ------------------------------------------------------------------
@@ -1025,8 +1029,7 @@ class ConfigEditorApp(App[None]):
     @on(ConfigSaved)
     async def on_config_saved(self, message: ConfigSaved) -> None:
         """Handles the ConfigSaved message."""
-        self.loading = False
-        self.notify("Konfiguration gespeichert", severity="information")
+        self.screen.loading = False
         self.exit()
 
     async def action_quit(self) -> None:
