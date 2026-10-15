@@ -220,10 +220,14 @@ class ClientsOverview(Static):
 
         data = message.data
         if not data:
+            # No columns/data - keep header hidden and mark loading done
+            # TODO: Write a test for this edge case (empty table)
+            table.show_header = False
             table.loading = False
             self.notify("Tabelle neu geladen.")
             return
 
+        table.show_header = True
         self._add_rows_to_table(table, data)
 
         if self._last_applied_sort[0]:
