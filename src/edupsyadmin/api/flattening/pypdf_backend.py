@@ -22,8 +22,6 @@ Limitations
 - If a field has no value and no appearance stream, it is silently skipped.
 """
 
-from __future__ import annotations
-
 import re
 from dataclasses import dataclass
 from pathlib import Path
