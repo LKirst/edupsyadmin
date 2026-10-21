@@ -147,7 +147,7 @@ def execute(args: Namespace) -> None:
     form_paths_normalized: list[Path] = [normalize_path(p) for p in form_paths]
     logger.debug(f"Trying to fill the files: {form_paths_normalized}")
 
-    out_dir = args.out_dir or config.core.output_directory
+    out_dir = normalize_path(args.out_dir or config.core.output_directory)
 
     for cid in args.client_ids:
         client_view = clients_manager.get_client_view(cid)
