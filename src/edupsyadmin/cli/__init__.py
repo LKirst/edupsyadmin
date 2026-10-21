@@ -1,6 +1,7 @@
 import argparse
 import importlib
 import importlib.resources
+import logging
 import shutil
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from pathlib import Path
@@ -275,7 +276,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Scrub sensitive arguments from logs
     sensitive_keys = {
-        "name",
+        "names",
         "csv",
         "key_value_pairs",
         "inject_data",
@@ -298,7 +299,12 @@ def main(argv: list[str] | None = None) -> int:
         KeyError,
         MigrationError,
     ) as err:
-        logger.critical(err)
+        logger.critical(
+            "%s: %s",
+            type(err).__name__,
+            err,
+            exc_info=logger.isEnabledFor(logging.DEBUG),
+        )
         return 1
     logger.debug("successful completion")
     return 0

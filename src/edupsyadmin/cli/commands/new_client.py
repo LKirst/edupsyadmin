@@ -43,21 +43,29 @@ def _enter_client_csv(
     import_config_name: str | None = None,
 ) -> int:
     """
-    Read client from a csv file.
+    Read client(s) from a csv file and add them to the database.
 
     :param clients_manager: a ClientsManager instance used to add the client to the db
     :param csv_path: path to a csv file
     :param school: short name of the school as set in the config file
     :param name: name(s) of the client(s) as specified in the "name" column of the csv
     :param import_config_name: name of the csv import configuration from the config
-    return: client_id of the last client that was created
+    :raises ValueError: if the import config is unknown, the lookup column is
+        missing, a name is not found, or no school/name is available
+    :return: client_id of the last client that was created
     """
     pd = lazy_import("pandas")
 
     client_cls = clients.Client
 
     if import_config_name:
-        import_conf = config.csv_import[import_config_name]
+        try:
+            import_conf = config.csv_import[import_config_name]
+        except KeyError:
+            raise ValueError(
+                f"Unknown csv import config '{import_config_name}'. "
+                f"Available configs: {sorted(config.csv_import)}",
+            ) from None
         separator = import_conf.separator
         column_mapping = import_conf.column_mapping
     else:
@@ -78,34 +86,76 @@ def _enter_client_csv(
             "address.email": "email_encr",
         }
 
-    df = pd.read_csv(csv_path, sep=separator, encoding="utf-8", dtype=str).rename(
-        columns=column_mapping,
+    # keep_default_na: Empty cells become "" (the defaults used by
+    # Client.__init__), and values like "NA" or "Null" stay strings.
+    raw_df = pd.read_csv(
+        csv_path, sep=separator, encoding="utf-8", dtype=str, keep_default_na=False
     )
 
-    # this is necessary so that telephone numbers are strings that can be encrypted
-    df["telephone1_encr"] = df["telephone1_encr"].fillna("").astype(str)
-    df["telephone2_encr"] = df["telephone2_encr"].fillna("").astype(str)
-
-    # The 'name' column is not in the mapping, it's used for lookup
-    if "name" not in df.columns:
-        # If the original 'name' column was mapped, find its new name
-        lookup_col = next(
-            (
-                new_name
-                for old_name, new_name in column_mapping.items()
-                if old_name == "name"
-            ),
-            "name",
+    # Log a warning if there are unknown keys
+    unmatched = sorted(set(column_mapping) - set(raw_df.columns))
+    if unmatched:
+        logger.warning(
+            "Column mapping (import config: %s) refers to columns that are not in "
+            "'%s' and will be ignored: %s. Columns found in the file: %s",
+            import_config_name or "<default>",
+            csv_path,
+            unmatched,
+            list(raw_df.columns),
         )
-    else:
-        lookup_col = "name"
 
+    df = raw_df.rename(columns=column_mapping)
+
+    # Telephone numbers must be strings so that they can be encrypted.
+    for phone_col in ("telephone1_encr", "telephone2_encr"):
+        if phone_col in df.columns:
+            df[phone_col] = df[phone_col].fillna("").astype(str)
+        else:
+            logger.warning(
+                "No column was mapped to '%s'; it will be left empty.", phone_col
+            )
+
+    # The 'name' column is used for lookup; it may itself have been renamed.
+    lookup_col = "name" if "name" in df.columns else column_mapping.get("name", "name")
+    if lookup_col not in df.columns:
+        raise ValueError(
+            f"Lookup column '{lookup_col}' not found in '{csv_path}' after applying "
+            f"the column mapping. Available columns: {list(df.columns)}",
+        )
+
+    # Use the first school from the config if none was passed.
+    if school is None:
+        try:
+            school = next(iter(config.school))
+        except StopIteration:
+            raise ValueError(
+                "No school passed and none defined in the config."
+            ) from None
+
+    # Only keep keys that the Client model accepts.
+    valid_keys = {c.key for c in sa_inspect(client_cls).column_attrs}
+    valid_init_keys = set(signature(client_cls.__init__).parameters)
+    allowed_keys = valid_keys | valid_init_keys
+    # postCode/city are merged into city_encr below, so they are valid targets.
+    unknown_targets = sorted(
+        target
+        for target in set(column_mapping.values())
+        if target not in allowed_keys and target not in {"postCode", "city"}
+    )
+    if unknown_targets:
+        logger.debug(
+            "Column mapping targets are not Client fields and will be dropped: %s",
+            unknown_targets,
+        )
+
+    client_id: int | None = None
     for this_name in name:
         client_series = df[df[lookup_col] == this_name]
 
         if client_series.empty:
             raise ValueError(
-                f"The name '{this_name}' was not found in the CSV file '{csv_path}'.",
+                f"The name '{this_name}' was not found in column '{lookup_col}' "
+                f"of the CSV file '{csv_path}'.",
             )
 
         client_data = client_series.iloc[0].to_dict()
@@ -128,30 +178,20 @@ def _enter_client_csv(
                     ).date()
                 except ValueError:
                     logger.error(
-                        f"Could not parse date '{client_data[date_col]}' "
-                        f"for column '{date_col}'. "
+                        "Could not parse date '%s' for column '%s'. "
                         "Please ensure the format is DD.MM.YYYY.",
+                        client_data[date_col],
+                        date_col,
                     )
                     client_data[date_col] = None
 
-        # check if school was passed and if not use the first from the config
-        if school is None:
-            school = next(iter(config.school.keys()))
         client_data["school"] = school
 
-        # Filter data to only include valid columns for the Client model
-        valid_keys = {c.key for c in sa_inspect(client_cls).column_attrs}
-        init_sig = signature(client_cls.__init__)
-        valid_init_keys = set(init_sig.parameters.keys())
-
-        final_client_data = {
-            k: v
-            for k, v in client_data.items()
-            if k in valid_keys or k in valid_init_keys
-        }
-
+        final_client_data = {k: v for k, v in client_data.items() if k in allowed_keys}
         client_id = clients_manager.add_client(**final_client_data)
 
+    if client_id is None:
+        raise ValueError("No client names were given; nothing was added.")
     return client_id
 
 
