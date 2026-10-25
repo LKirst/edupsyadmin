@@ -325,6 +325,100 @@ def test_create_documentation(
     )
 
 
+def test_create_documentation_respects_config_output_directory(
+    tmp_path,
+    mock_webuntis,
+    mock_config,
+    pdf_forms,
+):
+    out_dir = tmp_path / "custom_output"
+    out_dir.mkdir()
+    config.core.output_directory = out_dir
+
+    database_path = tmp_path / "test.sqlite"
+    database_url = f"sqlite:///{database_path}"
+
+    # Arrange
+    upgrade_db(database_url)
+    client_id = managers.ClientsManager(database_url).add_client(
+        school="FirstSchool",
+        gender_encr="f",
+        class_name_encr="11TKKG",
+        first_name_encr="Erika",
+        last_name_encr="Mustermann",
+        birthday_encr="2000-12-24",
+    )
+
+    # Act
+    args = argparse.Namespace(
+        database_url=database_url,
+        client_ids=[client_id],
+        form_set="lrst",
+        form_paths=None,
+        inject_data=None,
+        out_dir=None,
+        tui=False,
+        no_encryption=True,
+        password=None,
+    )
+    create_documentation_command.execute(args)
+
+    # Assert
+    output_pdf_path = out_dir / f"{client_id}_merged.pdf"
+    assert output_pdf_path.exists(), (
+        f"Output file {output_pdf_path} was not created in {out_dir}"
+    )
+
+
+def test_create_documentation_out_dir_cli_override(
+    tmp_path,
+    mock_webuntis,
+    mock_config,
+    pdf_forms,
+):
+    config_dir = tmp_path / "config_output"
+    config_dir.mkdir()
+    config.core.output_directory = config_dir
+
+    cli_dir = tmp_path / "cli_output"
+    cli_dir.mkdir()
+
+    database_path = tmp_path / "test.sqlite"
+    database_url = f"sqlite:///{database_path}"
+
+    # Arrange
+    upgrade_db(database_url)
+    client_id = managers.ClientsManager(database_url).add_client(
+        school="FirstSchool",
+        gender_encr="f",
+        class_name_encr="11TKKG",
+        first_name_encr="Erika",
+        last_name_encr="Mustermann",
+        birthday_encr="2000-12-24",
+    )
+
+    # Act
+    args = argparse.Namespace(
+        database_url=database_url,
+        client_ids=[client_id],
+        form_set="lrst",
+        form_paths=None,
+        inject_data=None,
+        out_dir=cli_dir,
+        tui=False,
+        no_encryption=True,
+        password=None,
+    )
+    create_documentation_command.execute(args)
+
+    # Assert
+    output_pdf_path = cli_dir / f"{client_id}_merged.pdf"
+    assert output_pdf_path.exists(), (
+        f"Output file {output_pdf_path} was not created in {cli_dir}"
+    )
+    assert not (config_dir / f"{client_id}_merged.pdf").exists()
+
+
 def test_delete_client(mock_config, tmp_path):
     database_path = tmp_path / "test.sqlite"
     database_url = f"sqlite:///{database_path}"
