@@ -1,3 +1,4 @@
+import io
 import os
 from dataclasses import dataclass
 from datetime import date
@@ -46,7 +47,7 @@ class TestReportData:
     birthday: date
     age_str: str
     results: list[ResultsItem]
-    plot_path: str | os.PathLike[str]
+    plot_path: str | os.PathLike[str] | io.BytesIO
 
 
 class BasePDFReport:
@@ -365,10 +366,16 @@ class TestReport(BasePDFReport):
         flowables.append(Spacer(1, 20))
 
         # Plot
-        if Path(self.data.plot_path).exists():
-            img = Image(str(self.data.plot_path))
-            img = self._scale_image(img, available_width=A4[0] - 3 * cm)
-            flowables.append(img)
+        if isinstance(self.data.plot_path, io.BytesIO):
+            self.data.plot_path.seek(0)
+            img = Image(self.data.plot_path)
+        else:
+            plot_path = Path(self.data.plot_path)
+            if not plot_path.exists():
+                raise FileNotFoundError(f"Plot image not found: {plot_path}")
+            img = Image(str(plot_path))
+        img = self._scale_image(img, available_width=A4[0] - 3 * cm)
+        flowables.append(img)
 
         doc.build(
             flowables,
@@ -473,7 +480,7 @@ class TaetigkeitsberichtReport(BasePDFReport):
 
 def normal_distribution_plot(
     v_lines: list[int | float],
-    plot_filename: str | os.PathLike[str] = "plot.png",
+    plot_filename: str | os.PathLike[str] | io.BytesIO = "plot.png",
 ) -> None:
     mu = 0
     variance = 1
@@ -494,5 +501,8 @@ def normal_distribution_plot(
     for value in v_lines:
         plt.vlines(x=value, ymin=0, ymax=0.45)
     plt.tight_layout()
-    plt.savefig(plot_filename)
+    if isinstance(plot_filename, io.BytesIO):
+        plt.savefig(plot_filename, format="png")
+    else:
+        plt.savefig(plot_filename)
     plt.close()

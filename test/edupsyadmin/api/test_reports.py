@@ -1,6 +1,8 @@
+import io
 from datetime import date
 
 import pandas as pd
+import pytest
 
 from edupsyadmin.api.reports import (
     TaetigkeitsberichtReport,
@@ -40,6 +42,47 @@ def test_test_report_build_creates_pdf(tmp_path):
     )
 
     output_path = tmp_path / "test_report.pdf"
+    TestReport(data).build(output_path)
+
+    assert output_path.exists()
+    assert output_path.stat().st_size > 0
+
+
+def test_test_report_missing_plot_raises_error(tmp_path):
+    """TestReport.build() raises FileNotFoundError if plot image is missing."""
+    data = TestReportData(
+        heading="Test Heading",
+        client_name_or_id="Test Client",
+        grade=10,
+        test_date=date(2024, 3, 1),
+        birthday=date(2000, 5, 15),
+        age_str="23 Jahre, 9 Monate",
+        results=[],
+        plot_path=tmp_path / "nonexistent_plot.png",
+    )
+
+    output_path = tmp_path / "test_report.pdf"
+    with pytest.raises(FileNotFoundError, match="Plot image not found"):
+        TestReport(data).build(output_path)
+
+
+def test_test_report_build_with_bytesio_plot(tmp_path):
+    """TestReport.build() works with an in-memory BytesIO plot."""
+    buf = io.BytesIO()
+    normal_distribution_plot([0.0, 1.0], buf)
+
+    data = TestReportData(
+        heading="In-Memory Test Heading",
+        client_name_or_id="Test Client",
+        grade=10,
+        test_date=date(2024, 3, 1),
+        birthday=date(2000, 5, 15),
+        age_str="23 Jahre, 9 Monate",
+        results=[],
+        plot_path=buf,
+    )
+
+    output_path = tmp_path / "test_report_bytesio.pdf"
     TestReport(data).build(output_path)
 
     assert output_path.exists()

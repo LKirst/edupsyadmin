@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import csv
+import io
 import math
 import os
 from datetime import datetime
@@ -258,8 +259,12 @@ def generate_lgvt_report(
 
     # Plot generation
     z_values = [lv_z, lgs_z, lg_z]
-    fn_plot = Path("normal_distribution_plot.png")
-    normal_distribution_plot(z_values, fn_plot)
+    directory_path = normalize_path(directory)
+    output_fn = directory_path / f"{client_id}_Auswertung_LGVT.pdf"
+
+    buf_plot = io.BytesIO()
+    normal_distribution_plot(z_values, buf_plot)
+    buf_plot.seek(0)
 
     data = TestReportData(
         heading=f"LGVT ({version}) Auswertung",
@@ -269,19 +274,11 @@ def generate_lgvt_report(
         birthday=birthday,
         age_str=age_str,
         results=results,
-        plot_path=fn_plot,
+        plot_path=buf_plot,
     )
 
-    directory_path = normalize_path(directory)
-    output_fn = directory_path / f"{client_id}_Auswertung_LGVT.pdf"
-
-    try:
-        report = TestReport(data)
-        report.build(output_fn)
-    finally:
-        # remove plot png
-        if fn_plot.exists():
-            fn_plot.unlink()
+    report = TestReport(data)
+    report.build(output_fn)
 
     return output_fn
 

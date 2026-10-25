@@ -1,3 +1,4 @@
+import io
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
@@ -110,17 +111,19 @@ def generate_cft_report(
         ("IQ Teil 1 max - Teil 2 (sign. ab 12)", str(differenz)),
     ]
 
-    # create a normal distribution plot and save it as a png
-    iq_values = [iq_part1_min, iq_part1_max, iq_part2, iq_total_min, iq_total_max]
-    z_values = [iq_to_z(iq) for iq in iq_values if iq is not None]
-    fn_plot = Path("normal_distribution_plot.png")
-    normal_distribution_plot(z_values, fn_plot)
-
-    # create the pdf
     name = (
         (client_dict.first_name_encr or "") + " " + (client_dict.last_name_encr or "")
     ).strip() or str(client_id)
+    output_fn = directory_path / f"{client_id}_Auswertung.pdf"
 
+    # create a normal distribution plot in memory
+    iq_values = [iq_part1_min, iq_part1_max, iq_part2, iq_total_min, iq_total_max]
+    z_values = [iq_to_z(iq) for iq in iq_values if iq is not None]
+    buf_plot = io.BytesIO()
+    normal_distribution_plot(z_values, buf_plot)
+    buf_plot.seek(0)
+
+    # create the pdf
     data = TestReportData(
         heading="CFT 20-R Auswertung",
         client_name_or_id=name,
@@ -129,16 +132,11 @@ def generate_cft_report(
         birthday=birthday,
         age_str=age_str,
         results=results,
-        plot_path=fn_plot,
+        plot_path=buf_plot,
     )
 
     report = TestReport(data)
-    output_fn = directory_path / f"{client_id}_Auswertung.pdf"
     report.build(output_fn)
-
-    # remove the plot png
-    if fn_plot.exists():
-        fn_plot.unlink()
 
     return output_fn
 
