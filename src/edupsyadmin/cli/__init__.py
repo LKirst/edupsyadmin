@@ -277,6 +277,7 @@ def main(argv: list[str] | None = None) -> int:
     # Scrub sensitive arguments from logs
     sensitive_keys = {
         "names",
+        "name",
         "csv",
         "key_value_pairs",
         "inject_data",
