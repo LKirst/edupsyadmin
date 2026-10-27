@@ -407,7 +407,7 @@ def mk_report(
         incorrect_answ=incorrect_answ,
         num_processed=num_processed,
         words_after_last_item=words_after_last_item,
-        lv_pr_korr=lv_pr_korr,
+        lv_pr_korr=round_half_up(lv_pr_korr, 2),  # round for printing
         lgs_pr_korr=lgs_pr_korr,
         lg_pr=lg_pr,
         lv_rw_korr=lv_rw_korr,
