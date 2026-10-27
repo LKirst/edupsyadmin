@@ -1,3 +1,29 @@
+## 10.1.0 (2026-10-27)
+
+### Feat
+
+- **tui.editconfig**: show spinner while saving
+- **tui.clients_overview**: use the available space more effectively
+- **api.managers**: reduce the number of columns that are shown by default
+
+### Fix
+
+- **editconfig**: only touch the keyring if pw, uid or username are changed
+- **reports**: use io.BytesIO to pass the plots to reportlab
+- **cli.create_documentation**: only normlize out_dir if value is passed
+- **cli**: scrub both name and names from logging
+- **cli**: normalize output path for create-documentation
+- **cli**: make new-client csv import more robust
+- **tui**: prevents clicks on an empty header
+- **mk-report**: respect the output_dir from config
+- **editconfig**: make editconfig more robust
+- **taetigkeitsbericht**: get school column for taetigkeitsbericht
+
+### Refactor
+
+- use python 3.15 lazy imports
+- upgrade to python 3.15
+
 ## 10.0.1 (2026-09-28)
 
 ### Fix
