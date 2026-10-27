@@ -8,6 +8,7 @@ from textual.widgets import Input, RichLog
 
 from edupsyadmin.api.migration import upgrade_db
 from edupsyadmin.core.config import AppConfig
+from edupsyadmin.tui import editconfig_app
 from edupsyadmin.tui.editconfig import (
     PathIsDirValidator,
     PathIsFileValidator,
@@ -314,31 +315,54 @@ async def test_add_new_school_empty_required_fields_blocks_save(mock_config, tmp
 
 
 @pytest.mark.asyncio
-async def test_save_without_keys_or_password_blocks_save(mock_config, tmp_path):
-    """Test that attempting to save without keys or password displays log error."""
-    db_path = tmp_path / "test.db"
-    db_url = f"sqlite:///{db_path}"
-    upgrade_db(db_url)
+async def test_save_without_password_saves_without_touching_keyring(
+    mock_config: Path,
+    db_url: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Without a password and with an unchanged identity, Save skips the keyring."""
+    calls: list[tuple[str, str]] = []
+
+    def recording(uid: str, username: str) -> list[bytes]:
+        calls.append((uid, username))
+        return []
+
+    monkeypatch.setattr(editconfig_app, "get_keys_from_keyring", recording)
 
     app = ConfigEditorApp(mock_config, TEST_UID, TEST_USERNAME, database_url=db_url)
-
     async with app.run_test(size=(80, 250)) as pilot:
-        save_btn = app.query_one("#save")
-        save_btn.focus()
+        app.query_exactly_one("#core-logging", Input).value = "INFO"
         await pilot.pause()
-        await pilot.click(save_btn)
-
-        # Wait a moment for worker to complete
-        for _ in range(20):
-            await pilot.pause()
-            log = app.query_one("#edit-config-log", expect_type=RichLog)
-            if log.has_class("-visible"):
+        await pilot.click("#save")
+        # Wait for the app to exit (it exits after saving)
+        for _ in range(100):
+            if not app._running:
                 break
             await asyncio.sleep(0.05)
 
-        assert app._running
+    assert calls == []
+    with mock_config.open("r", encoding="utf-8") as f:
+        assert yaml.safe_load(f)["core"]["logging"] == "INFO"
+
+
+@pytest.mark.asyncio
+async def test_save_with_changed_identity_and_no_keys_is_blocked(
+    mock_config: Path,
+    db_url: str,
+) -> None:
+    """An edited keyring identity without stored keys must not be saved."""
+    app = ConfigEditorApp(mock_config, TEST_UID, TEST_USERNAME, database_url=db_url)
+    async with app.run_test(size=(80, 250)) as pilot:
+        app.query_one("#core-app_username", expect_type=Input).value = "someone-else"
+        await pilot.pause()
+        await pilot.click("#save")
+
         log = app.query_one("#edit-config-log", expect_type=RichLog)
-        assert log.has_class("-visible")
+        async with asyncio.timeout(5):
+            while not log.has_class("-visible"):
+                await pilot.pause(0.05)
+
+        assert app._running
 
 
 @pytest.mark.asyncio

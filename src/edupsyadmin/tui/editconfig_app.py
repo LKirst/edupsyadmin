@@ -165,8 +165,16 @@ class ConfigEditorApp(App[None]):
         self.app_uid = app_uid
         self.app_username = app_username
         self.database_url = database_url
+
         # Widgets that blocked the most recent save attempt.
         self._invalid_inputs: list[Widget] = []
+
+        # Keyring identity as loaded; keys live under these names.
+        core = self.config_dict.get("core", {})
+        self._loaded_identity: tuple[str, str] = (
+            str(core.get("app_uid") or ""),
+            str(core.get("app_username") or ""),
+        )
 
         self.title = "Konfiguration für edupsyadmin"
 
@@ -854,6 +862,7 @@ class ConfigEditorApp(App[None]):
 
                 def on_confirm(confirmed: bool | None) -> None:
                     if not confirmed:
+                        self.screen.loading = False
                         self.notify(
                             "Speichern abgebrochen. "
                             "Die Schlüssel wurden nicht geändert.",
@@ -934,11 +943,18 @@ class ConfigEditorApp(App[None]):
         if not self._validate_inputs_for_save():
             return
 
-        self.screen.loading = True  # show spinner for get_keys
-
         app_uid = self.query_one("#core-app_uid", expect_type=Input).value.strip()
         username = self.query_one("#core-app_username", expect_type=Input).value.strip()
 
+        password = self.query_one(
+            "#password-section", expect_type=PasswordEditor
+        ).password
+        identity_changed = (app_uid, username) != self._loaded_identity
+        if not password and not identity_changed:
+            self._start_save()  # sets screen.loading = True
+            return
+
+        self.screen.loading = True  # show spinner for get_keys
         self._get_keys_worker(app_uid, username)
 
     # ------------------------------------------------------------------
