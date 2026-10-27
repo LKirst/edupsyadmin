@@ -46,11 +46,12 @@ def test_cli_get_clients_execution(benchmark, mock_config, tmp_path, num_clients
             database_url=database_url,
             salt_path=salt_path,
             nta_nos=False,
-            school=None,
+            schools=None,
             client_id=None,
             out=None,
             tui=False,
             columns=None,
+            all_academic_years=True,
         )
         get_clients_command.execute(args)
 
