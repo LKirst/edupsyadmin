@@ -67,7 +67,7 @@ Nun aktualisiere edupsyadmin mit:
 
 .. code-block:: console
 
-   $ uv tool upgrade edupsyadmin --python 3.14
+   $ uv tool upgrade edupsyadmin --python 3.15
 
 Mit ``edupsyadmin --version`` kannst du überprüfen, welche Version von
 edupsyadmin jetzt installiert ist.
