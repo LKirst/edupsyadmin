@@ -5,8 +5,8 @@ from argparse import ArgumentParser, Namespace
 from pypdf import PdfReader
 from pypdf.errors import PyPdfError
 
-from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.utils.path_utils import normalize_path
+lazy from edupsyadmin.api.flatten_pdf import flatten_pdfs
 
 COMMAND_DESCRIPTION = "Flatten pdf forms"
 COMMAND_HELP = "Flatten pdf forms"
@@ -52,5 +52,4 @@ def execute(args: Namespace) -> None:
                 except PyPdfError, OSError, ValueError:
                     continue
 
-    flatten_pdfs = lazy_import("edupsyadmin.api.flatten_pdf").flatten_pdfs
     flatten_pdfs(args.form_paths, password=password)

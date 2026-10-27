@@ -3,7 +3,10 @@ import sys
 import textwrap
 from argparse import ArgumentParser, Namespace
 
-from edupsyadmin.cli.utils import lazy_import
+from edupsyadmin.core.logger import logger
+lazy from edupsyadmin.api.managers import ClientsManager
+lazy from edupsyadmin.tui.edupsyadmintui import EdupsyadminTui
+lazy from edupsyadmin.utils.academic_year import get_this_academic_year_string
 
 COMMAND_DESCRIPTION = "Start the TUI"
 COMMAND_HELP = "Start the TUI"
@@ -69,11 +72,9 @@ def _suppress_console_logging() -> None:
 
 def execute(args: Namespace) -> None:
     """Entry point for the TUI."""
-    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
-    clients_manager = clients_manager_cls(
+    clients_manager = ClientsManager(
         database_url=args.database_url,
     )
-    logger = lazy_import("edupsyadmin.core.logger").logger
     total = clients_manager.get_total_count()
     logger.info(f"Database contains {total} entries.")
 
@@ -88,14 +89,9 @@ def execute(args: Namespace) -> None:
     elif args.academic_years is not None:
         academic_years = args.academic_years
     else:
-        get_this_academic_year_string = lazy_import(
-            "edupsyadmin.utils.academic_year",
-        ).get_this_academic_year_string
         academic_years = [get_this_academic_year_string()]
 
-    edupsyadmin_tui_cls = lazy_import("edupsyadmin.tui.edupsyadmintui").EdupsyadminTui
-
-    app = edupsyadmin_tui_cls(
+    app = EdupsyadminTui(
         manager=clients_manager,
         nta_nos=args.nta_nos,
         schools=args.schools,

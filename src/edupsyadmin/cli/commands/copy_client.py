@@ -3,8 +3,9 @@ from argparse import ArgumentParser, Namespace
 
 from rich.console import Console
 
-from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.core.logger import logger
+lazy from edupsyadmin.api.managers import ClientsManager
+lazy from edupsyadmin.utils.academic_year import get_this_academic_year_string
 
 COMMAND_DESCRIPTION = "Copy a client to an academic year"
 COMMAND_HELP = "Copy a client to an academic year"
@@ -39,16 +40,12 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 def execute(args: Namespace) -> None:
     """Execute the copy-client command."""
-    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
-    clients_manager = clients_manager_cls(
+    clients_manager = ClientsManager(
         database_url=args.database_url,
     )
 
     to_academic_year = args.to_academic_year
     if to_academic_year is None:
-        get_this_academic_year_string = lazy_import(
-            "edupsyadmin.utils.academic_year",
-        ).get_this_academic_year_string
         to_academic_year = get_this_academic_year_string()
 
     new_id = clients_manager.copy_client(

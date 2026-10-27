@@ -1,10 +1,11 @@
 import textwrap
 from argparse import ArgumentParser, Namespace
 
-from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 from edupsyadmin.utils.path_utils import normalize_path
+lazy from edupsyadmin.api.cft_report import create_report
+lazy from edupsyadmin.api.lgvt import mk_report
 
 COMMAND_DESCRIPTION = "Create a report for a given test type."
 COMMAND_HELP = "Create a report for a given test type."
@@ -43,7 +44,6 @@ def execute(args: Namespace) -> None:
     logger.debug(f"args.test_type: {args.test_type}")
     out_dir = args.out_dir or config.core.output_directory
     if args.test_type == "LGVT":
-        mk_report = lazy_import("edupsyadmin.api.lgvt").mk_report
         mk_report(
             args.database_url,
             args.client_id,
@@ -52,7 +52,6 @@ def execute(args: Namespace) -> None:
             directory=out_dir,
         )
     elif args.test_type == "CFT":
-        create_report = lazy_import("edupsyadmin.api.cft_report").create_report
         create_report(
             args.database_url,
             args.client_id,

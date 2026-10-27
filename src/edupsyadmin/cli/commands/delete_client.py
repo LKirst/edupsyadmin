@@ -1,7 +1,7 @@
 import textwrap
 from argparse import ArgumentParser, Namespace
 
-from edupsyadmin.cli.utils import lazy_import
+lazy from edupsyadmin.api.managers import ClientsManager
 
 COMMAND_DESCRIPTION = "Delete a client in the database"
 COMMAND_HELP = "Delete a client in the database"
@@ -22,8 +22,7 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 def execute(args: Namespace) -> None:
     """Execute the delete_client command."""
-    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
-    clients_manager = clients_manager_cls(
+    clients_manager = ClientsManager(
         database_url=args.database_url,
     )
     clients_manager.delete_client(args.client_id)

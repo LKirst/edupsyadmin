@@ -1,7 +1,7 @@
 import textwrap
 from argparse import ArgumentParser, Namespace
 
-from edupsyadmin.cli.utils import lazy_import
+lazy from edupsyadmin.api.setup_demo import setup_demo
 
 COMMAND_DESCRIPTION = (
     "Create a sandboxed demo environment (demo-config.yml, demo-salt.txt, demo.db)"
@@ -26,5 +26,4 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 def execute(_args: Namespace) -> None:
     """Create a sandboxed demo environment."""
-    setup_demo = lazy_import("edupsyadmin.api.setup_demo").setup_demo
     setup_demo()

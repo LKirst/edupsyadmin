@@ -1,8 +1,9 @@
 import textwrap
 from argparse import ArgumentParser, Namespace
 
-from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.utils.path_utils import normalize_path
+lazy from edupsyadmin.api.taetigkeitsbericht_from_db import taetigkeitsbericht
+lazy from edupsyadmin.utils.academic_year import get_this_academic_year_string
 
 COMMAND_DESCRIPTION = "Create a PDF output for the Taetigkeitsbericht (experimental)"
 COMMAND_HELP = "Create a PDF output for the Taetigkeitsbericht (experimental)"
@@ -55,14 +56,8 @@ def add_arguments(parser: ArgumentParser) -> None:
 def execute(args: Namespace) -> None:
     """Execute the taetigkeitsbericht command."""
 
-    taetigkeitsbericht = lazy_import(
-        "edupsyadmin.api.taetigkeitsbericht_from_db",
-    ).taetigkeitsbericht
     academic_year = args.academic_year
     if academic_year is None:
-        get_this_academic_year_string = lazy_import(
-            "edupsyadmin.utils.academic_year",
-        ).get_this_academic_year_string
         academic_year = get_this_academic_year_string()
 
     taetigkeitsbericht(

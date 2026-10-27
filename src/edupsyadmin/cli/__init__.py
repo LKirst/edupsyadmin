@@ -10,9 +10,7 @@ from typing import Any
 from edupsyadmin.__version__ import __version__
 from edupsyadmin.api.exceptions import ClientNotFoundError, MigrationError
 from edupsyadmin.api.migration_fs import migrate_to_stable_paths
-from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.core.config import config
-from edupsyadmin.core.encrypt import encr, get_keys_from_keyring
 from edupsyadmin.core.logger import logger
 from edupsyadmin.core.paths import (
     APP_UID,
@@ -21,6 +19,8 @@ from edupsyadmin.core.paths import (
     DEFAULT_SALT_PATH,
 )
 from edupsyadmin.utils.path_utils import normalize_path
+lazy from edupsyadmin.api.migration import upgrade_db
+lazy from edupsyadmin.core.encrypt import encr, get_keys_from_keyring
 
 __all__ = ("main",)
 
@@ -224,7 +224,6 @@ def _run_db_migrations(args: argparse.Namespace) -> int:
     no_db_commands = ["info", "flatten-pdfs"]
     if args.command_name not in no_db_commands:
         try:
-            upgrade_db = lazy_import("edupsyadmin.api.migration").upgrade_db
             upgrade_db(args.database_url, salt_path=args.salt_path)
         except MigrationError as err:
             logger.critical(err)

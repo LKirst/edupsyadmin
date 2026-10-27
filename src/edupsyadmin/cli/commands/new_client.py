@@ -3,11 +3,11 @@ import textwrap
 from argparse import ArgumentParser, Namespace
 from datetime import datetime
 from inspect import signature
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import inspect as sa_inspect
+lazy import pandas as pd
 
-from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db import clients
@@ -15,6 +15,9 @@ from edupsyadmin.utils.path_utils import normalize_path
 
 if TYPE_CHECKING:
     from edupsyadmin.api.managers import ClientsManager
+
+lazy from edupsyadmin.api.managers import ClientsManager
+lazy from edupsyadmin.tui.edit_client_app import EditClientApp
 
 COMMAND_DESCRIPTION = "Add a new client"
 COMMAND_HELP = "Add a new client"
@@ -54,8 +57,6 @@ def _enter_client_csv(
         missing, a name is not found, or no school/name is available
     :return: client_id of the last client that was created
     """
-    pd = lazy_import("pandas")
-
     client_cls = clients.Client
 
     if import_config_name:
@@ -187,7 +188,9 @@ def _enter_client_csv(
 
         client_data["school"] = school
 
-        final_client_data = {k: v for k, v in client_data.items() if k in allowed_keys}
+        final_client_data: dict[str, Any] = {
+            str(k): v for k, v in client_data.items() if k in allowed_keys
+        }
         client_id = clients_manager.add_client(**final_client_data)
 
     if client_id is None:
@@ -240,8 +243,7 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 def execute(args: Namespace) -> None:
     """Execute the new-client command."""
-    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
-    clients_manager = clients_manager_cls(
+    clients_manager = ClientsManager(
         database_url=args.database_url,
     )
 
@@ -260,7 +262,4 @@ def execute(args: Namespace) -> None:
         if not args.keep_file:
             csv_path.unlink()
     else:
-        edit_client_app_cls = lazy_import(
-            "edupsyadmin.tui.edit_client_app",
-        ).EditClientApp
-        edit_client_app_cls(clients_manager=clients_manager).run()
+        EditClientApp(clients_manager=clients_manager).run()

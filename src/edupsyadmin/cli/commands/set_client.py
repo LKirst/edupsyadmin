@@ -1,7 +1,9 @@
 import textwrap
 from argparse import ArgumentParser, Namespace
 
-from edupsyadmin.cli.utils import lazy_import, parse_key_value_pairs
+from edupsyadmin.cli.utils import parse_key_value_pairs
+lazy from edupsyadmin.api.managers import ClientsManager
+lazy from edupsyadmin.tui.edit_client_app import EditClientApp
 
 COMMAND_DESCRIPTION = "Change values for one or more clients"
 COMMAND_HELP = "Change values for one or more clients"
@@ -40,8 +42,7 @@ def execute(args: Namespace) -> None:
     """
     Set the value for a key given one or multiple client_ids
     """
-    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
-    clients_manager = clients_manager_cls(
+    clients_manager = ClientsManager(
         database_url=args.database_url,
     )
 
@@ -55,8 +56,5 @@ def execute(args: Namespace) -> None:
             new_data=key_value_pairs_dict,
         )
     else:
-        edit_client_app_cls = lazy_import(
-            "edupsyadmin.tui.edit_client_app",
-        ).EditClientApp
         for cid in args.client_ids:
-            edit_client_app_cls(clients_manager=clients_manager, client_id=cid).run()
+            EditClientApp(clients_manager=clients_manager, client_id=cid).run()

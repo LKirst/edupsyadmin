@@ -3,10 +3,13 @@ import textwrap
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
-from edupsyadmin.cli.utils import lazy_import, parse_key_value_pairs
+from edupsyadmin.cli.utils import parse_key_value_pairs
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 from edupsyadmin.utils.path_utils import normalize_path
+lazy from edupsyadmin.api.fill_form import fill_form
+lazy from edupsyadmin.api.managers import ClientsManager
+lazy from edupsyadmin.tui.fill_form_app import FillFormApp
 
 COMMAND_DESCRIPTION = (
     "Fill a pdf form or a text file with a liquid template. "
@@ -110,22 +113,18 @@ def _get_pdf_password(args: Namespace) -> str | None:
 
 def execute(args: Namespace) -> None:
     """Execute the create-documentation command."""
-    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
-    clients_manager = clients_manager_cls(
+    clients_manager = ClientsManager(
         database_url=args.database_url,
     )
 
     password = _get_pdf_password(args)
 
     if args.tui:
-        fill_form_app_cls = lazy_import("edupsyadmin.tui.fill_form_app").FillFormApp
-        fill_form_app_cls(
+        FillFormApp(
             clients_manager=clients_manager,
             client_ids=args.client_ids,
         ).run()
         return
-
-    fill_form = lazy_import("edupsyadmin.api.fill_form").fill_form
 
     form_paths: list[Path] = []
     if args.form_paths:

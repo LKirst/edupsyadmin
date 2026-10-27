@@ -1,7 +1,7 @@
 import textwrap
 from argparse import ArgumentParser, Namespace
 
-from edupsyadmin.cli.utils import lazy_import
+lazy from edupsyadmin.tui.editconfig_app import ConfigEditorApp
 
 COMMAND_DESCRIPTION = "Edit app configuration"
 COMMAND_HELP = "Edit app configuration"
@@ -24,10 +24,7 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 def execute(args: Namespace) -> None:
     """Execute the edit-config command."""
-    config_editor_app_cls = lazy_import(
-        "edupsyadmin.tui.editconfig_app",
-    ).ConfigEditorApp
-    config_editor_app_cls(
+    ConfigEditorApp(
         args.config_path,
         args.app_uid,
         args.app_username,

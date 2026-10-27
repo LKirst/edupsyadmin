@@ -448,9 +448,9 @@ def test_delete_client(mock_config, tmp_path):
 
 def test_edit_config_command(mock_config):
     """Test that the edit_config command starts the TUI."""
-    with patch("edupsyadmin.cli.commands.edit_config.lazy_import") as mock_lazy_import:
+    with patch("edupsyadmin.cli.commands.edit_config.ConfigEditorApp") as mock_app_cls:
         # Prevent the app from actually running
-        mock_app_instance = mock_lazy_import.return_value.ConfigEditorApp.return_value
+        mock_app_instance = mock_app_cls.return_value
         mock_app_instance.run.return_value = None
 
         # Call the command function
@@ -463,7 +463,7 @@ def test_edit_config_command(mock_config):
         edit_config_command.execute(args)
 
         # Assert that the app was initialized with the correct config path
-        mock_lazy_import.return_value.ConfigEditorApp.assert_called_once_with(
+        mock_app_cls.assert_called_once_with(
             mock_config,
             TEST_UID,
             TEST_USERNAME,
@@ -487,10 +487,10 @@ def test_create_documentation_tui(mock_config, tmp_path):
     set_keys_in_keyring(APP_UID, username, [key])
 
     with patch(
-        "edupsyadmin.cli.commands.create_documentation.lazy_import",
-    ) as mock_lazy_import:
+        "edupsyadmin.cli.commands.create_documentation.FillFormApp",
+    ) as mock_app_cls:
         # Prevent the app from actually running
-        mock_app_instance = mock_lazy_import.return_value.FillFormApp.return_value
+        mock_app_instance = mock_app_cls.return_value
         mock_app_instance.run.return_value = None
 
         # Call the main function with the mock config and the TUI flag
@@ -507,12 +507,9 @@ def test_create_documentation_tui(mock_config, tmp_path):
         )
 
         # Assert that the app was initialized
-        mock_lazy_import.return_value.FillFormApp.assert_called_once()
+        mock_app_cls.assert_called_once()
         # Assert that a clients_manager was passed to the app's constructor
-        assert (
-            "clients_manager"
-            in mock_lazy_import.return_value.FillFormApp.call_args.kwargs
-        )
+        assert "clients_manager" in mock_app_cls.call_args.kwargs
 
         # Assert that the app was run
         mock_app_instance.run.assert_called_once()

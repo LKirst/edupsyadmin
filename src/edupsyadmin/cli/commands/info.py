@@ -1,7 +1,7 @@
 import textwrap
 from argparse import ArgumentParser, Namespace
 
-from edupsyadmin.cli.utils import lazy_import
+lazy from edupsyadmin.info import info
 
 COMMAND_DESCRIPTION = "Show app version and what paths the app uses"
 COMMAND_HELP = "Get useful information for debugging"
@@ -24,8 +24,7 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 def execute(args: Namespace) -> None:
     """Execute the info command."""
-    info_module = lazy_import("edupsyadmin.info")
-    info_module.info(
+    info(
         app_uid=args.app_uid,
         app_username=args.app_username,
         database_url=args.database_url,

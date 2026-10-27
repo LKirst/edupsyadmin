@@ -5,9 +5,12 @@ from argparse import ArgumentParser, Namespace
 from rich.console import Console
 from rich.table import Table
 
-from edupsyadmin.cli.utils import lazy_import
 from edupsyadmin.core.logger import logger
 from edupsyadmin.utils.path_utils import normalize_path
+lazy from edupsyadmin.api.display_client_details import display_client_details
+lazy from edupsyadmin.api.managers import ClientsManager
+lazy from edupsyadmin.tui.clients_overview_app import ClientsOverviewApp
+lazy from edupsyadmin.utils.academic_year import get_this_academic_year_string
 
 COMMAND_DESCRIPTION = "Show clients overview or single client"
 COMMAND_HELP = "Show clients overview or single client"
@@ -81,8 +84,7 @@ def add_arguments(parser: ArgumentParser) -> None:
 
 def execute(args: Namespace) -> None:
     """Execute the get-clients command."""
-    clients_manager_cls = lazy_import("edupsyadmin.api.managers").ClientsManager
-    clients_manager = clients_manager_cls(
+    clients_manager = ClientsManager(
         database_url=args.database_url,
     )
 
@@ -97,16 +99,10 @@ def execute(args: Namespace) -> None:
     elif args.academic_years is not None:
         academic_years = args.academic_years
     else:
-        get_this_academic_year_string = lazy_import(
-            "edupsyadmin.utils.academic_year",
-        ).get_this_academic_year_string
         academic_years = [get_this_academic_year_string()]
 
     if args.tui:
-        clients_overview_app_cls = lazy_import(
-            "edupsyadmin.tui.clients_overview_app",
-        ).ClientsOverviewApp
-        clients_overview_app_cls(
+        ClientsOverviewApp(
             clients_manager=clients_manager,
             nta_nos=args.nta_nos,
             schools=args.schools,
@@ -114,10 +110,6 @@ def execute(args: Namespace) -> None:
             academic_years=academic_years,
         ).run()
     else:
-        display_client_details = lazy_import(
-            "edupsyadmin.api.display_client_details",
-        ).display_client_details
-
         if args.client_id:
             client_data = clients_manager.get_decrypted_client(args.client_id)
             display_client_details(client_data)
