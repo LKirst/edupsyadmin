@@ -1,6 +1,6 @@
 [build-system]
-build-backend = "hatchling.build"
-requires = [ "hatchling" ]
+build-backend = "uv_build"
+requires = [ "uv-build>=0.13.6,<0.14" ]
 
 [project]
 name = "edupsyadmin"
@@ -16,16 +16,16 @@ classifiers = [
 ]
 dependencies = [
   "alembic>=1.18",
-  "cryptography>=48",
+  "cryptography>=50",
   "keyring>=25.7",
   "platformdirs>=4.10",
   "pydantic>=2.13",
-  "pypdf>=6.12",
+  "pypdf>=6.21",
   "python-dateutil>=2.9",
   "python-liquid>=2",
   "pyyaml>=6.0.3",
   "rich>=15",
-  "sqlalchemy>=2",
+  "sqlalchemy>=2.1",
   "textual>=8.2",
 ]
 optional-dependencies.bwbackend = [ "bitwarden-keyring>=0.3.2" ]
@@ -61,11 +61,10 @@ dev = [
   "types-pyyaml>=6.0.12.20241221",
 ]
 
-[tool.hatch]
-build.targets.wheel.shared-data = { "src/edupsyadmin/alembic" = "edupsyadmin/alembic", "src/edupsyadmin/alembic.ini" = "edupsyadmin/alembic.ini" }
-
 [tool.uv]
 exclude-newer = "3d"
+# TODO: remove this workaround when pyyaml wheels for 3.15 are released
+extra-build-variables.pyyaml = { PYYAML_FORCE_LIBYAML = "0" }
 
 [tool.ruff]
 lint.select = [
