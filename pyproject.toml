@@ -4,7 +4,7 @@ requires = [ "uv-build>=0.13.6,<0.14" ]
 
 [project]
 name = "edupsyadmin"
-version = "10.1.0"
+version = "10.1.1"
 description = "edupsyadmin provides tools to help school psychologists with their documentation"
 readme = "README.md"
 license = { text = "MIT" }
