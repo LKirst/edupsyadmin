@@ -71,7 +71,6 @@ class ClientsOverview(Static):
         Binding("delete", "request_delete_client", "Löschen"),
         Binding("y", "request_copy_client", "Kopieren in Schuljahr"),
         Binding("n", "sort_by_last_name", "↕ `last_name_encr`"),
-        Binding("s", "sort_by_school", "↕ `schule`"),
         Binding("i", "sort_by_client_id", "↕ `client_id`"),
         Binding("c", "sort_by_class_name", "↕ `class_name_encr`"),
         Binding("ctrl+r", "reload", "Neu laden"),
@@ -357,10 +356,6 @@ class ClientsOverview(Static):
     def action_sort_by_last_name(self) -> None:
         """Sort DataTable by last name"""
         self._sort_table_by("last_name_encr")
-
-    def action_sort_by_school(self) -> None:
-        """Sort DataTable by school and last name"""
-        self._sort_table_by("school", "last_name_encr")
 
     def action_sort_by_class_name(self) -> None:
         """Sort DataTable by class_name_encr and last name"""
