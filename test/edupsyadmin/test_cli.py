@@ -78,6 +78,7 @@ def change_wd(tmp_path):
         "flatten-pdfs --help",
         "taetigkeitsbericht --help",
         "delete-client --help",
+        "check-shredding --help",
         "edit-config --help",
         "rotate-key --help",
     ),

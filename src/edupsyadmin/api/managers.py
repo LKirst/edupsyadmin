@@ -1,5 +1,6 @@
 import inspect as py_inspect
 import logging  # just for interaction with the sqlalchemy logger
+from datetime import date
 from typing import Any
 
 from sqlalchemy import create_engine, func, inspect, or_, select
@@ -7,7 +8,12 @@ from sqlalchemy.orm import sessionmaker
 
 from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.exceptions import ClientNotFoundError
-from edupsyadmin.api.types import ClientRecord
+from edupsyadmin.api.types import (
+    ClientRecord,
+    ShreddingCandidateRecord,
+    ShreddingReport,
+    ShreddingUnsetRecord,
+)
 from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db import clients as clients_db
@@ -229,3 +235,61 @@ class ClientsManager:
             return (
                 session.scalar(select(func.count()).select_from(clients_db.Client)) or 0
             )
+
+    def get_shredding_report(
+        self,
+        as_of: date | None = None,
+        schools: list[str] | None = None,
+    ) -> ShreddingReport:
+        """Inspect database for clients due for shredding and unset shredding dates.
+
+        :param as_of: Cutoff date to compare against (defaults to date.today()).
+        :param schools: Optional filter for specific school names.
+        :return: ShreddingReport containing due_clients and unset_clients.
+        """
+        cutoff = as_of or date.today()
+        logger.debug(f"Querying shredding status as of {cutoff}")
+
+        stmt = select(
+            clients_db.Client.client_id,
+            clients_db.Client.record_academic_year,
+            clients_db.Client.school,
+            clients_db.Client.class_name_encr,
+            clients_db.Client.document_shredding_date_encr,
+        )
+
+        if schools:
+            stmt = stmt.where(clients_db.Client.school.in_(schools))
+
+        due_clients: list[ShreddingCandidateRecord] = []
+        unset_clients: list[ShreddingUnsetRecord] = []
+
+        with self.Session() as session:
+            result = session.execute(stmt, execution_options={"yield_per": 100})
+            for row in result:
+                shred_date = row.document_shredding_date_encr
+                if shred_date is None:
+                    unset_clients.append(
+                        ShreddingUnsetRecord(
+                            client_id=row.client_id,
+                            record_academic_year=row.record_academic_year,
+                            school=row.school,
+                            class_name_encr=row.class_name_encr or "",
+                        )
+                    )
+                elif shred_date <= cutoff:
+                    due_clients.append(
+                        ShreddingCandidateRecord(
+                            client_id=row.client_id,
+                            record_academic_year=row.record_academic_year,
+                            school=row.school,
+                            document_shredding_date_encr=shred_date,
+                        )
+                    )
+
+        due_clients.sort(
+            key=lambda c: (c.document_shredding_date_encr, c.school, c.client_id)
+        )
+        unset_clients.sort(key=lambda c: (c.school, c.client_id))
+
+        return ShreddingReport(due_clients=due_clients, unset_clients=unset_clients)

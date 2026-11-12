@@ -3,11 +3,13 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
+from sqlalchemy import update
 
 from edupsyadmin.api.managers import (
     ClientNotFoundError,
 )
 from edupsyadmin.core.logger import logger as app_logger
+from edupsyadmin.db.clients import Client
 
 EXPECTED_KEYS = {
     "first_name_encr",
@@ -794,6 +796,60 @@ class TestClientValidation:
         assert copied_client_keep.record_academic_year == "2027/28"
         assert copied_client_keep.min_sessions == data["min_sessions"]
         assert copied_client_keep.n_sessions == data["n_sessions"]
+
+    def test_get_shredding_report(self, clients_manager, client_dict_set_by_user):
+        data1 = dict(client_dict_set_by_user)
+        data1.pop("client_id", None)
+        data1["first_name_encr"] = "DueClient"
+        data1["school"] = "FirstSchool"
+        id1 = clients_manager.add_client(**data1)
+        with clients_manager.Session() as session, session.begin():
+            session.execute(
+                update(Client)
+                .where(Client.client_id == id1)
+                .values(document_shredding_date_encr=date(2020, 7, 31))
+            )
+
+        data2 = dict(client_dict_set_by_user)
+        data2.pop("client_id", None)
+        data2["first_name_encr"] = "FutureClient"
+        data2["school"] = "FirstSchool"
+        id2 = clients_manager.add_client(**data2)
+        with clients_manager.Session() as session, session.begin():
+            session.execute(
+                update(Client)
+                .where(Client.client_id == id2)
+                .values(document_shredding_date_encr=date(2099, 7, 31))
+            )
+
+        data3 = dict(client_dict_set_by_user)
+        data3.pop("client_id", None)
+        data3["first_name_encr"] = "UnsetClient"
+        data3["class_name_encr"] = "Vorklasse"
+        data3["school"] = "OtherSchool"
+        id3 = clients_manager.add_client(**data3)
+
+        # 1. As of today
+        report_today = clients_manager.get_shredding_report(as_of=date(2025, 1, 1))
+        due_ids_today = [c.client_id for c in report_today.due_clients]
+        unset_ids = [u.client_id for u in report_today.unset_clients]
+        assert id1 in due_ids_today
+        assert id2 not in due_ids_today
+        assert id3 in unset_ids
+
+        # 2. Future as_of date
+        report_future = clients_manager.get_shredding_report(as_of=date(2100, 1, 1))
+        due_ids_future = [c.client_id for c in report_future.due_clients]
+        assert id1 in due_ids_future
+        assert id2 in due_ids_future
+
+        # 3. Filter by school
+        report_school = clients_manager.get_shredding_report(
+            as_of=date(2100, 1, 1),
+            schools=["OtherSchool"],
+        )
+        assert id3 in [u.client_id for u in report_school.unset_clients]
+        assert all(c.school == "OtherSchool" for c in report_school.due_clients)
 
 
 # Make the script executable.

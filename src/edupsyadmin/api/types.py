@@ -74,3 +74,32 @@ class FillFormResult(TypedDict, total=True):
     client_id: int
     success: bool
     error: Exception | None
+
+
+class ShreddingCandidateRecord(BaseModel):
+    """Client record whose document shredding date has passed."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    client_id: int
+    record_academic_year: str
+    school: str
+    document_shredding_date_encr: date
+
+
+class ShreddingUnsetRecord(BaseModel):
+    """Client record without a calculated document shredding date."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    client_id: int
+    record_academic_year: str
+    school: str
+    class_name_encr: str
+
+
+class ShreddingReport(BaseModel):
+    """Report partitioning clients into due candidates and unset records."""
+
+    due_clients: list[ShreddingCandidateRecord]
+    unset_clients: list[ShreddingUnsetRecord]
