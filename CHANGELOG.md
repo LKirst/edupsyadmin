@@ -1,3 +1,13 @@
+## 10.2.0 (2026-11-12)
+
+### Feat
+
+- **cli**: add check-shredding command
+
+### Fix
+
+- **tui**: remove sort by school
+
 ## 10.1.1 (2026-10-29)
 
 ## 10.1.0 (2026-10-27)
