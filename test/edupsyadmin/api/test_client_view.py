@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import cast
 from unittest.mock import patch
 
 import pytest
@@ -50,16 +49,12 @@ def test_client_view_convenience_data(
 
     # school data
     is_1st_school = client_dict_internal.school == "FirstSchool"
-    assert (
-        result["school_name"] == "Berufsfachschule Kinderpflege"
-        if is_1st_school
-        else "Fachoberschule"
+    expected_school_name = (
+        "Berufsfachschule Kinderpflege" if is_1st_school else "Fachoberschule"
     )
-    assert (
-        result["school_street"] == "Beispielstr. 1"
-        if is_1st_school
-        else "Platzhalterweg 2"
-    )
+    expected_school_street = "Beispielstr. 1" if is_1st_school else "Platzhalterweg 2"
+    assert result["school_name"] == expected_school_name
+    assert result["school_street"] == expected_school_street
     if is_1st_school:
         assert (
             result["school_addr_s_wname"]
@@ -92,7 +87,7 @@ def test_client_view_convenience_data(
     ]
 
     for d in expected_dates:
-        assert _is_valid_german_date(cast(dict, result)[d])
+        assert _is_valid_german_date(result[d])
 
     # Verify that the school subjects were fetched
     mock_get_subjects.assert_called_once_with(client_dict_internal.school)
