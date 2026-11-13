@@ -50,7 +50,7 @@ class FillFormApp(App[None]):
             try:
                 clients_data[client_id] = self.clients_manager.get_client_view(
                     client_id,
-                ).model_dump()
+                )
             except ClientNotFoundError:
                 failed_ids.append(client_id)
 

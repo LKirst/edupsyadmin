@@ -306,6 +306,6 @@ class FillFormScreen(Screen):
         for client_id in self.client_ids:
             clients_data[client_id] = self.clients_manager.get_client_view(
                 client_id,
-            ).model_dump()
+            )
 
         self.query_one(FillForm).display_client_info(clients_data)
