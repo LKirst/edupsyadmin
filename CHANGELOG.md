@@ -1,3 +1,14 @@
+## 10.2.1 (2026-11-16)
+
+### Fix
+
+- **lgvt**: round the rohwert, not the percentile
+
+### Refactor
+
+- **config**: switch to py-yaml12
+- **tui**: remove unnecessary model_dump
+
 ## 10.2.0 (2026-11-12)
 
 ### Feat
