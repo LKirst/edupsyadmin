@@ -9,7 +9,6 @@ from unittest.mock import MagicMock
 import keyring
 import keyring.errors
 import pytest
-import yaml
 from cryptography.fernet import Fernet
 from keyring.backends.null import Keyring as NullKeyring
 from sample_pdf_form import create_pdf_form
@@ -19,6 +18,7 @@ from snapshot_utils import (
     actual_snapshot_path_key,
     snapshot_logger,
 )
+from yaml12 import read_yaml, write_yaml
 
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.api.migration import upgrade_db
@@ -112,21 +112,26 @@ def mock_config(
     pdf_forms,
     request,
 ) -> Generator[Path]:
-    template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
+    template_resource = (
+        importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
+    )
     conf_path = tmp_path_factory.mktemp("tmp", numbered=True) / "mock_conf.yml"
 
     # Load the template content
-    template_content = yaml.safe_load(template_path.read_text(encoding="UTF-8"))
+    with importlib.resources.as_file(template_resource) as template_path:
+        template_content = read_yaml(template_path)
 
-    # Modify the content as needed for the test fixture
-    template_content["core"]["app_username"] = (
-        f"user_read_from_file-{request.node.name}"
-    )
-    template_content["form_set"]["lrst"] = [str(path) for path in pdf_forms]
+    assert isinstance(template_content, dict)
+    core = template_content["core"]
+    assert isinstance(core, dict)
+    core["app_username"] = f"user_read_from_file-{request.node.name}"
+
+    form_set = template_content["form_set"]
+    assert isinstance(form_set, dict)
+    form_set["lrst"] = [str(path) for path in pdf_forms]
 
     # Write this modified content directly to the temporary config file
-    with conf_path.open("w", encoding="UTF-8") as f:
-        yaml.dump(template_content, f)
+    write_yaml(template_content, conf_path)
 
     # Now, load this prepared config into the global config instance for
     # other fixtures/tests
@@ -162,10 +167,8 @@ def mock_config_snapshots(
     del config.school["SecondSchool"]  # keep it simple for snapshots
 
     # write the changed config to file
-    with conf_path.open("w", encoding="UTF-8") as f:
-        # convert to dict for pyyaml, excluding the runtime 'config' path
-        dictyaml = config.model_dump(exclude={"core": {"config"}})
-        yaml.dump(dictyaml, f)
+    dictyaml = config.model_dump(exclude={"core": {"config"}})
+    write_yaml(dictyaml, conf_path)
 
     # set different username than written to file to test which one is used
     config.core.app_username = f"user_set_in_fixture-{request.node.name}"

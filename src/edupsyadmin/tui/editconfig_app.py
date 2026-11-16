@@ -2,7 +2,6 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, ClassVar, Final
 
-import yaml
 from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 from rich.markup import escape
@@ -15,6 +14,7 @@ from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, RichLog, Select, Static
 from textual.worker import get_current_worker
+from yaml12 import write_yaml
 
 from edupsyadmin.core.config import (
     AppConfig,
@@ -82,16 +82,6 @@ FIELD_LABELS: Final[dict[str, str]] = {
     "item_key": "Name",
     "separator": "Trennzeichen",
 }
-
-
-def save_config(config_dict: dict[str, Any], file_path: Path) -> None:
-    """Save the configuration dictionary back to the YAML file.
-
-    :param config_dict: The configuration to write.
-    :param file_path: Target YAML file.
-    """
-    with file_path.open("w", encoding="utf-8") as f:
-        yaml.safe_dump(config_dict, f, default_flow_style=False, allow_unicode=True)
 
 
 def normalize_config_value(value: Any) -> Any:
@@ -1024,9 +1014,9 @@ class ConfigEditorApp(App[None]):
     @work(thread=True)
     def _save_config_worker(self, config_dict: dict[str, Any], file_path: Path) -> None:
         try:
-            save_config(config_dict, file_path)
+            write_yaml(config_dict, file_path)
             self.post_message(ConfigSaved())
-        except Exception as e:  # noqa: BLE001
+        except (OSError, TypeError, ValueError) as e:
             self.log(f"Error saving config: {e}")
             self.call_from_thread(
                 self._fail,

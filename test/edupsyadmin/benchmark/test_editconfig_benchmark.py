@@ -3,14 +3,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-import yaml
 from conftest import TEST_UID, TEST_USERNAME
 from cryptography.fernet import Fernet
+from yaml12 import read_yaml, write_yaml
 
 from edupsyadmin.api.migration import upgrade_db
 from edupsyadmin.core.config import AppConfig
 from edupsyadmin.core.encrypt import set_keys_in_keyring
-from edupsyadmin.tui.editconfig_app import ConfigEditorApp, save_config
+from edupsyadmin.tui.editconfig_app import ConfigEditorApp
 
 if TYPE_CHECKING:
     from pytest_benchmark.fixture import BenchmarkFixture
@@ -34,13 +34,11 @@ def test_benchmark_save_config_yaml_dump(
     tmp_path: Path,
 ) -> None:
     """Benchmark saving configuration to YAML disk storage."""
-    with mock_config.open("r", encoding="utf-8") as f:
-        config_data = yaml.safe_load(f)
-
+    config_data = read_yaml(mock_config)
     out_file = tmp_path / "out_benchmark.yml"
 
     def run_save() -> None:
-        save_config(config_data, out_file)
+        write_yaml(config_data, out_file)
 
     benchmark(run_save)
 
@@ -50,8 +48,7 @@ def test_benchmark_pydantic_model_validate(
     mock_config: Path,
 ) -> None:
     """Benchmark Pydantic model validation of the full config dict."""
-    with mock_config.open("r", encoding="utf-8") as f:
-        config_data = yaml.safe_load(f)
+    config_data = read_yaml(mock_config)
 
     def run_model_validate() -> None:
         AppConfig.model_validate(config_data)
@@ -109,10 +106,12 @@ def test_benchmark_full_save_tui_flow_existing_keys(
     db_url: str,
 ) -> None:
     """Benchmark the full TUI save flow when existing keys are in keyring."""
-    with mock_config.open("r", encoding="utf-8") as f:
-        conf_data = yaml.safe_load(f)
-    uid = conf_data.get("core", {}).get("app_uid") or TEST_UID
-    username = conf_data.get("core", {}).get("app_username") or TEST_USERNAME
+    conf_data = read_yaml(mock_config)
+    assert isinstance(conf_data, dict)
+    core = conf_data.get("core")
+    core_dict = core if isinstance(core, dict) else {}
+    uid = str(core_dict.get("app_uid") or TEST_UID)
+    username = str(core_dict.get("app_username") or TEST_USERNAME)
     set_keys_in_keyring(uid, username, [Fernet.generate_key()])
 
     async def execute_save() -> None:

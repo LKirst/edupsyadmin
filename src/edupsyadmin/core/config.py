@@ -9,8 +9,8 @@ values.
 from pathlib import Path
 from typing import Any
 
-import yaml
 from pydantic import BaseModel, Field
+from yaml12 import read_yaml
 
 from edupsyadmin.core.logger import logger
 
@@ -93,14 +93,16 @@ class Settings:
 
         The file is read and validated against the Pydantic models.
         """
-        with path.open("r", encoding="UTF-8") as stream:
-            logger.debug(f"reading config data from '{path}'")
-            data = yaml.safe_load(stream)
+        logger.debug(f"reading config data from '{path}'")
+        data = read_yaml(path)
 
         if not data:
             raise ValueError("Configuration could not be loaded or is empty.")
 
-        self._instance = AppConfig(**data)
+        if not isinstance(data, dict):
+            raise TypeError("Configuration is not a mapping.")
+
+        self._instance = AppConfig.model_validate(data)
 
     def __getattr__(self, name: str) -> Any:
         """Delegate attribute access to the loaded AppConfig instance."""

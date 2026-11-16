@@ -1,7 +1,7 @@
 import importlib.resources
 from pathlib import Path
 
-import yaml
+from yaml12 import read_yaml, write_yaml
 
 from edupsyadmin.api.managers import ClientsManager
 from edupsyadmin.api.migration import upgrade_db
@@ -32,16 +32,24 @@ def setup_demo() -> None:
     demo_salt_path.unlink(missing_ok=True)
 
     # Load default config and customize for demo
-    template_path = importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
-    with template_path.open("r", encoding="utf-8") as f:
-        demo_config = yaml.safe_load(f)
+    template_resource = (
+        importlib.resources.files("edupsyadmin.data") / "sampleconfig.yml"
+    )
+    with importlib.resources.as_file(template_resource) as template_path:
+        demo_config = read_yaml(template_path)
+
+    if not isinstance(demo_config, dict):
+        raise TypeError("sampleconfig.yml must contain a mapping.")
+
+    core = demo_config.get("core")
+    if not isinstance(core, dict):
+        raise TypeError("sampleconfig.yml missing core section.")
 
     # Customize for demo
-    demo_config["core"]["app_uid"] = demo_app_uid
-    demo_config["core"]["app_username"] = demo_username
+    core["app_uid"] = demo_app_uid
+    core["app_username"] = demo_username
 
-    with demo_config_path.open("w", encoding="utf-8") as f:
-        yaml.dump(demo_config, f)
+    write_yaml(demo_config, demo_config_path)
 
     # Load the new demo config
     config.load(demo_config_path)

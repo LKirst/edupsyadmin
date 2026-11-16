@@ -2,9 +2,9 @@ import asyncio
 from pathlib import Path
 
 import pytest
-import yaml
 from conftest import TEST_UID, TEST_USERNAME
 from textual.widgets import Input, RichLog
+from yaml12 import read_yaml
 
 from edupsyadmin.api.migration import upgrade_db
 from edupsyadmin.core.config import AppConfig
@@ -159,14 +159,18 @@ async def test_app_saves_config_changes(mock_config, tmp_path):
             await asyncio.sleep(0.05)
 
     # Read the config file after the app has exited
-    with config_path.open("r") as f:
-        saved_config = yaml.safe_load(f)
+    saved_config = read_yaml(config_path)
+    assert isinstance(saved_config, dict)
+    core = saved_config["core"]
+    assert isinstance(core, dict)
+    schoolpsy = saved_config["schoolpsy"]
+    assert isinstance(schoolpsy, dict)
 
     # Assert that the changes were saved
-    assert saved_config["core"]["logging"] == new_logging_level
-    assert saved_config["core"]["template_directory"] == new_template_directory
-    assert saved_config["core"]["output_directory"] == new_output_directory
-    assert saved_config["schoolpsy"]["schoolpsy_name"] == new_schoolpsy_name
+    assert core["logging"] == new_logging_level
+    assert core["template_directory"] == new_template_directory
+    assert core["output_directory"] == new_output_directory
+    assert schoolpsy["schoolpsy_name"] == new_schoolpsy_name
 
 
 def test_path_validators_empty_string(tmp_path: Path) -> None:
@@ -253,11 +257,14 @@ async def test_add_new_school_and_save_success(mock_config, tmp_path):
 
     assert not app._running
 
-    with config_path.open("r", encoding="utf-8") as f:
-        saved_config = yaml.safe_load(f)
+    saved_config = read_yaml(config_path)
+    assert isinstance(saved_config, dict)
+    school = saved_config["school"]
+    assert isinstance(school, dict)
 
-    assert "Gymnasium" in saved_config["school"]
-    gym = saved_config["school"]["Gymnasium"]
+    assert "Gymnasium" in school
+    gym = school["Gymnasium"]
+    assert isinstance(gym, dict)
     assert gym["school_name"] == "Goethe Gymnasium"
     assert gym["school_street"] == "Schulstr. 5"
     assert gym["school_city"] == "80331 Muenchen"
@@ -266,7 +273,7 @@ async def test_add_new_school_and_save_success(mock_config, tmp_path):
     assert gym["nstudents"] == expected_nstudents
 
     # Ensure the saved YAML passes Pydantic validation
-    app_config = AppConfig(**saved_config)
+    app_config = AppConfig.model_validate(saved_config)
     assert app_config.school["Gymnasium"].end == expected_end
 
 
@@ -341,8 +348,11 @@ async def test_save_without_password_saves_without_touching_keyring(
             await asyncio.sleep(0.05)
 
     assert calls == []
-    with mock_config.open("r", encoding="utf-8") as f:
-        assert yaml.safe_load(f)["core"]["logging"] == "INFO"
+    saved_mock = read_yaml(mock_config)
+    assert isinstance(saved_mock, dict)
+    core = saved_mock["core"]
+    assert isinstance(core, dict)
+    assert core["logging"] == "INFO"
 
 
 @pytest.mark.asyncio

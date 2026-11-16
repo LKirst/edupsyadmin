@@ -19,11 +19,11 @@ dependencies = [
   "cryptography>=50",
   "keyring>=25.7",
   "platformdirs>=4.10",
+  "py-yaml12>=0.2",
   "pydantic>=2.13",
   "pypdf>=6.21",
   "python-dateutil>=2.9",
   "python-liquid>=2",
-  "pyyaml>=6.0.3",
   "rich>=15",
   "sqlalchemy>=2.1",
   "textual>=8.2",
@@ -58,13 +58,10 @@ dev = [
   "ty>=0.0.40",
   "types-greenlet>=3.1.0.20241221",
   "types-python-dateutil>=2.9.0.20241206",
-  "types-pyyaml>=6.0.12.20241221",
 ]
 
 [tool.uv]
 exclude-newer = "3d"
-# TODO: remove this workaround when pyyaml wheels for 3.15 are released
-extra-build-variables.pyyaml = { PYYAML_FORCE_LIBYAML = "0" }
 
 [tool.ruff]
 lint.select = [
