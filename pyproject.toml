@@ -62,6 +62,9 @@ dev = [
 
 [tool.uv]
 exclude-newer = "3d"
+# TODO: remove this workaround when pyyaml wheels for 3.15 are released
+# This line is still necessary for commitizen which depends on pyyaml
+extra-build-variables.pyyaml = { PYYAML_FORCE_LIBYAML = "0" }
 
 [tool.ruff]
 lint.select = [
