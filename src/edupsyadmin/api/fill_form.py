@@ -243,7 +243,7 @@ def write_form_md(fn: Path, out_fn: Path, data: Mapping[str, Any]) -> None:
             raise
 
         try:
-            msg = template.render(**data)
+            msg = template.render(data)
         except LiquidError as e:
             e.add_note(
                 "The template could be parsed, but there was an issue with "

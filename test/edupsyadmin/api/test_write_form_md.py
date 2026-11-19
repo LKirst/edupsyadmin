@@ -3,8 +3,8 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+from liquid import Template
 from liquid.exceptions import LiquidError
-from liquid.template import BoundTemplate
 
 from edupsyadmin.api.client_view import ClientView
 from edupsyadmin.api.fill_form import fill_form, write_form_md
@@ -102,31 +102,28 @@ def test_write_form_md_liquid_error_parse(
     template_path = tmp_path / "template.md"
     output_path = tmp_path / "output.md"
 
-    # Invalid liquid syntax: unclosed tag
-    template_content = "Hello {{ first_name_encr "
-    template_path.write_text(template_content, encoding="utf8")
+    # Invalid liquid syntax: block tag without its closing tag
+    template_path.write_text("{% if first_name_encr %}Hello", encoding="utf8")
 
     with pytest.raises(LiquidError):
         write_form_md(template_path, output_path, client_dict_internal.model_dump())
 
 
 def test_write_form_md_liquid_error_render(tmp_path: Path) -> None:
-    """
-    Test that LiquidError is caught and reraised with a note during rendering.
+    """Test that a LiquidError raised during rendering propagates.
 
-    Note: It's harder to trigger a render-time LiquidError with standard templates
-    as liquid is quite permissive. One way is to use a filter that fails.
+    Liquid is permissive at render time, so the render step is mocked to
+    raise a ``LiquidError``.
     """
-    # Let's try to mock template.render to raise a LiquidError
     template_path = tmp_path / "template.md"
     output_path = tmp_path / "output.md"
     template_path.write_text("{{ test }}", encoding="utf8")
 
     with (
         mock.patch.object(
-            BoundTemplate,
+            Template,
             "render",
-            side_effect=LiquidError("Render failure", token=None),
+            side_effect=LiquidError("Render failure"),
         ),
         pytest.raises(LiquidError, match="Render failure"),
     ):
