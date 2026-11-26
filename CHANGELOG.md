@@ -1,3 +1,13 @@
+## 10.2.2 (2026-11-26)
+
+### Fix
+
+- **fill_form**: update python-liquid code to v3
+
+### Refactor
+
+- **cli**: refactor new_client command for readability
+
 ## 10.2.1 (2026-11-16)
 
 ### Fix
