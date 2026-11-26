@@ -1,9 +1,7 @@
 import os
 import textwrap
 from argparse import ArgumentParser, Namespace
-from datetime import datetime
 from inspect import signature
-from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import inspect as sa_inspect
 lazy import pandas as pd
@@ -12,10 +10,6 @@ from edupsyadmin.core.config import config
 from edupsyadmin.core.logger import logger
 from edupsyadmin.db import clients
 from edupsyadmin.utils.path_utils import normalize_path
-
-if TYPE_CHECKING:
-    from edupsyadmin.api.managers import ClientsManager
-
 lazy from edupsyadmin.api.managers import ClientsManager
 lazy from edupsyadmin.tui.edit_client_app import EditClientApp
 
@@ -36,29 +30,10 @@ COMMAND_EPILOG = textwrap.dedent(
         --names "Client1Name" "Client2Name" --school MySchool --keep-file
 """,
 )
+_CITY_COLUMNS = frozenset({"postCode", "city"})
 
 
-def _enter_client_csv(
-    clients_manager: ClientsManager,
-    csv_path: str | os.PathLike[str],
-    school: str | None,
-    name: list[str],
-    import_config_name: str | None = None,
-) -> int:
-    """
-    Read client(s) from a csv file and add them to the database.
-
-    :param clients_manager: a ClientsManager instance used to add the client to the db
-    :param csv_path: path to a csv file
-    :param school: short name of the school as set in the config file
-    :param name: name(s) of the client(s) as specified in the "name" column of the csv
-    :param import_config_name: name of the csv import configuration from the config
-    :raises ValueError: if the import config is unknown, the lookup column is
-        missing, a name is not found, or no school/name is available
-    :return: client_id of the last client that was created
-    """
-    client_cls = clients.Client
-
+def _get_import_config(import_config_name: str | None) -> tuple[str, dict[str, str]]:
     if import_config_name:
         try:
             import_conf = config.csv_import[import_config_name]
@@ -86,6 +61,22 @@ def _enter_client_csv(
             "address.phone": "telephone2_encr",
             "address.email": "email_encr",
         }
+    return separator, column_mapping
+
+
+def _allowed_client_keys() -> set[str]:
+    client_cls = clients.Client
+    valid_keys = {c.key for c in sa_inspect(client_cls).column_attrs}
+    valid_init_keys = set(signature(client_cls.__init__).parameters)
+    return valid_keys | valid_init_keys
+
+
+def _read_clients_csv(
+    csv_path: str | os.PathLike[str],
+    import_config_name: str | None,
+) -> tuple[str, pd.DataFrame]:
+    """Read a client csv and apply the column mapping."""
+    separator, column_mapping = _get_import_config(import_config_name)
 
     # keep_default_na: Empty cells become "" (the defaults used by
     # Client.__init__), and values like "NA" or "Null" stay strings.
@@ -107,6 +98,67 @@ def _enter_client_csv(
 
     df = raw_df.rename(columns=column_mapping)
 
+    # The 'name' column is used for lookup; it may itself have been renamed.
+    lookup_col = "name" if "name" in df.columns else column_mapping.get("name", "name")
+    if lookup_col not in df.columns:
+        raise ValueError(
+            f"Lookup column '{lookup_col}' not found in '{csv_path}' after applying "
+            f"the column mapping. Available columns: {list(df.columns)}",
+        )
+
+    allowed_keys = _allowed_client_keys()
+
+    # postCode/city (_CITY_COLUMNS) are merged into city_encr later, so
+    # they are valid targets.
+    unknown_targets = sorted(
+        target
+        for target in set(column_mapping.values())
+        if target not in allowed_keys and target not in _CITY_COLUMNS
+    )
+    if unknown_targets:
+        logger.debug(
+            "Column mapping targets are not Client fields and will be dropped: %s",
+            unknown_targets,
+        )
+
+    keep = allowed_keys | _CITY_COLUMNS | {lookup_col}
+    return lookup_col, df[[col for col in df.columns if col in keep]]
+
+
+def _resolve_school(school: str | None) -> str:
+    """Return the specified school or the first one defined in the config."""
+    if school is not None:
+        return school
+    try:
+        return next(iter(config.school))
+    except StopIteration:
+        raise ValueError("No school passed and none defined in the config.") from None
+
+
+def _enter_client_csv(
+    clients_manager: ClientsManager,
+    csv_path: str | os.PathLike[str],
+    school: str | None,
+    name: list[str],
+    import_config_name: str | None = None,
+) -> list[int]:
+    """
+    Read client(s) from a csv file and add them to the database.
+
+    :param clients_manager: a ClientsManager instance used to add the client to the db
+    :param csv_path: path to a csv file
+    :param school: short name of the school as set in the config file
+    :param name: name(s) of the client(s) as specified in the "name" column of the csv
+    :param import_config_name: name of the csv import configuration from the config
+    :raises ValueError: if the import config is unknown, the lookup column is
+        missing, a name is not found, or no school/name is available
+    :return: list of client_ids that were created
+    """
+    if not name:
+        raise ValueError("No client names were given; nothing was added.")
+
+    lookup_col, df = _read_clients_csv(csv_path, import_config_name)
+
     # Telephone numbers must be strings so that they can be encrypted.
     for phone_col in ("telephone1_encr", "telephone2_encr"):
         if phone_col in df.columns:
@@ -116,86 +168,71 @@ def _enter_client_csv(
                 "No column was mapped to '%s'; it will be left empty.", phone_col
             )
 
-    # The 'name' column is used for lookup; it may itself have been renamed.
-    lookup_col = "name" if "name" in df.columns else column_mapping.get("name", "name")
-    if lookup_col not in df.columns:
+    school_name = _resolve_school(school)
+
+    # Resolve every name first so a typo in the last name does not leave
+    # the earlier clients half-imported.
+    available = set(df[lookup_col])
+    missing = [this_name for this_name in name if this_name not in available]
+    if missing:
         raise ValueError(
-            f"Lookup column '{lookup_col}' not found in '{csv_path}' after applying "
-            f"the column mapping. Available columns: {list(df.columns)}",
+            f"The name(s) {missing} were not found in column '{lookup_col}' "
+            f"of the CSV file '{csv_path}'.",
         )
 
-    # Use the first school from the config if none was passed.
-    if school is None:
-        try:
-            school = next(iter(config.school))
-        except StopIteration:
-            raise ValueError(
-                "No school passed and none defined in the config."
-            ) from None
-
-    # Only keep keys that the Client model accepts.
-    valid_keys = {c.key for c in sa_inspect(client_cls).column_attrs}
-    valid_init_keys = set(signature(client_cls.__init__).parameters)
-    allowed_keys = valid_keys | valid_init_keys
-    # postCode/city are merged into city_encr below, so they are valid targets.
-    unknown_targets = sorted(
-        target
-        for target in set(column_mapping.values())
-        if target not in allowed_keys and target not in {"postCode", "city"}
+    # drop_duplicates keeps the first match per name;
+    # .loc[name] returns the rows in the order the names were given.
+    selected = (
+        df.drop_duplicates(subset=lookup_col)
+        .set_index(lookup_col, drop=False)
+        .loc[name]
     )
-    if unknown_targets:
-        logger.debug(
-            "Column mapping targets are not Client fields and will be dropped: %s",
-            unknown_targets,
-        )
+    records = _preprocess_client_csv_data(selected, school_name).to_dict(
+        orient="records"
+    )
+    return [
+        clients_manager.add_client(**{str(k): v for k, v in record.items()})
+        for record in records
+    ]
 
-    client_id: int | None = None
-    for this_name in name:
-        client_series = df[df[lookup_col] == this_name]
 
-        if client_series.empty:
-            raise ValueError(
-                f"The name '{this_name}' was not found in column '{lookup_col}' "
-                f"of the CSV file '{csv_path}'.",
-            )
+def _preprocess_client_csv_data(df: pd.DataFrame, school: str) -> pd.DataFrame:
+    """Prepare the selected csv rows for ``ClientsManager.add_client``.
 
-        client_data = client_series.iloc[0].to_dict()
+    Merges ``postCode`` and ``city`` into ``city_encr``, parses dates
+    (``DD.MM.YYYY``, unparsable values become None), sets the school and drops
+    all columns that are not ``Client`` fields.
 
-        # Combine address fields if they exist
-        if "postCode" in client_data and "city" in client_data:
-            client_data["city_encr"] = (
-                str(client_data.pop("postCode", ""))
-                + " "
-                + str(client_data.pop("city", ""))
-            )
+    :param df: the selected rows of the csv dataframe
+    :param school: short name of the school
+    :return: dataframe whose columns are valid ``add_client`` keyword arguments
+    """
+    df = df.copy()
 
-        # Handle date formatting
-        for date_col in ("entry_date_encr", "birthday_encr"):
-            if date_col in client_data and isinstance(client_data[date_col], str):
-                try:
-                    client_data[date_col] = datetime.strptime(
-                        client_data[date_col],
-                        "%d.%m.%Y",
-                    ).date()
-                except ValueError:
-                    logger.error(
-                        "Could not parse date '%s' for column '%s'. "
-                        "Please ensure the format is DD.MM.YYYY.",
-                        client_data[date_col],
-                        date_col,
-                    )
-                    client_data[date_col] = None
+    # Combine address fields if they exist
+    if {"postCode", "city"} <= set(df.columns):
+        df["city_encr"] = df.pop("postCode") + " " + df.pop("city")
 
-        client_data["school"] = school
+    # Handle date formatting
+    for date_col in ("entry_date_encr", "birthday_encr"):
+        if date_col not in df.columns:
+            continue
+        parsed = pd.to_datetime(df[date_col], format="%d.%m.%Y", errors="coerce")
+        failed = parsed.isna()
+        for bad_value in df.loc[failed, date_col]:
+            if bad_value:
+                logger.error(
+                    "Could not parse date '%s' for column '%s'. "
+                    "Please ensure the format is DD.MM.YYYY.",
+                    bad_value,
+                    date_col,
+                )
+        df[date_col] = parsed.dt.date.where(~failed, None)
 
-        final_client_data: dict[str, Any] = {
-            str(k): v for k, v in client_data.items() if k in allowed_keys
-        }
-        client_id = clients_manager.add_client(**final_client_data)
+    df["school"] = school
 
-    if client_id is None:
-        raise ValueError("No client names were given; nothing was added.")
-    return client_id
+    allowed_keys = _allowed_client_keys()
+    return df[[col for col in df.columns if col in allowed_keys]]
 
 
 def add_arguments(parser: ArgumentParser) -> None:
