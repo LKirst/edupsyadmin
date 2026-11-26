@@ -22,6 +22,7 @@ class ClientsOverviewApp(App):
         schools: list[str] | None = None,
         columns: list[str] | None = None,
         academic_years: list[str] | None = None,
+        active: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -30,6 +31,7 @@ class ClientsOverviewApp(App):
         self.schools = schools
         self.columns = columns
         self.academic_years = academic_years
+        self.active = active
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -39,5 +41,6 @@ class ClientsOverviewApp(App):
             schools=self.schools,
             columns=self.columns,
             academic_years=self.academic_years,
+            active=self.active,
         )
         yield Footer()

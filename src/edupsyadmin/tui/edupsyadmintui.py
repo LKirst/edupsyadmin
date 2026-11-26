@@ -57,6 +57,7 @@ class EdupsyadminTui(App[None]):
         schools: list[str] | None = None,
         columns: list[str] | None = None,
         academic_years: list[str] | None = None,
+        active: bool = False,
     ) -> None:
         super().__init__()
         self.manager = manager
@@ -65,6 +66,7 @@ class EdupsyadminTui(App[None]):
         self.schools = schools
         self.columns = columns
         self.academic_years = academic_years
+        self.active = active
 
     def compose(self) -> ComposeResult:
         yield Header()

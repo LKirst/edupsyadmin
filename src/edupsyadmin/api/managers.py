@@ -75,6 +75,7 @@ class ClientsManager:
         schools: list[str] | None = None,
         columns: list[str] | str | None = None,
         academic_years: list[str] | str | None = None,
+        active: bool = False,
     ) -> list[dict[str, Any]]:
         logger.debug("trying to query client data for overview")
 
@@ -139,6 +140,8 @@ class ClientsManager:
             conditions.append(
                 clients_db.Client.record_academic_year.in_(academic_years)
             )
+        if active:
+            conditions.append(clients_db.Client.case_active.is_(True))
         if conditions:
             stmt = stmt.where(*conditions)
 

@@ -68,6 +68,9 @@ def add_arguments(parser: ArgumentParser) -> None:
         action="store_true",
         help="show entries from all academic years (overrides default filtering)",
     )
+    parser.add_argument(
+        "--active", action="store_true", help="show only active clients"
+    )
     parser.add_argument("--out", help="path for an output file", type=normalize_path)
     parser.add_argument(
         "--client-id",
@@ -108,6 +111,7 @@ def execute(args: Namespace) -> None:
             schools=args.schools,
             columns=args.columns,
             academic_years=academic_years,
+            active=args.active,
         ).run()
     else:
         if args.client_id:
@@ -120,6 +124,7 @@ def execute(args: Namespace) -> None:
                 schools=args.schools,
                 columns=args.columns,
                 academic_years=academic_years,
+                active=args.active,
             )
             # Sort manually
             data.sort(key=lambda x: (x.get("school", ""), x.get("last_name_encr", "")))

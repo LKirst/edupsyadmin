@@ -116,6 +116,7 @@ class ClientsOverview(Static):
         schools: list[str] | None = None,
         columns: list[str] | None = None,
         academic_years: list[str] | None = None,
+        active: bool = False,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
@@ -126,6 +127,7 @@ class ClientsOverview(Static):
         self.schools = schools
         self.columns = columns
         self.academic_years = academic_years
+        self.active = active
         self._last_applied_sort: tuple[tuple[str, ...], bool] = ((), False)
         self._reverse_states: dict[str, bool] = {}
 
@@ -154,6 +156,7 @@ class ClientsOverview(Static):
             schools=self.schools,
             columns=self.columns,
             academic_years=self.academic_years,
+            active=self.active,
         )
         self.post_message(self._DataLoaded(data))
 

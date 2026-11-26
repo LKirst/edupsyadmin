@@ -53,6 +53,9 @@ def add_arguments(parser: ArgumentParser) -> None:
         action="store_true",
         help="show entries from all academic years (overrides default filtering)",
     )
+    parser.add_argument(
+        "--active", action="store_true", help="show only active clients"
+    )
 
 
 def _suppress_console_logging() -> None:
@@ -97,5 +100,6 @@ def execute(args: Namespace) -> None:
         schools=args.schools,
         columns=args.columns,
         academic_years=academic_years,
+        active=args.active,
     )
     app.run()
